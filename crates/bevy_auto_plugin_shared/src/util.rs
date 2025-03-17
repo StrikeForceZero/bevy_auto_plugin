@@ -53,8 +53,10 @@ pub fn path_to_string(path: &Path, strip_spaces: bool) -> String {
 
 pub enum Target {
     RegisterTypes,
+    RegisterStateTypes,
     AddEvents,
     InitResources,
+    InitStates,
     RequiredComponentAutoName,
 }
 

@@ -58,8 +58,10 @@ pub fn update_state(
         let path = path_to_string(&path, false);
         let inserted = match target {
             Target::RegisterTypes => entry.context.register_types.insert(path),
+            Target::RegisterStateTypes => entry.context.register_state_types.insert(path),
             Target::AddEvents => entry.context.add_events.insert(path),
             Target::InitResources => entry.context.init_resources.insert(path),
+            Target::InitStates => entry.context.init_states.insert(path),
             Target::RequiredComponentAutoName => entry.context.auto_names.insert(path),
         };
         if !inserted {
