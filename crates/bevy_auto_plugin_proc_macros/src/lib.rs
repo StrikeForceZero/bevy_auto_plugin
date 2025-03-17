@@ -4,7 +4,10 @@ use proc_macro2::TokenStream as MacroStream;
 use bevy_auto_plugin_shared::util::{
     inject_module, items_with_attribute_macro, ItemWithAttributeMatch,
 };
-use bevy_auto_plugin_shared::{generate_add_events, generate_auto_names, generate_init_resources, generate_init_states, generate_register_state_types, generate_register_types};
+use bevy_auto_plugin_shared::{
+    generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
+    generate_register_state_types, generate_register_types,
+};
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::meta::ParseNestedMeta;
@@ -97,10 +100,11 @@ fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> Result<MacroStre
 
         let auto_names = items_with_attribute_macro(items, "auto_name")?;
         let auto_names = map_to_string(auto_names);
-        
-        let auto_register_state_types = items_with_attribute_macro(items, "auto_register_state_type")?;
+
+        let auto_register_state_types =
+            items_with_attribute_macro(items, "auto_register_state_type")?;
         let auto_register_state_types = map_to_string(auto_register_state_types);
-        
+
         let auto_init_states = items_with_attribute_macro(items, "auto_init_state")?;
         let auto_init_states = map_to_string(auto_init_states);
 
@@ -111,7 +115,8 @@ fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> Result<MacroStre
             let auto_init_resources =
                 generate_init_resources(&app_param_ident, auto_init_resources)?;
             let auto_names = generate_auto_names(&app_param_ident, auto_names)?;
-            let auto_register_state_types = generate_register_state_types(&app_param_ident, auto_register_state_types)?;
+            let auto_register_state_types =
+                generate_register_state_types(&app_param_ident, auto_register_state_types)?;
             let auto_init_states = generate_init_states(&app_param_ident, auto_init_states)?;
             parse2::<Item>(quote! {
                 pub(super) fn #init_name(app: &mut bevy_app::prelude::App) {
@@ -377,7 +382,7 @@ pub fn auto_name(_attr: CompilerStream, input: CompilerStream) -> CompilerStream
 ///     #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
 ///     enum Foo {
 ///         #[default]
-///         A, 
+///         A,
 ///     }
 ///
 ///     // code gen:
@@ -411,7 +416,7 @@ pub fn auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerS
 ///     #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
 ///     enum Foo {
 ///         #[default]
-///         A, 
+///         A,
 ///     }
 ///
 ///     // code gen:

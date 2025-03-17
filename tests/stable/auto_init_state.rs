@@ -1,7 +1,7 @@
 use bevy_app::prelude::*;
-use bevy_state::prelude::*;
-use bevy_state::app::StatesPlugin;
 use bevy_auto_plugin::auto_plugin_module::*;
+use bevy_state::app::StatesPlugin;
+use bevy_state::prelude::*;
 
 #[auto_plugin(init_name=init)]
 mod plugin_module {
@@ -14,7 +14,7 @@ mod plugin_module {
         A,
         B,
     }
-    
+
     #[auto_init_state]
     #[derive(SubStates, Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
     #[source(Test = Test::B)]
@@ -23,7 +23,6 @@ mod plugin_module {
         A,
         B,
     }
-
 }
 use plugin_module::*;
 
@@ -43,6 +42,12 @@ fn test_auto_init_state() {
     let app = app();
     assert!(app.world().get_resource::<State<Test>>().is_some());
     assert!(app.world().get_resource::<NextState<Test>>().is_some());
-    assert!(app.world().get_resource::<State<InnerTest>>().is_some(), "did not auto init state");
-    assert!(app.world().get_resource::<NextState<InnerTest>>().is_some(), "did not auto init state");
+    assert!(
+        app.world().get_resource::<State<InnerTest>>().is_some(),
+        "did not auto init state"
+    );
+    assert!(
+        app.world().get_resource::<NextState<InnerTest>>().is_some(),
+        "did not auto init state"
+    );
 }

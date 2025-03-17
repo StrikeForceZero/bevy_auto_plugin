@@ -12,7 +12,10 @@ use bevy_auto_plugin_nightly_shared::{FileState, UpdateStateError};
 use bevy_auto_plugin_shared::util::{
     resolve_path_from_item_or_args, FnParamMutabilityCheckErrMessages, Target,
 };
-use bevy_auto_plugin_shared::{generate_add_events, generate_auto_names, generate_init_resources, generate_init_states, generate_register_state_types, generate_register_types, util};
+use bevy_auto_plugin_shared::{
+    generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
+    generate_register_state_types, generate_register_types, util,
+};
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::meta::ParseNestedMeta;
@@ -165,8 +168,10 @@ fn auto_plugin_inner(file_path: String, app_param_name: &Ident) -> Result<MacroS
             app_param_name,
             file_state.context.register_types.clone().drain(),
         )?;
-        let register_state_types =
-            generate_register_state_types(app_param_name, file_state.context.register_state_types.drain())?;
+        let register_state_types = generate_register_state_types(
+            app_param_name,
+            file_state.context.register_state_types.drain(),
+        )?;
         let add_events =
             generate_add_events(app_param_name, file_state.context.add_events.drain())?;
         let init_resources =
@@ -378,7 +383,7 @@ pub fn auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream 
 }
 
 /// Automatically initializes a State in the Bevy `App`.
-/// 
+///
 /// # Example (without generics)
 /// ```no_run
 /// use bevy::prelude::*;

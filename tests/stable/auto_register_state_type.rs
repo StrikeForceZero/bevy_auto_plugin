@@ -1,9 +1,9 @@
 use bevy_app::prelude::*;
 use bevy_auto_plugin::auto_plugin_module::*;
 use bevy_ecs::prelude::*;
+use bevy_reflect::prelude::*;
 use bevy_state::app::StatesPlugin;
 use bevy_state::prelude::*;
-use bevy_reflect::prelude::*;
 
 #[auto_plugin(init_name=init)]
 mod plugin_module {

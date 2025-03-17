@@ -1,9 +1,9 @@
 use bevy_app::prelude::*;
+use bevy_auto_plugin::auto_plugin::*;
 use bevy_ecs::prelude::*;
 use bevy_reflect::prelude::*;
 use bevy_state::app::StatesPlugin;
 use bevy_state::prelude::*;
-use bevy_auto_plugin::auto_plugin::*;
 
 #[auto_register_type]
 #[auto_register_state_type]
