@@ -13,8 +13,8 @@ use bevy_auto_plugin_shared::util::{
     resolve_path_from_item_or_args, FnParamMutabilityCheckErrMessages, Target,
 };
 use bevy_auto_plugin_shared::{
-    generate_add_events, generate_auto_names, generate_init_resources, generate_register_types,
-    util,
+    generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
+    generate_register_state_types, generate_register_types, util,
 };
 use proc_macro2::{Ident, Span};
 use quote::quote;
@@ -168,16 +168,24 @@ fn auto_plugin_inner(file_path: String, app_param_name: &Ident) -> Result<MacroS
             app_param_name,
             file_state.context.register_types.clone().drain(),
         )?;
+        let register_state_types = generate_register_state_types(
+            app_param_name,
+            file_state.context.register_state_types.drain(),
+        )?;
         let add_events =
             generate_add_events(app_param_name, file_state.context.add_events.drain())?;
         let init_resources =
             generate_init_resources(app_param_name, file_state.context.init_resources.drain())?;
+        let init_states =
+            generate_init_states(app_param_name, file_state.context.init_states.drain())?;
         let auto_names =
             generate_auto_names(app_param_name, file_state.context.auto_names.drain())?;
         Ok(quote! {
             #register_types
+            #register_state_types
             #add_events
             #init_resources
+            #init_states
             #auto_names
         })
     })
@@ -372,4 +380,49 @@ pub fn auto_init_resource(attr: CompilerStream, input: CompilerStream) -> Compil
 #[proc_macro_attribute]
 pub fn auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(attr, input, Target::RequiredComponentAutoName)
+}
+
+/// Automatically initializes a State in the Bevy `App`.
+///
+/// # Example (without generics)
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_auto_plugin::auto_plugin::*;
+///
+/// #[auto_init_state]
+/// #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
+/// struct Foo;
+///
+/// #[auto_plugin(app=app)]
+/// fn plugin(app: &mut App) {
+///     // generated code:
+///     app.init_state::<Foo>();
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(attr, input, Target::InitStates)
+}
+
+/// Automatically registers a State type in the Bevy `App`.
+///
+/// # Example (without generics)
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_auto_plugin::auto_plugin::*;
+///
+/// #[auto_register_state_type]
+/// #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash, Reflect)]
+/// struct Foo;
+///
+/// #[auto_plugin(app=app)]
+/// fn plugin(app: &mut App) {
+///     // generated code:
+///     app.register_type::<State<Foo>>();
+///     app.register_type::<NextState<Foo>>();
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn auto_register_state_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(attr, input, Target::RegisterStateTypes)
 }

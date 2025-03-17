@@ -5,7 +5,8 @@ use bevy_auto_plugin_shared::util::{
     inject_module, items_with_attribute_macro, ItemWithAttributeMatch,
 };
 use bevy_auto_plugin_shared::{
-    generate_add_events, generate_auto_names, generate_init_resources, generate_register_types,
+    generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
+    generate_register_state_types, generate_register_types,
 };
 use proc_macro2::{Ident, Span};
 use quote::quote;
@@ -100,6 +101,13 @@ fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> Result<MacroStre
         let auto_names = items_with_attribute_macro(items, "auto_name")?;
         let auto_names = map_to_string(auto_names);
 
+        let auto_register_state_types =
+            items_with_attribute_macro(items, "auto_register_state_type")?;
+        let auto_register_state_types = map_to_string(auto_register_state_types);
+
+        let auto_init_states = items_with_attribute_macro(items, "auto_init_state")?;
+        let auto_init_states = map_to_string(auto_init_states);
+
         inject_module(&mut module, move || {
             let auto_register_types =
                 generate_register_types(&app_param_ident, auto_register_types)?;
@@ -107,11 +115,16 @@ fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> Result<MacroStre
             let auto_init_resources =
                 generate_init_resources(&app_param_ident, auto_init_resources)?;
             let auto_names = generate_auto_names(&app_param_ident, auto_names)?;
+            let auto_register_state_types =
+                generate_register_state_types(&app_param_ident, auto_register_state_types)?;
+            let auto_init_states = generate_init_states(&app_param_ident, auto_init_states)?;
             parse2::<Item>(quote! {
                 pub(super) fn #init_name(app: &mut bevy_app::prelude::App) {
                     #auto_register_types
+                    #auto_register_state_types
                     #auto_add_events
                     #auto_init_resources
+                    #auto_init_states
                     #auto_names
                 }
             })
@@ -350,6 +363,75 @@ pub fn auto_init_resource(_args: CompilerStream, input: CompilerStream) -> Compi
 /// ```
 #[proc_macro_attribute]
 pub fn auto_name(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    // Just return the input unchanged; this acts as a marker.
+    input
+}
+
+/// Automatically initializes a State in the Bevy `App`.
+///
+/// # Example (without generics)
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_auto_plugin::auto_plugin::*;
+///
+/// #[auto_plugin(init_name=init)]
+/// pub mod my_plugin {
+///     use super::*;
+///
+///     #[auto_init_state]
+///     #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
+///     enum Foo {
+///         #[default]
+///         A,
+///     }
+///
+///     // code gen:
+///     pub(super) fn init(app: &mut App) {  
+///         app.init_state::<FooResource>();
+///     }
+/// }
+///
+/// fn plugin(app: &mut App) {
+///     app.add_plugin(my_plugin::init)
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn auto_init_state(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    // Just return the input unchanged; this acts as a marker.
+    input
+}
+
+/// Automatically registers a State<T> and NextState<T> in the Bevy `App`.
+///
+/// # Example (without generics)
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_auto_plugin::auto_plugin::*;
+///
+/// #[auto_plugin(init_name=init)]
+/// pub mod my_plugin {
+///     use super::*;
+///
+///     #[auto_register_state_type]
+///     #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
+///     enum Foo {
+///         #[default]
+///         A,
+///     }
+///
+///     // code gen:
+///     pub(super) fn init(app: &mut App) {  
+///         app.register_type::<State<Foo>>();
+///         app.register_type::<NextState<Foo>>();
+///     }
+/// }
+///
+/// fn plugin(app: &mut App) {
+///     app.add_plugin(my_plugin::init)
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn auto_register_state_type(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
 }

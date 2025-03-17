@@ -9,8 +9,10 @@ pub mod util;
 #[derive(Default)]
 pub struct AutoPluginContext {
     pub register_types: HashSet<String>,
+    pub register_state_types: HashSet<String>,
     pub add_events: HashSet<String>,
     pub init_resources: HashSet<String>,
+    pub init_states: HashSet<String>,
     pub auto_names: HashSet<String>,
 }
 
@@ -91,6 +93,47 @@ pub fn generate_auto_names(
         {
             // auto_names
             #(#auto_names)*
+        }
+    })
+}
+
+pub fn generate_register_state_types(
+    app_ident: &Ident,
+    items: impl Iterator<Item = String>,
+) -> syn::Result<MacroStream> {
+    let register_state_types = items
+        .map(|item| {
+            let item = syn::parse_str::<Path>(&item)?;
+            Ok(quote! {
+                #app_ident.register_type::<State<#item>>();
+                #app_ident.register_type::<NextState<#item>>();
+            })
+        })
+        .collect::<syn::Result<Vec<_>>>()?;
+    Ok(quote! {
+        {
+            // register_state_types
+            #(#register_state_types)*
+        }
+    })
+}
+
+pub fn generate_init_states(
+    app_ident: &Ident,
+    items: impl Iterator<Item = String>,
+) -> syn::Result<MacroStream> {
+    let init_states = items
+        .map(|item| {
+            let item = syn::parse_str::<Path>(&item)?;
+            Ok(quote! {
+                #app_ident.init_state::<#item>();
+            })
+        })
+        .collect::<syn::Result<Vec<_>>>()?;
+    Ok(quote! {
+        {
+            // init_states
+            #(#init_states)*
         }
     })
 }
