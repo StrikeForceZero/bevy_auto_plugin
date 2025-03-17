@@ -396,7 +396,7 @@ pub fn auto_name(_attr: CompilerStream, input: CompilerStream) -> CompilerStream
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+pub fn auto_init_state(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
 }
@@ -431,7 +431,7 @@ pub fn auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerS
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn auto_register_state_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+pub fn auto_register_state_type(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
 }

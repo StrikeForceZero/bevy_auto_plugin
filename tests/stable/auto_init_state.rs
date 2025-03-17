@@ -12,6 +12,7 @@ mod plugin_module {
     pub enum Test {
         #[default]
         A,
+        #[allow(dead_code)]
         B,
     }
 
@@ -21,7 +22,6 @@ mod plugin_module {
     pub enum InnerTest {
         #[default]
         A,
-        B,
     }
 }
 use plugin_module::*;

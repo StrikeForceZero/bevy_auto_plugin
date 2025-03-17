@@ -1,6 +1,5 @@
 use bevy_app::prelude::*;
 use bevy_auto_plugin::auto_plugin::*;
-use bevy_ecs::prelude::*;
 use bevy_state::app::StatesPlugin;
 use bevy_state::prelude::*;
 
@@ -9,6 +8,7 @@ use bevy_state::prelude::*;
 enum Test {
     #[default]
     A,
+    #[allow(dead_code)]
     B,
 }
 
@@ -18,7 +18,6 @@ enum Test {
 enum InnerTest {
     #[default]
     A,
-    B,
 }
 
 #[auto_plugin(app=app)]
