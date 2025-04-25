@@ -28,12 +28,11 @@ members = ["crates/*"]
 bevy_auto_plugin_shared = { version = "0.1.2", path = "crates/bevy_auto_plugin_shared" }
 bevy_auto_plugin_nightly_shared = { version = "0.1.2", path = "crates/bevy_auto_plugin_nightly_shared" }
 bevy_auto_plugin_proc_macros = { version = "0.1.2", path = "crates/bevy_auto_plugin_proc_macros" }
-bevy_app = { version = "0.15", default-features = false }
-bevy_core = { version = "0.15" }
-bevy_state = { version = "0.15" }
-bevy_reflect = { version = "0.15" }
-bevy_internal = { version = "0.15" }
-bevy_ecs = { version = "0.15" }
+bevy_app = { version = "0.16", default-features = false }
+bevy_state = { version = "0.16" }
+bevy_reflect = { version = "0.16" }
+bevy_internal = { version = "0.16" }
+bevy_ecs = { version = "0.16" }
 proc-macro2 = "1"
 syn = { version = "2", features = ["full"] }
 quote = "1"
@@ -46,7 +45,6 @@ bevy_auto_plugin_nightly_proc_macros = { version = "0.1.2", path = "crates/bevy_
 
 [dev-dependencies]
 bevy_app = { workspace = true, default-features = false }
-bevy_core = { workspace = true }
 bevy_reflect = { workspace = true }
 bevy_ecs = { workspace = true }
 bevy_state = { workspace = true }

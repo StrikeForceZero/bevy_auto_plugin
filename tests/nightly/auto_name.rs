@@ -1,6 +1,6 @@
 use bevy_app::prelude::*;
 use bevy_auto_plugin::auto_plugin::*;
-use bevy_core::Name;
+use bevy_ecs::name::Name;
 use bevy_ecs::prelude::*;
 
 #[derive(Component)]
