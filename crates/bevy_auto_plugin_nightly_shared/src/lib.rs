@@ -24,8 +24,8 @@ pub fn get_file_path() -> String {
     #[cfg(feature = "nightly_proc_macro_span")]
     let file_path = Span::call_site()
         .unwrap()
-        .source_file()
-        .path()
+        .local_file()
+        .unwrap()
         .display()
         .to_string();
 
