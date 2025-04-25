@@ -81,12 +81,12 @@ impl<'a> TryFrom<&'a Item> for StructOrEnumRef<'a> {
 
     fn try_from(item: &'a Item) -> std::result::Result<Self, Self::Error> {
         Ok(match item {
-            Item::Struct(ref struct_item) => StructOrEnumRef::new(
+            Item::Struct(struct_item) => StructOrEnumRef::new(
                 &struct_item.ident,
                 &struct_item.generics,
                 &struct_item.attrs,
             ),
-            Item::Enum(ref enum_item) => {
+            Item::Enum(enum_item) => {
                 StructOrEnumRef::new(&enum_item.ident, &enum_item.generics, &enum_item.attrs)
             }
             _ => return Err(Error::new(item.span(), "expected struct or enum")),
