@@ -11,11 +11,16 @@ publish = true
 [lib]
 
 [features]
+nightly = []
+nightly_pre_2025_04_16 = []
 nightly_proc_macro_span = []
 missing_auto_plugin_check = []
 missing_auto_plugin_is_compile_error = ["missing_auto_plugin_check"]
 missing_auto_plugin_is_error = ["missing_auto_plugin_check", "log"]
 missing_auto_plugin_is_warning = ["missing_auto_plugin_check", "log"]
+# internal
+_all = []
+
 
 [dependencies]
 bevy_auto_plugin_shared = { workspace = true }

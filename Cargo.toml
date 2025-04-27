@@ -13,13 +13,16 @@ default = []
 # unused (CI)
 stable = []
 # nightly - optional
-nightly = ["nightly_proc_macro_span"]
+nightly = ["nightly_proc_macro_span", "bevy_auto_plugin_nightly_proc_macros/nightly"]
+nightly_pre_2025_04_16 = ["nightly_proc_macro_span", "bevy_auto_plugin_nightly_proc_macros/nightly_pre_2025_04_16"]
 nightly_proc_macro_span = ["bevy_auto_plugin_nightly_proc_macros/nightly_proc_macro_span"]
 # nightly - optional extras
 log_plugin_build = ["bevy_auto_plugin_nightly_proc_macros/log_plugin_build"]
 missing_auto_plugin_is_compile_error = ["bevy_auto_plugin_nightly_proc_macros/missing_auto_plugin_is_compile_error"]
 missing_auto_plugin_is_error = ["bevy_auto_plugin_nightly_proc_macros/missing_auto_plugin_is_error"]
 missing_auto_plugin_is_warning = ["bevy_auto_plugin_nightly_proc_macros/missing_auto_plugin_is_warning"]
+# internal
+_all = ["bevy_auto_plugin_nightly_proc_macros/_all"]
 
 [workspace]
 members = ["crates/*"]
@@ -51,6 +54,9 @@ bevy_state = { workspace = true }
 internal_test_util = { path = "crates/internal_test_util" }
 trybuild = "1.0"
 log = { workspace = true }
+
+[build-dependencies]
+rustc_version = "0.4"
 
 [package.metadata.docs.rs]
 toolchain = "nightly" # Use nightly for docs.rs

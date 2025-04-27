@@ -87,7 +87,18 @@ mod plugin_module {
 - Causes issues for ide's like RustRover
 
 ## Usage - Nightly
+
+NOTE:
+`nightly-2025-04-16` [changed the api](https://github.com/rust-lang/rust/issues/54725#event-2307701034) being used to track files. As of writing the [language server is stubbed to return none](https://github.com/rust-lang/rust/pull/139671#issuecomment-2796920999). 
+
+Use `nightly-2025-04-15` or earlier along with `--feature=bevy_auto_plugin/nightly_pre_2025_04_16`  or `bevy_auto_plugin = { features=["nightly_pre_2025_04_16"] }` to use previous API.
+
+Otherwise:
+
 `--features=bevy_auto_plugin/nightly` or `bevy_auto_plugin = { features=["nightly"] }`
+
+
+
 ```rust
 use bevy::prelude::*;
 use bevy_auto_plugin::auto_plugin::*;
