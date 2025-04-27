@@ -2,7 +2,7 @@ use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
 
 use bevy_auto_plugin_shared::util::{
-    inject_module, items_with_attribute_macro, ItemWithAttributeMatch,
+    ItemWithAttributeMatch, inject_module, items_with_attribute_macro,
 };
 use bevy_auto_plugin_shared::{
     generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
@@ -11,7 +11,7 @@ use bevy_auto_plugin_shared::{
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::meta::ParseNestedMeta;
-use syn::{parse2, parse_macro_input, Item, ItemMod, Result};
+use syn::{Item, ItemMod, Result, parse_macro_input, parse2};
 
 #[derive(Default)]
 struct AutoPluginAttributes {

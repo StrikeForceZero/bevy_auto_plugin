@@ -1,7 +1,6 @@
 #![cfg_attr(feature = "nightly_proc_macro_span", feature(proc_macro_span))]
-use bevy_auto_plugin_shared::util::{path_to_string, Target};
 use bevy_auto_plugin_shared::AutoPluginContext;
-use proc_macro2::Span;
+use bevy_auto_plugin_shared::util::{Target, path_to_string};
 use quote::quote;
 use std::cell::RefCell;
 use std::collections::HashMap;

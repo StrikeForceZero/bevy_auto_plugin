@@ -33,7 +33,12 @@ pub fn resolve_path_from_item_or_args(
             .unwrap_or_else(|| unreachable!());
         if path_ident != ident {
             let provided_path_string = path_to_string(&path, true);
-            return Err(Error::new(path.span(), format!("Attribute arguments path does not match the items ident, got: {provided_path_string}, expected: {ident} (with generics if applicable)")));
+            return Err(Error::new(
+                path.span(),
+                format!(
+                    "Attribute arguments path does not match the items ident, got: {provided_path_string}, expected: {ident} (with generics if applicable)"
+                ),
+            ));
         }
         validate_generic_counts(struct_or_enum.generics, &path)?;
         Ok(path)
@@ -245,7 +250,12 @@ pub fn items_with_attribute_macro(
                     Ok(path)
                 } else {
                     let provided_path_string = quote!(#path).to_string().replace(" ", "");
-                    Err(syn::Error::new(path.span(), format!("Attribute arguments path does not match the items ident, got: {provided_path_string}, expected: {ident} (with generics if applicable)")))
+                    Err(syn::Error::new(
+                        path.span(),
+                        format!(
+                            "Attribute arguments path does not match the items ident, got: {provided_path_string}, expected: {ident} (with generics if applicable)"
+                        ),
+                    ))
                 }
             } else {
                 Err(syn::Error::new(
