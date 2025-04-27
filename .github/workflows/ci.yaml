@@ -36,7 +36,7 @@ jobs:
             
             # Run tests with the specified feature set
             - name: Run tests
-              if: ${{ matrix.toolchain == 'nightly' || matrix.feature-set == 'default' }}
+              if: ${{ matrix.toolchain == 'nightly' || matrix.toolchain == 'stable' && matrix.feature-set == 'default' }}
               run: |
                   echo "Testing with ${{ matrix.toolchain }} and features: ${{ matrix.toolchain }},${{ matrix.feature-set }}"
                   cargo test --features "${{ matrix.toolchain }},${{ matrix.feature-set }}"
