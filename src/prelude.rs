@@ -313,14 +313,14 @@ pub mod module {
     }
 }
 
-pub mod inline {
+pub mod flat_file {
     pub mod prelude {
         #[doc(inline)]
         ///
         /// # Example (without generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_add_event]
         /// #[derive(Event, Reflect)]
@@ -336,7 +336,7 @@ pub mod inline {
         /// # Example (with generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_add_event(FooEventWithGeneric<bool>)]
         /// #[derive(Event, Reflect)]
@@ -348,13 +348,13 @@ pub mod inline {
         ///     // app.add_event::<FooEventWithGeneric<bool>>();
         /// }
         /// ```
-        pub use bevy_auto_plugin_proc_macros::inline_auto_add_event as auto_add_event;
+        pub use bevy_auto_plugin_proc_macros::flat_file_auto_add_event as auto_add_event;
         #[doc(inline)]
         ///
         /// # Example (without generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_init_resource]
         /// #[derive(Resource, Default, Reflect)]
@@ -370,7 +370,7 @@ pub mod inline {
         /// # Example (with generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_init_resource(FooResourceWithGeneric<bool>)]
         /// #[derive(Resource, Default, Reflect)]
@@ -383,13 +383,13 @@ pub mod inline {
         ///     // app.init_resource::<FooResourceWithGeneric<bool>>();
         /// }
         /// ```
-        pub use bevy_auto_plugin_proc_macros::inline_auto_init_resource as auto_init_resource;
+        pub use bevy_auto_plugin_proc_macros::flat_file_auto_init_resource as auto_init_resource;
         #[doc(inline)]
         ///
         /// # Example (without generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_init_state]
         /// #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
@@ -401,13 +401,13 @@ pub mod inline {
         ///     // app.init_state::<Foo>();
         /// }
         /// ```
-        pub use bevy_auto_plugin_proc_macros::inline_auto_init_state as auto_init_state;
+        pub use bevy_auto_plugin_proc_macros::flat_file_auto_init_state as auto_init_state;
         #[doc(inline)]
         ///
         /// # Example (without generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_register_type]
         /// #[derive(Component, Reflect)]
@@ -426,7 +426,7 @@ pub mod inline {
         /// # Example (with generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_register_type(FooComponentWithGeneric<bool>)]
         /// #[auto_register_type(FooComponentWithGeneric<u32>)]
@@ -443,13 +443,13 @@ pub mod inline {
         ///     // app.register_required_components_with::<FooComponentWithGeneric<boo>, Name>(|| Name::new("FooComponentWithGeneric<boo>"));
         /// }
         /// ```
-        pub use bevy_auto_plugin_proc_macros::inline_auto_name as auto_name;
+        pub use bevy_auto_plugin_proc_macros::flat_file_auto_name as auto_name;
         #[doc(inline)]
         ///
         /// # Example
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// // Example attributes or declarations for components, events, or resources
         /// // #[auto_register_type]
@@ -467,13 +467,13 @@ pub mod inline {
         ///     // Your custom logic comes here.
         /// }
         /// ```
-        pub use bevy_auto_plugin_proc_macros::inline_auto_plugin as auto_plugin;
+        pub use bevy_auto_plugin_proc_macros::flat_file_auto_plugin as auto_plugin;
         #[doc(inline)]
         ///
         /// # Example (without generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_register_state_type]
         /// #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash, Reflect)]
@@ -486,13 +486,13 @@ pub mod inline {
         ///     // app.register_type::<NextState<Foo>>();
         /// }
         /// ```
-        pub use bevy_auto_plugin_proc_macros::inline_auto_register_state_type as auto_register_state_type;
+        pub use bevy_auto_plugin_proc_macros::flat_file_auto_register_state_type as auto_register_state_type;
         #[doc(inline)]
         ///
         /// # Example (without generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_register_type]
         /// #[derive(Component, Reflect)]
@@ -509,7 +509,7 @@ pub mod inline {
         /// # Example (with generics)
         /// ```
         /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
+        /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
         /// #[auto_register_type(FooComponentWithGeneric<bool>)]
         /// #[auto_register_type(FooComponentWithGeneric<u32>)]
@@ -524,6 +524,6 @@ pub mod inline {
         ///     // app.register_type::<FooComponentWithGeneric<u32>>();
         /// }
         /// ```
-        pub use bevy_auto_plugin_proc_macros::inline_auto_register_type as auto_register_type;
+        pub use bevy_auto_plugin_proc_macros::flat_file_auto_register_type as auto_register_type;
     }
 }

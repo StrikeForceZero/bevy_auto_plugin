@@ -1,2 +1,2 @@
-mod inline;
+mod flat_file;
 mod module;

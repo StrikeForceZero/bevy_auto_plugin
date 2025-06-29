@@ -4,7 +4,7 @@ use quote::quote;
 use std::collections::HashSet;
 use syn::Path;
 
-pub mod inline;
+pub mod flat_file;
 pub mod module;
 pub mod util;
 

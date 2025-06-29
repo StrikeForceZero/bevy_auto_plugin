@@ -1,5 +1,5 @@
-use crate::inline::file_state;
-use crate::inline::file_state::{update_file_state, update_state};
+use crate::flat_file::file_state;
+use crate::flat_file::file_state::{update_file_state, update_state};
 use crate::util::{
     FnParamMutabilityCheckErrMessages, Target, is_fn_param_mutable_reference,
     resolve_path_from_item_or_args,

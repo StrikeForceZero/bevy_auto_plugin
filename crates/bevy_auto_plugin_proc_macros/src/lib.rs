@@ -67,8 +67,8 @@ pub fn module_auto_register_state_type(
 
 /* INLINE */
 
-use bevy_auto_plugin_shared::inline;
-use bevy_auto_plugin_shared::inline::inner::auto_plugin_inner;
+use bevy_auto_plugin_shared::flat_file;
+use bevy_auto_plugin_shared::flat_file::inner::auto_plugin_inner;
 use bevy_auto_plugin_shared::util::Target;
 use proc_macro2::Span;
 use syn::punctuated::Punctuated;
@@ -77,8 +77,8 @@ use syn::{Error, Item, ItemFn, Path, Token};
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
-pub fn inline_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let mut attrs = inline::attribute::AutoPluginAttributes::default();
+pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    let mut attrs = flat_file::attribute::AutoPluginAttributes::default();
     let arg_parser = syn::meta::parser(|meta| attrs.parse(meta));
     parse_macro_input!(attr with arg_parser);
     let Some(app_param_name) = attrs.app_param_name else {
@@ -98,7 +98,7 @@ pub fn inline_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
     )
 }
 
-fn inline_handle_attribute(
+fn flat_file_handle_attribute(
     attr: CompilerStream,
     input: CompilerStream,
     target: Target,
@@ -111,8 +111,8 @@ fn inline_handle_attribute(
         Some(parse_macro_input!(attr with Punctuated::<Path, Token![,]>::parse_terminated))
     };
 
-    inline::inner::handle_attribute_inner(
-        inline::file_state::get_file_path(),
+    flat_file::inner::handle_attribute_inner(
+        flat_file::file_state::get_file_path(),
         parsed_item,
         Span::call_site(),
         target,
@@ -124,36 +124,36 @@ fn inline_handle_attribute(
 
 /// Automatically registers a type with the Bevy `App`.
 #[proc_macro_attribute]
-pub fn inline_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    inline_handle_attribute(attr, input, Target::RegisterTypes)
+pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    flat_file_handle_attribute(attr, input, Target::RegisterTypes)
 }
 /// Automatically adds an event type to the Bevy `App`.
 #[proc_macro_attribute]
-pub fn inline_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    inline_handle_attribute(attr, input, Target::AddEvents)
+pub fn flat_file_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    flat_file_handle_attribute(attr, input, Target::AddEvents)
 }
 /// Automatically initializes a resource in the Bevy `App`.
 #[proc_macro_attribute]
-pub fn inline_auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    inline_handle_attribute(attr, input, Target::InitResources)
+pub fn flat_file_auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    flat_file_handle_attribute(attr, input, Target::InitResources)
 }
 /// Automatically associates a required component `Name` with the default value set to the ident in the Bevy `App`.
 #[proc_macro_attribute]
-pub fn inline_auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    inline_handle_attribute(attr, input, Target::RequiredComponentAutoName)
+pub fn flat_file_auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    flat_file_handle_attribute(attr, input, Target::RequiredComponentAutoName)
 }
 
 /// Automatically initializes a State in the Bevy `App`.
 #[proc_macro_attribute]
-pub fn inline_auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    inline_handle_attribute(attr, input, Target::InitStates)
+pub fn flat_file_auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    flat_file_handle_attribute(attr, input, Target::InitStates)
 }
 
 /// Automatically registers a State type in the Bevy `App`.
 #[proc_macro_attribute]
-pub fn inline_auto_register_state_type(
+pub fn flat_file_auto_register_state_type(
     attr: CompilerStream,
     input: CompilerStream,
 ) -> CompilerStream {
-    inline_handle_attribute(attr, input, Target::RegisterStateTypes)
+    flat_file_handle_attribute(attr, input, Target::RegisterStateTypes)
 }
