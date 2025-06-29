@@ -10,30 +10,8 @@ use bevy_auto_plugin_shared::{
 };
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::meta::ParseNestedMeta;
 use syn::{Item, ItemMod, Result, parse_macro_input, parse2};
 
-#[derive(Default)]
-struct AutoPluginAttributes {
-    init_name: Option<Ident>,
-}
-
-impl AutoPluginAttributes {
-    fn parse(&mut self, meta: ParseNestedMeta) -> Result<()> {
-        if meta.path.is_ident("init_name") {
-            self.init_name = Some(meta.value()?.parse()?);
-            Ok(())
-        } else {
-            Err(meta.error("unsupported attribute"))
-        }
-    }
-    fn init_name(&self) -> Ident {
-        self.init_name
-            .as_ref()
-            .cloned()
-            .unwrap_or(Ident::new("init", Span::call_site()))
-    }
-}
 
 /// Attaches to a module and generates an initialization function that automatically registering types, events, and resources in the `App`.
 ///
@@ -62,7 +40,7 @@ impl AutoPluginAttributes {
 /// ```
 #[proc_macro_attribute]
 pub fn auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let mut attrs = AutoPluginAttributes::default();
+    let mut attrs = bevy_auto_plugin_shared::module::attribute::AutoPluginAttributes::default();
     let arg_parser = syn::meta::parser(|meta| attrs.parse(meta));
     parse_macro_input!(attr with arg_parser);
 

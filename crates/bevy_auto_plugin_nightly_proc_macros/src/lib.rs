@@ -9,7 +9,7 @@ use bevy_auto_plugin_nightly_shared::{
     update_state as nightly_update_state,
 };
 use bevy_auto_plugin_shared::util::{
-    FnParamMutabilityCheckErrMessages, Target, resolve_path_from_item_or_args,
+    resolve_path_from_item_or_args, FnParamMutabilityCheckErrMessages, Target,
 };
 use bevy_auto_plugin_shared::{
     generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
@@ -17,11 +17,11 @@ use bevy_auto_plugin_shared::{
 };
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::meta::ParseNestedMeta;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::token::Comma;
-use syn::{Error, Item, ItemFn, Path, Result, Token, parse_macro_input};
+use syn::{parse_macro_input, Error, Item, ItemFn, Path, Result, Token};
+use bevy_auto_plugin_shared::inline::attribute::AutoPluginAttributes;
 
 fn update_file_state<R>(file_path: String, update_fn: impl FnOnce(&mut FileState) -> R) -> R {
     nightly_update_file_state(file_path, update_fn)
@@ -37,22 +37,6 @@ fn update_state(
 
 fn get_file_path() -> String {
     nightly_get_file_path()
-}
-
-#[derive(Default)]
-struct AutoPluginAttributes {
-    app_param_name: Option<Ident>,
-}
-
-impl AutoPluginAttributes {
-    fn parse(&mut self, meta: ParseNestedMeta) -> Result<()> {
-        if meta.path.is_ident("app") {
-            self.app_param_name = Some(meta.value()?.parse()?);
-            Ok(())
-        } else {
-            Err(meta.error("unsupported attribute"))
-        }
-    }
 }
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.

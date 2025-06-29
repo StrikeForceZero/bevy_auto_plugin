@@ -5,6 +5,8 @@ use std::collections::HashSet;
 use syn::Path;
 
 pub mod util;
+pub mod inline;
+pub mod module;
 
 #[derive(Default)]
 pub struct AutoPluginContext {
