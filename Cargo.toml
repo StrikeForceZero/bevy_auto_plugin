@@ -40,7 +40,7 @@ bevy_auto_plugin_proc_macros = { workspace = true }
 
 [dev-dependencies]
 bevy = { workspace = true }
-bevy_app = { workspace = true, default-features = false }
+bevy_app = { workspace = true }
 bevy_reflect = { workspace = true }
 bevy_ecs = { workspace = true }
 bevy_state = { workspace = true }
