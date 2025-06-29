@@ -2,6 +2,8 @@ use bevy_auto_plugin_shared::module;
 use proc_macro::TokenStream as CompilerStream;
 use syn::{ItemMod, parse_macro_input};
 
+/* Module */
+
 /// Attaches to a module and generates an initialization function that automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
 pub fn module_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
@@ -65,7 +67,7 @@ pub fn module_auto_register_state_type(
     input
 }
 
-/* INLINE */
+/* Flat File */
 
 use bevy_auto_plugin_shared::flat_file;
 use bevy_auto_plugin_shared::flat_file::inner::auto_plugin_inner;
