@@ -1,5 +1,5 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::auto_plugin_module::*;
+use bevy_auto_plugin::prelude::module::*;
 use bevy_state::app::StatesPlugin;
 use bevy_state::prelude::*;
 

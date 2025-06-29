@@ -1,5 +1,5 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::auto_plugin::*;
+use bevy_auto_plugin::prelude::inline::*;
 use bevy_ecs::prelude::*;
 
 #[auto_add_event(Test<bool>)]
