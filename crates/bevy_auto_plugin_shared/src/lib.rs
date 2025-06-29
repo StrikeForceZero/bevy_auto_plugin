@@ -4,9 +4,9 @@ use quote::quote;
 use std::collections::HashSet;
 use syn::Path;
 
-pub mod util;
 pub mod inline;
 pub mod module;
+pub mod util;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AutoPluginAttribute {

@@ -1,12 +1,18 @@
+use crate::inline::file_state;
+use crate::inline::file_state::{update_file_state, update_state};
+use crate::util::{
+    FnParamMutabilityCheckErrMessages, Target, is_fn_param_mutable_reference,
+    resolve_path_from_item_or_args,
+};
+use crate::{
+    generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
+    generate_register_state_types, generate_register_types,
+};
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
-use syn::{Error, Item, ItemFn, Path};
 use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
-use crate::{generate_add_events, generate_auto_names, generate_init_resources, generate_init_states, generate_register_state_types, generate_register_types};
-use crate::inline::file_state;
-use crate::inline::file_state::{update_file_state, update_state};
-use crate::util::{is_fn_param_mutable_reference, resolve_path_from_item_or_args, FnParamMutabilityCheckErrMessages, Target};
+use syn::{Error, Item, ItemFn, Path};
 
 pub fn auto_plugin_inner(input: ItemFn, app_param_name: Ident) -> syn::Result<MacroStream> {
     let _func_name = &input.sig.ident;
@@ -52,11 +58,14 @@ pub fn auto_plugin_inner(input: ItemFn, app_param_name: Ident) -> syn::Result<Ma
             #func_body
         }
     };
-    
+
     Ok(expanded)
 }
 
-pub fn auto_plugin_inner_to_stream(file_path: String, app_param_name: &Ident) -> syn::Result<MacroStream> {
+pub fn auto_plugin_inner_to_stream(
+    file_path: String,
+    app_param_name: &Ident,
+) -> syn::Result<MacroStream> {
     update_file_state(file_path, |file_state| {
         if file_state.plugin_registered {
             return Err(Error::new(

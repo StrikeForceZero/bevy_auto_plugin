@@ -2,34 +2,6 @@ pub mod module {
     pub mod prelude {
         #[doc(inline)]
         ///
-        /// # Example
-        /// ```
-        /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::module::prelude::*;
-        ///
-        /// #[auto_plugin(init_name=init)]
-        /// pub mod my_plugin {
-        ///     use bevy::prelude::*;
-        ///     use bevy_auto_plugin::module::prelude::*;
-        ///
-        ///     #[auto_register_type]
-        ///     #[derive(Component, Reflect)]
-        ///     #[reflect(Component)]
-        ///     pub struct MyComponent;
-        ///
-        ///     /* code gen */
-        ///     // pub(super) fn init(app: &mut App) {  
-        ///     //     app.register_type::<MyComponent>();
-        ///     // }
-        /// }
-        ///
-        /// fn plugin(app: &mut App) {
-        ///     app.add_plugins(my_plugin::init);
-        /// }
-        /// ```
-        pub use bevy_auto_plugin_proc_macros::module_auto_plugin as auto_plugin;
-        #[doc(inline)]
-        ///
         /// # Example (without generics)
         /// ```
         /// use bevy::prelude::*;
@@ -225,6 +197,65 @@ pub mod module {
         pub use bevy_auto_plugin_proc_macros::module_auto_name as auto_name;
         #[doc(inline)]
         ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::module::prelude::*;
+        ///
+        /// #[auto_plugin(init_name=init)]
+        /// pub mod my_plugin {
+        ///     use bevy::prelude::*;
+        ///     use bevy_auto_plugin::module::prelude::*;
+        ///
+        ///     #[auto_register_type]
+        ///     #[derive(Component, Reflect)]
+        ///     #[reflect(Component)]
+        ///     pub struct MyComponent;
+        ///
+        ///     /* code gen */
+        ///     // pub(super) fn init(app: &mut App) {  
+        ///     //     app.register_type::<MyComponent>();
+        ///     // }
+        /// }
+        ///
+        /// fn plugin(app: &mut App) {
+        ///     app.add_plugins(my_plugin::init);
+        /// }
+        /// ```
+        pub use bevy_auto_plugin_proc_macros::module_auto_plugin as auto_plugin;
+        #[doc(inline)]
+        ///
+        /// # Example (without generics)
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::module::prelude::*;
+        ///
+        /// #[auto_plugin(init_name=init)]
+        /// pub mod my_plugin {
+        ///     use bevy::prelude::*;
+        ///     use bevy_auto_plugin::module::prelude::*;
+        ///
+        ///     #[auto_register_state_type]
+        ///     #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash, Reflect)]
+        ///     enum Foo {
+        ///         #[default]
+        ///         A,
+        ///     }
+        ///
+        ///     /* code gen */
+        ///     // pub(super) fn init(app: &mut App) {  
+        ///     //     app.register_type::<State<Foo>>();
+        ///     //     app.register_type::<NextState<Foo>>();
+        ///     // }
+        /// }
+        ///
+        /// fn plugin(app: &mut App) {
+        ///     app.add_plugins(my_plugin::init);
+        /// }
+        /// ```
+        pub use bevy_auto_plugin_proc_macros::module_auto_register_state_type as auto_register_state_type;
+        #[doc(inline)]
+        ///
         /// # Example (without generics)
         /// ```
         /// use bevy::prelude::*;
@@ -279,66 +310,11 @@ pub mod module {
         /// }
         /// ```
         pub use bevy_auto_plugin_proc_macros::module_auto_register_type as auto_register_type;
-        #[doc(inline)]
-        ///
-        /// # Example (without generics)
-        /// ```
-        /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::module::prelude::*;
-        ///
-        /// #[auto_plugin(init_name=init)]
-        /// pub mod my_plugin {
-        ///     use bevy::prelude::*;
-        ///     use bevy_auto_plugin::module::prelude::*;
-        ///
-        ///     #[auto_register_state_type]
-        ///     #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash, Reflect)]
-        ///     enum Foo {
-        ///         #[default]
-        ///         A,
-        ///     }
-        ///
-        ///     /* code gen */
-        ///     // pub(super) fn init(app: &mut App) {  
-        ///     //     app.register_type::<State<Foo>>();
-        ///     //     app.register_type::<NextState<Foo>>();
-        ///     // }
-        /// }
-        ///
-        /// fn plugin(app: &mut App) {
-        ///     app.add_plugins(my_plugin::init);
-        /// }
-        /// ```
-        pub use bevy_auto_plugin_proc_macros::module_auto_register_state_type as auto_register_state_type;
     }
 }
 
 pub mod inline {
     pub mod prelude {
-        #[doc(inline)]
-        ///
-        /// # Example
-        /// ```
-        /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
-        ///
-        /// // Example attributes or declarations for components, events, or resources
-        /// // #[auto_register_type]
-        /// // #[derive(Component, Reflect)]
-        /// // #[reflect(Component)]
-        /// // struct MyComponent;
-        ///
-        /// // ^ auto macro attributes must be declared above #[auto_plugin]
-        /// #[auto_plugin(app=app)]
-        /// fn plugin(app: &mut App) {
-        ///     // Code generated by the macro is injected here.
-        ///     // For example:
-        ///     // app.register_type::<MyComponent>();
-        ///
-        ///     // Your custom logic comes here.
-        /// }
-        /// ```
-        pub use bevy_auto_plugin_proc_macros::inline_auto_plugin as auto_plugin;
         #[doc(inline)]
         ///
         /// # Example (without generics)
@@ -470,6 +446,49 @@ pub mod inline {
         pub use bevy_auto_plugin_proc_macros::inline_auto_name as auto_name;
         #[doc(inline)]
         ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::inline::prelude::*;
+        ///
+        /// // Example attributes or declarations for components, events, or resources
+        /// // #[auto_register_type]
+        /// // #[derive(Component, Reflect)]
+        /// // #[reflect(Component)]
+        /// // struct MyComponent;
+        ///
+        /// // ^ auto macro attributes must be declared above #[auto_plugin]
+        /// #[auto_plugin(app=app)]
+        /// fn plugin(app: &mut App) {
+        ///     // Code generated by the macro is injected here.
+        ///     // For example:
+        ///     // app.register_type::<MyComponent>();
+        ///
+        ///     // Your custom logic comes here.
+        /// }
+        /// ```
+        pub use bevy_auto_plugin_proc_macros::inline_auto_plugin as auto_plugin;
+        #[doc(inline)]
+        ///
+        /// # Example (without generics)
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::inline::prelude::*;
+        ///
+        /// #[auto_register_state_type]
+        /// #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash, Reflect)]
+        /// struct Foo;
+        ///
+        /// #[auto_plugin(app=app)]
+        /// fn plugin(app: &mut App) {
+        ///     /* generated code */
+        ///     // app.register_type::<State<Foo>>();
+        ///     // app.register_type::<NextState<Foo>>();
+        /// }
+        /// ```
+        pub use bevy_auto_plugin_proc_macros::inline_auto_register_state_type as auto_register_state_type;
+        #[doc(inline)]
+        ///
         /// # Example (without generics)
         /// ```
         /// use bevy::prelude::*;
@@ -506,24 +525,5 @@ pub mod inline {
         /// }
         /// ```
         pub use bevy_auto_plugin_proc_macros::inline_auto_register_type as auto_register_type;
-        #[doc(inline)]
-        ///
-        /// # Example (without generics)
-        /// ```
-        /// use bevy::prelude::*;
-        /// use bevy_auto_plugin::inline::prelude::*;
-        ///
-        /// #[auto_register_state_type]
-        /// #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash, Reflect)]
-        /// struct Foo;
-        ///
-        /// #[auto_plugin(app=app)]
-        /// fn plugin(app: &mut App) {
-        ///     /* generated code */
-        ///     // app.register_type::<State<Foo>>();
-        ///     // app.register_type::<NextState<Foo>>();
-        /// }
-        /// ```
-        pub use bevy_auto_plugin_proc_macros::inline_auto_register_state_type as auto_register_state_type;
     }
 }

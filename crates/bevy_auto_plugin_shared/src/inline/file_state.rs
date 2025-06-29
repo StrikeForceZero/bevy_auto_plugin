@@ -1,9 +1,9 @@
-use syn::Path;
-use quote::quote;
 use crate::AutoPluginContext;
-use crate::util::{path_to_string, Target};
+use crate::util::{Target, path_to_string};
+use quote::quote;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use syn::Path;
 use thiserror::Error;
 
 thread_local! {

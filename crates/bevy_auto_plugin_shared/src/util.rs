@@ -1,3 +1,4 @@
+use crate::AutoPluginAttribute;
 use proc_macro2::Ident;
 use quote::quote;
 use syn::punctuated::Punctuated;
@@ -7,7 +8,6 @@ use syn::{
     Attribute, Error, FnArg, Generics, Item, ItemFn, ItemMod, Pat, Path, PathArguments,
     PathSegment, Token, Type, TypeReference,
 };
-use crate::AutoPluginAttribute;
 
 pub fn resolve_path_from_item_or_args(
     item: &Item,

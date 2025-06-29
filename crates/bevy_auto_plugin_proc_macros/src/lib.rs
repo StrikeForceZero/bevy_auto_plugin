@@ -1,6 +1,6 @@
-use proc_macro::{TokenStream as CompilerStream};
-use syn::{parse_macro_input, ItemMod};
 use bevy_auto_plugin_shared::module;
+use proc_macro::TokenStream as CompilerStream;
+use syn::{ItemMod, parse_macro_input};
 
 /// Attaches to a module and generates an initialization function that automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
@@ -57,26 +57,23 @@ pub fn module_auto_init_state(_attr: CompilerStream, input: CompilerStream) -> C
 
 /// Automatically registers a State<T> and NextState<T> in the Bevy `App`.
 #[proc_macro_attribute]
-pub fn module_auto_register_state_type(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+pub fn module_auto_register_state_type(
+    _attr: CompilerStream,
+    input: CompilerStream,
+) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
 }
 
 /* INLINE */
 
-#[cfg(feature = "missing_auto_plugin_check")]
-use bevy_auto_plugin_shared::inline::file_state::files_missing_plugin_ts;
-use bevy_auto_plugin_shared::util::{
-    FnParamMutabilityCheckErrMessages, Target,
-};
-use bevy_auto_plugin_shared::{inline, util};
+use bevy_auto_plugin_shared::inline::inner::auto_plugin_inner;
+use bevy_auto_plugin_shared::util::{Target};
+use bevy_auto_plugin_shared::{inline};
+use proc_macro2::Span;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::{Error, Item, ItemFn, Path, Token};
-use quote::quote;
-use proc_macro2::Span;
-use bevy_auto_plugin_shared::inline::file_state::files_missing_plugin_ts;
-use bevy_auto_plugin_shared::inline::inner::auto_plugin_inner;
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
@@ -96,10 +93,16 @@ pub fn inline_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
     // Parse the input function
     let input = parse_macro_input!(input as ItemFn);
 
-    CompilerStream::from(auto_plugin_inner(input, app_param_name).unwrap_or_else(|err| err.to_compile_error()))
+    CompilerStream::from(
+        auto_plugin_inner(input, app_param_name).unwrap_or_else(|err| err.to_compile_error()),
+    )
 }
 
-fn inline_handle_attribute(attr: CompilerStream, input: CompilerStream, target: Target) -> CompilerStream {
+fn inline_handle_attribute(
+    attr: CompilerStream,
+    input: CompilerStream,
+    target: Target,
+) -> CompilerStream {
     let cloned_input = input.clone();
     let parsed_item = parse_macro_input!(input as Item);
     let args = if attr.is_empty() {
@@ -115,8 +118,8 @@ fn inline_handle_attribute(attr: CompilerStream, input: CompilerStream, target: 
         target,
         args,
     )
-        .map(|_| cloned_input)
-        .unwrap_or_else(|err| err.to_compile_error().into())
+    .map(|_| cloned_input)
+    .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
 /// Automatically registers a type with the Bevy `App`.
@@ -148,6 +151,9 @@ pub fn inline_auto_init_state(attr: CompilerStream, input: CompilerStream) -> Co
 
 /// Automatically registers a State type in the Bevy `App`.
 #[proc_macro_attribute]
-pub fn inline_auto_register_state_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+pub fn inline_auto_register_state_type(
+    attr: CompilerStream,
+    input: CompilerStream,
+) -> CompilerStream {
     inline_handle_attribute(attr, input, Target::RegisterStateTypes)
 }

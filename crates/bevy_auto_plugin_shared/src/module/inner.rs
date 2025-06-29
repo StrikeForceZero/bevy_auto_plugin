@@ -1,8 +1,11 @@
-use syn::{parse2, Item, ItemMod};
+use crate::util::{ItemWithAttributeMatch, inject_module, items_with_attribute_macro};
+use crate::{
+    AutoPluginAttribute, generate_add_events, generate_auto_names, generate_init_resources,
+    generate_init_states, generate_register_state_types, generate_register_types,
+};
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
-use crate::{generate_add_events, generate_auto_names, generate_init_resources, generate_init_states, generate_register_state_types, generate_register_types, AutoPluginAttribute};
-use crate::util::{inject_module, items_with_attribute_macro, ItemWithAttributeMatch};
+use syn::{Item, ItemMod, parse2};
 
 pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<MacroStream> {
     let app_param_ident = Ident::new("app", Span::call_site());
@@ -16,13 +19,15 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
         }
 
         // Find all items with the provided [`attribute_name`] #[...] attribute
-        let auto_register_types = items_with_attribute_macro(items, AutoPluginAttribute::RegisterType)?;
+        let auto_register_types =
+            items_with_attribute_macro(items, AutoPluginAttribute::RegisterType)?;
         let auto_register_types = map_to_string(auto_register_types);
 
         let auto_add_events = items_with_attribute_macro(items, AutoPluginAttribute::AddEvent)?;
         let auto_add_events = map_to_string(auto_add_events);
 
-        let auto_init_resources = items_with_attribute_macro(items, AutoPluginAttribute::InitResource)?;
+        let auto_init_resources =
+            items_with_attribute_macro(items, AutoPluginAttribute::InitResource)?;
         let auto_init_resources = map_to_string(auto_init_resources);
 
         let auto_names = items_with_attribute_macro(items, AutoPluginAttribute::Name)?;
