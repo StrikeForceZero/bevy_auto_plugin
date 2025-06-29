@@ -48,19 +48,19 @@ jobs:
             -   name: Checkout code
                 uses: actions/checkout@v3
             
-            # Install Rust with nightly toolchain
-            -   name: Install Rust (nightly)
+            # Install Rust with stable toolchain
+            -   name: Install Rust (stable)
                 uses: actions-rs/toolchain@v1
                 with:
                     profile: minimal
-                    toolchain: nightly
+                    toolchain: stable
                     override: true
             
-            # Compile documentation with nightly
+            # Compile documentation with stable
             -   name: Compile Rust documentation
                 run: |
                     echo "Compiling Rust documentation"
-                    cargo +nightly doc --features=nightly --no-deps
+                    cargo +stable doc --features=stable --no-deps
 
     rustfmt:
         runs-on: ubuntu-latest
@@ -68,22 +68,22 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v3
     
-            - name: Install Rust (nightly)
+            - name: Install Rust (stable)
               uses: actions-rs/toolchain@v1
               with:
                   profile: minimal
-                  toolchain: nightly
+                  toolchain: stable
                   override: true
 
             - name: Install rustfmt
               run: |
-                  echo "Installing rustfmt for nightly"
-                  rustup component add rustfmt --toolchain nightly
+                  echo "Installing rustfmt for stable"
+                  rustup component add rustfmt --toolchain stable
     
             - name: Run rustfmt
               run: |
-                  echo "Checking code formatting with rustfmt (nightly)"
-                  cargo +nightly fmt --all -- --check
+                  echo "Checking code formatting with rustfmt (stable)"
+                  cargo +stable fmt --all -- --check
 
     clippy:
         runs-on: ubuntu-latest
@@ -91,19 +91,19 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v3
 
-            - name: Install Rust (nightly)
+            - name: Install Rust (stable)
               uses: actions-rs/toolchain@v1
               with:
                   profile: minimal
-                  toolchain: nightly
+                  toolchain: stable
                   override: true
 
             - name: Install clippy
               run: |
-                  echo "Installing clippy for nightly"
-                  rustup component add clippy --toolchain nightly
+                  echo "Installing clippy for stable"
+                  rustup component add clippy --toolchain stable
 
             - name: Run clippy
               run: |
-                  echo "Running clippy for lint checks (nightly)"
-                  cargo +nightly clippy --all-targets --all-features -- -D warnings
+                  echo "Running clippy for lint checks (stable)"
+                  cargo +stable clippy --all-targets --all-features -- -D warnings
