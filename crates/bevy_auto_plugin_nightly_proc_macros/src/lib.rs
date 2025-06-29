@@ -1,24 +1,18 @@
 use proc_macro::TokenStream as CompilerStream;
-use proc_macro2::TokenStream as MacroStream;
-
 #[cfg(feature = "missing_auto_plugin_check")]
 use bevy_auto_plugin_shared::inline::file_state::files_missing_plugin_ts;
 use bevy_auto_plugin_shared::util::{
-    resolve_path_from_item_or_args, FnParamMutabilityCheckErrMessages, Target,
+    FnParamMutabilityCheckErrMessages, Target,
 };
-use bevy_auto_plugin_shared::{
-    generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
-    generate_register_state_types, generate_register_types, util,
-};
-use proc_macro2::{Ident, Span};
+use bevy_auto_plugin_shared::util;
+use proc_macro2::Span;
 use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::token::Comma;
-use syn::{parse_macro_input, Error, Item, ItemFn, Path, Result, Token};
+use syn::{parse_macro_input, Error, Item, ItemFn, Path, Token};
 use bevy_auto_plugin_shared::inline::attribute::AutoPluginAttributes;
-use bevy_auto_plugin_shared::inline::file_state::{get_file_path, update_file_state, update_state};
-
+use bevy_auto_plugin_shared::inline::file_state::get_file_path;
+use bevy_auto_plugin_shared::inline::inner;
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 ///
@@ -73,7 +67,7 @@ pub fn auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStrea
         return err.into_compile_error().into();
     }
 
-    let injected_code = match auto_plugin_inner(get_file_path(), &app_param_name) {
+    let injected_code = match inner::auto_plugin_inner(get_file_path(), &app_param_name) {
         Ok(code) => code,
         Err(err) => return err.to_compile_error().into(),
     };
@@ -110,56 +104,6 @@ pub fn auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStrea
     CompilerStream::from(expanded)
 }
 
-fn auto_plugin_inner(file_path: String, app_param_name: &Ident) -> Result<MacroStream> {
-    update_file_state(file_path, |file_state| {
-        if file_state.plugin_registered {
-            return Err(Error::new(
-                Span::call_site(),
-                "plugin already registered or duplicate attribute",
-            ));
-        }
-        file_state.plugin_registered = true;
-        let register_types = generate_register_types(
-            app_param_name,
-            file_state.context.register_types.clone().drain(),
-        )?;
-        let register_state_types = generate_register_state_types(
-            app_param_name,
-            file_state.context.register_state_types.drain(),
-        )?;
-        let add_events =
-            generate_add_events(app_param_name, file_state.context.add_events.drain())?;
-        let init_resources =
-            generate_init_resources(app_param_name, file_state.context.init_resources.drain())?;
-        let init_states =
-            generate_init_states(app_param_name, file_state.context.init_states.drain())?;
-        let auto_names =
-            generate_auto_names(app_param_name, file_state.context.auto_names.drain())?;
-        Ok(quote! {
-            #register_types
-            #register_state_types
-            #add_events
-            #init_resources
-            #init_states
-            #auto_names
-        })
-    })
-}
-
-fn handle_attribute_inner(
-    file_path: String,
-    item: Item,
-    attr_span: Span,
-    target: Target,
-    args: Option<Punctuated<Path, Comma>>,
-) -> Result<()> {
-    let path = resolve_path_from_item_or_args(&item, args)?;
-
-    update_state(file_path, path, target).map_err(|err| Error::new(attr_span, err))?;
-
-    Ok(())
-}
-
 fn handle_attribute(attr: CompilerStream, input: CompilerStream, target: Target) -> CompilerStream {
     let cloned_input = input.clone();
     let parsed_item = parse_macro_input!(input as Item);
@@ -169,7 +113,7 @@ fn handle_attribute(attr: CompilerStream, input: CompilerStream, target: Target)
         Some(parse_macro_input!(attr with Punctuated::<Path, Token![,]>::parse_terminated))
     };
 
-    handle_attribute_inner(
+    inner::handle_attribute_inner(
         get_file_path(),
         parsed_item,
         Span::call_site(),
