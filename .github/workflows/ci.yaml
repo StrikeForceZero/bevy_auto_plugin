@@ -19,7 +19,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                toolchain: [stable, nightly, nightly-2025-04-15]
+                toolchain: [stable]
                 feature-set: [default, missing_auto_plugin_is_compile_error]
         steps:
             # Checkout the repository
@@ -36,16 +36,10 @@ jobs:
             
             # Run tests with the specified feature set
             - name: Run tests
-              if: ${{ matrix.toolchain == 'nightly' || matrix.toolchain == 'stable' && matrix.feature-set == 'default' }}
+              if: ${{ matrix.toolchain == 'stable' || matrix.toolchain == 'nightly' }}
               run: |
                   echo "Testing with ${{ matrix.toolchain }} and features: ${{ matrix.toolchain }},${{ matrix.feature-set }}"
-                  cargo test --features "${{ matrix.toolchain }},${{ matrix.feature-set }}"
-            
-            - name: Run tests with older nightly API (pre 2025-04-16)
-              if: ${{ matrix.toolchain == 'nightly-2025-04-15' }}
-              run: |
-                  echo "Testing with nightly-2025-04-15 and features: nightly_pre_2025_04_16,${{ matrix.feature-set }}"
-                  cargo test --features "nightly_pre_2025_04_16,${{ matrix.feature-set }}"
+                  cargo test --features "${{ matrix.feature-set }}"
 
     doc-test:
         runs-on: ubuntu-latest
@@ -54,19 +48,19 @@ jobs:
             -   name: Checkout code
                 uses: actions/checkout@v3
             
-            # Install Rust with nightly toolchain
-            -   name: Install Rust (nightly)
+            # Install Rust with stable toolchain
+            -   name: Install Rust (stable)
                 uses: actions-rs/toolchain@v1
                 with:
                     profile: minimal
-                    toolchain: nightly
+                    toolchain: stable
                     override: true
             
-            # Compile documentation with nightly
+            # Compile documentation with stable
             -   name: Compile Rust documentation
                 run: |
                     echo "Compiling Rust documentation"
-                    cargo +nightly doc --features=nightly --no-deps
+                    cargo +stable doc --no-deps
 
     rustfmt:
         runs-on: ubuntu-latest
@@ -74,22 +68,22 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v3
     
-            - name: Install Rust (nightly)
+            - name: Install Rust (stable)
               uses: actions-rs/toolchain@v1
               with:
                   profile: minimal
-                  toolchain: nightly
+                  toolchain: stable
                   override: true
 
             - name: Install rustfmt
               run: |
-                  echo "Installing rustfmt for nightly"
-                  rustup component add rustfmt --toolchain nightly
+                  echo "Installing rustfmt for stable"
+                  rustup component add rustfmt --toolchain stable
     
             - name: Run rustfmt
               run: |
-                  echo "Checking code formatting with rustfmt (nightly)"
-                  cargo +nightly fmt --all -- --check
+                  echo "Checking code formatting with rustfmt (stable)"
+                  cargo +stable fmt --all -- --check
 
     clippy:
         runs-on: ubuntu-latest
@@ -97,19 +91,19 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v3
 
-            - name: Install Rust (nightly)
+            - name: Install Rust (stable)
               uses: actions-rs/toolchain@v1
               with:
                   profile: minimal
-                  toolchain: nightly
+                  toolchain: stable
                   override: true
 
             - name: Install clippy
               run: |
-                  echo "Installing clippy for nightly"
-                  rustup component add clippy --toolchain nightly
+                  echo "Installing clippy for stable"
+                  rustup component add clippy --toolchain stable
 
             - name: Run clippy
               run: |
-                  echo "Running clippy for lint checks (nightly)"
-                  cargo +nightly clippy --all-targets --all-features -- -D warnings
+                  echo "Running clippy for lint checks (stable)"
+                  cargo +stable clippy --all-targets --all-features -- -D warnings

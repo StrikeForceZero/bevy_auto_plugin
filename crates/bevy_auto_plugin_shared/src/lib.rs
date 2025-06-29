@@ -4,7 +4,32 @@ use quote::quote;
 use std::collections::HashSet;
 use syn::Path;
 
+pub mod flat_file;
+pub mod module;
 pub mod util;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AutoPluginAttribute {
+    RegisterType,
+    AddEvent,
+    InitResource,
+    InitState,
+    Name,
+    RegisterStateType,
+}
+
+impl AutoPluginAttribute {
+    pub const fn ident_str(self) -> &'static str {
+        match self {
+            Self::RegisterType => "auto_register_type",
+            Self::AddEvent => "auto_add_event",
+            Self::InitResource => "auto_init_resource",
+            Self::InitState => "auto_init_state",
+            Self::Name => "auto_name",
+            Self::RegisterStateType => "auto_register_state_type",
+        }
+    }
+}
 
 #[derive(Default)]
 pub struct AutoPluginContext {
