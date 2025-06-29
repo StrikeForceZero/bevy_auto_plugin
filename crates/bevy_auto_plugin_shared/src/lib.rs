@@ -8,6 +8,13 @@ pub mod util;
 pub mod inline;
 pub mod module;
 
+pub const IDENT_STR_AUTO_ADD_EVENT: &str = "auto_add_event";
+pub const IDENT_STR_AUTO_INIT_RESOURCE: &str = "auto_init_resource";
+pub const IDENT_STR_AUTO_INIT_STATE: &str = "auto_init_state";
+pub const IDENT_STR_AUTO_NAME: &str = "auto_name";
+pub const IDENT_STR_AUTO_REGISTER_TYPE: &str = "auto_register_type";
+pub const IDENT_STR_AUTO_REGISTER_STATE_TYPE: &str = "auto_register_state_type";
+
 #[derive(Default)]
 pub struct AutoPluginContext {
     pub register_types: HashSet<String>,
