@@ -26,7 +26,7 @@ pub fn auto_plugin_inner(input: ItemFn, app_param_name: Ident) -> syn::Result<Ma
 
     #[cfg(feature = "missing_auto_plugin_check")]
     let injected_code = {
-        let output = files_missing_plugin_ts();
+        let output = file_state::files_missing_plugin_ts();
         quote! {
             #output
             #injected_code
