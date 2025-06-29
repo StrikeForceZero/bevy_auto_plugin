@@ -1,4 +1,4 @@
-use bevy_auto_plugin::prelude::inline::*;
+use bevy_auto_plugin::inline::prelude::*;
 
 #[auto_plugin]
 fn plugin(_app: &bevy_app::App) {}

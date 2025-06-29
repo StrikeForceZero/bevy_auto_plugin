@@ -1,4 +1,4 @@
-use bevy_auto_plugin::prelude::inline::*;
+use bevy_auto_plugin::inline::prelude::*;
 
 
 #[auto_register_type(Test)]
