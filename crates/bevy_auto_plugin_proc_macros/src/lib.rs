@@ -67,9 +67,9 @@ pub fn module_auto_register_state_type(
 
 /* INLINE */
 
+use bevy_auto_plugin_shared::inline;
 use bevy_auto_plugin_shared::inline::inner::auto_plugin_inner;
-use bevy_auto_plugin_shared::util::{Target};
-use bevy_auto_plugin_shared::{inline};
+use bevy_auto_plugin_shared::util::Target;
 use proc_macro2::Span;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
