@@ -39,6 +39,7 @@ log = "0.4"
 bevy_auto_plugin_proc_macros = { workspace = true }
 
 [dev-dependencies]
+# required for doc tests
 bevy = { workspace = true }
 bevy_app = { workspace = true }
 bevy_reflect = { workspace = true }
@@ -46,4 +47,5 @@ bevy_ecs = { workspace = true }
 bevy_state = { workspace = true }
 internal_test_util = { path = "crates/internal_test_util" }
 trybuild = "1.0"
+# used in feature tests
 log = { workspace = true }
