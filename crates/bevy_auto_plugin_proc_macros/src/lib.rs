@@ -64,23 +64,23 @@ fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> Result<MacroStre
         }
 
         // Find all items with the provided [`attribute_name`] #[...] attribute
-        let auto_register_types = items_with_attribute_macro(items, AutoPluginAttribute::RegisterType.ident_str())?;
+        let auto_register_types = items_with_attribute_macro(items, AutoPluginAttribute::RegisterType)?;
         let auto_register_types = map_to_string(auto_register_types);
 
-        let auto_add_events = items_with_attribute_macro(items, AutoPluginAttribute::AddEvent.ident_str())?;
+        let auto_add_events = items_with_attribute_macro(items, AutoPluginAttribute::AddEvent)?;
         let auto_add_events = map_to_string(auto_add_events);
 
-        let auto_init_resources = items_with_attribute_macro(items, AutoPluginAttribute::InitResource.ident_str())?;
+        let auto_init_resources = items_with_attribute_macro(items, AutoPluginAttribute::InitResource)?;
         let auto_init_resources = map_to_string(auto_init_resources);
 
-        let auto_names = items_with_attribute_macro(items, AutoPluginAttribute::Name.ident_str())?;
+        let auto_names = items_with_attribute_macro(items, AutoPluginAttribute::Name)?;
         let auto_names = map_to_string(auto_names);
 
         let auto_register_state_types =
-            items_with_attribute_macro(items, AutoPluginAttribute::RegisterStateType.ident_str())?;
+            items_with_attribute_macro(items, AutoPluginAttribute::RegisterStateType)?;
         let auto_register_state_types = map_to_string(auto_register_state_types);
 
-        let auto_init_states = items_with_attribute_macro(items, AutoPluginAttribute::InitState.ident_str())?;
+        let auto_init_states = items_with_attribute_macro(items, AutoPluginAttribute::InitState)?;
         let auto_init_states = map_to_string(auto_init_states);
 
         inject_module(&mut module, move || {

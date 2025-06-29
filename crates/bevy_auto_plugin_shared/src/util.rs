@@ -7,6 +7,7 @@ use syn::{
     Attribute, Error, FnArg, Generics, Item, ItemFn, ItemMod, Pat, Path, PathArguments,
     PathSegment, Token, Type, TypeReference,
 };
+use crate::AutoPluginAttribute;
 
 pub fn resolve_path_from_item_or_args(
     item: &Item,
@@ -185,14 +186,14 @@ pub fn count_generics(path: &Path) -> usize {
 
 pub fn get_all_items_in_module_by_attribute(
     module: &ItemMod,
-    attribute_name: &'static str,
+    attribute: AutoPluginAttribute,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>> {
     let Some((_, items)) = &module.content else {
         return Ok(vec![]);
     };
 
     // Find all items with the provided [`attribute_name`] #[...] attribute
-    let matched_items = items_with_attribute_macro(items, attribute_name)?;
+    let matched_items = items_with_attribute_macro(items, attribute)?;
     Ok(matched_items)
 }
 
@@ -223,9 +224,9 @@ impl ItemWithAttributeMatch {
 
 pub fn items_with_attribute_macro(
     items: &Vec<syn::Item>,
-    attribute_name: &'static str,
+    attribute: AutoPluginAttribute,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>> {
-    let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(attribute_name) };
+    let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(attribute.ident_str()) };
 
     fn parse(ident: &Ident, attr: &Attribute) -> syn::Result<syn::Path> {
         let mut has_args = false;
