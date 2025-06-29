@@ -23,6 +23,7 @@ members = ["crates/*"]
 [workspace.dependencies]
 bevy_auto_plugin_shared = { version = "0.2.1", path = "crates/bevy_auto_plugin_shared" }
 bevy_auto_plugin_proc_macros = { version = "0.2.1", path = "crates/bevy_auto_plugin_proc_macros" }
+bevy = { version = "0.16", default-features = false, features = ["bevy_state"] }
 bevy_app = { version = "0.16", default-features = false }
 bevy_state = { version = "0.16" }
 bevy_reflect = { version = "0.16" }
@@ -38,6 +39,7 @@ log = "0.4"
 bevy_auto_plugin_proc_macros = { workspace = true }
 
 [dev-dependencies]
+bevy = { workspace = true }
 bevy_app = { workspace = true, default-features = false }
 bevy_reflect = { workspace = true }
 bevy_ecs = { workspace = true }
