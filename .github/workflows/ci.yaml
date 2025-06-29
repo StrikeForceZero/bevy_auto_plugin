@@ -39,7 +39,7 @@ jobs:
               if: ${{ matrix.toolchain == 'stable' || matrix.toolchain == 'nightly' }}
               run: |
                   echo "Testing with ${{ matrix.toolchain }} and features: ${{ matrix.toolchain }},${{ matrix.feature-set }}"
-                  cargo test --features "${{ matrix.toolchain }},${{ matrix.feature-set }}"
+                  cargo test --features "${{ matrix.feature-set }}"
 
     doc-test:
         runs-on: ubuntu-latest
@@ -60,7 +60,7 @@ jobs:
             -   name: Compile Rust documentation
                 run: |
                     echo "Compiling Rust documentation"
-                    cargo +stable doc --features=stable --no-deps
+                    cargo +stable doc --no-deps
 
     rustfmt:
         runs-on: ubuntu-latest
