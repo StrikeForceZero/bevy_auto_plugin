@@ -10,7 +10,7 @@ This crate is designed to reduce the boilerplate required when creating Bevy plu
 
 While there are ongoing discussions about auto-registering types by default in Bevy—potentially making part of this crate redundant—the remaining functionality should continue to provide quality-of-life improvements for bevy related development.
 
-## Usage - Stable
+## Usage - Module
 ```rust
 use bevy::prelude::*;
 use bevy_auto_plugin::auto_plugin_module::*;
@@ -86,18 +86,7 @@ mod plugin_module {
 ### Known Limitations
 - Causes issues for ide's like RustRover
 
-## Usage - Nightly
-
-NOTE:
-`nightly-2025-04-16` [changed the api](https://github.com/rust-lang/rust/issues/54725#event-2307701034) being used to track files. As of writing the [language server is stubbed to return none](https://github.com/rust-lang/rust/pull/139671#issuecomment-2796920999). 
-
-Use `nightly-2025-04-15` or earlier along with `--feature=bevy_auto_plugin/nightly_pre_2025_04_16`  or `bevy_auto_plugin = { features=["nightly_pre_2025_04_16"] }` to use previous API.
-
-Otherwise:
-
-`--features=bevy_auto_plugin/nightly` or `bevy_auto_plugin = { features=["nightly"] }`
-
-
+## Usage - Inline
 
 ```rust
 use bevy::prelude::*;
@@ -165,8 +154,6 @@ fn plugin(app: &mut App) {
 ```
 
 ### Known Limitations
-- The internal state relies on call site file paths which currently requires `Nightly` rust.
-
 - All items need to be in the same module. This won't work:
 ```rust
 use bevy::prelude::*;

@@ -1,2 +1,2 @@
-mod nightly;
-mod stable;
+mod inline;
+mod module;

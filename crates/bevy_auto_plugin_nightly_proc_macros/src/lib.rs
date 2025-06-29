@@ -4,7 +4,6 @@ use proc_macro2::TokenStream as MacroStream;
 #[cfg(feature = "missing_auto_plugin_check")]
 use bevy_auto_plugin_nightly_shared::files_missing_plugin_ts;
 use bevy_auto_plugin_nightly_shared::{FileState, UpdateStateError};
-#[cfg(feature = "nightly_proc_macro_span")]
 use bevy_auto_plugin_nightly_shared::{
     get_file_path as nightly_get_file_path, update_file_state as nightly_update_file_state,
     update_state as nightly_update_state,
@@ -25,9 +24,6 @@ use syn::token::Comma;
 use syn::{Error, Item, ItemFn, Path, Result, Token, parse_macro_input};
 
 fn update_file_state<R>(file_path: String, update_fn: impl FnOnce(&mut FileState) -> R) -> R {
-    #[cfg(not(feature = "nightly_proc_macro_span"))]
-    panic!("proc_macro_span feature is required for this crate");
-    #[cfg(feature = "nightly_proc_macro_span")]
     nightly_update_file_state(file_path, update_fn)
 }
 
@@ -36,16 +32,10 @@ fn update_state(
     path: Path,
     target: Target,
 ) -> std::result::Result<(), UpdateStateError> {
-    #[cfg(not(feature = "nightly_proc_macro_span"))]
-    panic!("proc_macro_span feature is required for this crate");
-    #[cfg(feature = "nightly_proc_macro_span")]
     nightly_update_state(file_path, path, target)
 }
 
 fn get_file_path() -> String {
-    #[cfg(not(feature = "nightly_proc_macro_span"))]
-    panic!("proc_macro_span feature is required for this crate");
-    #[cfg(feature = "nightly_proc_macro_span")]
     nightly_get_file_path()
 }
 

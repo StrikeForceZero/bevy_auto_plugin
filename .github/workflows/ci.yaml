@@ -19,7 +19,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                toolchain: [stable, nightly, nightly-2025-04-15]
+                toolchain: [stable]
                 feature-set: [default, missing_auto_plugin_is_compile_error]
         steps:
             # Checkout the repository
@@ -36,16 +36,10 @@ jobs:
             
             # Run tests with the specified feature set
             - name: Run tests
-              if: ${{ matrix.toolchain == 'nightly' || matrix.toolchain == 'stable' && matrix.feature-set == 'default' }}
+              if: ${{ matrix.toolchain == 'stable' || matrix.toolchain == 'nightly' }}
               run: |
                   echo "Testing with ${{ matrix.toolchain }} and features: ${{ matrix.toolchain }},${{ matrix.feature-set }}"
                   cargo test --features "${{ matrix.toolchain }},${{ matrix.feature-set }}"
-            
-            - name: Run tests with older nightly API (pre 2025-04-16)
-              if: ${{ matrix.toolchain == 'nightly-2025-04-15' }}
-              run: |
-                  echo "Testing with nightly-2025-04-15 and features: nightly_pre_2025_04_16,${{ matrix.feature-set }}"
-                  cargo test --features "nightly_pre_2025_04_16,${{ matrix.feature-set }}"
 
     doc-test:
         runs-on: ubuntu-latest

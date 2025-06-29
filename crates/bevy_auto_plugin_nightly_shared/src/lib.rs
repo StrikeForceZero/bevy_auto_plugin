@@ -1,4 +1,3 @@
-#![cfg_attr(feature = "nightly_proc_macro_span", feature(proc_macro_span))]
 use bevy_auto_plugin_shared::AutoPluginContext;
 use bevy_auto_plugin_shared::util::{Target, path_to_string};
 use quote::quote;
@@ -20,47 +19,13 @@ pub struct FileState {
 }
 
 pub fn get_file_path() -> String {
-    {
-        #[cfg(feature = "nightly_proc_macro_span")]
-        {
-            #[cfg(all(feature = "nightly_pre_2025_04_16", not(feature = "nightly")))]
-            {
-                use proc_macro2::Span;
-                Span::call_site()
-                    .unwrap()
-                    .source_file()
-                    .path()
-                    .display()
-                    .to_string()
-            }
-
-            #[cfg(all(
-                feature = "nightly",
-                any(not(feature = "nightly_pre_2025_04_16"), feature = "_all")
-            ))]
-            {
-                use proc_macro2::Span;
-                Span::call_site()
-                    .unwrap()
-                    .local_file()
-                    .expect("failed to resolve local file from span")
-                    .display()
-                    .to_string()
-            }
-        }
-        #[cfg(all(
-            feature = "nightly",
-            feature = "nightly_pre_2025_04_16",
-            not(feature = "_all")
-        ))]
-        {
-            panic!("nightly_pre_2025_04_16 feature is not compatible with nightly");
-        }
-        #[cfg(not(feature = "nightly_proc_macro_span"))]
-        {
-            panic!("proc_macro_span feature is required for this crate");
-        }
-    }
+    use proc_macro2::Span;
+    Span::call_site()
+        .unwrap()
+        .local_file()
+        .expect("failed to resolve local file from span")
+        .display()
+        .to_string()
 }
 
 pub fn update_file_state<R>(file_path: String, update_fn: impl FnOnce(&mut FileState) -> R) -> R {

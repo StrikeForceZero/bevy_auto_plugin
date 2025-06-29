@@ -13,9 +13,6 @@ proc-macro = true
 
 [features]
 log_plugin_build = ["log"]
-nightly = ["bevy_auto_plugin_nightly_shared/nightly"]
-nightly_pre_2025_04_16 = ["bevy_auto_plugin_nightly_shared/nightly_pre_2025_04_16"]
-nightly_proc_macro_span = ["bevy_auto_plugin_nightly_shared/nightly_proc_macro_span"]
 missing_auto_plugin_check = []
 missing_auto_plugin_is_compile_error = ["missing_auto_plugin_check"]
 missing_auto_plugin_is_error = ["missing_auto_plugin_check", "log"]
