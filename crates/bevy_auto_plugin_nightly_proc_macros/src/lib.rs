@@ -2,12 +2,7 @@ use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
 
 #[cfg(feature = "missing_auto_plugin_check")]
-use bevy_auto_plugin_nightly_shared::files_missing_plugin_ts;
-use bevy_auto_plugin_nightly_shared::{FileState, UpdateStateError};
-use bevy_auto_plugin_nightly_shared::{
-    get_file_path as nightly_get_file_path, update_file_state as nightly_update_file_state,
-    update_state as nightly_update_state,
-};
+use bevy_auto_plugin_shared::inline::file_state::files_missing_plugin_ts;
 use bevy_auto_plugin_shared::util::{
     resolve_path_from_item_or_args, FnParamMutabilityCheckErrMessages, Target,
 };
@@ -22,6 +17,7 @@ use syn::spanned::Spanned;
 use syn::token::Comma;
 use syn::{parse_macro_input, Error, Item, ItemFn, Path, Result, Token};
 use bevy_auto_plugin_shared::inline::attribute::AutoPluginAttributes;
+use bevy_auto_plugin_shared::inline::file_state::{get_file_path as nightly_get_file_path, update_file_state as nightly_update_file_state, update_state as nightly_update_state, FileState, UpdateStateError};
 
 fn update_file_state<R>(file_path: String, update_fn: impl FnOnce(&mut FileState) -> R) -> R {
     nightly_update_file_state(file_path, update_fn)
