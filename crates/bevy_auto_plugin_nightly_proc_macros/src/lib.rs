@@ -17,23 +17,8 @@ use syn::spanned::Spanned;
 use syn::token::Comma;
 use syn::{parse_macro_input, Error, Item, ItemFn, Path, Result, Token};
 use bevy_auto_plugin_shared::inline::attribute::AutoPluginAttributes;
-use bevy_auto_plugin_shared::inline::file_state::{get_file_path as nightly_get_file_path, update_file_state as nightly_update_file_state, update_state as nightly_update_state, FileState, UpdateStateError};
+use bevy_auto_plugin_shared::inline::file_state::{get_file_path, update_file_state, update_state};
 
-fn update_file_state<R>(file_path: String, update_fn: impl FnOnce(&mut FileState) -> R) -> R {
-    nightly_update_file_state(file_path, update_fn)
-}
-
-fn update_state(
-    file_path: String,
-    path: Path,
-    target: Target,
-) -> std::result::Result<(), UpdateStateError> {
-    nightly_update_state(file_path, path, target)
-}
-
-fn get_file_path() -> String {
-    nightly_get_file_path()
-}
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 ///
