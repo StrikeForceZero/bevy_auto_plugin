@@ -1,14 +1,6 @@
 use proc_macro::TokenStream as CompilerStream;
-use proc_macro2::TokenStream as MacroStream;
-
-use bevy_auto_plugin_shared::util::{
-    ItemWithAttributeMatch, inject_module, items_with_attribute_macro,
-};
-use bevy_auto_plugin_shared::{generate_add_events, generate_auto_names, generate_init_resources, generate_init_states, generate_register_state_types, generate_register_types, AutoPluginAttribute};
-use proc_macro2::{Ident, Span};
-use quote::quote;
-use syn::{Item, ItemMod, Result, parse_macro_input, parse2};
-
+use syn::{parse_macro_input, ItemMod};
+use bevy_auto_plugin_shared::module::inner;
 
 /// Attaches to a module and generates an initialization function that automatically registering types, events, and resources in the `App`.
 ///
@@ -44,73 +36,12 @@ pub fn auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStrea
     // Parse the input module
     let module = parse_macro_input!(input as ItemMod);
 
-    let injected_module = match auto_plugin_inner(module, &attrs.init_name()) {
+    let injected_module = match inner::auto_plugin_inner(module, &attrs.init_name()) {
         Ok(code) => code,
         Err(err) => return err.to_compile_error().into(),
     };
 
     CompilerStream::from(injected_module)
-}
-
-fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> Result<MacroStream> {
-    let app_param_ident = Ident::new("app", Span::call_site());
-    // Extract the content inside the module
-    if let Some((_, items)) = &module.content {
-        fn map_to_string(
-            iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
-        ) -> impl Iterator<Item = String> {
-            iter.into_iter()
-                .map(ItemWithAttributeMatch::into_path_string)
-        }
-
-        // Find all items with the provided [`attribute_name`] #[...] attribute
-        let auto_register_types = items_with_attribute_macro(items, AutoPluginAttribute::RegisterType)?;
-        let auto_register_types = map_to_string(auto_register_types);
-
-        let auto_add_events = items_with_attribute_macro(items, AutoPluginAttribute::AddEvent)?;
-        let auto_add_events = map_to_string(auto_add_events);
-
-        let auto_init_resources = items_with_attribute_macro(items, AutoPluginAttribute::InitResource)?;
-        let auto_init_resources = map_to_string(auto_init_resources);
-
-        let auto_names = items_with_attribute_macro(items, AutoPluginAttribute::Name)?;
-        let auto_names = map_to_string(auto_names);
-
-        let auto_register_state_types =
-            items_with_attribute_macro(items, AutoPluginAttribute::RegisterStateType)?;
-        let auto_register_state_types = map_to_string(auto_register_state_types);
-
-        let auto_init_states = items_with_attribute_macro(items, AutoPluginAttribute::InitState)?;
-        let auto_init_states = map_to_string(auto_init_states);
-
-        inject_module(&mut module, move || {
-            let auto_register_types =
-                generate_register_types(&app_param_ident, auto_register_types)?;
-            let auto_add_events = generate_add_events(&app_param_ident, auto_add_events)?;
-            let auto_init_resources =
-                generate_init_resources(&app_param_ident, auto_init_resources)?;
-            let auto_names = generate_auto_names(&app_param_ident, auto_names)?;
-            let auto_register_state_types =
-                generate_register_state_types(&app_param_ident, auto_register_state_types)?;
-            let auto_init_states = generate_init_states(&app_param_ident, auto_init_states)?;
-            parse2::<Item>(quote! {
-                pub(super) fn #init_name(app: &mut bevy_app::prelude::App) {
-                    #auto_register_types
-                    #auto_register_state_types
-                    #auto_add_events
-                    #auto_init_resources
-                    #auto_init_states
-                    #auto_names
-                }
-            })
-        })?;
-    }
-
-    let output = quote! {
-        #module
-    };
-
-    Ok(output)
 }
 
 /// Automatically registers a type with the Bevy `App`.
