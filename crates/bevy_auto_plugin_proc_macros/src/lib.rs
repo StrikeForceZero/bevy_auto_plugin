@@ -355,6 +355,8 @@ use syn::spanned::Spanned;
 use syn::{Error, Item, ItemFn, Path, Token};
 use quote::quote;
 use proc_macro2::Span;
+use bevy_auto_plugin_shared::inline::file_state::files_missing_plugin_ts;
+use bevy_auto_plugin_shared::inline::inner::auto_plugin_inner;
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 ///
@@ -394,56 +396,8 @@ pub fn inline_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
 
     // Parse the input function
     let input = parse_macro_input!(input as ItemFn);
-    let _func_name = &input.sig.ident;
-    let func_body = &input.block;
-    let func_sig = &input.sig;
-    let func_vis = &input.vis;
-    let func_attrs = &input.attrs;
 
-    // TODO: tuple struct with &'static string and app_param_name ?
-    let app_param_mut_check_result = util::is_fn_param_mutable_reference(&input, &app_param_name, FnParamMutabilityCheckErrMessages {
-        not_mutable_message: "auto_plugin attribute must be used on a function with a `&mut bevy::app::App` parameter".to_string(),
-        not_found_message: format!("auto_plugin could not find the parameter named `{app_param_name}` in the function signature."),
-    });
-    if let Err(err) = app_param_mut_check_result {
-        return err.into_compile_error().into();
-    }
-
-    let injected_code = match inline::inner::auto_plugin_inner(inline::file_state::get_file_path(), &app_param_name) {
-        Ok(code) => code,
-        Err(err) => return err.to_compile_error().into(),
-    };
-
-    #[cfg(feature = "missing_auto_plugin_check")]
-    let injected_code = {
-        let output = files_missing_plugin_ts();
-        quote! {
-            #output
-            #injected_code
-        }
-    };
-
-    #[cfg(feature = "log_plugin_build")]
-    let injected_code = quote! {
-        log::debug!("plugin START");
-        #injected_code
-    };
-
-    #[cfg(feature = "log_plugin_build")]
-    let func_body = quote! {
-        #func_body
-        log::debug!("plugin END");
-    };
-
-    let expanded = quote! {
-        #(#func_attrs)*
-        #func_vis #func_sig {
-            #injected_code
-            #func_body
-        }
-    };
-
-    CompilerStream::from(expanded)
+    CompilerStream::from(auto_plugin_inner(input, app_param_name).unwrap_or_else(|err| err.to_compile_error()))
 }
 
 fn inline_handle_attribute(attr: CompilerStream, input: CompilerStream, target: Target) -> CompilerStream {
