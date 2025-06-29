@@ -8,12 +8,28 @@ pub mod util;
 pub mod inline;
 pub mod module;
 
-pub const IDENT_STR_AUTO_ADD_EVENT: &str = "auto_add_event";
-pub const IDENT_STR_AUTO_INIT_RESOURCE: &str = "auto_init_resource";
-pub const IDENT_STR_AUTO_INIT_STATE: &str = "auto_init_state";
-pub const IDENT_STR_AUTO_NAME: &str = "auto_name";
-pub const IDENT_STR_AUTO_REGISTER_TYPE: &str = "auto_register_type";
-pub const IDENT_STR_AUTO_REGISTER_STATE_TYPE: &str = "auto_register_state_type";
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AutoPluginAttribute {
+    RegisterType,
+    AddEvent,
+    InitResource,
+    InitState,
+    Name,
+    RegisterStateType,
+}
+
+impl AutoPluginAttribute {
+    pub const fn ident_str(self) -> &'static str {
+        match self {
+            Self::RegisterType => "auto_register_type",
+            Self::AddEvent => "auto_add_event",
+            Self::InitResource => "auto_init_resource",
+            Self::InitState => "auto_init_state",
+            Self::Name => "auto_name",
+            Self::RegisterStateType => "auto_register_state_type",
+        }
+    }
+}
 
 #[derive(Default)]
 pub struct AutoPluginContext {
