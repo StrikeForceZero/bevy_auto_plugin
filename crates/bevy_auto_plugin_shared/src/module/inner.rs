@@ -50,8 +50,8 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
             let auto_register_state_types =
                 generate_register_state_types(&app_param_ident, auto_register_state_types)?;
             let auto_init_states = generate_init_states(&app_param_ident, auto_init_states)?;
-            
-            let func_body = quote! {                
+
+            let func_body = quote! {
                 #auto_register_types
                 #auto_register_state_types
                 #auto_add_events
@@ -66,7 +66,7 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
                 #func_body
                 log::debug!("plugin END");
             };
-            
+
             parse2::<Item>(quote! {
                 pub(super) fn #init_name(app: &mut bevy_app::prelude::App) {
                     #func_body

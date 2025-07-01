@@ -1,6 +1,9 @@
 use crate::flat_file::file_state;
 use crate::flat_file::file_state::{update_file_state, update_state};
-use crate::util::{FnParamMutabilityCheckErrMessages, Target, is_fn_param_mutable_reference, resolve_path_from_item_or_args};
+use crate::util::{
+    FnParamMutabilityCheckErrMessages, Target, is_fn_param_mutable_reference,
+    resolve_path_from_item_or_args,
+};
 use crate::{
     generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
     generate_register_state_types, generate_register_types,
@@ -11,7 +14,11 @@ use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{Error, Item, ItemFn, Path};
 
-pub fn auto_plugin_inner(file_path: String, input: ItemFn, app_param_name: Ident) -> syn::Result<MacroStream> {
+pub fn auto_plugin_inner(
+    file_path: String,
+    input: ItemFn,
+    app_param_name: Ident,
+) -> syn::Result<MacroStream> {
     let _func_name = &input.sig.ident;
     let func_body = &input.block;
     let func_sig = &input.sig;
@@ -24,7 +31,7 @@ pub fn auto_plugin_inner(file_path: String, input: ItemFn, app_param_name: Ident
         not_found_message: format!("auto_plugin could not find the parameter named `{app_param_name}` in the function signature."),
     });
     app_param_mut_check_result?;
-    
+
     let injected_code = auto_plugin_inner_to_stream(file_path, &app_param_name)?;
 
     #[cfg(feature = "missing_auto_plugin_check")]
@@ -35,7 +42,7 @@ pub fn auto_plugin_inner(file_path: String, input: ItemFn, app_param_name: Ident
             #injected_code
         }
     };
-    
+
     let func_body = quote! {
         #injected_code
         #func_body
