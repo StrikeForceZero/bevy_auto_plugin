@@ -154,6 +154,9 @@ fn plugin(app: &mut App) {
 ```
 
 ### Known Limitations
+- Won't provide outputs in IDE's due to [Language Server Stubbed](https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147)
+  - use `lang_server_noop` feature (enabled by default) to allow `flat_file` macros to no-ops when they fail to resolve `Span::local_file`
+  - attempts to naively detect when running under `rustc` context to otherwise bubble up the errors to the compiler
 - All items need to be in the same module. This won't work:
 ```rust
 use bevy::prelude::*;
