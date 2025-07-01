@@ -1,4 +1,3 @@
-use crate::flat_file::file_state;
 use crate::flat_file::file_state::{update_file_state, update_state};
 use crate::util::{
     FnParamMutabilityCheckErrMessages, Target, is_fn_param_mutable_reference,
@@ -36,7 +35,8 @@ pub fn auto_plugin_inner(
 
     #[cfg(feature = "missing_auto_plugin_check")]
     let injected_code = {
-        let output = file_state::files_missing_plugin_ts();
+        use crate::flat_file::file_state::files_missing_plugin_ts;
+        let output = files_missing_plugin_ts();
         quote! {
             #output
             #injected_code
