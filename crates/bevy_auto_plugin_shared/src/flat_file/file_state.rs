@@ -18,14 +18,12 @@ pub struct FileState {
     pub context: AutoPluginContext,
 }
 
-pub fn get_file_path() -> String {
+/// Panics if called from outside a procedural macro.
+pub fn get_file_path() -> Option<String> {
     use proc_macro2::Span;
     Span::call_site()
         .unwrap()
-        .local_file()
-        .expect("failed to resolve local file from span")
-        .display()
-        .to_string()
+        .local_file().map(|p| p.display().to_string())
 }
 
 pub fn update_file_state<R>(file_path: String, update_fn: impl FnOnce(&mut FileState) -> R) -> R {

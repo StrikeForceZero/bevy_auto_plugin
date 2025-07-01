@@ -1,5 +1,5 @@
 use bevy_auto_plugin_shared::module;
-use proc_macro::TokenStream as CompilerStream;
+use proc_macro::{TokenStream as CompilerStream};
 use syn::{ItemMod, parse_macro_input};
 
 /* Module */
@@ -71,11 +71,12 @@ pub fn module_auto_register_state_type(
 
 use bevy_auto_plugin_shared::flat_file;
 use bevy_auto_plugin_shared::flat_file::inner::auto_plugin_inner;
-use bevy_auto_plugin_shared::util::Target;
+use bevy_auto_plugin_shared::util::{resolve_local_file, Target};
 use proc_macro2::Span;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::{Error, Item, ItemFn, Path, Token};
+use quote::ToTokens;
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
@@ -95,8 +96,13 @@ pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Com
     // Parse the input function
     let input = parse_macro_input!(input as ItemFn);
 
+    let path = match resolve_local_file(input.to_token_stream()) {
+        Ok(path) => path,
+        Err(ts) => return ts.into(),
+    };
+
     CompilerStream::from(
-        auto_plugin_inner(input, app_param_name).unwrap_or_else(|err| err.to_compile_error()),
+        auto_plugin_inner(path, input, app_param_name).unwrap_or_else(|err| err.to_compile_error()),
     )
 }
 
@@ -113,8 +119,13 @@ fn flat_file_handle_attribute(
         Some(parse_macro_input!(attr with Punctuated::<Path, Token![,]>::parse_terminated))
     };
 
+    let path = match resolve_local_file(parsed_item.to_token_stream()) {
+        Ok(path) => path,
+        Err(ts) => return ts.into(),
+    };
+    
     flat_file::inner::handle_attribute_inner(
-        flat_file::file_state::get_file_path(),
+        path,
         parsed_item,
         Span::call_site(),
         target,
