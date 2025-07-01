@@ -64,11 +64,6 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
             let func_body = quote! {
                 log::debug!("plugin START");
                 #func_body
-            };
-        
-            #[cfg(feature = "log_plugin_build")]
-            let func_body = quote! {
-                #func_body
                 log::debug!("plugin END");
             };
             

@@ -35,15 +35,15 @@ pub fn auto_plugin_inner(file_path: String, input: ItemFn, app_param_name: Ident
             #injected_code
         }
     };
-
-    #[cfg(feature = "log_plugin_build")]
-    let injected_code = quote! {
-        log::debug!("plugin START");
+    
+    let func_body = quote! {
         #injected_code
+        #func_body
     };
 
     #[cfg(feature = "log_plugin_build")]
     let func_body = quote! {
+        log::debug!("plugin START");
         #func_body
         log::debug!("plugin END");
     };
@@ -51,7 +51,6 @@ pub fn auto_plugin_inner(file_path: String, input: ItemFn, app_param_name: Ident
     let expanded = quote! {
         #(#func_attrs)*
         #func_vis #func_sig {
-            #injected_code
             #func_body
         }
     };
