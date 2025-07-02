@@ -98,7 +98,7 @@ pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Com
 
     let path = match resolve_local_file(
         #[cfg(feature = "lang_server_noop")]
-        input.to_token_stream()
+        input.to_token_stream(),
     ) {
         Ok(path) => path,
         Err(ts) => return ts.into(),
@@ -124,7 +124,7 @@ fn flat_file_handle_attribute(
 
     let path = match resolve_local_file(
         #[cfg(feature = "lang_server_noop")]
-        parsed_item.to_token_stream()
+        parsed_item.to_token_stream(),
     ) {
         Ok(path) => path,
         Err(ts) => return ts.into(),
