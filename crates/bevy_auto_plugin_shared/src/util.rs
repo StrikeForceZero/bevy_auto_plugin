@@ -317,7 +317,7 @@ pub fn is_rustc() -> std::io::Result<bool> {
 /// TODO: remove when rust-analyzer fully implements local_file https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147
 pub fn resolve_local_file(fallback_ts: MacroStream) -> Result<String, MacroStream> {
     let Some(path) = crate::flat_file::file_state::get_file_path() else {
-        let mut io_error = None;
+        let mut io_error: Option<std::io::Error> = None;
         #[cfg(feature = "lang_server_noop")]
         {
             match is_rustc() {
