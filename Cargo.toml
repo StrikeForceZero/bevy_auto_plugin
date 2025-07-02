@@ -6,31 +6,30 @@ repository = "https://github.com/StrikeForceZero/bevy_auto_plugin"
 license = "MIT OR Apache-2.0"
 description = "Procedural macros to simplify and streamline the creation of Bevy plugins by automating the registration of types, initialization of resources, and addition of events"
 edition = "2024"
+rust-version = "1.88"
 publish = true
 
 [features]
-default = []
-# unused (CI)
-stable = []
-# nightly - optional
-nightly = ["nightly_proc_macro_span", "bevy_auto_plugin_nightly_proc_macros/nightly"]
-nightly_pre_2025_04_16 = ["nightly_proc_macro_span", "bevy_auto_plugin_nightly_proc_macros/nightly_pre_2025_04_16"]
-nightly_proc_macro_span = ["bevy_auto_plugin_nightly_proc_macros/nightly_proc_macro_span"]
-# nightly - optional extras
-log_plugin_build = ["bevy_auto_plugin_nightly_proc_macros/log_plugin_build"]
-missing_auto_plugin_is_compile_error = ["bevy_auto_plugin_nightly_proc_macros/missing_auto_plugin_is_compile_error"]
-missing_auto_plugin_is_error = ["bevy_auto_plugin_nightly_proc_macros/missing_auto_plugin_is_error"]
-missing_auto_plugin_is_warning = ["bevy_auto_plugin_nightly_proc_macros/missing_auto_plugin_is_warning"]
-# internal
-_all = ["bevy_auto_plugin_nightly_proc_macros/_all"]
+default = [
+    "lang_server_noop"
+]
+# optional extras
+log_plugin_build = ["bevy_auto_plugin_proc_macros/log_plugin_build"]
+missing_auto_plugin_is_compile_error = ["bevy_auto_plugin_proc_macros/missing_auto_plugin_is_compile_error"]
+missing_auto_plugin_is_error = ["bevy_auto_plugin_proc_macros/missing_auto_plugin_is_error"]
+missing_auto_plugin_is_warning = ["bevy_auto_plugin_proc_macros/missing_auto_plugin_is_warning"]
+# This "hack" will check the current executable from the env
+#   when exe file_stem (without extension) != `rustc` - allows the macros to act like a no-op on failure to resolve `local_file`
+#   required for use in many IDE's until these stubs get fully implemented: https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147
+lang_server_noop = ["bevy_auto_plugin_proc_macros/lang_server_noop"]
 
 [workspace]
 members = ["crates/*"]
 
 [workspace.dependencies]
 bevy_auto_plugin_shared = { version = "0.2.1", path = "crates/bevy_auto_plugin_shared" }
-bevy_auto_plugin_nightly_shared = { version = "0.2.1", path = "crates/bevy_auto_plugin_nightly_shared" }
 bevy_auto_plugin_proc_macros = { version = "0.2.1", path = "crates/bevy_auto_plugin_proc_macros" }
+bevy = { version = "0.16", default-features = false, features = ["bevy_state"] }
 bevy_app = { version = "0.16", default-features = false }
 bevy_state = { version = "0.16" }
 bevy_reflect = { version = "0.16" }
@@ -44,20 +43,15 @@ log = "0.4"
 
 [dependencies]
 bevy_auto_plugin_proc_macros = { workspace = true }
-bevy_auto_plugin_nightly_proc_macros = { version = "0.2.1", path = "crates/bevy_auto_plugin_nightly_proc_macros", optional = true }
 
 [dev-dependencies]
-bevy_app = { workspace = true, default-features = false }
+# required for doc tests
+bevy = { workspace = true }
+bevy_app = { workspace = true }
 bevy_reflect = { workspace = true }
 bevy_ecs = { workspace = true }
 bevy_state = { workspace = true }
 internal_test_util = { path = "crates/internal_test_util" }
 trybuild = "1.0"
+# used in feature tests
 log = { workspace = true }
-
-[build-dependencies]
-rustc_version = "0.4"
-
-[package.metadata.docs.rs]
-toolchain = "nightly" # Use nightly for docs.rs
-features = ["nightly"]

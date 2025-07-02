@@ -10,10 +10,10 @@ This crate is designed to reduce the boilerplate required when creating Bevy plu
 
 While there are ongoing discussions about auto-registering types by default in Bevy—potentially making part of this crate redundant—the remaining functionality should continue to provide quality-of-life improvements for bevy related development.
 
-## Usage - Stable
+## Usage - Module
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::auto_plugin_module::*;
+use bevy_auto_plugin::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 mod plugin_module {
@@ -86,22 +86,11 @@ mod plugin_module {
 ### Known Limitations
 - Causes issues for ide's like RustRover
 
-## Usage - Nightly
-
-NOTE:
-`nightly-2025-04-16` [changed the api](https://github.com/rust-lang/rust/issues/54725#event-2307701034) being used to track files. As of writing the [language server is stubbed to return none](https://github.com/rust-lang/rust/pull/139671#issuecomment-2796920999). 
-
-Use `nightly-2025-04-15` or earlier along with `--feature=bevy_auto_plugin/nightly_pre_2025_04_16`  or `bevy_auto_plugin = { features=["nightly_pre_2025_04_16"] }` to use previous API.
-
-Otherwise:
-
-`--features=bevy_auto_plugin/nightly` or `bevy_auto_plugin = { features=["nightly"] }`
-
-
+## Usage - Flat File
 
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::auto_plugin::*;
+use bevy_auto_plugin::flat_file::prelude::*;
 
 #[auto_register_type]
 #[derive(Component, Reflect)]
@@ -165,12 +154,14 @@ fn plugin(app: &mut App) {
 ```
 
 ### Known Limitations
-- The internal state relies on call site file paths which currently requires `Nightly` rust.
-
+- Won't provide outputs in IDE's due to [Language Server Stubbed](https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147)
+  - use `lang_server_noop` feature (enabled by default) to allow `flat_file` macros to no-ops when they fail to resolve `Span::local_file`
+  - attempts to naively detect when running under `rustc` context to otherwise bubble up the errors to the compiler
 - All items need to be in the same module. This won't work:
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::*;
+use bevy_auto_plugin::flat_file::prelude::*;
+
 mod foo {
     use super::*;
     #[auto_register_type]

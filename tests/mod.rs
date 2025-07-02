@@ -1,2 +1,2 @@
-mod nightly;
-mod stable;
+mod flat_file;
+mod module;

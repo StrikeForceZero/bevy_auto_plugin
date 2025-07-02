@@ -1,4 +1,5 @@
-use proc_macro2::Ident;
+use crate::AutoPluginAttribute;
+use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
@@ -185,14 +186,14 @@ pub fn count_generics(path: &Path) -> usize {
 
 pub fn get_all_items_in_module_by_attribute(
     module: &ItemMod,
-    attribute_name: &'static str,
+    attribute: AutoPluginAttribute,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>> {
     let Some((_, items)) = &module.content else {
         return Ok(vec![]);
     };
 
     // Find all items with the provided [`attribute_name`] #[...] attribute
-    let matched_items = items_with_attribute_macro(items, attribute_name)?;
+    let matched_items = items_with_attribute_macro(items, attribute)?;
     Ok(matched_items)
 }
 
@@ -223,9 +224,9 @@ impl ItemWithAttributeMatch {
 
 pub fn items_with_attribute_macro(
     items: &Vec<syn::Item>,
-    attribute_name: &'static str,
+    attribute: AutoPluginAttribute,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>> {
-    let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(attribute_name) };
+    let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(attribute.ident_str()) };
 
     fn parse(ident: &Ident, attr: &Attribute) -> syn::Result<syn::Path> {
         let mut has_args = false;
@@ -300,4 +301,38 @@ pub fn items_with_attribute_macro(
         }
     }
     Ok(matched_items)
+}
+
+/// Checks if the current executable looks like rustc
+pub fn is_rustc() -> std::io::Result<bool> {
+    use std::env;
+    use std::ffi::OsStr;
+    let exe = env::current_exe()?;
+    let stem = exe.file_stem().and_then(OsStr::to_str).unwrap_or("");
+    Ok(stem.eq_ignore_ascii_case("rustc"))
+}
+
+/// Panics if called from outside a procedural macro.
+///
+/// TODO: remove when rust-analyzer fully implements local_file https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147
+pub fn resolve_local_file(fallback_ts: MacroStream) -> Result<String, MacroStream> {
+    let Some(path) = crate::flat_file::file_state::get_file_path() else {
+        let mut io_error = None;
+        #[cfg(feature = "lang_server_noop")]
+        {
+            match is_rustc() {
+                Ok(false) => {
+                    return Err(fallback_ts);
+                }
+                Err(err) => {
+                    io_error.replace(err);
+                }
+                _ => {}
+            }
+        }
+        let err_message = io_error.map(|err| format!(": {err:?}")).unwrap_or_default();
+        let message = format!("failed to resolve local_file{err_message}");
+        return Err(Error::new(Span::call_site(), message).into_compile_error());
+    };
+    Ok(path)
 }

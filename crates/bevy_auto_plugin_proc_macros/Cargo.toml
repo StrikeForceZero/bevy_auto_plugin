@@ -11,8 +11,16 @@ publish = true
 [lib]
 proc-macro = true
 
+[features]
+log_plugin_build = ["bevy_auto_plugin_shared/log_plugin_build"]
+missing_auto_plugin_check = ["bevy_auto_plugin_shared/missing_auto_plugin_check"]
+missing_auto_plugin_is_compile_error = ["bevy_auto_plugin_shared/missing_auto_plugin_check"]
+missing_auto_plugin_is_error = ["bevy_auto_plugin_shared/missing_auto_plugin_check", "bevy_auto_plugin_shared/log"]
+missing_auto_plugin_is_warning = ["bevy_auto_plugin_shared/missing_auto_plugin_check", "bevy_auto_plugin_shared/log"]
+lang_server_noop = ["bevy_auto_plugin_shared/lang_server_noop"]
+
 [dependencies]
 bevy_auto_plugin_shared = { workspace = true }
-proc-macro2 = { workspace = true }
 syn = { workspace = true }
+proc-macro2 = { workspace = true }
 quote = { workspace = true }
