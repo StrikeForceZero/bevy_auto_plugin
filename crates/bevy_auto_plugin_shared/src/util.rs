@@ -320,9 +320,10 @@ pub fn resolve_local_file(
     fallback_ts: MacroStream
 ) -> Result<String, MacroStream> {
     let Some(path) = crate::flat_file::file_state::get_file_path() else {
-        let mut io_error: Option<std::io::Error> = None;
+        let io_error: Option<std::io::Error> = None;
         #[cfg(feature = "lang_server_noop")]
-        {
+        let io_error = {
+            let mut io_error = io_error;
             match is_rustc() {
                 Ok(false) => {
                     return Err(fallback_ts);
@@ -332,7 +333,8 @@ pub fn resolve_local_file(
                 }
                 _ => {}
             }
-        }
+            io_error
+        };
         let err_message = io_error.map(|err| format!(": {err:?}")).unwrap_or_default();
         let message = format!("failed to resolve local_file{err_message}");
         return Err(Error::new(Span::call_site(), message).into_compile_error());
