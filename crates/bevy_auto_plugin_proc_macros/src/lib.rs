@@ -96,7 +96,10 @@ pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Com
     // Parse the input function
     let input = parse_macro_input!(input as ItemFn);
 
-    let path = match resolve_local_file(input.to_token_stream()) {
+    let path = match resolve_local_file(
+        #[cfg(feature = "lang_server_noop")]
+        input.to_token_stream()
+    ) {
         Ok(path) => path,
         Err(ts) => return ts.into(),
     };
@@ -119,7 +122,10 @@ fn flat_file_handle_attribute(
         Some(parse_macro_input!(attr with Punctuated::<Path, Token![,]>::parse_terminated))
     };
 
-    let path = match resolve_local_file(parsed_item.to_token_stream()) {
+    let path = match resolve_local_file(
+        #[cfg(feature = "lang_server_noop")]
+        parsed_item.to_token_stream()
+    ) {
         Ok(path) => path,
         Err(ts) => return ts.into(),
     };
