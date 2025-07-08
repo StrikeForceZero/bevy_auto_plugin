@@ -1,0 +1,9 @@
+error: auto_plugin requires specifying the name of the `&mut bevy::app::App` parameter when there’s more than one parameter, example:
+       #[auto_plugin(app=my_app)]
+       fn my_plugin(my_app: &mut App)
+ --> tests/flat_file/ui/auto_plugin_missing_param_with_multiple.rs:3:1
+  |
+3 | #[auto_plugin]
+  | ^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `auto_plugin` (in Nightly builds, run with -Z macro-backtrace for more info)

@@ -1,7 +1,11 @@
 use bevy_auto_plugin::flat_file::prelude::*;
 
-#[auto_plugin]
-fn plugin() {}
+struct Test;
+
+impl Test {
+    #[auto_plugin]
+    fn plugin(&self) {}
+}
 
 // dummy main
 fn main() {}

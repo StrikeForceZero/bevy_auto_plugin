@@ -1,0 +1,7 @@
+error: auto_plugin default expects the functions first parameter to be `&mut bevy::app::App`, got: Path for the parameter Pat::Wild
+ --> tests/flat_file/ui/auto_plugin_default_wrong_first_param.rs:3:1
+  |
+3 | #[auto_plugin]
+  | ^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `auto_plugin` (in Nightly builds, run with -Z macro-backtrace for more info)
