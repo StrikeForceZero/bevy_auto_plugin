@@ -7,7 +7,7 @@ use syn::{ItemMod, parse_macro_input};
 /// Attaches to a module and generates an initialization function that automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
 pub fn module_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let mut attrs = bevy_auto_plugin_shared::module::attribute::AutoPluginAttributes::default();
+    let mut attrs = module::attribute::AutoPluginAttributes::default();
     let arg_parser = syn::meta::parser(|meta| attrs.parse(meta));
     parse_macro_input!(attr with arg_parser);
 
@@ -75,8 +75,7 @@ use bevy_auto_plugin_shared::util::{Target, resolve_local_file};
 use proc_macro2::Span;
 use quote::ToTokens;
 use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
-use syn::{Error, Item, ItemFn, Path, Token};
+use syn::{Item, ItemFn, Path, Token};
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
@@ -84,17 +83,12 @@ pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Com
     let mut attrs = flat_file::attribute::AutoPluginAttributes::default();
     let arg_parser = syn::meta::parser(|meta| attrs.parse(meta));
     parse_macro_input!(attr with arg_parser);
-    let Some(app_param_name) = attrs.app_param_name else {
-        return Error::new(
-            attrs.app_param_name.span(),
-            "auto_plugin requires attribute specifying the name of the `&mut bevy::app::App` parameter. Example: #[auto_plugin(app=app)]",
-        )
-            .into_compile_error()
-            .into();
-    };
-
-    // Parse the input function
     let input = parse_macro_input!(input as ItemFn);
+
+    let app_param_name = match flat_file::attribute::get_app_param_name(&input, attrs) {
+        Ok(name) => name,
+        Err(err) => return err.to_compile_error().into(),
+    };
 
     let path = match resolve_local_file(
         #[cfg(feature = "lang_server_noop")]
