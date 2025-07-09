@@ -1,24 +1,12 @@
+use darling::FromMeta;
 use proc_macro2::{Ident, Span};
-use syn::meta::ParseNestedMeta;
+use smart_default::SmartDefault;
 
-#[derive(Default)]
-pub struct AutoPluginAttributes {
-    pub init_name: Option<Ident>,
-}
-
-impl AutoPluginAttributes {
-    pub fn parse(&mut self, meta: ParseNestedMeta) -> syn::Result<()> {
-        if meta.path.is_ident("init_name") {
-            self.init_name = Some(meta.value()?.parse()?);
-            Ok(())
-        } else {
-            Err(meta.error("unsupported attribute"))
-        }
-    }
-    pub fn init_name(&self) -> Ident {
-        self.init_name
-            .as_ref()
-            .cloned()
-            .unwrap_or(Ident::new("init", Span::call_site()))
-    }
+/// Parsed contents of `#[module_auto_plugin(init_name = ...)]`
+#[derive(Debug, SmartDefault, FromMeta)]
+#[darling(default)]
+pub struct ModuleArgs {
+    #[darling(rename = "init_name")]
+    #[default(Ident::new("init", Span::call_site()))]
+    pub init_name: Ident,
 }

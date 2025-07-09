@@ -1,4 +1,6 @@
 use bevy_auto_plugin_shared::module;
+use darling::FromMeta;
+use darling::ast::NestedMeta;
 use proc_macro::TokenStream as CompilerStream;
 use syn::{ItemMod, parse_macro_input};
 
@@ -7,14 +9,25 @@ use syn::{ItemMod, parse_macro_input};
 /// Attaches to a module and generates an initialization function that automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
 pub fn module_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let mut attrs = module::attribute::AutoPluginAttributes::default();
-    let arg_parser = syn::meta::parser(|meta| attrs.parse(meta));
-    parse_macro_input!(attr with arg_parser);
+    let attr_args = match NestedMeta::parse_meta_list(attr.into()) {
+        Ok(v) => v,
+        Err(e) => {
+            use darling::Error;
+            return CompilerStream::from(Error::from(e).write_errors());
+        }
+    };
+
+    let args = match ModuleArgs::from_list(&attr_args) {
+        Ok(v) => v,
+        Err(e) => {
+            return CompilerStream::from(e.write_errors());
+        }
+    };
 
     // Parse the input module
     let module = parse_macro_input!(input as ItemMod);
 
-    let injected_module = match module::inner::auto_plugin_inner(module, &attrs.init_name()) {
+    let injected_module = match module::inner::auto_plugin_inner(module, &args.init_name) {
         Ok(code) => code,
         Err(err) => return err.to_compile_error().into(),
     };
@@ -70,7 +83,9 @@ pub fn module_auto_register_state_type(
 /* Flat File */
 
 use bevy_auto_plugin_shared::flat_file;
+use bevy_auto_plugin_shared::flat_file::attribute::FlatFileArgs;
 use bevy_auto_plugin_shared::flat_file::inner::auto_plugin_inner;
+use bevy_auto_plugin_shared::module::attribute::ModuleArgs;
 use bevy_auto_plugin_shared::util::{Target, resolve_local_file};
 use proc_macro2::Span;
 use quote::ToTokens;
@@ -80,12 +95,24 @@ use syn::{Item, ItemFn, Path, Token};
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
 pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let mut attrs = flat_file::attribute::AutoPluginAttributes::default();
-    let arg_parser = syn::meta::parser(|meta| attrs.parse(meta));
-    parse_macro_input!(attr with arg_parser);
+    let attr_args = match NestedMeta::parse_meta_list(attr.into()) {
+        Ok(v) => v,
+        Err(e) => {
+            use darling::Error;
+            return CompilerStream::from(Error::from(e).write_errors());
+        }
+    };
+
+    let args = match FlatFileArgs::from_list(&attr_args) {
+        Ok(v) => v,
+        Err(e) => {
+            return CompilerStream::from(e.write_errors());
+        }
+    };
+
     let input = parse_macro_input!(input as ItemFn);
 
-    let app_param_name = match flat_file::attribute::get_app_param_name(&input, attrs) {
+    let app_param_name = match args.resolve_app_param_name(&input) {
         Ok(name) => name,
         Err(err) => return err.to_compile_error().into(),
     };
