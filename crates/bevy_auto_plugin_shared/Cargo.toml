@@ -24,3 +24,4 @@ syn = { workspace = true }
 quote = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true, optional = true }
+smart-default = { workspace = true }

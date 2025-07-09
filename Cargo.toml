@@ -40,6 +40,7 @@ syn = { version = "2", features = ["full"] }
 quote = "1"
 thiserror = "2"
 log = "0.4"
+smart-default = { version = "0.7" }
 
 [dependencies]
 bevy_auto_plugin_proc_macros = { workspace = true }
