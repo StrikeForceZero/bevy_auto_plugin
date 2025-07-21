@@ -1,5 +1,5 @@
 use crate::AutoPluginAttribute;
-use proc_macro2::{Ident, Span, TokenStream as MacroStream};
+use proc_macro2::Ident;
 use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
@@ -8,6 +8,7 @@ use syn::{
     Attribute, Error, FnArg, Generics, Item, ItemFn, ItemMod, Pat, Path, PathArguments,
     PathSegment, Token, Type, TypeReference,
 };
+use thiserror::Error;
 
 pub fn resolve_path_from_item_or_args(
     item: &Item,
@@ -303,42 +304,64 @@ pub fn items_with_attribute_macro(
     Ok(matched_items)
 }
 
+#[derive(Error, Debug)]
+pub enum RustcDetectionError {
+    #[error("could not query current executable: {source}")]
+    CurrentExe {
+        #[from]
+        source: std::io::Error,
+    },
+    #[error("env::current_exe() path has no file‑name component: {path}")]
+    NoFileName { path: std::path::PathBuf },
+}
+
 /// Checks if the current executable looks like rustc
-pub fn is_rustc() -> std::io::Result<bool> {
+pub fn is_rustc() -> Result<bool, RustcDetectionError> {
     use std::env;
     use std::ffi::OsStr;
-    let exe = env::current_exe()?;
-    let stem = exe.file_stem().and_then(OsStr::to_str).unwrap_or("");
+    let exe = env::current_exe().map_err(RustcDetectionError::from)?;
+    let Some(stem) = exe.file_stem().and_then(OsStr::to_str) else {
+        return Err(RustcDetectionError::NoFileName { path: exe });
+    };
     Ok(stem.eq_ignore_ascii_case("rustc"))
+}
+
+#[derive(Error, Debug)]
+pub enum LocalFileError {
+    /// `Span::local_file()` came back `None` – the span is virtual or remapped.
+    #[error("span does not refer to a real on‑disk file")]
+    VirtualSpan,
+
+    /// Something went wrong while determining if called from rustc.
+    #[error(transparent)]
+    RustcDetection(#[from] RustcDetectionError),
+}
+
+pub enum LocalFile {
+    File(String),
+    #[cfg(feature = "lang_server_noop")]
+    Noop,
+    Error(LocalFileError),
 }
 
 /// Panics if called from outside a procedural macro.
 ///
 /// TODO: remove when rust-analyzer fully implements local_file https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147
-pub fn resolve_local_file(
-    #[cfg(feature = "lang_server_noop")] fallback_ts: MacroStream,
-) -> Result<String, MacroStream> {
-    let Some(path) = crate::flat_file::file_state::get_file_path() else {
-        let io_error: Option<std::io::Error> = None;
-        #[cfg(feature = "lang_server_noop")]
-        let io_error = {
-            let mut io_error = io_error;
-            match is_rustc() {
-                Ok(false) => {
-                    return Err(fallback_ts);
+pub fn resolve_local_file() -> LocalFile {
+    match crate::flat_file::file_state::get_file_path() {
+        Some(p) => LocalFile::File(p),
+        None => {
+            #[cfg(feature = "lang_server_noop")]
+            {
+                match is_rustc() {
+                    Ok(false) => return LocalFile::Noop,
+                    Err(e) => return LocalFile::Error(e.into()),
+                    _ => {} // fall through
                 }
-                Err(err) => {
-                    io_error.replace(err);
-                }
-                _ => {}
             }
-            io_error
-        };
-        let err_message = io_error.map(|err| format!(": {err:?}")).unwrap_or_default();
-        let message = format!("failed to resolve local_file{err_message}");
-        return Err(Error::new(Span::call_site(), message).into_compile_error());
-    };
-    Ok(path)
+            LocalFile::Error(LocalFileError::VirtualSpan)
+        }
+    }
 }
 
 pub fn debug_pat(pat: &Pat) -> &'static str {

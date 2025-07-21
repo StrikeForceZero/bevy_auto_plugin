@@ -1,8 +1,11 @@
+use crate::module::attribute::ModuleArgs;
 use crate::util::{ItemWithAttributeMatch, inject_module, items_with_attribute_macro};
 use crate::{
     AutoPluginAttribute, generate_add_events, generate_auto_names, generate_init_resources,
     generate_init_states, generate_register_state_types, generate_register_types,
 };
+use darling::FromMeta;
+use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
 use syn::{Item, ItemMod, parse2};
@@ -80,4 +83,11 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
     };
 
     Ok(output)
+}
+
+pub fn expand_module(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
+    let attr_args: Vec<NestedMeta> = NestedMeta::parse_meta_list(attr)?;
+    let args = ModuleArgs::from_list(&attr_args)?;
+    let item_mod: ItemMod = parse2(item)?;
+    auto_plugin_inner(item_mod, &args.init_name)
 }
