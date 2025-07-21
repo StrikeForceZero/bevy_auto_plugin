@@ -1,17 +1,20 @@
+use crate::flat_file::attribute::FlatFileArgs;
 use crate::flat_file::file_state::{update_file_state, update_state};
 use crate::util::{
-    FnParamMutabilityCheckErrMessages, Target, is_fn_param_mutable_reference,
-    resolve_path_from_item_or_args,
+    FnParamMutabilityCheckErrMessages, LocalFile, Target, is_fn_param_mutable_reference,
+    resolve_local_file, resolve_path_from_item_or_args,
 };
 use crate::{
     generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
     generate_register_state_types, generate_register_types,
 };
+use darling::FromMeta;
+use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
-use quote::quote;
+use quote::{ToTokens, quote};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
-use syn::{Error, Item, ItemFn, Path};
+use syn::{Error, Item, ItemFn, Path, parse2};
 
 pub fn auto_plugin_inner(
     file_path: String,
@@ -104,6 +107,25 @@ pub fn auto_plugin_inner_to_stream(
     })
 }
 
+pub fn handle_attribute_outer(
+    item: Item,
+    attr_span: Span,
+    target: Target,
+    args: Option<Punctuated<Path, Comma>>,
+) -> syn::Result<()> {
+    let file_path = match resolve_local_file() {
+        LocalFile::File(path) => path,
+        #[cfg(feature = "lang_server_noop")]
+        LocalFile::Noop => {
+            return Ok(());
+        }
+        LocalFile::Error(err) => {
+            return Err(Error::new(attr_span, err));
+        }
+    };
+    handle_attribute_inner(file_path, item, attr_span, target, args)
+}
+
 pub fn handle_attribute_inner(
     file_path: String,
     item: Item,
@@ -116,4 +138,22 @@ pub fn handle_attribute_inner(
     update_state(file_path, path, target).map_err(|err| Error::new(attr_span, err))?;
 
     Ok(())
+}
+
+pub fn expand_flat_file(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
+    let attr_args: Vec<NestedMeta> = NestedMeta::parse_meta_list(attr)?;
+    let args = FlatFileArgs::from_list(&attr_args)?;
+    let item_fn: ItemFn = parse2(item)?;
+    let app_param = args.resolve_app_param_name(&item_fn)?;
+    let path = match resolve_local_file() {
+        LocalFile::File(path) => path,
+        #[cfg(feature = "lang_server_noop")]
+        LocalFile::Noop => {
+            return Ok(item_fn.to_token_stream());
+        }
+        LocalFile::Error(err) => {
+            return Err(Error::new(Span::call_site(), err));
+        }
+    };
+    auto_plugin_inner(path, item_fn, app_param)
 }

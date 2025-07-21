@@ -1,38 +1,20 @@
-use bevy_auto_plugin_shared::module;
-use darling::FromMeta;
-use darling::ast::NestedMeta;
+use bevy_auto_plugin_shared::module::inner::expand_module;
 use proc_macro::TokenStream as CompilerStream;
-use syn::{ItemMod, parse_macro_input};
+use proc_macro2::TokenStream as MacroStream;
+use syn::{Error, parse_macro_input};
+
+fn to_compile_error(err: Error) -> MacroStream {
+    err.to_compile_error()
+}
 
 /* Module */
 
 /// Attaches to a module and generates an initialization function that automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
 pub fn module_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let attr_args = match NestedMeta::parse_meta_list(attr.into()) {
-        Ok(v) => v,
-        Err(e) => {
-            use darling::Error;
-            return CompilerStream::from(Error::from(e).write_errors());
-        }
-    };
-
-    let args = match ModuleArgs::from_list(&attr_args) {
-        Ok(v) => v,
-        Err(e) => {
-            return CompilerStream::from(e.write_errors());
-        }
-    };
-
-    // Parse the input module
-    let module = parse_macro_input!(input as ItemMod);
-
-    let injected_module = match module::inner::auto_plugin_inner(module, &args.init_name) {
-        Ok(code) => code,
-        Err(err) => return err.to_compile_error().into(),
-    };
-
-    CompilerStream::from(injected_module)
+    expand_module(attr.into(), input.into())
+        .unwrap_or_else(to_compile_error)
+        .into()
 }
 
 /// Automatically registers a type with the Bevy `App`.
@@ -83,51 +65,18 @@ pub fn module_auto_register_state_type(
 /* Flat File */
 
 use bevy_auto_plugin_shared::flat_file;
-use bevy_auto_plugin_shared::flat_file::attribute::FlatFileArgs;
-use bevy_auto_plugin_shared::flat_file::inner::auto_plugin_inner;
-use bevy_auto_plugin_shared::module::attribute::ModuleArgs;
-use bevy_auto_plugin_shared::util::{Target, resolve_local_file};
+use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
+use bevy_auto_plugin_shared::util::Target;
 use proc_macro2::Span;
-use quote::ToTokens;
 use syn::punctuated::Punctuated;
-use syn::{Item, ItemFn, Path, Token};
+use syn::{Item, Path, Token};
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
 pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let attr_args = match NestedMeta::parse_meta_list(attr.into()) {
-        Ok(v) => v,
-        Err(e) => {
-            use darling::Error;
-            return CompilerStream::from(Error::from(e).write_errors());
-        }
-    };
-
-    let args = match FlatFileArgs::from_list(&attr_args) {
-        Ok(v) => v,
-        Err(e) => {
-            return CompilerStream::from(e.write_errors());
-        }
-    };
-
-    let input = parse_macro_input!(input as ItemFn);
-
-    let app_param_name = match args.resolve_app_param_name(&input) {
-        Ok(name) => name,
-        Err(err) => return err.to_compile_error().into(),
-    };
-
-    let path = match resolve_local_file(
-        #[cfg(feature = "lang_server_noop")]
-        input.to_token_stream(),
-    ) {
-        Ok(path) => path,
-        Err(ts) => return ts.into(),
-    };
-
-    CompilerStream::from(
-        auto_plugin_inner(path, input, app_param_name).unwrap_or_else(|err| err.to_compile_error()),
-    )
+    expand_flat_file(attr.into(), input.into())
+        .unwrap_or_else(to_compile_error)
+        .into()
 }
 
 fn flat_file_handle_attribute(
@@ -143,15 +92,7 @@ fn flat_file_handle_attribute(
         Some(parse_macro_input!(attr with Punctuated::<Path, Token![,]>::parse_terminated))
     };
 
-    let path = match resolve_local_file(
-        #[cfg(feature = "lang_server_noop")]
-        parsed_item.to_token_stream(),
-    ) {
-        Ok(path) => path,
-        Err(ts) => return ts.into(),
-    };
-
-    flat_file::inner::handle_attribute_inner(path, parsed_item, Span::call_site(), target, args)
+    flat_file::inner::handle_attribute_outer(parsed_item, Span::call_site(), target, args)
         .map(|_| cloned_input)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
