@@ -36,6 +36,12 @@ impl AutoPluginAttribute {
     }
 }
 
+#[derive(FromMeta, Debug)]
+#[darling(derive_syn_parse)]
+pub struct StructOrEnumAttributeParams {
+    pub generics: Option<TypeList>,
+}
+
 #[derive(FromMeta)]
 #[darling(derive_syn_parse)]
 pub struct AddSystemParams {

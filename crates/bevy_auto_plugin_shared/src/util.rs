@@ -1,12 +1,13 @@
-use crate::{AddSystemParams, AutoPluginAttribute};
-use proc_macro2::Ident;
+use crate::{AddSystemParams, AutoPluginAttribute, StructOrEnumAttributeParams};
+use darling::FromMeta;
+use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::token::Comma;
 use syn::{
     Attribute, Error, FnArg, Generics, Item, ItemFn, ItemMod, Pat, Path, PathArguments,
-    PathSegment, Token, Type, TypeReference,
+    PathSegment, Token, Type, TypeReference, parse2,
 };
 use thiserror::Error;
 
@@ -27,7 +28,7 @@ where
         };
         if let Some(extra_arg) = args.next() {
             return Err(Error::new(
-                extra_arg.span(),
+                extra_arg.get_span(),
                 "Attribute arguments expects a single path",
             ));
         }
@@ -39,7 +40,7 @@ where
         if path_ident != ident {
             let provided_path_string = path_to_string(&path, true);
             return Err(Error::new(
-                path.span(),
+                path.get_span(),
                 format!(
                     "Attribute arguments path does not match the items ident, got: {provided_path_string}, expected: {ident} (with generics if applicable)"
                 ),
@@ -65,6 +66,7 @@ pub fn path_to_string_with_spaces(path: &Path) -> String {
     path_to_string(path, false)
 }
 
+#[derive(Debug)]
 pub enum TargetRequirePath {
     RegisterTypes,
     RegisterStateTypes,
@@ -120,6 +122,7 @@ impl<'a> TryFrom<&'a Item> for StructOrEnumRef<'a> {
     type Error = Error;
 
     fn try_from(item: &'a Item) -> std::result::Result<Self, Self::Error> {
+        use syn::spanned::Spanned;
         Ok(match item {
             Item::Struct(struct_item) => StructOrEnumRef::new(
                 &struct_item.ident,
@@ -154,6 +157,7 @@ impl<'a> TryFrom<&'a Item> for FnRef<'a> {
     type Error = Error;
 
     fn try_from(item: &'a Item) -> std::result::Result<Self, Self::Error> {
+        use syn::spanned::Spanned;
         Ok(match item {
             Item::Fn(fn_item) => {
                 Self::new(&fn_item.sig.ident, &fn_item.sig.generics, &fn_item.attrs)
@@ -203,6 +207,7 @@ pub fn is_fn_param_mutable_reference(
     param_ident: &Ident,
     messages: FnParamMutabilityCheckErrMessages,
 ) -> syn::Result<()> {
+    use syn::spanned::Spanned;
     for arg in &item.sig.inputs {
         if let FnArg::Typed(pat_type) = arg {
             let Pat::Ident(pat_ident) = &*pat_type.pat else {
@@ -234,16 +239,43 @@ pub fn is_mutable_reference(ty: &Type) -> bool {
     )
 }
 
-pub fn validate_generic_counts(generics: &Generics, path: &Path) -> syn::Result<()> {
+pub trait CountGenerics {
+    fn get_span(&self) -> Span;
+    fn count(&self) -> usize;
+}
+
+impl CountGenerics for Path {
+    fn get_span(&self) -> Span {
+        syn::spanned::Spanned::span(&self)
+    }
+
+    fn count(&self) -> usize {
+        count_generics(self)
+    }
+}
+
+impl CountGenerics for StructOrEnumAttributeParams {
+    fn get_span(&self) -> Span {
+        use syn::spanned::Spanned;
+        self.generics.span()
+    }
+
+    fn count(&self) -> usize {
+        self.generics.iter().count()
+    }
+}
+
+pub fn validate_generic_counts<T>(generics: &Generics, cg: &T) -> syn::Result<()>
+where
+    T: CountGenerics,
+{
     let expected_generics_count = generics.type_params().count();
     if expected_generics_count > 0 {
-        let paths_count = count_generics(path);
-        if paths_count != expected_generics_count {
+        let count = cg.count();
+        if count != expected_generics_count {
             return Err(Error::new(
-                path.span(),
-                format!(
-                    "expected {expected_generics_count} generic parameters, found {paths_count}"
-                ),
+                cg.get_span(),
+                format!("expected {expected_generics_count} generic parameters, found {count}"),
             ));
         }
     }
@@ -360,85 +392,166 @@ where
     Ok(matched_items)
 }
 
+fn legacy_parse_single_item_with_attribute_macro(
+    ident: &Ident,
+    attr: &Attribute,
+) -> syn::Result<syn::Path> {
+    let mut has_args = false;
+    let _ = attr.parse_nested_meta(|_| {
+        has_args = true;
+        Ok(())
+    });
+    if has_args {
+        let paths = attr.parse_args_with(Punctuated::<syn::Path, Token![,]>::parse_terminated)?;
+
+        // Ensure exactly one path is present
+        if paths.len() == 1 {
+            // Extract the single path
+            let path = paths.into_iter().next().unwrap_or_else(|| unreachable!());
+            let path_ident = path
+                .segments
+                .get(0)
+                .map(|segment| &segment.ident)
+                .unwrap_or_else(|| unreachable!());
+            if path_ident == ident {
+                Ok(path)
+            } else {
+                let provided_path_string = quote!(#path).to_string().replace(" ", "");
+                Err(syn::Error::new(
+                    path.get_span(),
+                    format!(
+                        "Attribute arguments path does not match the items ident, got: {provided_path_string}, expected: {ident} (with generics if applicable)"
+                    ),
+                ))
+            }
+        } else {
+            use syn::spanned::Spanned;
+            Err(syn::Error::new(
+                attr.span(),
+                "Attribute arguments expect exactly one path",
+            ))
+        }
+    } else {
+        use syn::spanned::Spanned;
+        // allow #[attribute] without args
+        if let Some(segment) = attr.path().segments.last() {
+            if !segment.arguments.is_empty() {
+                // this should be unreachable from testing
+                Err(syn::Error::new(
+                    attr.span(),
+                    "Unexpected arguments (bad proc macro logic)",
+                ))
+            } else {
+                Ok(ident_to_path(ident))
+            }
+        } else {
+            Err(syn::Error::new(
+                attr.span(),
+                "Attribute arguments expect exactly one path",
+            ))
+        }
+    }
+}
+
+fn legacy_struct_or_enum_item_with_attribute_macro(
+    item: &Item,
+    struct_or_enum_ref: &StructOrEnumRef,
+    attr: &Attribute,
+) -> syn::Result<ItemWithAttributeMatch> {
+    let path = legacy_parse_single_item_with_attribute_macro(struct_or_enum_ref.ident, attr)?;
+    validate_generic_counts(struct_or_enum_ref.generics, &path)?;
+    Ok(ItemWithAttributeMatch {
+        item: item.clone(),
+        path,
+        attributes: attr.clone(),
+    })
+}
+
+fn new_struct_or_enum_item_with_attribute_macro(
+    item: &Item,
+    struct_or_enum_ref: &StructOrEnumRef,
+    attr: &Attribute,
+) -> syn::Result<ItemWithAttributeMatch> {
+    let path = ident_to_path(struct_or_enum_ref.ident());
+    let mut has_args = false;
+    let _ = attr.parse_nested_meta(|_| {
+        has_args = true;
+        Ok(())
+    });
+    let path = if has_args {
+        let user_provided_generic_values = StructOrEnumAttributeParams::from_meta(&attr.meta)?;
+        validate_generic_counts(struct_or_enum_ref.generics, &user_provided_generic_values)?;
+        let generics = user_provided_generic_values
+            .generics
+            .as_ref()
+            .map(MacroStream::from)
+            .unwrap_or_default();
+        parse2::<Path>(quote! {
+            #path::<#generics>
+        })?
+    } else {
+        path
+    };
+    Ok(ItemWithAttributeMatch {
+        item: item.clone(),
+        path,
+        attributes: attr.clone(),
+    })
+}
+
+fn do_with_struct_or_enum_items_with_attribute_macro<F>(
+    items: &Vec<syn::Item>,
+    attribute: AutoPluginAttribute,
+    cb: F,
+) -> syn::Result<Vec<ItemWithAttributeMatch>>
+where
+    F: Fn(&Item, &StructOrEnumRef, &Attribute) -> syn::Result<ItemWithAttributeMatch>,
+{
+    let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(attribute.ident_str()) };
+
+    let mut matched_items = vec![];
+    for item in items {
+        let Ok(struct_or_enum_ref) = StructOrEnumRef::try_from(item) else {
+            continue;
+        };
+        for attr in struct_or_enum_ref.attributes.iter().filter(is_marker) {
+            let matched_item = cb(item, &struct_or_enum_ref, attr)?;
+            matched_items.push(matched_item);
+        }
+    }
+    Ok(matched_items)
+}
+
 pub fn struct_or_enum_items_with_attribute_macro(
     items: &Vec<syn::Item>,
     attribute: AutoPluginAttribute,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>> {
-    let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(attribute.ident_str()) };
-
-    fn parse(ident: &Ident, attr: &Attribute) -> syn::Result<syn::Path> {
-        let mut has_args = false;
-        let _ = attr.parse_nested_meta(|_| {
-            has_args = true;
-            Ok(())
-        });
-        if has_args {
-            let paths =
-                attr.parse_args_with(Punctuated::<syn::Path, Token![,]>::parse_terminated)?;
-
-            // Ensure exactly one path is present
-            if paths.len() == 1 {
-                // Extract the single path
-                let path = paths.into_iter().next().unwrap_or_else(|| unreachable!());
-                let path_ident = path
-                    .segments
-                    .get(0)
-                    .map(|segment| &segment.ident)
-                    .unwrap_or_else(|| unreachable!());
-                if path_ident == ident {
-                    Ok(path)
-                } else {
-                    let provided_path_string = quote!(#path).to_string().replace(" ", "");
-                    Err(syn::Error::new(
-                        path.span(),
-                        format!(
-                            "Attribute arguments path does not match the items ident, got: {provided_path_string}, expected: {ident} (with generics if applicable)"
-                        ),
-                    ))
+    do_with_struct_or_enum_items_with_attribute_macro(
+        items,
+        attribute,
+        |item, struct_or_enum_ref, attr| {
+            let err = match new_struct_or_enum_item_with_attribute_macro(
+                item,
+                struct_or_enum_ref,
+                attr,
+            ) {
+                Ok(matched) => return Ok(matched),
+                Err(err) => err,
+            };
+            let err = match legacy_struct_or_enum_item_with_attribute_macro(
+                item,
+                struct_or_enum_ref,
+                attr,
+            ) {
+                Ok(matched) => return Ok(matched),
+                Err(_) => {
+                    // prefer new api error
+                    err
                 }
-            } else {
-                Err(syn::Error::new(
-                    attr.span(),
-                    "Attribute arguments expect exactly one path",
-                ))
-            }
-        } else {
-            // allow #[attribute] without args
-            if let Some(segment) = attr.path().segments.last() {
-                if !segment.arguments.is_empty() {
-                    // this should be unreachable from testing
-                    Err(syn::Error::new(
-                        attr.span(),
-                        "Unexpected arguments (bad proc macro logic)",
-                    ))
-                } else {
-                    Ok(ident_to_path(ident))
-                }
-            } else {
-                Err(syn::Error::new(
-                    attr.span(),
-                    "Attribute arguments expect exactly one path",
-                ))
-            }
-        }
-    }
-
-    let mut matched_items = vec![];
-    for item in items {
-        let Ok(matched_item) = StructOrEnumRef::try_from(item) else {
-            continue;
-        };
-        for attr in matched_item.attributes.iter().filter(is_marker) {
-            let path = parse(matched_item.ident, attr)?;
-            validate_generic_counts(matched_item.generics, &path)?;
-            matched_items.push(ItemWithAttributeMatch {
-                item: item.clone(),
-                path,
-                attributes: attr.clone(),
-            });
-        }
-    }
-    Ok(matched_items)
+            };
+            Err(err)
+        },
+    )
 }
 
 #[derive(Error, Debug)]
