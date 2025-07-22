@@ -1,5 +1,9 @@
 mod auto_add_event;
 mod auto_add_event_generic;
+mod auto_add_systems;
+mod auto_add_systems_complex_with_generics;
+mod auto_add_systems_with_generics;
+mod auto_add_systems_with_set;
 mod auto_init_resource;
 mod auto_init_resource_generic;
 mod auto_init_state;

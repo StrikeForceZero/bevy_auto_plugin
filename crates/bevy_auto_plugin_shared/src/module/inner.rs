@@ -1,8 +1,12 @@
 use crate::module::attribute::ModuleArgs;
-use crate::util::{ItemWithAttributeMatch, inject_module, items_with_attribute_macro};
+use crate::util::{
+    FnRef, ItemWithAttributeMatch, inject_module, items_with_attribute_macro,
+    struct_or_enum_items_with_attribute_macro,
+};
 use crate::{
-    AutoPluginAttribute, generate_add_events, generate_auto_names, generate_init_resources,
-    generate_init_states, generate_register_state_types, generate_register_types,
+    AddSystemParams, AddSystemSerializedParams, AutoPluginAttribute, generate_add_events,
+    generate_add_systems, generate_auto_names, generate_init_resources, generate_init_states,
+    generate_register_state_types, generate_register_types,
 };
 use darling::FromMeta;
 use darling::ast::NestedMeta;
@@ -21,27 +25,52 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
                 .map(ItemWithAttributeMatch::into_path_string)
         }
 
+        fn map_to_add_system_serialized_params(
+            iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
+        ) -> darling::Result<Vec<AddSystemSerializedParams>> {
+            iter.into_iter()
+                .map(|item| {
+                    let args = match AddSystemParams::from_meta(&item.attributes.meta) {
+                        Ok(args) => args,
+                        Err(err) => return Err(err),
+                    };
+                    Ok(AddSystemSerializedParams::from_macro_attr(
+                        &item.path, &args,
+                    ))
+                })
+                .collect()
+        }
+
         // Find all items with the provided [`attribute_name`] #[...] attribute
         let auto_register_types =
-            items_with_attribute_macro(items, AutoPluginAttribute::RegisterType)?;
+            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::RegisterType)?;
         let auto_register_types = map_to_string(auto_register_types);
 
-        let auto_add_events = items_with_attribute_macro(items, AutoPluginAttribute::AddEvent)?;
+        let auto_add_events =
+            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::AddEvent)?;
         let auto_add_events = map_to_string(auto_add_events);
 
         let auto_init_resources =
-            items_with_attribute_macro(items, AutoPluginAttribute::InitResource)?;
+            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::InitResource)?;
         let auto_init_resources = map_to_string(auto_init_resources);
 
-        let auto_names = items_with_attribute_macro(items, AutoPluginAttribute::Name)?;
+        let auto_names =
+            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::Name)?;
         let auto_names = map_to_string(auto_names);
 
-        let auto_register_state_types =
-            items_with_attribute_macro(items, AutoPluginAttribute::RegisterStateType)?;
+        let auto_register_state_types = struct_or_enum_items_with_attribute_macro(
+            items,
+            AutoPluginAttribute::RegisterStateType,
+        )?;
         let auto_register_state_types = map_to_string(auto_register_state_types);
 
-        let auto_init_states = items_with_attribute_macro(items, AutoPluginAttribute::InitState)?;
+        let auto_init_states =
+            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::InitState)?;
         let auto_init_states = map_to_string(auto_init_states);
+
+        let auto_add_system =
+            items_with_attribute_macro::<FnRef>(items, AutoPluginAttribute::AddSystem)?;
+        let auto_add_system = map_to_add_system_serialized_params(auto_add_system)?.into_iter();
 
         inject_module(&mut module, move || {
             let auto_register_types =
@@ -53,6 +82,7 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
             let auto_register_state_types =
                 generate_register_state_types(&app_param_ident, auto_register_state_types)?;
             let auto_init_states = generate_init_states(&app_param_ident, auto_init_states)?;
+            let auto_add_systems = generate_add_systems(&app_param_ident, auto_add_system)?;
 
             let func_body = quote! {
                 #auto_register_types
@@ -61,6 +91,7 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
                 #auto_init_resources
                 #auto_init_states
                 #auto_names
+                #auto_add_systems
             };
 
             #[cfg(feature = "log_plugin_build")]

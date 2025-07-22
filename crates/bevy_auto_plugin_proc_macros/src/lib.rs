@@ -62,6 +62,13 @@ pub fn module_auto_register_state_type(
     input
 }
 
+/// Automatically add_system in the Bevy `App`.
+#[proc_macro_attribute]
+pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    // Just return the input unchanged; this acts as a marker.
+    input
+}
+
 /* Flat File */
 
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;

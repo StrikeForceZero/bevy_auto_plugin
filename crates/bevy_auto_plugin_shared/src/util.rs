@@ -286,7 +286,25 @@ pub fn get_all_items_in_module_by_attribute(
     };
 
     // Find all items with the provided [`attribute_name`] #[...] attribute
-    let matched_items = items_with_attribute_macro(items, attribute)?;
+    let matched_items = match attribute {
+        AutoPluginAttribute::RegisterType => {
+            struct_or_enum_items_with_attribute_macro(items, attribute)?
+        }
+        AutoPluginAttribute::AddEvent => {
+            struct_or_enum_items_with_attribute_macro(items, attribute)?
+        }
+        AutoPluginAttribute::InitResource => {
+            struct_or_enum_items_with_attribute_macro(items, attribute)?
+        }
+        AutoPluginAttribute::InitState => {
+            struct_or_enum_items_with_attribute_macro(items, attribute)?
+        }
+        AutoPluginAttribute::Name => struct_or_enum_items_with_attribute_macro(items, attribute)?,
+        AutoPluginAttribute::RegisterStateType => {
+            struct_or_enum_items_with_attribute_macro(items, attribute)?
+        }
+        AutoPluginAttribute::AddSystem => items_with_attribute_macro::<FnRef>(items, attribute)?,
+    };
     Ok(matched_items)
 }
 
@@ -315,7 +333,34 @@ impl ItemWithAttributeMatch {
     }
 }
 
-pub fn items_with_attribute_macro(
+pub fn items_with_attribute_macro<'a, T>(
+    items: &'a Vec<Item>,
+    attribute: AutoPluginAttribute,
+) -> syn::Result<Vec<ItemWithAttributeMatch>>
+where
+    T: IdentGenericsAttrs<'a>,
+{
+    let mut matched_items = vec![];
+    for item in items {
+        let Ok(matched_item) = T::try_from(item) else {
+            continue;
+        };
+        for attr in matched_item
+            .attributes()
+            .iter()
+            .filter(|a| a.meta.path().is_ident(attribute.ident_str()))
+        {
+            matched_items.push(ItemWithAttributeMatch {
+                item: item.clone(),
+                path: ident_to_path(matched_item.ident()),
+                attributes: attr.clone(),
+            })
+        }
+    }
+    Ok(matched_items)
+}
+
+pub fn struct_or_enum_items_with_attribute_macro(
     items: &Vec<syn::Item>,
     attribute: AutoPluginAttribute,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>> {

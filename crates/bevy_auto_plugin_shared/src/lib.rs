@@ -19,6 +19,7 @@ pub enum AutoPluginAttribute {
     InitState,
     Name,
     RegisterStateType,
+    AddSystem,
 }
 
 impl AutoPluginAttribute {
@@ -30,6 +31,7 @@ impl AutoPluginAttribute {
             Self::InitState => "auto_init_state",
             Self::Name => "auto_name",
             Self::RegisterStateType => "auto_register_state_type",
+            Self::AddSystem => "auto_add_system",
         }
     }
 }
