@@ -1,9 +1,8 @@
-use crate::AutoPluginContext;
-use crate::util::{Target, path_to_string};
+use crate::util::{TargetData, path_to_string_with_spaces};
+use crate::{AddSystemSerializedParams, AutoPluginContext};
 use quote::quote;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use syn::Path;
 use thiserror::Error;
 
 thread_local! {
@@ -37,8 +36,7 @@ pub fn update_file_state<R>(file_path: String, update_fn: impl FnOnce(&mut FileS
 
 pub fn update_state(
     file_path: String,
-    path: Path,
-    target: Target,
+    target: TargetData,
 ) -> std::result::Result<(), UpdateStateError> {
     FILE_STATE_MAP.with(|map| {
         let mut map = map.borrow_mut();
@@ -46,14 +44,35 @@ pub fn update_state(
         if entry.plugin_registered {
             return Err(UpdateStateError::PluginAlreadyRegistered);
         }
-        let path = path_to_string(&path, false);
         let inserted = match target {
-            Target::RegisterTypes => entry.context.register_types.insert(path),
-            Target::RegisterStateTypes => entry.context.register_state_types.insert(path),
-            Target::AddEvents => entry.context.add_events.insert(path),
-            Target::InitResources => entry.context.init_resources.insert(path),
-            Target::InitStates => entry.context.init_states.insert(path),
-            Target::RequiredComponentAutoName => entry.context.auto_names.insert(path),
+            TargetData::RegisterTypes(path) => entry
+                .context
+                .register_types
+                .insert(path_to_string_with_spaces(&path)),
+            TargetData::RegisterStateTypes(path) => entry
+                .context
+                .register_state_types
+                .insert(path_to_string_with_spaces(&path)),
+            TargetData::AddEvents(path) => entry
+                .context
+                .add_events
+                .insert(path_to_string_with_spaces(&path)),
+            TargetData::InitResources(path) => entry
+                .context
+                .init_resources
+                .insert(path_to_string_with_spaces(&path)),
+            TargetData::InitStates(path) => entry
+                .context
+                .init_states
+                .insert(path_to_string_with_spaces(&path)),
+            TargetData::RequiredComponentAutoName(path) => entry
+                .context
+                .auto_names
+                .insert(path_to_string_with_spaces(&path)),
+            TargetData::AddSystem { system, params } => entry
+                .context
+                .add_systems
+                .insert(AddSystemSerializedParams::from_macro_attr(&system, &params)),
         };
         if !inserted {
             return Err(UpdateStateError::Duplicate);

@@ -349,6 +349,7 @@ pub mod flat_file {
         /// }
         /// ```
         pub use bevy_auto_plugin_proc_macros::flat_file_auto_add_event as auto_add_event;
+        pub use bevy_auto_plugin_proc_macros::flat_file_auto_add_system as auto_add_system;
         #[doc(inline)]
         ///
         /// # Example (without generics)

@@ -1,4 +1,4 @@
-use crate::AutoPluginAttribute;
+use crate::{AddSystemParams, AutoPluginAttribute};
 use proc_macro2::Ident;
 use quote::quote;
 use syn::punctuated::Punctuated;
@@ -10,12 +10,15 @@ use syn::{
 };
 use thiserror::Error;
 
-pub fn resolve_path_from_item_or_args(
-    item: &Item,
+pub fn resolve_path_from_item_or_args<'a, T>(
+    item: &'a Item,
     args: Option<Punctuated<Path, Comma>>,
-) -> syn::Result<Path> {
-    let struct_or_enum = StructOrEnumRef::try_from(item)?;
-    let ident = struct_or_enum.ident;
+) -> syn::Result<Path>
+where
+    T: IdentGenericsAttrs<'a>,
+{
+    let struct_or_enum = T::try_from(item)?;
+    let ident = struct_or_enum.ident();
     if let Some(args) = args {
         let mut args = args.into_iter();
         // Extract the single path
@@ -42,7 +45,7 @@ pub fn resolve_path_from_item_or_args(
                 ),
             ));
         }
-        validate_generic_counts(struct_or_enum.generics, &path)?;
+        validate_generic_counts(struct_or_enum.generics(), &path)?;
         Ok(path)
     } else {
         Ok(ident_to_path(ident))
@@ -58,13 +61,43 @@ pub fn path_to_string(path: &Path, strip_spaces: bool) -> String {
     }
 }
 
-pub enum Target {
+pub fn path_to_string_with_spaces(path: &Path) -> String {
+    path_to_string(path, false)
+}
+
+pub enum TargetRequirePath {
     RegisterTypes,
     RegisterStateTypes,
     AddEvents,
     InitResources,
     InitStates,
     RequiredComponentAutoName,
+}
+
+pub enum TargetData {
+    RegisterTypes(Path),
+    RegisterStateTypes(Path),
+    AddEvents(Path),
+    InitResources(Path),
+    InitStates(Path),
+    RequiredComponentAutoName(Path),
+    AddSystem {
+        system: Path,
+        params: AddSystemParams,
+    },
+}
+
+impl TargetData {
+    pub fn from_target_require_path(target_require_path: TargetRequirePath, path: Path) -> Self {
+        match target_require_path {
+            TargetRequirePath::RegisterTypes => Self::RegisterTypes(path),
+            TargetRequirePath::RegisterStateTypes => Self::RegisterStateTypes(path),
+            TargetRequirePath::AddEvents => Self::AddEvents(path),
+            TargetRequirePath::InitResources => Self::InitResources(path),
+            TargetRequirePath::InitStates => Self::InitStates(path),
+            TargetRequirePath::RequiredComponentAutoName => Self::RequiredComponentAutoName(path),
+        }
+    }
 }
 
 pub struct StructOrEnumRef<'a> {
@@ -98,6 +131,65 @@ impl<'a> TryFrom<&'a Item> for StructOrEnumRef<'a> {
             }
             _ => return Err(Error::new(item.span(), "expected struct or enum")),
         })
+    }
+}
+
+pub struct FnRef<'a> {
+    pub ident: &'a Ident,
+    pub generics: &'a Generics,
+    pub attributes: &'a Vec<Attribute>,
+}
+
+impl<'a> FnRef<'a> {
+    fn new(ident: &'a Ident, generics: &'a Generics, attributes: &'a Vec<Attribute>) -> Self {
+        Self {
+            ident,
+            generics,
+            attributes,
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Item> for FnRef<'a> {
+    type Error = Error;
+
+    fn try_from(item: &'a Item) -> std::result::Result<Self, Self::Error> {
+        Ok(match item {
+            Item::Fn(fn_item) => {
+                Self::new(&fn_item.sig.ident, &fn_item.sig.generics, &fn_item.attrs)
+            }
+            _ => return Err(Error::new(item.span(), "expected fn")),
+        })
+    }
+}
+
+pub trait IdentGenericsAttrs<'a>: TryFrom<&'a Item, Error = Error> {
+    fn ident(&self) -> &Ident;
+    fn generics(&self) -> &Generics;
+    fn attributes(&self) -> &Vec<Attribute>;
+}
+
+impl<'a> IdentGenericsAttrs<'a> for StructOrEnumRef<'a> {
+    fn ident(&self) -> &Ident {
+        self.ident
+    }
+    fn generics(&self) -> &Generics {
+        self.generics
+    }
+    fn attributes(&self) -> &Vec<Attribute> {
+        self.attributes
+    }
+}
+
+impl<'a> IdentGenericsAttrs<'a> for FnRef<'a> {
+    fn ident(&self) -> &Ident {
+        self.ident
+    }
+    fn generics(&self) -> &Generics {
+        self.generics
+    }
+    fn attributes(&self) -> &Vec<Attribute> {
+        self.attributes
     }
 }
 

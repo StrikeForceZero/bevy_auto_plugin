@@ -1,17 +1,19 @@
 use crate::flat_file::attribute::FlatFileArgs;
 use crate::flat_file::file_state::{update_file_state, update_state};
 use crate::util::{
-    FnParamMutabilityCheckErrMessages, LocalFile, Target, is_fn_param_mutable_reference,
-    resolve_local_file, resolve_path_from_item_or_args,
+    FnParamMutabilityCheckErrMessages, FnRef, LocalFile, StructOrEnumRef, TargetData,
+    TargetRequirePath, is_fn_param_mutable_reference, resolve_local_file,
+    resolve_path_from_item_or_args,
 };
 use crate::{
-    generate_add_events, generate_auto_names, generate_init_resources, generate_init_states,
-    generate_register_state_types, generate_register_types,
+    AddSystemParams, generate_add_events, generate_add_systems, generate_auto_names,
+    generate_init_resources, generate_init_states, generate_register_state_types,
+    generate_register_types,
 };
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
-use quote::{ToTokens, quote};
+use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{Error, Item, ItemFn, Path, parse2};
@@ -96,6 +98,8 @@ pub fn auto_plugin_inner_to_stream(
             generate_init_states(app_param_name, file_state.context.init_states.drain())?;
         let auto_names =
             generate_auto_names(app_param_name, file_state.context.auto_names.drain())?;
+        let add_systems =
+            generate_add_systems(app_param_name, file_state.context.add_systems.drain())?;
         Ok(quote! {
             #register_types
             #register_state_types
@@ -103,6 +107,7 @@ pub fn auto_plugin_inner_to_stream(
             #init_resources
             #init_states
             #auto_names
+            #add_systems
         })
     })
 }
@@ -110,7 +115,7 @@ pub fn auto_plugin_inner_to_stream(
 pub fn handle_attribute_outer(
     item: Item,
     attr_span: Span,
-    target: Target,
+    target: TargetRequirePath,
     args: Option<Punctuated<Path, Comma>>,
 ) -> syn::Result<()> {
     let file_path = match resolve_local_file() {
@@ -130,17 +135,51 @@ pub fn handle_attribute_inner(
     file_path: String,
     item: Item,
     attr_span: Span,
-    target: Target,
+    target: TargetRequirePath,
     args: Option<Punctuated<Path, Comma>>,
 ) -> syn::Result<()> {
-    let path = resolve_path_from_item_or_args(&item, args)?;
+    let path = resolve_path_from_item_or_args::<StructOrEnumRef>(&item, args)?;
+    let target_data = TargetData::from_target_require_path(target, path);
+    update_state(file_path, target_data).map_err(|err| Error::new(attr_span, err))?;
+    Ok(())
+}
 
-    update_state(file_path, path, target).map_err(|err| Error::new(attr_span, err))?;
+pub fn handle_add_system_attribute_outer(
+    item: Item,
+    args: AddSystemParams,
+    attr_span: Span,
+) -> syn::Result<()> {
+    let file_path = match resolve_local_file() {
+        LocalFile::File(path) => path,
+        #[cfg(feature = "lang_server_noop")]
+        LocalFile::Noop => {
+            return Ok(());
+        }
+        LocalFile::Error(err) => {
+            return Err(Error::new(attr_span, err));
+        }
+    };
+    handle_add_system_attribute_inner(file_path, item, args, attr_span)
+}
 
+pub fn handle_add_system_attribute_inner(
+    file_path: String,
+    item: Item,
+    args: AddSystemParams,
+    attr_span: Span,
+) -> syn::Result<()> {
+    let path = resolve_path_from_item_or_args::<FnRef>(&item, None)?;
+    let target_data = TargetData::AddSystem {
+        system: path,
+        params: args,
+    };
+    update_state(file_path, target_data).map_err(|err| Error::new(attr_span, err))?;
     Ok(())
 }
 
 pub fn expand_flat_file(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
+    #[cfg(feature = "lang_server_noop")]
+    use quote::ToTokens;
     let attr_args: Vec<NestedMeta> = NestedMeta::parse_meta_list(attr)?;
     let args = FlatFileArgs::from_list(&attr_args)?;
     let item_fn: ItemFn = parse2(item)?;

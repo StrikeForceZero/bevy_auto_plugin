@@ -64,9 +64,9 @@ pub fn module_auto_register_state_type(
 
 /* Flat File */
 
-use bevy_auto_plugin_shared::flat_file;
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
-use bevy_auto_plugin_shared::util::Target;
+use bevy_auto_plugin_shared::util::TargetRequirePath;
+use bevy_auto_plugin_shared::{AddSystemParams, flat_file};
 use proc_macro2::Span;
 use syn::punctuated::Punctuated;
 use syn::{Item, Path, Token};
@@ -82,7 +82,7 @@ pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Com
 fn flat_file_handle_attribute(
     attr: CompilerStream,
     input: CompilerStream,
-    target: Target,
+    target: TargetRequirePath,
 ) -> CompilerStream {
     let cloned_input = input.clone();
     let parsed_item = parse_macro_input!(input as Item);
@@ -100,28 +100,28 @@ fn flat_file_handle_attribute(
 /// Automatically registers a type with the Bevy `App`.
 #[proc_macro_attribute]
 pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute(attr, input, Target::RegisterTypes)
+    flat_file_handle_attribute(attr, input, TargetRequirePath::RegisterTypes)
 }
 /// Automatically adds an event type to the Bevy `App`.
 #[proc_macro_attribute]
 pub fn flat_file_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute(attr, input, Target::AddEvents)
+    flat_file_handle_attribute(attr, input, TargetRequirePath::AddEvents)
 }
 /// Automatically initializes a resource in the Bevy `App`.
 #[proc_macro_attribute]
 pub fn flat_file_auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute(attr, input, Target::InitResources)
+    flat_file_handle_attribute(attr, input, TargetRequirePath::InitResources)
 }
 /// Automatically associates a required component `Name` with the default value set to the ident in the Bevy `App`.
 #[proc_macro_attribute]
 pub fn flat_file_auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute(attr, input, Target::RequiredComponentAutoName)
+    flat_file_handle_attribute(attr, input, TargetRequirePath::RequiredComponentAutoName)
 }
 
 /// Automatically initializes a State in the Bevy `App`.
 #[proc_macro_attribute]
 pub fn flat_file_auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute(attr, input, Target::InitStates)
+    flat_file_handle_attribute(attr, input, TargetRequirePath::InitStates)
 }
 
 /// Automatically registers a State type in the Bevy `App`.
@@ -130,5 +130,21 @@ pub fn flat_file_auto_register_state_type(
     attr: CompilerStream,
     input: CompilerStream,
 ) -> CompilerStream {
-    flat_file_handle_attribute(attr, input, Target::RegisterStateTypes)
+    flat_file_handle_attribute(attr, input, TargetRequirePath::RegisterStateTypes)
+}
+
+/// Automatically add_system in the Bevy `App`.
+#[proc_macro_attribute]
+pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    let args: AddSystemParams = match syn::parse(attr) {
+        Ok(v) => v,
+        Err(e) => {
+            return e.to_compile_error().into();
+        }
+    };
+    let cloned_input = input.clone();
+    let item = parse_macro_input!(input as Item);
+    flat_file::inner::handle_add_system_attribute_outer(item, args, Span::call_site())
+        .map(|_| cloned_input)
+        .unwrap_or_else(|err| err.to_compile_error().into())
 }
