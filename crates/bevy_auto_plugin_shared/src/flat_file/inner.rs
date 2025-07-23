@@ -109,11 +109,29 @@ pub fn auto_plugin_inner_to_stream(
     })
 }
 
-fn resolve_local_file_spanned(span: Span) -> syn::Result<Option<String>> {
+macro_rules! extract_or_noop {
+    ($out:ident, $item:expr, $ok:expr) => {
+        #[allow(clippy::infallible_destructuring_match)]
+        let $out = match $item {
+            ValueOrNoop::Value(item) => item,
+            #[cfg(feature = "lang_server_noop")]
+            ValueOrNoop::Noop => $ok,
+        };
+    };
+}
+
+enum ValueOrNoop<T> {
+    Value(T),
+    // drops unreachable branches during compilation
+    #[cfg(feature = "lang_server_noop")]
+    Noop,
+}
+
+fn resolve_local_file_spanned(span: Span) -> syn::Result<ValueOrNoop<String>> {
     Ok(match resolve_local_file() {
-        LocalFile::File(path) => Some(path),
+        LocalFile::File(path) => ValueOrNoop::Value(path),
         #[cfg(feature = "lang_server_noop")]
-        LocalFile::Noop => None,
+        LocalFile::Noop => ValueOrNoop::Noop,
         LocalFile::Error(err) => return Err(Error::new(span, err)),
     })
 }
@@ -124,9 +142,11 @@ pub fn handle_attribute_outer(
     target: TargetRequirePath,
     args: StructOrEnumAttributeParams,
 ) -> syn::Result<()> {
-    let Some(file_path) = resolve_local_file_spanned(attr_span)? else {
-        return Ok(());
-    };
+    extract_or_noop!(
+        file_path,
+        resolve_local_file_spanned(attr_span)?,
+        return Ok(())
+    );
     handle_attribute_inner(file_path, item, attr_span, target, args)
 }
 
@@ -148,9 +168,11 @@ pub fn handle_add_system_attribute_outer(
     args: AddSystemParams,
     attr_span: Span,
 ) -> syn::Result<()> {
-    let Some(file_path) = resolve_local_file_spanned(attr_span)? else {
-        return Ok(());
-    };
+    extract_or_noop!(
+        file_path,
+        resolve_local_file_spanned(attr_span)?,
+        return Ok(())
+    );
     handle_add_system_attribute_inner(file_path, item, args, attr_span)
 }
 
@@ -171,14 +193,13 @@ pub fn handle_add_system_attribute_inner(
 }
 
 pub fn expand_flat_file(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
-    #[cfg(feature = "lang_server_noop")]
-    use quote::ToTokens;
     let attr_args: Vec<NestedMeta> = NestedMeta::parse_meta_list(attr)?;
     let args = FlatFileArgs::from_list(&attr_args)?;
     let item_fn: ItemFn = parse2(item)?;
     let app_param = args.resolve_app_param_name(&item_fn)?;
-    let Some(file_path) = resolve_local_file_spanned(Span::call_site())? else {
+    extract_or_noop!(file_path, resolve_local_file_spanned(Span::call_site())?, {
+        use quote::ToTokens;
         return Ok(item_fn.to_token_stream());
-    };
+    });
     auto_plugin_inner(file_path, item_fn, app_param)
 }
