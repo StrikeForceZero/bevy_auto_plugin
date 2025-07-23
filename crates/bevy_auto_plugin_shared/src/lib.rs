@@ -333,7 +333,7 @@ pub fn generate_add_systems(
         .collect::<syn::Result<Vec<_>>>()?;
     Ok(quote! {
         {
-            // register systems
+            // add_systems
             #(#output)*
         }
     })
