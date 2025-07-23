@@ -109,21 +109,23 @@ pub fn auto_plugin_inner_to_stream(
     })
 }
 
+fn resolve_local_file_spanned(span: Span) -> syn::Result<Option<String>> {
+    Ok(match resolve_local_file() {
+        LocalFile::File(path) => Some(path),
+        #[cfg(feature = "lang_server_noop")]
+        LocalFile::Noop => None,
+        LocalFile::Error(err) => return Err(Error::new(span, err)),
+    })
+}
+
 pub fn handle_attribute_outer(
     item: Item,
     attr_span: Span,
     target: TargetRequirePath,
     args: StructOrEnumAttributeParams,
 ) -> syn::Result<()> {
-    let file_path = match resolve_local_file() {
-        LocalFile::File(path) => path,
-        #[cfg(feature = "lang_server_noop")]
-        LocalFile::Noop => {
-            return Ok(());
-        }
-        LocalFile::Error(err) => {
-            return Err(Error::new(attr_span, err));
-        }
+    let Some(file_path) = resolve_local_file_spanned(attr_span)? else {
+        return Ok(());
     };
     handle_attribute_inner(file_path, item, attr_span, target, args)
 }
@@ -146,15 +148,8 @@ pub fn handle_add_system_attribute_outer(
     args: AddSystemParams,
     attr_span: Span,
 ) -> syn::Result<()> {
-    let file_path = match resolve_local_file() {
-        LocalFile::File(path) => path,
-        #[cfg(feature = "lang_server_noop")]
-        LocalFile::Noop => {
-            return Ok(());
-        }
-        LocalFile::Error(err) => {
-            return Err(Error::new(attr_span, err));
-        }
+    let Some(file_path) = resolve_local_file_spanned(attr_span)? else {
+        return Ok(());
     };
     handle_add_system_attribute_inner(file_path, item, args, attr_span)
 }
@@ -182,15 +177,8 @@ pub fn expand_flat_file(attr: MacroStream, item: MacroStream) -> syn::Result<Mac
     let args = FlatFileArgs::from_list(&attr_args)?;
     let item_fn: ItemFn = parse2(item)?;
     let app_param = args.resolve_app_param_name(&item_fn)?;
-    let path = match resolve_local_file() {
-        LocalFile::File(path) => path,
-        #[cfg(feature = "lang_server_noop")]
-        LocalFile::Noop => {
-            return Ok(item_fn.to_token_stream());
-        }
-        LocalFile::Error(err) => {
-            return Err(Error::new(Span::call_site(), err));
-        }
+    let Some(file_path) = resolve_local_file_spanned(Span::call_site())? else {
+        return Ok(item_fn.to_token_stream());
     };
-    auto_plugin_inner(path, item_fn, app_param)
+    auto_plugin_inner(file_path, item_fn, app_param)
 }
