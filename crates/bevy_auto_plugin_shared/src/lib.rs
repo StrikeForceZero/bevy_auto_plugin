@@ -1,5 +1,5 @@
 use crate::type_list::TypeList;
-use crate::util::{path_to_string, path_to_string_with_spaces};
+use crate::util::{PathExt, path_to_string, path_to_string_with_spaces};
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::quote;
@@ -192,13 +192,16 @@ pub struct AddSystemSerializedParams {
 
 impl AddSystemSerializedParams {
     pub fn from_macro_attr(system: &Path, attr: &AddSystemParams) -> Self {
-        let generics = attr
-            .generics
-            .as_ref()
-            .map(TokenStream::from)
-            .unwrap_or_default();
-
-        let system_path_tokens = quote! { #system::<#generics> };
+        let system_path_tokens = if system.has_generics() {
+            quote! { #system }
+        } else {
+            let generics = attr
+                .generics
+                .as_ref()
+                .map(TokenStream::from)
+                .unwrap_or_default();
+            quote! { #system::<#generics> }
+        };
         // TODO: return result
         let system = parse2::<Path>(system_path_tokens).expect("failed to parse system path");
 
