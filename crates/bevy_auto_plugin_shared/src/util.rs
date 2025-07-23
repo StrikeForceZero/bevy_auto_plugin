@@ -1,7 +1,8 @@
+use crate::type_list::TypeList;
 use crate::{AddSystemParams, AutoPluginAttribute, StructOrEnumAttributeParams};
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
-use quote::quote;
+use quote::{ToTokens, quote};
 use syn::punctuated::Punctuated;
 use syn::{
     Attribute, Error, FnArg, Generics, Item, ItemFn, ItemMod, Pat, Path, PathArguments,
@@ -227,7 +228,7 @@ impl CountGenerics for Path {
     }
 
     fn count(&self) -> usize {
-        count_generics(self)
+        self.generic_count()
     }
 }
 
@@ -271,19 +272,6 @@ pub fn ident_to_path(ident: &Ident) -> Path {
             segments
         },
     }
-}
-
-pub fn count_generics(path: &Path) -> usize {
-    // Iterate through the segments of the path
-    for segment in &path.segments {
-        // Check if the segment has angle-bracketed arguments
-        if let PathArguments::AngleBracketed(angle_bracketed) = &segment.arguments {
-            // Count the number of arguments inside the angle brackets
-            return angle_bracketed.args.len();
-        }
-    }
-    // If no angle-bracketed arguments are found, return 0
-    0
 }
 
 pub fn get_all_items_in_module_by_attribute(
@@ -497,6 +485,39 @@ pub fn resolve_local_file() -> LocalFile {
     }
 }
 
+pub trait PathExt {
+    fn has_generics(&self) -> bool;
+    fn generics(&self) -> Option<TypeList>;
+    fn generic_count(&self) -> usize {
+        self.generics().map(|tl| tl.0.len()).unwrap_or(0)
+    }
+}
+
+impl PathExt for Path {
+    fn has_generics(&self) -> bool {
+        generics_from_path(self)
+            .ok()
+            .flatten()
+            .map(|tl| !tl.0.is_empty())
+            .unwrap_or(false)
+    }
+
+    fn generics(&self) -> Option<TypeList> {
+        generics_from_path(self).ok().flatten()
+    }
+}
+
+fn generics_from_path(path: &Path) -> syn::Result<Option<TypeList>> {
+    let mut generics = None;
+    for segment in &path.segments {
+        if let PathArguments::AngleBracketed(angle_bracketed) = &segment.arguments {
+            let type_list = parse2::<TypeList>(angle_bracketed.args.to_token_stream())?;
+            generics = Some(type_list);
+        }
+    }
+    Ok(generics)
+}
+
 pub fn debug_pat(pat: &Pat) -> &'static str {
     match pat {
         Pat::Ident(_) => "Pat::Ident",
@@ -538,5 +559,20 @@ pub fn debug_ty(ty: &Type) -> &'static str {
         Type::Tuple(_) => "Tuple",
         Type::Verbatim(_) => "Verbatim",
         _ => "<unknown>",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_generics_from_path() -> Result<(), syn::Error> {
+        let item = parse2::<Path>(quote! {
+            foo::bar::<u32, i32>
+        })?;
+        let generics = generics_from_path(&item)?.expect("no generics");
+        let generics = quote! { #generics };
+        assert_eq!("u32 , i32", generics.to_string());
+        Ok(())
     }
 }
