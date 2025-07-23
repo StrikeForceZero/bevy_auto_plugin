@@ -4,7 +4,7 @@ use bevy_ecs::prelude::*;
 use bevy_reflect::prelude::*;
 use std::any::Any;
 
-#[auto_register_type(Test<bool>)]
+#[auto_register_type(generics(bool))]
 #[derive(Reflect)]
 struct Test<T>(T);
 

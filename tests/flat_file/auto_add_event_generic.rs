@@ -2,7 +2,7 @@ use bevy_app::prelude::*;
 use bevy_auto_plugin::flat_file::prelude::*;
 use bevy_ecs::prelude::*;
 
-#[auto_add_event(Test<bool>)]
+#[auto_add_event(generics(bool))]
 #[derive(Event, Debug, PartialEq)]
 struct Test<T>(T);
 

@@ -1,7 +1,7 @@
 use bevy_auto_plugin_shared::module::inner::expand_module;
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
-use syn::{Error, parse_macro_input};
+use syn::{Error, ItemFn, parse_macro_input};
 
 fn to_compile_error(err: Error) -> MacroStream {
     err.to_compile_error()
@@ -73,10 +73,9 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
 use bevy_auto_plugin_shared::util::TargetRequirePath;
-use bevy_auto_plugin_shared::{AddSystemParams, flat_file};
+use bevy_auto_plugin_shared::{AddSystemParams, StructOrEnumAttributeParams, flat_file};
 use proc_macro2::Span;
-use syn::punctuated::Punctuated;
-use syn::{Item, Path, Token};
+use syn::Item;
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
@@ -93,11 +92,7 @@ fn flat_file_handle_attribute(
 ) -> CompilerStream {
     let cloned_input = input.clone();
     let parsed_item = parse_macro_input!(input as Item);
-    let args = if attr.is_empty() {
-        None
-    } else {
-        Some(parse_macro_input!(attr with Punctuated::<Path, Token![,]>::parse_terminated))
-    };
+    let args = parse_macro_input!(attr as StructOrEnumAttributeParams);
 
     flat_file::inner::handle_attribute_outer(parsed_item, Span::call_site(), target, args)
         .map(|_| cloned_input)
@@ -143,14 +138,9 @@ pub fn flat_file_auto_register_state_type(
 /// Automatically add_system in the Bevy `App`.
 #[proc_macro_attribute]
 pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let args: AddSystemParams = match syn::parse(attr) {
-        Ok(v) => v,
-        Err(e) => {
-            return e.to_compile_error().into();
-        }
-    };
     let cloned_input = input.clone();
-    let item = parse_macro_input!(input as Item);
+    let item = parse_macro_input!(input as ItemFn);
+    let args = parse_macro_input!(attr as AddSystemParams);
     flat_file::inner::handle_add_system_attribute_outer(item, args, Span::call_site())
         .map(|_| cloned_input)
         .unwrap_or_else(|err| err.to_compile_error().into())

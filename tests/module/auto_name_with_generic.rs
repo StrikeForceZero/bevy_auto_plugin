@@ -7,7 +7,7 @@ use bevy_ecs::prelude::*;
 mod plugin_module {
     use super::*;
     #[derive(Component)]
-    #[auto_name(Test<bool>)]
+    #[auto_name(generics(bool))]
     pub struct Test<T>(pub T);
 }
 use plugin_module::*;

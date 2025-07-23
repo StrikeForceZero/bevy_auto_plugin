@@ -1,21 +1,18 @@
 use crate::flat_file::attribute::FlatFileArgs;
 use crate::flat_file::file_state::{update_file_state, update_state};
 use crate::util::{
-    FnParamMutabilityCheckErrMessages, FnRef, LocalFile, StructOrEnumRef, TargetData,
-    TargetRequirePath, is_fn_param_mutable_reference, resolve_local_file,
-    resolve_path_from_item_or_args,
+    FnParamMutabilityCheckErrMessages, LocalFile, StructOrEnumRef, TargetData, TargetRequirePath,
+    is_fn_param_mutable_reference, resolve_local_file, resolve_path_from_item_or_args,
 };
 use crate::{
-    AddSystemParams, generate_add_events, generate_add_systems, generate_auto_names,
-    generate_init_resources, generate_init_states, generate_register_state_types,
-    generate_register_types,
+    AddSystemParams, StructOrEnumAttributeParams, generate_add_events, generate_add_systems,
+    generate_auto_names, generate_init_resources, generate_init_states,
+    generate_register_state_types, generate_register_types,
 };
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
-use syn::punctuated::Punctuated;
-use syn::token::Comma;
 use syn::{Error, Item, ItemFn, Path, parse2};
 
 pub fn auto_plugin_inner(
@@ -116,7 +113,7 @@ pub fn handle_attribute_outer(
     item: Item,
     attr_span: Span,
     target: TargetRequirePath,
-    args: Option<Punctuated<Path, Comma>>,
+    args: StructOrEnumAttributeParams,
 ) -> syn::Result<()> {
     let file_path = match resolve_local_file() {
         LocalFile::File(path) => path,
@@ -136,7 +133,7 @@ pub fn handle_attribute_inner(
     item: Item,
     attr_span: Span,
     target: TargetRequirePath,
-    args: Option<Punctuated<Path, Comma>>,
+    args: StructOrEnumAttributeParams,
 ) -> syn::Result<()> {
     let path = resolve_path_from_item_or_args::<StructOrEnumRef>(&item, args)?;
     let target_data = TargetData::from_target_require_path(target, path);
@@ -145,7 +142,7 @@ pub fn handle_attribute_inner(
 }
 
 pub fn handle_add_system_attribute_outer(
-    item: Item,
+    item: ItemFn,
     args: AddSystemParams,
     attr_span: Span,
 ) -> syn::Result<()> {
@@ -164,11 +161,12 @@ pub fn handle_add_system_attribute_outer(
 
 pub fn handle_add_system_attribute_inner(
     file_path: String,
-    item: Item,
+    item: ItemFn,
     args: AddSystemParams,
     attr_span: Span,
 ) -> syn::Result<()> {
-    let path = resolve_path_from_item_or_args::<FnRef>(&item, None)?;
+    let ident = &item.sig.ident;
+    let path = Path::from_string(&ident.to_string())?;
     let target_data = TargetData::AddSystem {
         system: path,
         params: args,

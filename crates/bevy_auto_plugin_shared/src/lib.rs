@@ -36,13 +36,22 @@ impl AutoPluginAttribute {
     }
 }
 
-#[derive(FromMeta, Debug)]
-#[darling(derive_syn_parse)]
+#[derive(FromMeta, Debug, Default)]
+#[darling(derive_syn_parse, default)]
 pub struct StructOrEnumAttributeParams {
     pub generics: Option<TypeList>,
 }
 
-#[derive(FromMeta)]
+impl StructOrEnumAttributeParams {
+    pub fn has_generics(&self) -> bool {
+        self.generics
+            .as_ref()
+            .map(|types| types.0.len() > 0)
+            .unwrap_or(false)
+    }
+}
+
+#[derive(FromMeta, Debug)]
 #[darling(derive_syn_parse)]
 pub struct AddSystemParams {
     pub schedule: Path,
@@ -258,7 +267,9 @@ pub fn generate_auto_names(
     let auto_names = items
         .map(|item| {
             let item = syn::parse_str::<Path>(&item)?;
-            let name = path_to_string(&item, true);
+            let name = path_to_string(&item, true)
+                // TODO: flag
+                .replace("::", "");
             Ok(quote! {
                 #app_ident.register_required_components_with::<#item, Name>(|| Name::new(#name));
             })

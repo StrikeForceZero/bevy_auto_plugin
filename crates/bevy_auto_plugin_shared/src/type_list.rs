@@ -41,6 +41,16 @@ impl FromMeta for TypeList {
     }
 }
 
+impl syn::parse::Parse for TypeList {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        use syn::{Token, Type, punctuated::Punctuated};
+        let elems = Punctuated::<Type, Token![,]>::parse_terminated(input)?
+            .into_iter()
+            .collect();
+        Ok(TypeList(elems))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

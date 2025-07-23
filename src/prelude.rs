@@ -37,7 +37,7 @@ pub mod module {
         ///     use bevy::prelude::*;
         ///     use bevy_auto_plugin::module::prelude::*;
         ///
-        ///     #[auto_add_event(FooEventWithGeneric<bool>)]
+        ///     #[auto_add_event(generics(bool))]
         ///     #[derive(Event, Reflect)]
         ///     struct FooEventWithGeneric<T>(T);
         ///
@@ -90,7 +90,7 @@ pub mod module {
         ///     use bevy::prelude::*;
         ///     use bevy_auto_plugin::module::prelude::*;
         ///
-        ///     #[auto_init_resource(FooResourceWithGeneric<bool>)]
+        ///     #[auto_init_resource(generics(bool))]
         ///     #[derive(Resource, Default, Reflect)]
         ///     #[reflect(Resource)]
         ///     struct FooResourceWithGeneric<T>(T);
@@ -176,11 +176,11 @@ pub mod module {
         ///     use bevy::prelude::*;
         ///     use bevy_auto_plugin::module::prelude::*;
         ///
-        ///     #[auto_register_type(FooComponentWithGeneric<bool>)]
-        ///     #[auto_register_type(FooComponentWithGeneric<u32>)]
+        ///     #[auto_register_type(generics(bool))]
+        ///     #[auto_register_type(generics(u32))]
         ///     #[derive(Component, Reflect)]
         ///     #[reflect(Component)]
-        ///     #[auto_name(FooComponentWithGeneric<bool>)]
+        ///     #[auto_name(generics(bool))]
         ///     struct FooComponentWithGeneric<T>(T);
         ///
         ///     /* code gen */
@@ -293,8 +293,8 @@ pub mod module {
         ///     use bevy::prelude::*;
         ///     use bevy_auto_plugin::module::prelude::*;
         ///
-        ///     #[auto_register_type(FooComponentWithGeneric<bool>)]
-        ///     #[auto_register_type(FooComponentWithGeneric<u32>)]
+        ///     #[auto_register_type(generics(bool))]
+        ///     #[auto_register_type(generics(u32))]
         ///     #[derive(Component, Reflect)]
         ///     #[reflect(Component)]
         ///     struct FooComponentWithGeneric<T>(T);
@@ -339,7 +339,7 @@ pub mod flat_file {
         /// use bevy::prelude::*;
         /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
-        /// #[auto_add_event(FooEventWithGeneric<bool>)]
+        /// #[auto_add_event(generics(bool))]
         /// #[derive(Event, Reflect)]
         /// struct FooEventWithGeneric<T>(T);
         ///
@@ -374,7 +374,7 @@ pub mod flat_file {
         /// use bevy::prelude::*;
         /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
-        /// #[auto_init_resource(FooResourceWithGeneric<bool>)]
+        /// #[auto_init_resource(generics(bool))]
         /// #[derive(Resource, Default, Reflect)]
         /// #[reflect(Resource)]
         /// struct FooResourceWithGeneric<T>(T);
@@ -430,11 +430,11 @@ pub mod flat_file {
         /// use bevy::prelude::*;
         /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
-        /// #[auto_register_type(FooComponentWithGeneric<bool>)]
-        /// #[auto_register_type(FooComponentWithGeneric<u32>)]
+        /// #[auto_register_type(generics(bool))]
+        /// #[auto_register_type(generics(u32))]
         /// #[derive(Component, Reflect)]
         /// #[reflect(Component)]
-        /// #[auto_name(FooComponentWithGeneric<bool>)]
+        /// #[auto_name(generics(bool))]
         /// struct FooComponentWithGeneric<T>(T);
         ///
         /// #[auto_plugin(app=app)]
@@ -513,8 +513,8 @@ pub mod flat_file {
         /// use bevy::prelude::*;
         /// use bevy_auto_plugin::flat_file::prelude::*;
         ///
-        /// #[auto_register_type(FooComponentWithGeneric<bool>)]
-        /// #[auto_register_type(FooComponentWithGeneric<u32>)]
+        /// #[auto_register_type(generics(bool))]
+        /// #[auto_register_type(generics(u32))]
         /// #[derive(Component, Reflect)]
         /// #[reflect(Component)]
         /// struct FooComponentWithGeneric<T>(T);

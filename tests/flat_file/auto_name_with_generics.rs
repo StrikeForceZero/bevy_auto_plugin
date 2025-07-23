@@ -4,7 +4,7 @@ use bevy_ecs::name::Name;
 use bevy_ecs::prelude::*;
 
 #[derive(Component)]
-#[auto_name(Test<bool>)]
+#[auto_name(generics(bool))]
 pub struct Test<T>(T);
 
 #[auto_plugin(app=app)]

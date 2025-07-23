@@ -6,7 +6,7 @@ use bevy_ecs::prelude::*;
 mod plugin_module {
     use super::*;
 
-    #[auto_init_resource(Test<bool>)]
+    #[auto_init_resource(generics(bool))]
     #[derive(Resource, Default)]
     pub struct Test<T>(pub T);
 }

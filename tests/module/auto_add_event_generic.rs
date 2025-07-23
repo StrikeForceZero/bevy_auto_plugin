@@ -5,7 +5,7 @@ use bevy_ecs::prelude::*;
 #[auto_plugin(init_name=init)]
 mod plugin_module {
     use super::*;
-    #[auto_add_event(Test<bool>)]
+    #[auto_add_event(generics(bool))]
     #[derive(Event, Debug, PartialEq)]
     pub struct Test<T>(pub T);
 }

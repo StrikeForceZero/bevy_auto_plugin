@@ -2,7 +2,7 @@ use bevy_app::prelude::*;
 use bevy_auto_plugin::flat_file::prelude::*;
 use bevy_ecs::prelude::*;
 
-#[auto_init_resource(Test<bool>)]
+#[auto_init_resource(generics(bool))]
 #[derive(Resource, Default)]
 struct Test<T>(T);
 

@@ -8,7 +8,7 @@ use std::any::Any;
 mod plugin_module {
     use super::*;
 
-    #[auto_register_type(Test<bool>)]
+    #[auto_register_type(generics(bool))]
     #[derive(Reflect)]
     pub struct Test<T>(pub T);
 }
