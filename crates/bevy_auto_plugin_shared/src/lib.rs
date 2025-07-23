@@ -4,7 +4,7 @@ use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::quote;
 use std::collections::HashSet;
-use syn::Path;
+use syn::{Path, parse2};
 
 pub mod flat_file;
 pub mod module;
@@ -53,9 +53,8 @@ impl StructOrEnumAttributeParams {
 
 #[derive(FromMeta, Debug)]
 #[darling(derive_syn_parse)]
-pub struct AddSystemParams {
+pub struct ScheduleConfigParams {
     pub schedule: Path,
-    pub generics: Option<TypeList>,
     pub in_set: Option<Path>,
     pub before: Option<Path>,
     pub after: Option<Path>,
@@ -67,10 +66,18 @@ pub struct AddSystemParams {
     pub before_ignore_deferred: Option<Path>,
 }
 
+#[derive(FromMeta, Debug)]
+#[darling(derive_syn_parse)]
+pub struct AddSystemParams {
+    pub generics: Option<TypeList>,
+    #[darling(flatten)]
+    pub schedule_config: ScheduleConfigParams,
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
-pub struct AddSystemSerializedParams {
+pub struct ScheduleConfigSerializedParams {
     pub schedule_path_string: String,
-    pub system_ident_string: String,
+    pub scheduled_item_path_string: String,
     pub in_set_path_string: Option<String>,
     pub before_path_string: Option<String>,
     pub after_path_string: Option<String>,
@@ -82,18 +89,11 @@ pub struct AddSystemSerializedParams {
     pub before_ignore_deferred_path_string: Option<String>,
 }
 
-impl AddSystemSerializedParams {
-    pub fn from_macro_attr(system: &Path, attr: &AddSystemParams) -> Self {
-        let generics = attr
-            .generics
-            .as_ref()
-            .map(TokenStream::from)
-            .unwrap_or_default();
-        let system_ident_string = quote! { #system::<#generics> };
-
+impl ScheduleConfigSerializedParams {
+    pub fn from_macro_attr(system: &Path, attr: &ScheduleConfigParams) -> Self {
         Self {
             schedule_path_string: path_to_string_with_spaces(&attr.schedule),
-            system_ident_string: system_ident_string.to_string(),
+            scheduled_item_path_string: path_to_string_with_spaces(system),
             in_set_path_string: attr.in_set.as_ref().map(path_to_string_with_spaces),
             before_path_string: attr.before.as_ref().map(path_to_string_with_spaces),
             after_path_string: attr.after.as_ref().map(path_to_string_with_spaces),
@@ -117,7 +117,7 @@ impl AddSystemSerializedParams {
                 .map(path_to_string_with_spaces),
         }
     }
-    pub fn to_tokens(&self, app_ident: &Ident) -> syn::Result<MacroStream> {
+    pub fn to_tokens(&self) -> syn::Result<MacroStream> {
         let mut output = quote! {};
         if let Some(in_set) = &self.in_set_path_string {
             let in_set = syn::parse_str::<Path>(in_set)?;
@@ -181,10 +181,40 @@ impl AddSystemSerializedParams {
                     .after_ignore_deferred(#after_ignore_deferred)
             }
         }
-        let schedule = syn::parse_str::<Path>(&self.schedule_path_string)?;
-        let system = syn::parse_str::<Path>(&self.system_ident_string)?;
+        Ok(output)
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+pub struct AddSystemSerializedParams {
+    pub schedule_config: ScheduleConfigSerializedParams,
+}
+
+impl AddSystemSerializedParams {
+    pub fn from_macro_attr(system: &Path, attr: &AddSystemParams) -> Self {
+        let generics = attr
+            .generics
+            .as_ref()
+            .map(TokenStream::from)
+            .unwrap_or_default();
+
+        let system_path_tokens = quote! { #system::<#generics> };
+        // TODO: return result
+        let system = parse2::<Path>(system_path_tokens).expect("failed to parse system path");
+
+        Self {
+            schedule_config: ScheduleConfigSerializedParams::from_macro_attr(
+                &system,
+                &attr.schedule_config,
+            ),
+        }
+    }
+    pub fn to_tokens(&self, app_ident: &Ident) -> syn::Result<MacroStream> {
+        let config_tokens = self.schedule_config.to_tokens()?;
+        let schedule = syn::parse_str::<Path>(&self.schedule_config.schedule_path_string)?;
+        let system = syn::parse_str::<Path>(&self.schedule_config.scheduled_item_path_string)?;
         Ok(quote! {
-            #app_ident.add_systems(#schedule, #system #output);
+            #app_ident.add_systems(#schedule, #system #config_tokens);
         })
     }
 }
