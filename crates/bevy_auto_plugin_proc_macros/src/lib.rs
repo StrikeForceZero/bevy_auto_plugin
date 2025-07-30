@@ -184,7 +184,6 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
                 Ok(p) => p,
                 Err(err) => return err.into_compile_error().into(),
             };
-            let name_lit = LitStr::new(&full_name, Span::call_site());
 
             output.extend(quote! {
                 impl bevy::prelude::Plugin for #path_with_generics {
@@ -194,10 +193,6 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
                 }
 
                 impl bevy_auto_plugin_shared::AutoPlugin for #path_with_generics {
-                    fn name(&self) -> &'static str {
-                        concat!(module_path!(), "::", #name_lit)
-                    }
-
                     fn build(&self, app: &mut bevy::prelude::App) {
                         bevy::prelude::Plugin::build(self, app);
                     }
@@ -205,13 +200,6 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
             });
         }
     }
-
-    let full_name = if generics.params.is_empty() {
-        ident.to_string()
-    } else {
-        format!("{}{}", ident, generics.to_token_stream())
-    };
-    let name_lit = LitStr::new(&full_name, Span::call_site());
 
     if params.global_auto_plugin.impl_generic_plugin_trait {
         output.extend(quote! {
@@ -230,10 +218,6 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
             impl #impl_generics bevy_auto_plugin_shared::AutoPlugin
                 for #ident #ty_generics #where_clause
             {
-                fn name(&self) -> &'static str {
-                    concat!(module_path!(), "::", #name_lit)
-                }
-
                 fn build(&self, app: &mut bevy::prelude::App) {
                     bevy::prelude::Plugin::build(self, app);
                 }

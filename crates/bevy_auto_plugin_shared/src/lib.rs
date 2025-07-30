@@ -3,6 +3,7 @@ use crate::util::{PathExt, path_to_string, path_to_string_with_spaces};
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::quote;
+use std::any::type_name;
 use std::collections::HashSet;
 use syn::{Attribute, Generics, Path, Type, Visibility, parse2};
 
@@ -420,7 +421,9 @@ pub fn generate_add_systems(
 }
 
 pub trait AutoPlugin: bevy_app::Plugin {
-    fn name(&self) -> &'static str;
+    fn name(&self) -> &'static str {
+        type_name::<Self>()
+    }
     fn build(&self, app: &mut bevy_app::App) {
         bevy_app::Plugin::build(self, app);
     }
