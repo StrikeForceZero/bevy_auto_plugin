@@ -1,10 +1,10 @@
 use crate::type_list::TypeList;
 use crate::util::{PathExt, path_to_string, path_to_string_with_spaces};
-use darling::FromMeta;
+use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::quote;
 use std::collections::HashSet;
-use syn::{Path, parse2};
+use syn::{Attribute, Generics, Path, Type, Visibility, parse2};
 
 pub mod flat_file;
 pub mod module;
@@ -36,9 +36,56 @@ impl AutoPluginAttribute {
     }
 }
 
+#[derive(Debug, FromField)]
+pub struct GlobalAutoPluginField {
+    ident: Option<Ident>,
+    ty: Type,
+}
+
+#[derive(Debug, FromVariant)]
+pub struct GlobalAutoPluginVariant {
+    ident: Ident,
+    fields: darling::ast::Fields<GlobalAutoPluginField>,
+}
+
+#[derive(FromDeriveInput, Debug)]
+#[darling(
+    attributes(global_auto_plugin),
+    forward_attrs,
+    supports(struct_any, enum_any)
+)]
+pub struct GlobalAutoPluginDeriveParams {
+    pub ident: Ident,
+    pub vis: Visibility,
+    pub generics: Generics,
+    pub data: darling::ast::Data<GlobalAutoPluginVariant, GlobalAutoPluginField>,
+    pub attrs: Vec<Attribute>,
+    #[darling(flatten)]
+    pub global_auto_plugin: GlobalAutoPluginStructOrEnumAttributeParams,
+}
+
+#[derive(FromMeta, Debug, Default)]
+#[darling(derive_syn_parse, default)]
+pub struct GlobalAutoPluginStructOrEnumAttributeParams {
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
+    pub impl_plugin_trait: bool,
+    pub impl_generic_auto_plugin_trait: bool,
+    pub impl_generic_plugin_trait: bool,
+}
+
+#[derive(FromMeta, Debug, Default)]
+#[darling(derive_syn_parse, default)]
+pub struct GlobalAutoPluginFnAttributeParams {
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
+}
+
 #[derive(FromMeta, Debug, Default)]
 #[darling(derive_syn_parse, default)]
 pub struct StructOrEnumAttributeParams {
+    // TODO: #[darling(multiple)]
+    //     pub generics: Vec<TypeList>,
     pub generics: Option<TypeList>,
 }
 
@@ -46,7 +93,7 @@ impl StructOrEnumAttributeParams {
     pub fn has_generics(&self) -> bool {
         self.generics
             .as_ref()
-            .map(|types| types.0.len() > 0)
+            .map(|types| !types.0.is_empty())
             .unwrap_or(false)
     }
 }
@@ -370,4 +417,11 @@ pub fn generate_add_systems(
             #(#output)*
         }
     })
+}
+
+pub trait AutoPlugin: bevy_app::Plugin {
+    fn name(&self) -> &'static str;
+    fn build(&self, app: &mut bevy_app::App) {
+        bevy_app::Plugin::build(self, app);
+    }
 }

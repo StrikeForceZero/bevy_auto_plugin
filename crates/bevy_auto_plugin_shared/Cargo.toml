@@ -19,6 +19,7 @@ missing_auto_plugin_is_warning = ["missing_auto_plugin_check", "log"]
 lang_server_noop = []
 
 [dependencies]
+bevy_app = { workspace = true }
 proc-macro2 = { workspace = true }
 syn = { workspace = true }
 quote = { workspace = true }
