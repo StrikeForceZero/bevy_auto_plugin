@@ -1,7 +1,7 @@
 use bevy_auto_plugin_shared::module::inner::expand_module;
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
-use syn::{Error, ItemFn, LitStr, Path, parse_macro_input, parse_str};
+use syn::{Error, ItemFn, Path, parse_macro_input, parse_str};
 
 fn to_compile_error(err: Error) -> MacroStream {
     err.to_compile_error()
@@ -72,10 +72,13 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 /* Flat File */
 
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
+use bevy_auto_plugin_shared::global::__internal::_plugin_entry_block;
 use bevy_auto_plugin_shared::util::TargetRequirePath;
 use bevy_auto_plugin_shared::{
     AddSystemParams, GlobalAutoPluginDeriveParams, GlobalAutoPluginFnAttributeParams,
-    StructOrEnumAttributeParams, flat_file,
+    GlobalStructOrEnumAttributeParams, StructOrEnumAttributeParams, default_app_ident, flat_file,
+    generate_register_type, generate_register_types,
+    get_unique_ident_for_global_struct_or_enum_attribute,
 };
 use proc_macro2::Span;
 use quote::{ToTokens, quote};
@@ -152,7 +155,7 @@ pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) ->
 
 /* global */
 
-#[proc_macro_derive(AutoPlugin, attributes(global_auto_plugin))]
+#[proc_macro_derive(AutoPlugin, attributes(auto_plugin))]
 pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
     use darling::FromDeriveInput;
     use syn::DeriveInput;
@@ -168,12 +171,22 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
 
     let mut output = MacroStream::new();
 
-    if params.global_auto_plugin.impl_plugin_trait {
-        let full_names = if params.global_auto_plugin.generics.is_empty() {
+    output.extend(quote! {
+        impl #impl_generics ::bevy_auto_plugin_shared::global::__internal::AutoPluginTypeId
+            for #ident #ty_generics #where_clause
+        {
+            fn type_id() -> std::any::TypeId {
+                std::any::TypeId::of::<Self>()
+            }
+        }
+    });
+
+    if params.auto_plugin.impl_plugin_trait {
+        let full_names = if params.auto_plugin.generics.is_empty() {
             vec![ident.to_string()]
         } else {
             params
-                .global_auto_plugin
+                .auto_plugin
                 .generics
                 .iter()
                 .map(|tl| format!("{}::<{}>", ident, tl.to_token_stream()))
@@ -186,42 +199,34 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
             };
 
             output.extend(quote! {
-                impl bevy::prelude::Plugin for #path_with_generics {
-                    fn build(&self, app: &mut bevy::prelude::App) {
-                        todo!()
+                impl ::bevy_auto_plugin_shared::global::__internal::bevy_app::Plugin for #path_with_generics {
+                    fn build(&self, app: &mut ::bevy_auto_plugin_shared::global::__internal::bevy_app::App) {
+                        <Self as ::bevy_auto_plugin_shared::global::__internal::AutoPlugin>::build(self, app);
                     }
                 }
 
-                impl bevy_auto_plugin_shared::AutoPlugin for #path_with_generics {
-                    fn build(&self, app: &mut bevy::prelude::App) {
-                        bevy::prelude::Plugin::build(self, app);
-                    }
-                }
+                impl ::bevy_auto_plugin_shared::global::__internal::AutoPlugin for #path_with_generics {}
             });
         }
     }
 
-    if params.global_auto_plugin.impl_generic_plugin_trait {
+    if params.auto_plugin.impl_generic_plugin_trait {
         output.extend(quote! {
-            impl #impl_generics bevy::prelude::Plugin
+            impl #impl_generics ::bevy_auto_plugin_shared::global::__internal::bevy_app::Plugin
                 for #ident #ty_generics #where_clause
             {
-                fn build(&self, app: &mut bevy::prelude::App) {
-                    todo!()
+                fn build(&self, app: &mut ::bevy_auto_plugin_shared::global::__internal::bevy_app::Plugin) {
+                    <Self as ::bevy_auto_plugin_shared::global::__internal::AutoPlugin>::build(self, app);
                 }
             }
         });
     }
 
-    if params.global_auto_plugin.impl_generic_auto_plugin_trait {
+    if params.auto_plugin.impl_generic_auto_plugin_trait {
         output.extend(quote! {
-            impl #impl_generics bevy_auto_plugin_shared::AutoPlugin
+            impl #impl_generics ::bevy_auto_plugin_shared::global::__internal::AutoPlugin
                 for #ident #ty_generics #where_clause
-            {
-                fn build(&self, app: &mut bevy::prelude::App) {
-                    bevy::prelude::Plugin::build(self, app);
-                }
-            }
+            {}
         });
     }
 
@@ -241,5 +246,44 @@ pub fn global_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
         #item
     };
     todo!();
+    output.into()
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    let item = parse_macro_input!(input as Item);
+    let ident = match &item {
+        Item::Struct(item_struct) => &item_struct.ident,
+        Item::Enum(item_enum) => &item_enum.ident,
+        _ => {
+            return Error::new(Span::call_site(), "Only struct and enum can be registered")
+                .into_compile_error()
+                .into();
+        }
+    };
+    let params = match syn::parse::<GlobalStructOrEnumAttributeParams>(attr) {
+        Ok(params) => params,
+        Err(err) => return err.into_compile_error().into(),
+    };
+    let unique_ident = get_unique_ident_for_global_struct_or_enum_attribute(
+        "_global_plugin_register_type_",
+        ident,
+        &params,
+    );
+    let generics = &params.inner.generics;
+    let target = quote! {
+        #ident::<#generics>
+    };
+    let app_ident = default_app_ident();
+    let register_tokens = match generate_register_type(&app_ident, target.to_string()) {
+        Ok(tokens) => tokens,
+        Err(err) => return err.into_compile_error().into(),
+    };
+    let expr = syn::parse_quote! { |#app_ident| { #register_tokens } };
+    let registration = _plugin_entry_block(&unique_ident, &params.plugin, &expr);
+    let output = quote! {
+        #item
+        #registration
+    };
     output.into()
 }

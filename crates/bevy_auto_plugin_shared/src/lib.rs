@@ -1,13 +1,14 @@
 use crate::type_list::TypeList;
 use crate::util::{PathExt, path_to_string, path_to_string_with_spaces};
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
-use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream as MacroStream, TokenStream};
 use quote::quote;
-use std::any::type_name;
 use std::collections::HashSet;
+use std::hash::Hash;
 use syn::{Attribute, Generics, Path, Type, Visibility, parse2};
 
 pub mod flat_file;
+pub mod global;
 pub mod module;
 mod type_list;
 pub mod util;
@@ -50,11 +51,7 @@ pub struct GlobalAutoPluginVariant {
 }
 
 #[derive(FromDeriveInput, Debug)]
-#[darling(
-    attributes(global_auto_plugin),
-    forward_attrs,
-    supports(struct_any, enum_any)
-)]
+#[darling(attributes(auto_plugin), forward_attrs, supports(struct_any, enum_any))]
 pub struct GlobalAutoPluginDeriveParams {
     pub ident: Ident,
     pub vis: Visibility,
@@ -62,7 +59,7 @@ pub struct GlobalAutoPluginDeriveParams {
     pub data: darling::ast::Data<GlobalAutoPluginVariant, GlobalAutoPluginField>,
     pub attrs: Vec<Attribute>,
     #[darling(flatten)]
-    pub global_auto_plugin: GlobalAutoPluginStructOrEnumAttributeParams,
+    pub auto_plugin: GlobalAutoPluginStructOrEnumAttributeParams,
 }
 
 #[derive(FromMeta, Debug, Default)]
@@ -82,7 +79,51 @@ pub struct GlobalAutoPluginFnAttributeParams {
     pub generics: Vec<TypeList>,
 }
 
-#[derive(FromMeta, Debug, Default)]
+fn hash_global_struct_or_enum_attribute_params(
+    ident: &Ident,
+    params: &GlobalStructOrEnumAttributeParams,
+) -> String {
+    use std::hash::Hasher;
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    ident.hash(&mut hasher);
+    params.hash(&mut hasher);
+    format!("{:x}", hasher.finish())
+}
+
+fn get_unique_ident_string_for_global_struct_or_enum_attribute(
+    prefix: &'static str,
+    ident: &Ident,
+    params: &GlobalStructOrEnumAttributeParams,
+) -> String {
+    let hash = hash_global_struct_or_enum_attribute_params(ident, params);
+    format!("{prefix}_{hash}")
+}
+
+pub fn get_unique_ident_for_global_struct_or_enum_attribute(
+    prefix: &'static str,
+    ident: &Ident,
+    params: &GlobalStructOrEnumAttributeParams,
+) -> Ident {
+    let ident_string =
+        get_unique_ident_string_for_global_struct_or_enum_attribute(prefix, ident, params);
+    Ident::new(&ident_string, ident.span())
+}
+
+#[derive(FromMeta, Debug, PartialEq, Hash)]
+#[darling(derive_syn_parse)]
+pub struct GlobalStructOrEnumAttributeParams {
+    pub plugin: Path,
+    #[darling(flatten, default)]
+    pub inner: StructOrEnumAttributeParams,
+}
+
+impl GlobalStructOrEnumAttributeParams {
+    pub fn has_generics(&self) -> bool {
+        self.inner.has_generics()
+    }
+}
+
+#[derive(FromMeta, Debug, Default, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
 pub struct StructOrEnumAttributeParams {
     // TODO: #[darling(multiple)]
@@ -281,17 +322,19 @@ pub struct AutoPluginContext {
     pub add_systems: HashSet<AddSystemSerializedParams>,
 }
 
+pub fn generate_register_type(app_ident: &Ident, item: String) -> syn::Result<MacroStream> {
+    let item = syn::parse_str::<Path>(&item)?;
+    Ok(quote! {
+        #app_ident.register_type::<#item>();
+    })
+}
+
 pub fn generate_register_types(
     app_ident: &Ident,
     items: impl Iterator<Item = String>,
 ) -> syn::Result<MacroStream> {
     let register_types = items
-        .map(|item| {
-            let item = syn::parse_str::<Path>(&item)?;
-            Ok(quote! {
-                #app_ident.register_type::<#item>();
-            })
-        })
+        .map(|item| generate_register_type(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
     Ok(quote! {
         {
@@ -420,11 +463,6 @@ pub fn generate_add_systems(
     })
 }
 
-pub trait AutoPlugin: bevy_app::Plugin {
-    fn name(&self) -> &'static str {
-        type_name::<Self>()
-    }
-    fn build(&self, app: &mut bevy_app::App) {
-        bevy_app::Plugin::build(self, app);
-    }
+pub fn default_app_ident() -> Ident {
+    Ident::new("app", Span::call_site())
 }

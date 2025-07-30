@@ -6,17 +6,23 @@ use internal_test_util::create_minimal_app;
 use std::any::Any;
 
 #[derive(AutoPlugin)]
-#[auto_plugin(impl_plugin_trait)]
-struct Test;
+#[auto_plugin(generics(u32, i32), impl_plugin_trait)]
+struct Test<T1, T2>(T1, T2)
+where
+    T1: Send + Sync + 'static,
+    T2: Send + Sync + 'static;
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
-#[auto_register_type(plugin = Test)]
-struct Foo;
+#[auto_register_type(plugin = Test::<u32, i32>, generics(u32, i32))]
+struct Foo<T1, T2>(T1, T2)
+where
+    T1: Any + Send + Sync + 'static,
+    T2: Any + Send + Sync + 'static;
 
 fn app() -> App {
     let mut app = create_minimal_app();
-    app.add_plugins(Test);
+    app.add_plugins(Test(0u32, 0i32));
     app
 }
 
@@ -26,7 +32,7 @@ fn test_auto_register_type() {
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
     assert!(
-        type_registry.contains(Foo.type_id()),
+        type_registry.contains(Foo::<u32, i32>.type_id()),
         "did not auto register type"
     );
 }

@@ -11,6 +11,7 @@ publish = true
 [lib]
 
 [features]
+inventory = []
 log_plugin_build = ["log"]
 missing_auto_plugin_check = []
 missing_auto_plugin_is_compile_error = ["missing_auto_plugin_check"]
@@ -20,6 +21,7 @@ lang_server_noop = []
 
 [dependencies]
 bevy_app = { workspace = true }
+bevy_log = { workspace = true }
 proc-macro2 = { workspace = true }
 syn = { workspace = true }
 quote = { workspace = true }
@@ -27,3 +29,4 @@ thiserror = { workspace = true }
 log = { workspace = true, optional = true }
 darling = { workspace = true }
 smart-default = { workspace = true }
+linkme = { workspace = true }

@@ -4,7 +4,7 @@ use quote::{ToTokens, quote};
 use syn::parse::Parser;
 use syn::{Meta, Token, Type, punctuated::Punctuated};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Hash)]
 pub struct TypeList(pub Vec<Type>);
 
 impl ToTokens for TypeList {
