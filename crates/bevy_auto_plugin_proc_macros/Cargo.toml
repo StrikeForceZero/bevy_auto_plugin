@@ -13,6 +13,7 @@ proc-macro = true
 
 [features]
 legacy_path_param = ["bevy_auto_plugin_shared/legacy_path_param"]
+inventory = ["bevy_auto_plugin_shared/inventory"]
 log_plugin_build = ["bevy_auto_plugin_shared/log_plugin_build"]
 missing_auto_plugin_check = ["bevy_auto_plugin_shared/missing_auto_plugin_check"]
 missing_auto_plugin_is_compile_error = ["bevy_auto_plugin_shared/missing_auto_plugin_check"]

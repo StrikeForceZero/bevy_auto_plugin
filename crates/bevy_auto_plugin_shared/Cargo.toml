@@ -31,3 +31,4 @@ log = { workspace = true, optional = true }
 darling = { workspace = true }
 smart-default = { workspace = true }
 linkme = { workspace = true }
+inventory = { workspace = true }
