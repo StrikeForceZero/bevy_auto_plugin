@@ -77,8 +77,8 @@ use bevy_auto_plugin_shared::util::TargetRequirePath;
 use bevy_auto_plugin_shared::{
     AddSystemParams, GlobalAutoPluginDeriveParams, GlobalAutoPluginFnAttributeParams,
     GlobalStructOrEnumAttributeParams, StructOrEnumAttributeParams, default_app_ident, flat_file,
-    generate_register_type, generate_register_types,
-    get_unique_ident_for_global_struct_or_enum_attribute,
+    generate_register_type, get_unique_ident_for_global_struct_or_enum_attribute,
+    ok_or_return_compiler_error,
 };
 use proc_macro2::Span;
 use quote::{ToTokens, quote};
@@ -99,7 +99,34 @@ fn flat_file_handle_attribute(
 ) -> CompilerStream {
     let cloned_input = input.clone();
     let parsed_item = parse_macro_input!(input as Item);
-    let args = parse_macro_input!(attr as StructOrEnumAttributeParams);
+
+    #[cfg(feature = "legacy_path_param")]
+    let attr_cloned = attr.clone();
+
+    let args: syn::Result<StructOrEnumAttributeParams> = match syn::parse(attr) {
+        Ok(args) => Ok(args),
+        Err(err) => {
+            #[cfg(not(feature = "legacy_path_param"))]
+            {
+                return err.to_compile_error().into();
+            }
+            #[cfg(feature = "legacy_path_param")]
+            {
+                bevy_auto_plugin_shared::util::StructOrEnumRef::try_from(&parsed_item)
+                    .and_then(|se_ref| {
+                        bevy_auto_plugin_shared::util::legacy_generics_from_path(
+                            &se_ref,
+                            attr_cloned.into(),
+                        )
+                    })
+                    .map(|generics| StructOrEnumAttributeParams { generics })
+                    .map_err(|legacy_err| {
+                        Error::new(err.span(), format!("new: {err}\nlegacy: {legacy_err}"))
+                    })
+            }
+        }
+    };
+    let args = ok_or_return_compiler_error!(args);
 
     flat_file::inner::handle_attribute_outer(parsed_item, Span::call_site(), target, args)
         .map(|_| cloned_input)

@@ -13,6 +13,8 @@ publish = true
 default = [
     "lang_server_noop"
 ]
+# DEPRECATED - Only exists for migration purposes
+legacy_path_param = ["bevy_auto_plugin_proc_macros/legacy_path_param"]
 inventory = ["bevy_auto_plugin_shared/inventory"]
 # optional extras
 log_plugin_build = ["bevy_auto_plugin_proc_macros/log_plugin_build"]

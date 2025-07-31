@@ -232,6 +232,17 @@ impl CountGenerics for Path {
     }
 }
 
+impl CountGenerics for StructOrEnumRef<'_> {
+    fn get_span(&self) -> Span {
+        use syn::spanned::Spanned;
+        self.generics.span()
+    }
+
+    fn count(&self) -> usize {
+        self.generics.params.len()
+    }
+}
+
 impl CountGenerics for StructOrEnumAttributeParams {
     fn get_span(&self) -> Span {
         use syn::spanned::Spanned;
@@ -369,7 +380,20 @@ fn struct_or_enum_item_with_attribute_macro(
         Ok(())
     });
     let path = if has_args {
-        let user_provided_generic_values = StructOrEnumAttributeParams::from_meta(&attr.meta)?;
+        let user_provided_generic_values = StructOrEnumAttributeParams::from_meta(&attr.meta);
+        #[cfg(feature = "legacy_path_param")]
+        let user_provided_generic_values = match user_provided_generic_values {
+            Ok(v) => Ok(v),
+            Err(err) => StructOrEnumRef::try_from(item)
+                .and_then(|se_ref| {
+                    legacy_generics_from_path(&se_ref, attr.meta.require_list()?.tokens.clone())
+                })
+                .map(|generics| StructOrEnumAttributeParams { generics })
+                .map_err(|legacy_err| {
+                    Error::new(err.span(), format!("new: {err}\nlegacy: {legacy_err}"))
+                }),
+        };
+        let user_provided_generic_values = user_provided_generic_values?;
         validate_generic_counts(struct_or_enum_ref.generics, &user_provided_generic_values)?;
         let generics = user_provided_generic_values
             .generics
@@ -518,6 +542,30 @@ fn generics_from_path(path: &Path) -> syn::Result<Option<TypeList>> {
     Ok(generics)
 }
 
+pub fn legacy_generics_from_path(
+    struct_or_enum_ref: &StructOrEnumRef,
+    attr: MacroStream,
+) -> syn::Result<Option<TypeList>> {
+    let path = parse2::<Path>(attr)?;
+    let path_last_segment = path.segments.last();
+    let path_maybe_ident = path_last_segment.map(|s| &s.ident);
+    if Some(struct_or_enum_ref.ident) != path_maybe_ident {
+        use syn::spanned::Spanned;
+        return Err(Error::new(
+            path.span(),
+            format!(
+                "path ident {} does not match struct or enum ident {:?}",
+                struct_or_enum_ref.ident, path_maybe_ident
+            ),
+        ));
+    }
+    validate_generic_counts(struct_or_enum_ref.generics, &path)?;
+    if !path.has_generics() {
+        return Ok(None);
+    }
+    Ok(path.generics())
+}
+
 pub fn debug_pat(pat: &Pat) -> &'static str {
     match pat {
         Pat::Ident(_) => "Pat::Ident",
@@ -562,9 +610,47 @@ pub fn debug_ty(ty: &Type) -> &'static str {
     }
 }
 
+#[macro_export]
+macro_rules! ok_or_return_compiler_error {
+    // Case 1: Only expression
+    ($expr:expr) => {
+        ok_or_return_compiler_error!(@internal ::proc_macro2::Span::call_site(), "failed to parse", $expr)
+    };
+
+    // Case 2: Span, Expression
+    ($span:expr, $expr:expr) => {
+        ok_or_return_compiler_error!(@internal $span, "failed to parse", $expr)
+    };
+
+    // Case 3: Expression, message
+    ($expr:expr, $message:literal) => {
+        ok_or_return_compiler_error!(@internal ::proc_macro2::Span::call_site(), $message, $expr)
+    };
+
+    // Case 4: Span, message, Expression
+    ($span:expr, $message:literal, $expr:expr) => {
+        ok_or_return_compiler_error!(@internal $span, $message, $expr)
+    };
+
+    // Internal handler (common logic)
+    (@internal $span:expr, $message:expr, $expr:expr) => {{
+        let span = $span;
+        let message = $message;
+        match $expr {
+            Ok(v) => v,
+            Err(e) => {
+                return syn::Error::new(span, format!("{}: {}", message, e))
+                    .to_compile_error()
+                    .into();
+            }
+        }
+    }};
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use syn::parse_quote;
     #[test]
     fn test_generics_from_path() -> Result<(), syn::Error> {
         let item = parse2::<Path>(quote! {
@@ -573,6 +659,21 @@ mod tests {
         let generics = generics_from_path(&item)?.expect("no generics");
         let generics = quote! { #generics };
         assert_eq!("u32 , i32", generics.to_string());
+        Ok(())
+    }
+
+    #[test]
+    fn test_legacy_generics_from_path() -> Result<(), syn::Error> {
+        let item = parse_quote! {
+            #[auto_register_types(Foo<T, U>)]
+            struct Foo<T, U>(T, U);
+        };
+        let attribute = quote! {
+            Foo<T, U>
+        };
+        let struct_or_enum_ref = StructOrEnumRef::try_from(&item)?;
+        let generics = legacy_generics_from_path(&struct_or_enum_ref, attribute)?;
+        assert_eq!("T , U", generics.to_token_stream().to_string().trim());
         Ok(())
     }
 }

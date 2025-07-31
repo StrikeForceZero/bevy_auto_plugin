@@ -12,6 +12,7 @@ publish = true
 
 [features]
 inventory = []
+legacy_path_param = []
 log_plugin_build = ["log"]
 missing_auto_plugin_check = []
 missing_auto_plugin_is_compile_error = ["missing_auto_plugin_check"]
