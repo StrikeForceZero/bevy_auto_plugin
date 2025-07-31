@@ -2,7 +2,7 @@ use bevy_app::prelude::*;
 use bevy_auto_plugin::module::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_reflect::prelude::*;
-use std::any::Any;
+use internal_test_util::type_id_of;
 
 #[auto_plugin(init_name=init)]
 mod plugin_module {
@@ -30,7 +30,7 @@ fn test_auto_register_type() {
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
     assert!(
-        type_registry.contains(Test.type_id()),
+        type_registry.contains(type_id_of::<Test>()),
         "did not auto register type"
     );
 }
