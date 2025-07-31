@@ -468,3 +468,16 @@ pub fn generate_add_systems(
 pub fn default_app_ident() -> Ident {
     Ident::new("app", Span::call_site())
 }
+
+#[cfg(target_arch = "wasm32")]
+unsafe extern "C" {
+    fn __wasm_call_ctors();
+}
+
+#[cfg(target_arch = "wasm32")]
+#[doc(hidden)]
+pub fn _initialize() {
+    unsafe {
+        __wasm_call_ctors();
+    }
+}
