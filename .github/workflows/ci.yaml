@@ -15,6 +15,7 @@ env:
   RUSTDOCFLAGS: --deny warnings
 
 jobs:
+  # ---------- native targets ----------
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -78,3 +79,26 @@ jobs:
 
       - name: Run clippy
         run: cargo +stable clippy --all-targets --all-features -- -D warnings
+
+  # ---------- WebAssembly target ----------
+  wasm-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        feature-set: [ default, missing_auto_plugin_is_compile_error, legacy_path_param, inventory ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust with wasm target
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown   # installs the target via rustup
+
+      - name: Verify crate for wasm32
+        run: |
+          echo "Building/tests (compile-only) for wasm32 with features: ${{ matrix.feature-set }}"
+          cargo test --target wasm32-unknown-unknown --no-run --features "${{ matrix.feature-set }}"
+          # To run the tests instead of just compiling, replace the line above with:
+          # wasm-pack test --node --features "${{ matrix.feature-set }}"
