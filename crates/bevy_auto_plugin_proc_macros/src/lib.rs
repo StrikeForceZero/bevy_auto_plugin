@@ -215,7 +215,7 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
             impl #impl_generics ::bevy_auto_plugin_shared::global::__internal::bevy_app::Plugin
                 for #ident #ty_generics #where_clause
             {
-                fn build(&self, app: &mut ::bevy_auto_plugin_shared::global::__internal::bevy_app::Plugin) {
+                fn build(&self, app: &mut ::bevy_auto_plugin_shared::global::__internal::bevy_app::App) {
                     <Self as ::bevy_auto_plugin_shared::global::__internal::AutoPlugin>::build(self, app);
                 }
             }
