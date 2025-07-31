@@ -19,91 +19,62 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        toolchain: [ stable ]
         feature-set: [ default, missing_auto_plugin_is_compile_error ]
     steps:
-      # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
-      
-      # Install Rust for the selected toolchain
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-      
-      # Run tests with the specified feature set
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
       - name: Run tests
-        if: ${{ matrix.toolchain == 'stable' || matrix.toolchain == 'nightly' }}
         run: |
-          echo "Testing with ${{ matrix.toolchain }} and features: ${{ matrix.toolchain }},${{ matrix.feature-set }}"
+          echo "Testing with features: ${{ matrix.feature-set }}"
           cargo test --features "${{ matrix.feature-set }}"
-  
+
   doc-test:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
-      
-      # Install Rust with stable toolchain
-      - name: Install Rust (stable)
-        uses: actions-rs/toolchain@v1
+
+      - name: Setup Rust (stable)
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
           override: true
-      
-      # Compile documentation with stable
+
       - name: Compile Rust documentation
-        run: |
-          echo "Compiling Rust documentation"
-          cargo +stable doc --no-deps
-  
+        run: cargo +stable doc --no-deps
+
   rustfmt:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Rust (stable)
-        uses: actions-rs/toolchain@v1
+      - name: Setup Rust with rustfmt
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
+          components: rustfmt
           override: true
 
-      - name: Install rustfmt
-        run: |
-          echo "Installing rustfmt for stable"
-          rustup component add rustfmt --toolchain stable
-
       - name: Run rustfmt
-        run: |
-          echo "Checking code formatting with rustfmt (stable)"
-          cargo +stable fmt --all -- --check
-  
+        run: cargo +stable fmt --all -- --check
+
   clippy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Rust (stable)
-        uses: actions-rs/toolchain@v1
+      - name: Setup Rust with clippy
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
+          components: clippy
           override: true
 
-      - name: Install clippy
-        run: |
-          echo "Installing clippy for stable"
-          rustup component add clippy --toolchain stable
-
       - name: Run clippy
-        run: |
-          echo "Running clippy for lint checks (stable)"
-          cargo +stable clippy --all-targets --all-features -- -D warnings
+        run: cargo +stable clippy --all-targets --all-features -- -D warnings
