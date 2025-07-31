@@ -38,12 +38,14 @@ impl AutoPluginAttribute {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, FromField)]
 pub struct GlobalAutoPluginField {
     ident: Option<Ident>,
     ty: Type,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, FromVariant)]
 pub struct GlobalAutoPluginVariant {
     ident: Ident,

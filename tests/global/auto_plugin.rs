@@ -3,7 +3,6 @@ use bevy_auto_plugin::global::prelude::{AutoPlugin, auto_register_type};
 use bevy_ecs::prelude::*;
 use bevy_reflect::Reflect;
 use internal_test_util::{create_minimal_app, type_id_of};
-use std::any::Any;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]

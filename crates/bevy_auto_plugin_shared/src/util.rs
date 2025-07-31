@@ -53,6 +53,7 @@ pub enum TargetRequirePath {
     RequiredComponentAutoName,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub enum TargetData {
     RegisterTypes(Path),

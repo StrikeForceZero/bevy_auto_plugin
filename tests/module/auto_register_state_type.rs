@@ -44,7 +44,6 @@ fn app() -> App {
 
 #[test]
 fn test_auto_register_state_type() {
-    use std::any::Any;
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
