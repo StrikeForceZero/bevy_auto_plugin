@@ -79,7 +79,7 @@ use bevy_auto_plugin_shared::attribute_args::{
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
 use bevy_auto_plugin_shared::global::__internal::_plugin_entry_block;
 use bevy_auto_plugin_shared::util::TargetRequirePath;
-use bevy_auto_plugin_shared::{default_app_ident, flat_file, ok_or_return_compiler_error};
+use bevy_auto_plugin_shared::{default_app_ident, flat_file, ok_or_return_compiler_error, util};
 use proc_macro2::Span;
 use quote::{ToTokens, quote};
 use syn::Item;
@@ -276,27 +276,6 @@ pub fn global_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
     output.into()
 }
 
-fn require_fn(item: &Item) -> syn::Result<&Ident> {
-    match item {
-        Item::Fn(f) => Ok(&f.sig.ident),
-        _ => Err(Error::new_spanned(
-            item,
-            "Only functions and enum can use this attribute macro",
-        )),
-    }
-}
-
-fn require_struct_or_enum(item: &Item) -> syn::Result<&Ident> {
-    match item {
-        Item::Struct(s) => Ok(&s.ident),
-        Item::Enum(e) => Ok(&e.ident),
-        _ => Err(Error::new_spanned(
-            item,
-            "Only struct and enum can use this attribute macro",
-        )),
-    }
-}
-
 fn global_attribute_inner<A, F>(
     attr: impl Into<MacroStream>,
     input: impl Into<MacroStream>,
@@ -355,7 +334,7 @@ pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) ->
         attr,
         input,
         "_global_plugin_register_type_",
-        require_struct_or_enum,
+        util::require_struct_or_enum,
         bevy_auto_plugin_shared::bevy_app_code_gen::generate_register_type,
     )
     .into()
@@ -367,7 +346,7 @@ pub fn global_auto_add_event(attr: CompilerStream, input: CompilerStream) -> Com
         attr,
         input,
         "_global_plugin_add_event_",
-        require_struct_or_enum,
+        util::require_struct_or_enum,
         bevy_auto_plugin_shared::bevy_app_code_gen::generate_add_event,
     )
     .into()
@@ -379,7 +358,7 @@ pub fn global_auto_init_resource(attr: CompilerStream, input: CompilerStream) ->
         attr,
         input,
         "_global_plugin_init_resource_",
-        require_struct_or_enum,
+        util::require_struct_or_enum,
         bevy_auto_plugin_shared::bevy_app_code_gen::generate_init_resource,
     )
     .into()
@@ -391,7 +370,7 @@ pub fn global_auto_init_state(attr: CompilerStream, input: CompilerStream) -> Co
         attr,
         input,
         "_global_plugin_init_state_",
-        require_struct_or_enum,
+        util::require_struct_or_enum,
         bevy_auto_plugin_shared::bevy_app_code_gen::generate_init_state,
     )
     .into()
@@ -403,7 +382,7 @@ pub fn global_auto_name(attr: CompilerStream, input: CompilerStream) -> Compiler
         attr,
         input,
         "_global_plugin_name_",
-        require_struct_or_enum,
+        util::require_struct_or_enum,
         bevy_auto_plugin_shared::bevy_app_code_gen::generate_auto_name,
     )
     .into()
@@ -418,7 +397,7 @@ pub fn global_auto_register_state_type(
         attr,
         input,
         "_global_plugin_register_state_type_",
-        require_struct_or_enum,
+        util::require_struct_or_enum,
         bevy_auto_plugin_shared::bevy_app_code_gen::generate_register_state_type,
     )
     .into()
@@ -430,7 +409,7 @@ pub fn global_auto_add_system(attr: CompilerStream, input: CompilerStream) -> Co
         attr,
         input,
         "_global_plugin_add_system_",
-        require_fn,
+        util::require_fn,
         bevy_auto_plugin_shared::bevy_app_code_gen::generate_add_system,
     )
     .into()
