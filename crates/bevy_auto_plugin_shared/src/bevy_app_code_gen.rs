@@ -1,161 +1,152 @@
-use crate::AddSystemSerializedParams;
-use crate::util::path_to_string;
+use crate::{AddSystemSerializedParams, util::path_to_string};
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
-use syn::Path;
 
-pub fn generate_register_type(app_ident: &Ident, item: String) -> syn::Result<MacroStream> {
-    let item = syn::parse_str::<Path>(&item)?;
-    Ok(quote! {
-        #app_ident.register_type::<#item>();
-    })
-}
-
-pub fn generate_register_types(
-    app_ident: &Ident,
-    items: impl Iterator<Item = String>,
-) -> syn::Result<MacroStream> {
-    let register_types = items
-        .map(|item| generate_register_type(app_ident, item))
+/// Generic code-gen for iterator of items passing each item to build param fn
+#[inline]
+fn gen_many<I, F, P>(app_ident: &Ident, items: I, doc: &str, build: F) -> syn::Result<MacroStream>
+where
+    I: IntoIterator<Item = P>,
+    F: Fn(&Ident, P) -> syn::Result<MacroStream>,
+{
+    let tokens = items
+        .into_iter()
+        .map(|item| build(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
+
     Ok(quote! {
-        /// generated register_types
-        {
-            #(#register_types)*
+        #[doc = #doc]
+        { #(#tokens)* }
+    })
+}
+
+/// Custom Single block app_ident method call impl
+macro_rules! impl_custom {
+    // with conversion
+    (
+        $single:ident,        // fn name for the “single” helper
+        $plural:ident,        // fn name for the “plural” helper
+        $doc:literal,         // doc-comment for the plural code-gen block
+        $item_ty:ty,          // the type that callers pass in
+        $conversion:expr,     // <-- user-supplied conversion
+        $build:expr $(,)?     // |app_ident, item| -> TokenStream
+    ) => {
+        impl_custom!(@impl $single, $plural, $doc, $item_ty, $conversion, $build);
+    };
+
+    // without conversion
+    (
+        $single:ident,
+        $plural:ident,
+        $doc:literal,
+        $item_ty:ty,
+        $build:expr $(,)?
+    ) => {
+        // Identity conversion: just return the item unchanged
+        impl_custom!(@impl
+            $single, $plural, $doc, $item_ty,
+            |_, item| syn::Result::Ok(item),   // default conversion
+            $build
+        );
+    };
+
+    // base
+    (@impl
+        $single:ident,
+        $plural:ident,
+        $doc:literal,
+        $item_ty:ty,
+        $conversion:expr,
+        $build:expr $(,)?
+    ) => {
+        pub fn $single(app_ident: &Ident, item: $item_ty) -> syn::Result<MacroStream> {
+            let item = $conversion(app_ident, item)?;
+            $build(app_ident, item)
         }
-    })
-}
 
-pub fn generate_add_event(app_ident: &Ident, item: String) -> syn::Result<MacroStream> {
-    let item = syn::parse_str::<Path>(&item)?;
-    Ok(quote! {
-        #app_ident.add_event::<#item>();
-    })
-}
-
-pub fn generate_add_events(
-    app_ident: &Ident,
-    items: impl Iterator<Item = String>,
-) -> syn::Result<MacroStream> {
-    let add_events = items
-        .map(|item| generate_add_event(app_ident, item))
-        .collect::<syn::Result<Vec<_>>>()?;
-    Ok(quote! {
-        /// generated add_events
+        pub fn $plural<I>(app_ident: &Ident, items: I) -> syn::Result<MacroStream>
+        where
+            I: IntoIterator<Item = $item_ty>,
         {
-            #(#add_events)*
+            gen_many(app_ident, items, $doc, |app_ident, item| $single(app_ident, item))
         }
-    })
+    };
 }
 
-pub fn generate_init_resource(app_ident: &Ident, item: String) -> syn::Result<MacroStream> {
-    let item = syn::parse_str::<Path>(&item)?;
-    Ok(quote! {
-        #app_ident.init_resource::<#item>();
-    })
+/// Simple single block app_ident method call impl
+///
+/// Generated functions accept [`String`] and attempt to parse it into [`Path`] as a validity check before returning [`TokenStream`]
+macro_rules! impl_simple {
+    (
+        $single:ident, // fn name for the single-item version
+        $plural:ident, // fn name for the plural-item version
+        $doc:literal, // doc comment for the plural version
+        $build:expr, // |app_ident, path| { ... } → TokenStream
+    ) => {
+        impl_custom!(
+            $single,
+            $plural,
+            $doc,
+            String,
+            |_, raw: String| syn::parse_str::<syn::Path>(&raw),
+            |app_ident, item| Ok($build(app_ident, &item)),
+        );
+    };
 }
 
-pub fn generate_init_resources(
-    app_ident: &Ident,
-    items: impl Iterator<Item = String>,
-) -> syn::Result<MacroStream> {
-    let init_resources = items
-        .map(|item| generate_init_resource(app_ident, item))
-        .collect::<syn::Result<Vec<_>>>()?;
-    Ok(quote! {
-        /// generated init_resources
-        {
-            #(#init_resources)*
-        }
-    })
-}
+// ── generators ──────────────────────────────────────────────────────────────
+impl_simple!(
+    generate_register_type,
+    generate_register_types,
+    "generated register_types",
+    |app_ident, path| quote! { #app_ident.register_type::<#path>(); },
+);
 
-pub fn generate_auto_name(app_ident: &Ident, item: String) -> syn::Result<MacroStream> {
-    let item = syn::parse_str::<Path>(&item)?;
-    let name = path_to_string(&item, true).replace("::", "");
-    Ok(quote! {
-        #app_ident.register_required_components_with::<#item, Name>(|| Name::new(#name));
-    })
-}
+impl_simple!(
+    generate_add_event,
+    generate_add_events,
+    "generated add_events",
+    |app_ident, path| quote! { #app_ident.add_event::<#path>(); },
+);
 
-pub fn generate_auto_names(
-    app_ident: &Ident,
-    items: impl Iterator<Item = String>,
-) -> syn::Result<MacroStream> {
-    let auto_names = items
-        .map(|item| generate_auto_name(app_ident, item))
-        .collect::<syn::Result<Vec<_>>>()?;
-    Ok(quote! {
-        /// generated auto_names
-        {
-            #(#auto_names)*
-        }
-    })
-}
+impl_simple!(
+    generate_init_resource,
+    generate_init_resources,
+    "generated init_resources",
+    |app_ident, path| quote! { #app_ident.init_resource::<#path>(); },
+);
 
-pub fn generate_register_state_type(app_ident: &Ident, item: String) -> syn::Result<MacroStream> {
-    let item = syn::parse_str::<Path>(&item)?;
-    Ok(quote! {
-        #app_ident.register_type::<State<#item>>();
-        #app_ident.register_type::<NextState<#item>>();
-    })
-}
+impl_simple!(
+    generate_register_state_type,
+    generate_register_state_types,
+    "generated register_state_types",
+    |app_ident, path| quote! {
+        #app_ident.register_type::<State<#path>>();
+        #app_ident.register_type::<NextState<#path>>();
+    },
+);
 
-pub fn generate_register_state_types(
-    app_ident: &Ident,
-    items: impl Iterator<Item = String>,
-) -> syn::Result<MacroStream> {
-    let register_state_types = items
-        .map(|item| generate_register_state_type(app_ident, item))
-        .collect::<syn::Result<Vec<_>>>()?;
-    Ok(quote! {
-        /// generated register_state_types
-        {
-            #(#register_state_types)*
-        }
-    })
-}
+impl_simple!(
+    generate_init_state,
+    generate_init_states,
+    "generated init_states",
+    |app_ident, path| quote! { #app_ident.init_state::<#path>(); },
+);
 
-pub fn generate_init_state(app_ident: &Ident, item: String) -> syn::Result<MacroStream> {
-    let item = syn::parse_str::<Path>(&item)?;
-    Ok(quote! {
-        #app_ident.init_state::<#item>();
-    })
-}
+impl_simple!(
+    generate_auto_name,
+    generate_auto_names,
+    "generated auto_names",
+    |app_ident, path| {
+        let name = path_to_string(path, true).replace("::", "");
+        quote! { #app_ident.register_required_components_with::<#path, Name>(|| Name::new(#name)); }
+    },
+);
 
-pub fn generate_init_states(
-    app_ident: &Ident,
-    items: impl Iterator<Item = String>,
-) -> syn::Result<MacroStream> {
-    let init_states = items
-        .map(|item| generate_init_state(app_ident, item))
-        .collect::<syn::Result<Vec<_>>>()?;
-    Ok(quote! {
-        /// generated init_states
-        {
-            #(#init_states)*
-        }
-    })
-}
-
-pub fn generate_add_system(
-    app_ident: &Ident,
-    item: AddSystemSerializedParams,
-) -> syn::Result<MacroStream> {
-    item.to_tokens(app_ident)
-}
-
-pub fn generate_add_systems(
-    app_ident: &Ident,
-    items: impl Iterator<Item = AddSystemSerializedParams>,
-) -> syn::Result<MacroStream> {
-    let output = items
-        .map(|item| generate_add_system(app_ident, item))
-        .collect::<syn::Result<Vec<_>>>()?;
-    Ok(quote! {
-        /// generated add_systems
-        {
-            #(#output)*
-        }
-    })
-}
+impl_custom!(
+    generate_add_system,
+    generate_add_systems,
+    "generated add_systems",
+    AddSystemSerializedParams,
+    |app_ident, item| AddSystemSerializedParams::to_tokens(&item, app_ident),
+);
