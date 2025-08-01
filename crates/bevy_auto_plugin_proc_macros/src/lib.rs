@@ -310,22 +310,36 @@ where
     quote!( #item #output )
 }
 
-#[proc_macro_attribute]
-pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+fn global_attribute_outer(
+    attr: impl Into<MacroStream>,
+    input: impl Into<MacroStream>,
+    prefix: &'static str,
+    generate_fn: impl FnOnce(&Ident, String) -> syn::Result<MacroStream>,
+) -> MacroStream {
     global_attribute_inner(
         attr,
         input,
         syn::parse2::<GlobalStructOrEnumAttributeArgs>,
         |ident, params, _item| {
-            let unique_ident = params.get_unique_ident("_global_plugin_register_type_", ident);
+            let unique_ident = params.get_unique_ident(prefix, ident);
             let generics = &params.inner.generics;
             let target = quote!( #ident::<#generics> );
 
             let app_ident = default_app_ident();
-            let register = generate_register_type(&app_ident, target.to_string())?;
+            let register = generate_fn(&app_ident, target.to_string())?;
             let expr: syn::ExprClosure = syn::parse_quote!( |#app_ident| { #register } );
             Ok(_plugin_entry_block(&unique_ident, &params.plugin, &expr))
         },
+    )
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    global_attribute_outer(
+        attr,
+        input,
+        "_global_plugin_register_type_",
+        generate_register_type,
     )
     .into()
 }
