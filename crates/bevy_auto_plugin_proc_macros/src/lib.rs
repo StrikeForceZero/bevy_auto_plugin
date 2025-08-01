@@ -72,8 +72,8 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 /* Flat File */
 
 use bevy_auto_plugin_shared::attribute_args::{
-    GlobalAutoPluginDeriveParams, GlobalAutoPluginFnAttributeParams,
-    GlobalStructOrEnumAttributeParams, StructOrEnumAttributeParams,
+    GlobalAutoPluginDeriveArgs, GlobalAutoPluginFnAttributeArgs, GlobalStructOrEnumAttributeArgs,
+    StructOrEnumAttributeArgs,
 };
 use bevy_auto_plugin_shared::bevy_app_code_gen::generate_register_type;
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
@@ -105,7 +105,7 @@ fn flat_file_handle_attribute(
     #[cfg(feature = "legacy_path_param")]
     let attr_cloned = attr.clone();
 
-    let args: syn::Result<StructOrEnumAttributeParams> = match syn::parse(attr) {
+    let args: syn::Result<StructOrEnumAttributeArgs> = match syn::parse(attr) {
         Ok(args) => Ok(args),
         Err(err) => {
             #[cfg(not(feature = "legacy_path_param"))]
@@ -121,7 +121,7 @@ fn flat_file_handle_attribute(
                             attr_cloned.into(),
                         )
                     })
-                    .map(|generics| StructOrEnumAttributeParams { generics })
+                    .map(|generics| StructOrEnumAttributeArgs { generics })
                     .map_err(|legacy_err| {
                         Error::new(err.span(), format!("new: {err}\nlegacy: {legacy_err}"))
                     })
@@ -190,7 +190,7 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
     use syn::DeriveInput;
 
     let derive_input = parse_macro_input!(input as DeriveInput);
-    let params = match GlobalAutoPluginDeriveParams::from_derive_input(&derive_input) {
+    let params = match GlobalAutoPluginDeriveArgs::from_derive_input(&derive_input) {
         Ok(params) => params,
         Err(err) => return err.write_errors().into(),
     };
@@ -267,7 +267,7 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
 pub fn global_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     let input_cloned = input.clone();
     let item = parse_macro_input!(input as ItemFn);
-    let params = match syn::parse::<GlobalAutoPluginFnAttributeParams>(input_cloned) {
+    let params = match syn::parse::<GlobalAutoPluginFnAttributeArgs>(input_cloned) {
         Ok(params) => params,
         Err(err) => return err.into_compile_error().into(),
     };
@@ -290,7 +290,7 @@ pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) ->
                 .into();
         }
     };
-    let params = match syn::parse::<GlobalStructOrEnumAttributeParams>(attr) {
+    let params = match syn::parse::<GlobalStructOrEnumAttributeArgs>(attr) {
         Ok(params) => params,
         Err(err) => return err.into_compile_error().into(),
     };

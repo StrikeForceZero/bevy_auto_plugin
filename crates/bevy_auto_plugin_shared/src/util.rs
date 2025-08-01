@@ -1,4 +1,4 @@
-use crate::attribute_args::StructOrEnumAttributeParams;
+use crate::attribute_args::StructOrEnumAttributeArgs;
 use crate::type_list::TypeList;
 use crate::{AddSystemParams, AutoPluginAttribute};
 use darling::FromMeta;
@@ -13,7 +13,7 @@ use thiserror::Error;
 
 pub fn resolve_path_from_item_or_args<'a, T>(
     item: &'a Item,
-    args: StructOrEnumAttributeParams,
+    args: StructOrEnumAttributeArgs,
 ) -> syn::Result<Path>
 where
     T: IdentGenericsAttrs<'a>,
@@ -245,7 +245,7 @@ impl CountGenerics for StructOrEnumRef<'_> {
     }
 }
 
-impl CountGenerics for StructOrEnumAttributeParams {
+impl CountGenerics for StructOrEnumAttributeArgs {
     fn get_span(&self) -> Span {
         use syn::spanned::Spanned;
         self.generics.span()
@@ -382,7 +382,7 @@ fn struct_or_enum_item_with_attribute_macro(
         Ok(())
     });
     let path = if has_args {
-        let user_provided_generic_values = StructOrEnumAttributeParams::from_meta(&attr.meta);
+        let user_provided_generic_values = StructOrEnumAttributeArgs::from_meta(&attr.meta);
         #[cfg(feature = "legacy_path_param")]
         let user_provided_generic_values = match user_provided_generic_values {
             Ok(v) => Ok(v),
@@ -390,7 +390,7 @@ fn struct_or_enum_item_with_attribute_macro(
                 .and_then(|se_ref| {
                     legacy_generics_from_path(&se_ref, attr.meta.require_list()?.tokens.clone())
                 })
-                .map(|generics| StructOrEnumAttributeParams { generics })
+                .map(|generics| StructOrEnumAttributeArgs { generics })
                 .map_err(|legacy_err| {
                     Error::new(err.span(), format!("new: {err}\nlegacy: {legacy_err}"))
                 }),

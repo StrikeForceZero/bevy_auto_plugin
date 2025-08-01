@@ -1,5 +1,5 @@
 use crate::AddSystemParams;
-use crate::attribute_args::StructOrEnumAttributeParams;
+use crate::attribute_args::StructOrEnumAttributeArgs;
 use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
     generate_init_states, generate_register_state_types, generate_register_types,
@@ -141,7 +141,7 @@ pub fn handle_attribute_outer(
     item: Item,
     attr_span: Span,
     target: TargetRequirePath,
-    args: StructOrEnumAttributeParams,
+    args: StructOrEnumAttributeArgs,
 ) -> syn::Result<()> {
     extract_or_noop!(
         file_path,
@@ -156,7 +156,7 @@ pub fn handle_attribute_inner(
     item: Item,
     attr_span: Span,
     target: TargetRequirePath,
-    args: StructOrEnumAttributeParams,
+    args: StructOrEnumAttributeArgs,
 ) -> syn::Result<()> {
     let path = resolve_path_from_item_or_args::<StructOrEnumRef>(&item, args)?;
     let target_data = TargetData::from_target_require_path(target, path);
