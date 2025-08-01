@@ -71,12 +71,14 @@ pub fn update_state(
                 .auto_names
                 .insert(path_to_string_with_spaces(&path)),
             TargetData::AddSystem { system, params } => {
-                entry
-                    .context
-                    .add_systems
-                    .insert(AddSystemSerializedArgs::try_from_macro_attr(
-                        system, params,
-                    )?)
+                let mut new = false;
+                for add_system_args in AddSystemSerializedArgs::try_from_macro_attr(system, params)?
+                {
+                    if entry.context.add_systems.insert(add_system_args) {
+                        new = true;
+                    }
+                }
+                new
             }
         };
         if !inserted {

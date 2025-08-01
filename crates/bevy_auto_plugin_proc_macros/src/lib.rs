@@ -118,7 +118,7 @@ fn flat_file_handle_attribute(
                             attr_cloned.into(),
                         )
                     })
-                    .map(|generics| StructOrEnumAttributeArgs { generics })
+                    .map(StructOrEnumAttributeArgs::from)
                     .map_err(|legacy_err| {
                         Error::new(err.span(), format!("new: {err}\nlegacy: {legacy_err}"))
                     })

@@ -8,7 +8,7 @@ use crate::flat_file::attribute::FlatFileArgs;
 use crate::flat_file::file_state::{update_file_state, update_state};
 use crate::util::{
     FnParamMutabilityCheckErrMessages, LocalFile, StructOrEnumRef, TargetData, TargetRequirePath,
-    is_fn_param_mutable_reference, resolve_local_file, resolve_path_from_item_or_args,
+    is_fn_param_mutable_reference, resolve_local_file, resolve_paths_from_item_or_args,
 };
 use darling::FromMeta;
 use darling::ast::NestedMeta;
@@ -182,9 +182,12 @@ pub fn handle_attribute_inner(
     target: TargetRequirePath,
     args: StructOrEnumAttributeArgs,
 ) -> syn::Result<()> {
-    let path = resolve_path_from_item_or_args::<StructOrEnumRef>(&item, args)?;
-    let target_data = TargetData::from_target_require_path(target, path);
-    update_state(file_path, target_data).map_err(|err| Error::new(attr_span, err))?;
+    let paths = resolve_paths_from_item_or_args::<StructOrEnumRef>(&item, args)?;
+    for path in paths {
+        let target_data = TargetData::from_target_require_path(target, path);
+        // TODO: cloning here feels dumb
+        update_state(file_path.clone(), target_data).map_err(|err| Error::new(attr_span, err))?;
+    }
     Ok(())
 }
 

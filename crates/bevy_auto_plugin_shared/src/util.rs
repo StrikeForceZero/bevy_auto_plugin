@@ -7,28 +7,34 @@ use quote::{ToTokens, quote};
 use syn::punctuated::Punctuated;
 use syn::{
     Attribute, Error, FnArg, Generics, Item, ItemFn, ItemMod, Pat, Path, PathArguments,
-    PathSegment, Type, TypeReference, parse2,
+    PathSegment, Type, TypeReference, parse_quote, parse2,
 };
 use thiserror::Error;
 
-pub fn resolve_path_from_item_or_args<'a, T>(
+pub fn resolve_paths_from_item_or_args<'a, T>(
     item: &'a Item,
     args: StructOrEnumAttributeArgs,
-) -> syn::Result<Path>
+) -> syn::Result<impl Iterator<Item = Path>>
 where
     T: IdentGenericsAttrs<'a>,
 {
     let struct_or_enum = T::try_from(item)?;
     let ident = struct_or_enum.ident();
-    if args.has_generics() {
+    let paths = if args.has_generics() {
         let generics = &args.generics;
-        let path_tokens = quote! { #ident::<#generics> };
-        let path = Path::from_string(&path_tokens.to_string())?;
-        validate_generic_counts(struct_or_enum.generics(), &path)?;
-        Ok(path)
+        generics
+            .into_iter()
+            .map(|generics| {
+                let path_tokens = quote! { #ident::<#generics> };
+                let path = Path::from_string(&path_tokens.to_string())?;
+                validate_generic_counts(struct_or_enum.generics(), &path)?;
+                Ok(path)
+            })
+            .collect::<syn::Result<Vec<_>>>()?
     } else {
-        Ok(ident_to_path(ident))
-    }
+        vec![ident_to_path(ident)]
+    };
+    Ok(paths.into_iter())
 }
 
 pub fn path_to_string(path: &Path, strip_spaces: bool) -> String {
@@ -44,7 +50,7 @@ pub fn path_to_string_with_spaces(path: &Path) -> String {
     path_to_string(path, false)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum TargetRequirePath {
     RegisterTypes,
     RegisterStateTypes,
@@ -227,7 +233,7 @@ impl CountGenerics for Path {
     }
 
     fn count(&self) -> usize {
-        self.generic_count()
+        self.generic_count().unwrap_or(0)
     }
 }
 
@@ -245,7 +251,10 @@ impl CountGenerics for StructOrEnumRef<'_> {
 impl CountGenerics for StructOrEnumAttributeArgs {
     fn get_span(&self) -> Span {
         use syn::spanned::Spanned;
-        self.generics.span()
+        self.generics
+            .first()
+            .map(|g| g.span())
+            .unwrap_or(Span::call_site())
     }
 
     fn count(&self) -> usize {
@@ -374,14 +383,14 @@ fn struct_or_enum_item_with_attribute_macro(
     item: &Item,
     struct_or_enum_ref: &StructOrEnumRef,
     attr: &Attribute,
-) -> syn::Result<ItemWithAttributeMatch> {
+) -> syn::Result<impl Iterator<Item = ItemWithAttributeMatch>> {
     let path = ident_to_path(struct_or_enum_ref.ident());
     let mut has_args = false;
     let _ = attr.parse_nested_meta(|_| {
         has_args = true;
         Ok(())
     });
-    let path = if has_args {
+    let paths = if has_args {
         let user_provided_generic_values = StructOrEnumAttributeArgs::from_meta(&attr.meta);
         #[cfg(feature = "legacy_path_param")]
         let user_provided_generic_values = match user_provided_generic_values {
@@ -390,29 +399,26 @@ fn struct_or_enum_item_with_attribute_macro(
                 .and_then(|se_ref| {
                     legacy_generics_from_path(&se_ref, attr.meta.require_list()?.tokens.clone())
                 })
-                .map(|generics| StructOrEnumAttributeArgs { generics })
+                .map(StructOrEnumAttributeArgs::from)
                 .map_err(|legacy_err| {
                     Error::new(err.span(), format!("new: {err}\nlegacy: {legacy_err}"))
                 }),
         };
         let user_provided_generic_values = user_provided_generic_values?;
         validate_generic_counts(struct_or_enum_ref.generics, &user_provided_generic_values)?;
-        let generics = user_provided_generic_values
+        user_provided_generic_values
             .generics
-            .as_ref()
-            .map(MacroStream::from)
-            .unwrap_or_default();
-        parse2::<Path>(quote! {
-            #path::<#generics>
-        })?
+            .into_iter()
+            .map(|generics| parse_quote!(#path::<#generics>))
+            .collect::<Vec<Path>>()
     } else {
-        path
+        vec![path]
     };
-    Ok(ItemWithAttributeMatch {
+    Ok(paths.into_iter().map(move |path| ItemWithAttributeMatch {
         item: item.clone(),
         path,
         attributes: attr.clone(),
-    })
+    }))
 }
 
 fn do_with_struct_or_enum_items_with_attribute_macro<F>(
@@ -421,7 +427,7 @@ fn do_with_struct_or_enum_items_with_attribute_macro<F>(
     cb: F,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>>
 where
-    F: Fn(&Item, &StructOrEnumRef, &Attribute) -> syn::Result<ItemWithAttributeMatch>,
+    F: Fn(&Item, &StructOrEnumRef, &Attribute) -> syn::Result<Vec<ItemWithAttributeMatch>>,
 {
     let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(attribute.ident_str()) };
 
@@ -432,7 +438,7 @@ where
         };
         for attr in struct_or_enum_ref.attributes.iter().filter(is_marker) {
             let matched_item = cb(item, &struct_or_enum_ref, attr)?;
-            matched_items.push(matched_item);
+            matched_items.extend(matched_item);
         }
     }
     Ok(matched_items)
@@ -446,7 +452,8 @@ pub fn struct_or_enum_items_with_attribute_macro(
         items,
         attribute,
         |item, struct_or_enum_ref, attr| {
-            struct_or_enum_item_with_attribute_macro(item, struct_or_enum_ref, attr)
+            // TODO: this got ugly
+            Ok(struct_or_enum_item_with_attribute_macro(item, struct_or_enum_ref, attr)?.collect())
         },
     )
 }
@@ -512,33 +519,29 @@ pub fn resolve_local_file() -> LocalFile {
 }
 
 pub trait PathExt {
-    fn has_generics(&self) -> bool;
-    fn generics(&self) -> Option<TypeList>;
-    fn generic_count(&self) -> usize {
-        self.generics().map(|tl| tl.0.len()).unwrap_or(0)
+    fn has_generics(&self) -> syn::Result<bool>;
+    fn generics(&self) -> syn::Result<TypeList>;
+    fn generic_count(&self) -> syn::Result<usize> {
+        Ok(self.generics()?.len())
     }
 }
 
 impl PathExt for Path {
-    fn has_generics(&self) -> bool {
-        generics_from_path(self)
-            .ok()
-            .flatten()
-            .map(|tl| !tl.0.is_empty())
-            .unwrap_or(false)
+    fn has_generics(&self) -> syn::Result<bool> {
+        Ok(!self.generics()?.is_empty())
     }
 
-    fn generics(&self) -> Option<TypeList> {
-        generics_from_path(self).ok().flatten()
+    fn generics(&self) -> syn::Result<TypeList> {
+        generics_from_path(self)
     }
 }
 
-fn generics_from_path(path: &Path) -> syn::Result<Option<TypeList>> {
-    let mut generics = None;
+fn generics_from_path(path: &Path) -> syn::Result<TypeList> {
+    let mut generics = TypeList::new();
     for segment in &path.segments {
         if let PathArguments::AngleBracketed(angle_bracketed) = &segment.arguments {
             let type_list = parse2::<TypeList>(angle_bracketed.args.to_token_stream())?;
-            generics = Some(type_list);
+            generics.0.extend(type_list.0);
         }
     }
     Ok(generics)
@@ -547,7 +550,7 @@ fn generics_from_path(path: &Path) -> syn::Result<Option<TypeList>> {
 pub fn legacy_generics_from_path(
     struct_or_enum_ref: &StructOrEnumRef,
     attr: MacroStream,
-) -> syn::Result<Option<TypeList>> {
+) -> syn::Result<TypeList> {
     let path = parse2::<Path>(attr)?;
     let path_last_segment = path.segments.last();
     let path_maybe_ident = path_last_segment.map(|s| &s.ident);
@@ -562,10 +565,7 @@ pub fn legacy_generics_from_path(
         ));
     }
     validate_generic_counts(struct_or_enum_ref.generics, &path)?;
-    if !path.has_generics() {
-        return Ok(None);
-    }
-    Ok(path.generics())
+    Ok(path.generics()?)
 }
 
 pub fn debug_pat(pat: &Pat) -> &'static str {
@@ -658,7 +658,7 @@ mod tests {
         let item = parse2::<Path>(quote! {
             foo::bar::<u32, i32>
         })?;
-        let generics = generics_from_path(&item)?.expect("no generics");
+        let generics = generics_from_path(&item).expect("no generics");
         let generics = quote! { #generics };
         assert_eq!("u32 , i32", generics.to_string());
         Ok(())

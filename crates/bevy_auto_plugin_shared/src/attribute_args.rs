@@ -1,10 +1,10 @@
 use crate::type_list::TypeList;
 use crate::util::{PathExt, path_to_string_with_spaces};
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
-use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
+use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
 use syn::parse::Parse;
-use syn::{Attribute, Generics, Path, Type, Visibility, parse_quote, parse_str, parse2};
+use syn::{Attribute, Generics, Path, Type, Visibility, parse_quote, parse_str};
 
 #[allow(dead_code)]
 #[derive(Debug, FromField)]
@@ -49,12 +49,12 @@ pub struct GlobalAutoPluginFnAttributeArgs {
     pub generics: Vec<TypeList>,
 }
 
-#[derive(FromMeta, Debug, PartialEq, Hash)]
+#[derive(FromMeta, Clone, Debug, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct GlobalAddSystemArgs {
     pub plugin: Path,
-    #[darling(default)]
-    pub generics: Option<TypeList>,
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
     #[darling(flatten)]
     pub schedule_config: ScheduleConfigArgs,
 }
@@ -96,13 +96,24 @@ impl GlobalStructOrEnumAttributeArgs {
 pub trait GlobalMacroArgs: Parse + std::hash::Hash {
     type Input;
     type ToTokensFn: Fn(&Self, Self::Input) -> syn::Result<MacroStream>;
-    fn target_path_with_ident(&self, ident: &Ident) -> Path {
-        let generics = &self.generics();
-        parse_quote!( #ident::<#generics> )
+    fn target_paths_with_ident(&self, ident: &Ident) -> Vec<Path> {
+        let output = self
+            .generics()
+            .iter()
+            .map(|generics| parse_quote!( #ident::<#generics> ))
+            .collect::<Vec<_>>();
+
+        // failsafe - we need at least one generated
+        // TODO: this made it more complex...
+        if output.is_empty() {
+            vec![parse_quote!( #ident )]
+        } else {
+            output
+        }
     }
-    fn generics(&self) -> Option<&TypeList>;
+    fn generics(&self) -> &[TypeList];
     fn plugin(&self) -> &Path;
-    fn to_input(self, ident: &Ident) -> syn::Result<Self::Input>;
+    fn to_input(self, ident: &Ident) -> syn::Result<impl Iterator<Item = Self::Input>>;
 
     fn _concat_ident_hash(&self, ident: &Ident) -> String {
         use std::hash::{Hash, Hasher};
@@ -126,51 +137,62 @@ pub trait GlobalMacroArgs: Parse + std::hash::Hash {
 impl GlobalMacroArgs for GlobalStructOrEnumAttributeArgs {
     type Input = Path;
     type ToTokensFn = fn(&Self, Self::Input) -> syn::Result<MacroStream>;
-    fn generics(&self) -> Option<&TypeList> {
-        self.inner.generics.as_ref()
+    fn generics(&self) -> &[TypeList] {
+        &self.inner.generics
     }
     fn plugin(&self) -> &Path {
         &self.plugin
     }
-    fn to_input(self, ident: &Ident) -> syn::Result<Self::Input> {
-        Ok(self.target_path_with_ident(ident))
+    fn to_input(self, ident: &Ident) -> syn::Result<impl Iterator<Item = Self::Input>> {
+        Ok(self.target_paths_with_ident(ident).into_iter())
     }
 }
 
 impl GlobalMacroArgs for GlobalAddSystemArgs {
     type Input = AddSystemWithTargetArgs;
     type ToTokensFn = fn(&Self, Self::Input) -> syn::Result<MacroStream>;
-    fn generics(&self) -> Option<&TypeList> {
-        self.generics.as_ref()
+    fn generics(&self) -> &[TypeList] {
+        &self.generics
     }
     fn plugin(&self) -> &Path {
         &self.plugin
     }
-    fn to_input(self, ident: &Ident) -> syn::Result<Self::Input> {
-        let target = self.target_path_with_ident(ident);
-        let add_system_args = AddSystemArgs::from(self);
-        AddSystemWithTargetArgs::try_from_macro_attr(target, add_system_args)
+    fn to_input(self, ident: &Ident) -> syn::Result<impl Iterator<Item = Self::Input>> {
+        let target_paths = self.target_paths_with_ident(ident);
+        let mut result_vec = Vec::with_capacity(target_paths.len());
+
+        for target in target_paths {
+            let add_system_args = AddSystemArgs::from(self.clone());
+            let items = AddSystemWithTargetArgs::try_from_macro_attr(target, add_system_args)?;
+            result_vec.extend(items);
+        }
+
+        Ok(result_vec.into_iter())
     }
 }
 
 #[derive(FromMeta, Debug, Default, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
 pub struct StructOrEnumAttributeArgs {
-    // TODO: #[darling(multiple)]
-    //     pub generics: Vec<TypeList>,
-    pub generics: Option<TypeList>,
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
+}
+
+impl From<TypeList> for StructOrEnumAttributeArgs {
+    fn from(value: TypeList) -> Self {
+        Self {
+            generics: vec![value],
+        }
+    }
 }
 
 impl StructOrEnumAttributeArgs {
     pub fn has_generics(&self) -> bool {
-        self.generics
-            .as_ref()
-            .map(|types| !types.0.is_empty())
-            .unwrap_or(false)
+        !self.generics.is_empty()
     }
 }
 
-#[derive(FromMeta, Debug, PartialEq, Hash)]
+#[derive(FromMeta, Clone, Debug, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct ScheduleConfigArgs {
     pub schedule: Path,
@@ -188,17 +210,15 @@ pub struct ScheduleConfigArgs {
 #[derive(FromMeta, Debug)]
 #[darling(derive_syn_parse)]
 pub struct AddSystemArgs {
-    pub generics: Option<TypeList>,
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
     #[darling(flatten)]
     pub schedule_config: ScheduleConfigArgs,
 }
 
 impl AddSystemArgs {
     pub fn has_generics(&self) -> bool {
-        self.generics
-            .as_ref()
-            .map(|types| !types.0.is_empty())
-            .unwrap_or(false)
+        !self.generics.is_empty()
     }
 }
 
@@ -369,8 +389,13 @@ pub struct AddSystemSerializedArgs {
 }
 
 impl AddSystemSerializedArgs {
-    pub fn try_from_macro_attr(system: Path, attr: AddSystemArgs) -> syn::Result<Self> {
-        Ok(AddSystemWithTargetArgs::try_from_macro_attr(system, attr)?.into())
+    pub fn try_from_macro_attr(
+        system: Path,
+        attr: AddSystemArgs,
+    ) -> syn::Result<impl Iterator<Item = Self>> {
+        Ok(AddSystemWithTargetArgs::try_from_macro_attr(system, attr)?
+            .into_iter()
+            .map(Self::from))
     }
     pub fn to_tokens(self, app_ident: &Ident) -> syn::Result<MacroStream> {
         AddSystemWithTargetArgs::try_from(self)?.to_tokens(app_ident)
@@ -383,25 +408,27 @@ pub struct AddSystemWithTargetArgs {
 }
 
 impl AddSystemWithTargetArgs {
-    pub fn try_from_macro_attr(system: Path, attr: AddSystemArgs) -> syn::Result<Self> {
-        let system_path_tokens = if system.has_generics() || !attr.has_generics() {
-            quote! { #system }
+    pub fn try_from_macro_attr(
+        system: Path,
+        attr: AddSystemArgs,
+    ) -> syn::Result<impl Iterator<Item = Self>> {
+        let systems: Vec<Path> = if system.has_generics()? || !attr.has_generics() {
+            vec![parse_quote! { #system }]
         } else {
-            let generics = attr
-                .generics
-                .as_ref()
-                .map(TokenStream::from)
-                .unwrap_or_default();
-            quote! { #system::<#generics> }
+            attr.generics
+                .into_iter()
+                .map(|generics| {
+                    parse_quote! { #system::<#generics> }
+                })
+                .collect()
         };
-        let system = parse2::<Path>(system_path_tokens)?;
 
-        Ok(Self {
+        Ok(systems.into_iter().map(move |system| Self {
             schedule_config: ScheduleConfigWithSystemArgs::from_macro_attr(
                 system,
-                attr.schedule_config,
+                attr.schedule_config.clone(),
             ),
-        })
+        }))
     }
     pub fn to_tokens(self, app_ident: &Ident) -> syn::Result<MacroStream> {
         let config_tokens = self.schedule_config.to_tokens()?;

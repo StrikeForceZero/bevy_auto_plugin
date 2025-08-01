@@ -28,17 +28,13 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
         fn map_to_add_system_args(
             iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
         ) -> darling::Result<Vec<AddSystemWithTargetArgs>> {
-            iter.into_iter()
-                .map(|item| {
-                    let args = match AddSystemArgs::from_meta(&item.attributes.meta) {
-                        Ok(args) => args,
-                        Err(err) => return Err(err),
-                    };
-                    Ok(AddSystemWithTargetArgs::try_from_macro_attr(
-                        item.path, args,
-                    )?)
-                })
-                .collect()
+            iter.into_iter().try_fold(Vec::new(), |mut acc, item| {
+                let args = AddSystemArgs::from_meta(&item.attributes.meta)?;
+                let it = AddSystemWithTargetArgs::try_from_macro_attr(item.path, args)
+                    .map_err(darling::Error::from)?;
+                acc.extend(it);
+                Ok(acc)
+            })
         }
 
         // Find all items with the provided [`attribute_name`] #[...] attribute

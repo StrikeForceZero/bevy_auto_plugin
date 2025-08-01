@@ -4,8 +4,20 @@ use quote::{ToTokens, quote};
 use syn::parse::Parser;
 use syn::{Meta, Token, Type, punctuated::Punctuated};
 
-#[derive(Debug, Default, PartialEq, Hash)]
+#[derive(Debug, Clone, Default, PartialEq, Hash)]
 pub struct TypeList(pub Vec<Type>);
+
+impl TypeList {
+    pub const fn new() -> Self {
+        Self(vec![])
+    }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
 
 impl ToTokens for TypeList {
     fn to_tokens(&self, tokens: &mut TokenStream) {

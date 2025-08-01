@@ -35,7 +35,7 @@ pub fn global_attribute_outer<T>(
     input: impl Into<MacroStream>,
     prefix: &'static str,
     require: fn(&Item) -> syn::Result<&Ident>,
-    generate_fn: impl FnOnce(&Ident, <T as GlobalMacroArgs>::Input) -> syn::Result<MacroStream>,
+    generate_fn: impl Fn(&Ident, <T as GlobalMacroArgs>::Input) -> syn::Result<MacroStream>,
 ) -> MacroStream
 where
     T: GlobalMacroArgs,
@@ -48,11 +48,20 @@ where
         |ident, params, _item| {
             let unique_ident = params.get_unique_ident(prefix, ident);
             let plugin = params.plugin().clone();
-            let input = params.to_input(ident)?;
-            let app_ident = default_app_ident();
-            let register = generate_fn(&app_ident, input)?;
-            let expr: syn::ExprClosure = syn::parse_quote!(|#app_ident| { #register });
-            let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
+            let inputs = params.to_input(ident)?;
+            let output = inputs
+                .map(|input| {
+                    let app_ident = default_app_ident();
+                    let register = generate_fn(&app_ident, input)?;
+                    let expr: syn::ExprClosure = syn::parse_quote!(|#app_ident| { #register });
+                    let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
+                    Ok(output)
+                })
+                .collect::<syn::Result<MacroStream>>()?;
+            assert!(
+                !output.is_empty(),
+                "No plugin entry points were generated for ident: {ident}"
+            );
             Ok(output)
         },
     )
