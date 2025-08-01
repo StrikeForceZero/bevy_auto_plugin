@@ -1,5 +1,7 @@
 // derived from Bevy Butler - MIT/Apache 2.0 https://github.com/TGRCdev/bevy-butler/blob/4eca26421d275134e0adc907e8c851bdcf10823a/bevy-butler/src/__internal/plugin.rs
 
+pub mod inner;
+
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
 use std::any::{TypeId, type_name};

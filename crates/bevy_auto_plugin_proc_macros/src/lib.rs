@@ -1,6 +1,6 @@
 use bevy_auto_plugin_shared::module::inner::expand_module;
 use proc_macro::TokenStream as CompilerStream;
-use proc_macro2::{Ident, TokenStream as MacroStream};
+use proc_macro2::TokenStream as MacroStream;
 use syn::{Error, ItemFn, Path, parse_macro_input, parse_str};
 
 fn to_compile_error(err: Error) -> MacroStream {
@@ -73,13 +73,12 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 
 use bevy_auto_plugin_shared::attribute_args::{
     AddSystemArgs, GlobalAddSystemArgs, GlobalAutoPluginDeriveArgs,
-    GlobalAutoPluginFnAttributeArgs, GlobalMacroArgs, GlobalStructOrEnumAttributeArgs,
-    StructOrEnumAttributeArgs,
+    GlobalAutoPluginFnAttributeArgs, GlobalStructOrEnumAttributeArgs, StructOrEnumAttributeArgs,
 };
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
-use bevy_auto_plugin_shared::global::__internal::_plugin_entry_block;
+use bevy_auto_plugin_shared::global::inner;
 use bevy_auto_plugin_shared::util::TargetRequirePath;
-use bevy_auto_plugin_shared::{default_app_ident, flat_file, ok_or_return_compiler_error, util};
+use bevy_auto_plugin_shared::{flat_file, ok_or_return_compiler_error, util};
 use proc_macro2::Span;
 use quote::{ToTokens, quote};
 use syn::Item;
@@ -276,61 +275,9 @@ pub fn global_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
     output.into()
 }
 
-fn global_attribute_inner<A, F>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-    require: fn(&Item) -> syn::Result<&Ident>,
-    parse_attr: fn(MacroStream) -> syn::Result<A>,
-    body: F,
-) -> MacroStream
-where
-    A: GlobalMacroArgs,
-    F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
-{
-    let attr = attr.into();
-    let input = input.into();
-
-    let item: Item = ok_or_return_compiler_error!(syn::parse2(input.clone()));
-
-    let ident = ok_or_return_compiler_error!(require(&item));
-
-    let args = ok_or_return_compiler_error!(parse_attr(attr));
-
-    let output = ok_or_return_compiler_error!(body(ident, args, &item));
-
-    quote!( #item #output )
-}
-
-fn global_attribute_outer<T>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-    prefix: &'static str,
-    require: fn(&Item) -> syn::Result<&Ident>,
-    generate_fn: impl FnOnce(&Ident, <T as GlobalMacroArgs>::Input) -> syn::Result<MacroStream>,
-) -> MacroStream
-where
-    T: GlobalMacroArgs,
-{
-    global_attribute_inner(
-        attr,
-        input,
-        require,
-        syn::parse2::<T>,
-        |ident, params, _item| {
-            let unique_ident = params.get_unique_ident(prefix, ident);
-            let plugin = params.plugin().clone();
-            let input = params.to_input(ident);
-            let app_ident = default_app_ident();
-            let register = generate_fn(&app_ident, input)?;
-            let expr: syn::ExprClosure = syn::parse_quote!(|#app_ident| { #register });
-            Ok(_plugin_entry_block(&unique_ident, &plugin, &expr))
-        },
-    )
-}
-
 #[proc_macro_attribute]
 pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+    inner::global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
         attr,
         input,
         "_global_plugin_register_type_",
@@ -342,7 +289,7 @@ pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) ->
 
 #[proc_macro_attribute]
 pub fn global_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+    inner::global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
         attr,
         input,
         "_global_plugin_add_event_",
@@ -354,7 +301,7 @@ pub fn global_auto_add_event(attr: CompilerStream, input: CompilerStream) -> Com
 
 #[proc_macro_attribute]
 pub fn global_auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+    inner::global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
         attr,
         input,
         "_global_plugin_init_resource_",
@@ -366,7 +313,7 @@ pub fn global_auto_init_resource(attr: CompilerStream, input: CompilerStream) ->
 
 #[proc_macro_attribute]
 pub fn global_auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+    inner::global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
         attr,
         input,
         "_global_plugin_init_state_",
@@ -378,7 +325,7 @@ pub fn global_auto_init_state(attr: CompilerStream, input: CompilerStream) -> Co
 
 #[proc_macro_attribute]
 pub fn global_auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+    inner::global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
         attr,
         input,
         "_global_plugin_name_",
@@ -393,7 +340,7 @@ pub fn global_auto_register_state_type(
     attr: CompilerStream,
     input: CompilerStream,
 ) -> CompilerStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+    inner::global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
         attr,
         input,
         "_global_plugin_register_state_type_",
@@ -405,7 +352,7 @@ pub fn global_auto_register_state_type(
 
 #[proc_macro_attribute]
 pub fn global_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_attribute_outer::<GlobalAddSystemArgs>(
+    inner::global_attribute_outer::<GlobalAddSystemArgs>(
         attr,
         input,
         "_global_plugin_add_system_",
