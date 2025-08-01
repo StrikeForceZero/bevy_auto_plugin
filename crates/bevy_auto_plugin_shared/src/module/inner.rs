@@ -1,5 +1,5 @@
 use crate::AutoPluginAttribute;
-use crate::attribute_args::{AddSystemArgs, AddSystemSerializedArgs};
+use crate::attribute_args::{AddSystemArgs, AddSystemWithTargetArgs};
 use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
     generate_init_states, generate_register_state_types, generate_register_types,
@@ -19,23 +19,22 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
     let app_param_ident = Ident::new("app", Span::call_site());
     // Extract the content inside the module
     if let Some((_, items)) = &module.content {
-        fn map_to_string(
+        fn map_to_path(
             iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
-        ) -> impl Iterator<Item = String> {
-            iter.into_iter()
-                .map(ItemWithAttributeMatch::into_path_string)
+        ) -> impl Iterator<Item = syn::Path> {
+            iter.into_iter().map(ItemWithAttributeMatch::path_owned)
         }
 
-        fn map_to_add_system_serialized_params(
+        fn map_to_add_system_args(
             iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
-        ) -> darling::Result<Vec<AddSystemSerializedArgs>> {
+        ) -> darling::Result<Vec<AddSystemWithTargetArgs>> {
             iter.into_iter()
                 .map(|item| {
                     let args = match AddSystemArgs::from_meta(&item.attributes.meta) {
                         Ok(args) => args,
                         Err(err) => return Err(err),
                     };
-                    Ok(AddSystemSerializedArgs::from_macro_attr(&item.path, &args))
+                    Ok(AddSystemWithTargetArgs::from_macro_attr(item.path, args))
                 })
                 .collect()
         }
@@ -43,33 +42,33 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
         // Find all items with the provided [`attribute_name`] #[...] attribute
         let auto_register_types =
             struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::RegisterType)?;
-        let auto_register_types = map_to_string(auto_register_types);
+        let auto_register_types = map_to_path(auto_register_types);
 
         let auto_add_events =
             struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::AddEvent)?;
-        let auto_add_events = map_to_string(auto_add_events);
+        let auto_add_events = map_to_path(auto_add_events);
 
         let auto_init_resources =
             struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::InitResource)?;
-        let auto_init_resources = map_to_string(auto_init_resources);
+        let auto_init_resources = map_to_path(auto_init_resources);
 
         let auto_names =
             struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::Name)?;
-        let auto_names = map_to_string(auto_names);
+        let auto_names = map_to_path(auto_names);
 
         let auto_register_state_types = struct_or_enum_items_with_attribute_macro(
             items,
             AutoPluginAttribute::RegisterStateType,
         )?;
-        let auto_register_state_types = map_to_string(auto_register_state_types);
+        let auto_register_state_types = map_to_path(auto_register_state_types);
 
         let auto_init_states =
             struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::InitState)?;
-        let auto_init_states = map_to_string(auto_init_states);
+        let auto_init_states = map_to_path(auto_init_states);
 
         let auto_add_system =
             items_with_attribute_macro::<FnRef>(items, AutoPluginAttribute::AddSystem)?;
-        let auto_add_system = map_to_add_system_serialized_params(auto_add_system)?.into_iter();
+        let auto_add_system = map_to_add_system_args(auto_add_system)?;
 
         inject_module(&mut module, move || {
             let auto_register_types =

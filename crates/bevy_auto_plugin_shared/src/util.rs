@@ -335,6 +335,9 @@ pub struct ItemWithAttributeMatch {
 }
 
 impl ItemWithAttributeMatch {
+    pub fn path_owned(self) -> Path {
+        self.path
+    }
     pub fn into_path_string(self) -> String {
         path_to_string(&self.path, false)
     }

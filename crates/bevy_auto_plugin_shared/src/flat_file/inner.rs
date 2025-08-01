@@ -1,5 +1,5 @@
-use crate::attribute_args::AddSystemArgs;
 use crate::attribute_args::StructOrEnumAttributeArgs;
+use crate::attribute_args::{AddSystemArgs, AddSystemSerializedArgs, AddSystemWithTargetArgs};
 use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
     generate_init_states, generate_register_state_types, generate_register_types,
@@ -14,7 +14,7 @@ use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
-use syn::{Error, Item, ItemFn, Path, parse2};
+use syn::{Error, Item, ItemFn, Path, parse_str, parse2};
 
 pub fn auto_plugin_inner(
     file_path: String,
@@ -79,25 +79,49 @@ pub fn auto_plugin_inner_to_stream(
                 "plugin already registered or duplicate attribute",
             ));
         }
+        fn map_to_path(input: impl IntoIterator<Item = String>) -> syn::Result<Vec<Path>> {
+            input
+                .into_iter()
+                .map(|str| parse_str::<Path>(&str))
+                .collect::<syn::Result<Vec<_>>>()
+        }
+        fn map_to_add_systems(
+            input: impl IntoIterator<Item = AddSystemSerializedArgs>,
+        ) -> syn::Result<Vec<AddSystemWithTargetArgs>> {
+            input
+                .into_iter()
+                .map(AddSystemWithTargetArgs::try_from)
+                .collect::<syn::Result<Vec<_>>>()
+        }
         file_state.plugin_registered = true;
         let register_types = generate_register_types(
             app_param_name,
-            file_state.context.register_types.clone().drain(),
+            map_to_path(file_state.context.register_types.drain())?,
         )?;
         let register_state_types = generate_register_state_types(
             app_param_name,
-            file_state.context.register_state_types.drain(),
+            map_to_path(file_state.context.register_state_types.drain())?,
         )?;
-        let add_events =
-            generate_add_events(app_param_name, file_state.context.add_events.drain())?;
-        let init_resources =
-            generate_init_resources(app_param_name, file_state.context.init_resources.drain())?;
-        let init_states =
-            generate_init_states(app_param_name, file_state.context.init_states.drain())?;
-        let auto_names =
-            generate_auto_names(app_param_name, file_state.context.auto_names.drain())?;
-        let add_systems =
-            generate_add_systems(app_param_name, file_state.context.add_systems.drain())?;
+        let add_events = generate_add_events(
+            app_param_name,
+            map_to_path(file_state.context.add_events.drain())?,
+        )?;
+        let init_resources = generate_init_resources(
+            app_param_name,
+            map_to_path(file_state.context.init_resources.drain())?,
+        )?;
+        let init_states = generate_init_states(
+            app_param_name,
+            map_to_path(file_state.context.init_states.drain())?,
+        )?;
+        let auto_names = generate_auto_names(
+            app_param_name,
+            map_to_path(file_state.context.auto_names.drain())?,
+        )?;
+        let add_systems = generate_add_systems(
+            app_param_name,
+            map_to_add_systems(file_state.context.add_systems.drain())?,
+        )?;
         Ok(quote! {
             #register_types
             #register_state_types

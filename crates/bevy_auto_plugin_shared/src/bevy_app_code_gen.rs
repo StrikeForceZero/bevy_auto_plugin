@@ -1,4 +1,4 @@
-use crate::attribute_args::AddSystemSerializedArgs;
+use crate::attribute_args::AddSystemWithTargetArgs;
 use crate::util::path_to_string;
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
@@ -12,7 +12,7 @@ where
 {
     let tokens = items
         .into_iter()
-        .map(|item| build(app_ident, item))
+        .map(|item| build(&app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
 
     Ok(quote! {
@@ -84,14 +84,9 @@ macro_rules! impl_simple {
         $doc:literal, // doc comment for the plural version
         $build:expr, // |app_ident, path| { ... } → TokenStream
     ) => {
-        impl_custom!(
-            $single,
-            $plural,
-            $doc,
-            String,
-            |_, raw: String| syn::parse_str::<syn::Path>(&raw),
-            |app_ident, item| Ok($build(app_ident, &item)),
-        );
+        impl_custom!($single, $plural, $doc, syn::Path, |app_ident, item| Ok(
+            $build(app_ident, &item)
+        ),);
     };
 }
 
@@ -148,6 +143,6 @@ impl_custom!(
     generate_add_system,
     generate_add_systems,
     "generated add_systems",
-    AddSystemSerializedArgs,
-    |app_ident, item| AddSystemSerializedArgs::to_tokens(&item, app_ident),
+    AddSystemWithTargetArgs,
+    |app_ident, item| AddSystemWithTargetArgs::to_tokens(item, app_ident),
 );

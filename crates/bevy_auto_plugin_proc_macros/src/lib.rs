@@ -72,10 +72,10 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 /* Flat File */
 
 use bevy_auto_plugin_shared::attribute_args::{
-    AddSystemArgs, GlobalAutoPluginDeriveArgs, GlobalAutoPluginFnAttributeArgs,
-    GlobalStructOrEnumAttributeArgs, StructOrEnumAttributeArgs,
+    AddSystemArgs, GlobalAddSystemArgs, GlobalAutoPluginDeriveArgs,
+    GlobalAutoPluginFnAttributeArgs, GlobalMacroArgs, GlobalStructOrEnumAttributeArgs,
+    StructOrEnumAttributeArgs,
 };
-use bevy_auto_plugin_shared::bevy_app_code_gen::generate_register_type;
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
 use bevy_auto_plugin_shared::global::__internal::_plugin_entry_block;
 use bevy_auto_plugin_shared::util::TargetRequirePath;
@@ -276,13 +276,23 @@ pub fn global_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
     output.into()
 }
 
-fn require_struct_or_enum(item: &Item) -> Result<&Ident, Error> {
+fn require_fn(item: &Item) -> syn::Result<&Ident> {
+    match item {
+        Item::Fn(f) => Ok(&f.sig.ident),
+        _ => Err(Error::new_spanned(
+            item,
+            "Only functions and enum can use this attribute macro",
+        )),
+    }
+}
+
+fn require_struct_or_enum(item: &Item) -> syn::Result<&Ident> {
     match item {
         Item::Struct(s) => Ok(&s.ident),
         Item::Enum(e) => Ok(&e.ident),
         _ => Err(Error::new_spanned(
             item,
-            "Only struct and enum can be registered",
+            "Only struct and enum can use this attribute macro",
         )),
     }
 }
@@ -290,10 +300,12 @@ fn require_struct_or_enum(item: &Item) -> Result<&Ident, Error> {
 fn global_attribute_inner<A, F>(
     attr: impl Into<MacroStream>,
     input: impl Into<MacroStream>,
+    require: fn(&Item) -> syn::Result<&Ident>,
     parse_attr: fn(MacroStream) -> syn::Result<A>,
     body: F,
 ) -> MacroStream
 where
+    A: GlobalMacroArgs,
     F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
 {
     let attr = attr.into();
@@ -301,7 +313,7 @@ where
 
     let item: Item = ok_or_return_compiler_error!(syn::parse2(input.clone()));
 
-    let ident = ok_or_return_compiler_error!(require_struct_or_enum(&item));
+    let ident = ok_or_return_compiler_error!(require(&item));
 
     let args = ok_or_return_compiler_error!(parse_attr(attr));
 
@@ -310,36 +322,116 @@ where
     quote!( #item #output )
 }
 
-fn global_attribute_outer(
+fn global_attribute_outer<T>(
     attr: impl Into<MacroStream>,
     input: impl Into<MacroStream>,
     prefix: &'static str,
-    generate_fn: impl FnOnce(&Ident, String) -> syn::Result<MacroStream>,
-) -> MacroStream {
+    require: fn(&Item) -> syn::Result<&Ident>,
+    generate_fn: impl FnOnce(&Ident, <T as GlobalMacroArgs>::Input) -> syn::Result<MacroStream>,
+) -> MacroStream
+where
+    T: GlobalMacroArgs,
+{
     global_attribute_inner(
         attr,
         input,
-        syn::parse2::<GlobalStructOrEnumAttributeArgs>,
+        require,
+        syn::parse2::<T>,
         |ident, params, _item| {
             let unique_ident = params.get_unique_ident(prefix, ident);
-            let generics = &params.inner.generics;
-            let target = quote!( #ident::<#generics> );
-
+            let plugin = params.plugin().clone();
+            let input = params.to_input(ident);
             let app_ident = default_app_ident();
-            let register = generate_fn(&app_ident, target.to_string())?;
-            let expr: syn::ExprClosure = syn::parse_quote!( |#app_ident| { #register } );
-            Ok(_plugin_entry_block(&unique_ident, &params.plugin, &expr))
+            let register = generate_fn(&app_ident, input)?;
+            let expr: syn::ExprClosure = syn::parse_quote!(|#app_ident| { #register });
+            Ok(_plugin_entry_block(&unique_ident, &plugin, &expr))
         },
     )
 }
 
 #[proc_macro_attribute]
 pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_attribute_outer(
+    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
         attr,
         input,
         "_global_plugin_register_type_",
-        generate_register_type,
+        require_struct_or_enum,
+        bevy_auto_plugin_shared::bevy_app_code_gen::generate_register_type,
+    )
+    .into()
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+        attr,
+        input,
+        "_global_plugin_add_event_",
+        require_struct_or_enum,
+        bevy_auto_plugin_shared::bevy_app_code_gen::generate_add_event,
+    )
+    .into()
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+        attr,
+        input,
+        "_global_plugin_init_resource_",
+        require_struct_or_enum,
+        bevy_auto_plugin_shared::bevy_app_code_gen::generate_init_resource,
+    )
+    .into()
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+        attr,
+        input,
+        "_global_plugin_init_state_",
+        require_struct_or_enum,
+        bevy_auto_plugin_shared::bevy_app_code_gen::generate_init_state,
+    )
+    .into()
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+        attr,
+        input,
+        "_global_plugin_name_",
+        require_struct_or_enum,
+        bevy_auto_plugin_shared::bevy_app_code_gen::generate_auto_name,
+    )
+    .into()
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_register_state_type(
+    attr: CompilerStream,
+    input: CompilerStream,
+) -> CompilerStream {
+    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
+        attr,
+        input,
+        "_global_plugin_register_state_type_",
+        require_struct_or_enum,
+        bevy_auto_plugin_shared::bevy_app_code_gen::generate_register_state_type,
+    )
+    .into()
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    global_attribute_outer::<GlobalAddSystemArgs>(
+        attr,
+        input,
+        "_global_plugin_add_system_",
+        require_fn,
+        bevy_auto_plugin_shared::bevy_app_code_gen::generate_add_system,
     )
     .into()
 }

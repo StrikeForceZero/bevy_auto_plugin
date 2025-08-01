@@ -3,7 +3,8 @@ use crate::util::{PathExt, path_to_string_with_spaces};
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::quote;
-use syn::{Attribute, Generics, Path, Type, Visibility, parse2};
+use syn::parse::Parse;
+use syn::{Attribute, Generics, Path, Type, Visibility, parse_quote, parse_str, parse2};
 
 #[allow(dead_code)]
 #[derive(Debug, FromField)]
@@ -50,6 +51,35 @@ pub struct GlobalAutoPluginFnAttributeArgs {
 
 #[derive(FromMeta, Debug, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
+pub struct GlobalAddSystemArgs {
+    pub plugin: Path,
+    pub generics: Option<TypeList>,
+    #[darling(flatten)]
+    pub schedule_config: ScheduleConfigArgs,
+}
+
+impl GlobalAddSystemArgs {
+    pub fn into_add_system_with_target_args(self, target: Path) -> AddSystemWithTargetArgs {
+        AddSystemWithTargetArgs {
+            schedule_config: ScheduleConfigWithSystemArgs::from_macro_attr(
+                target,
+                self.schedule_config,
+            ),
+        }
+    }
+}
+
+impl From<GlobalAddSystemArgs> for AddSystemArgs {
+    fn from(args: GlobalAddSystemArgs) -> Self {
+        Self {
+            generics: args.generics,
+            schedule_config: args.schedule_config,
+        }
+    }
+}
+
+#[derive(FromMeta, Debug, PartialEq, Hash)]
+#[darling(derive_syn_parse)]
 pub struct GlobalStructOrEnumAttributeArgs {
     pub plugin: Path,
     #[darling(flatten, default)]
@@ -60,7 +90,20 @@ impl GlobalStructOrEnumAttributeArgs {
     pub fn has_generics(&self) -> bool {
         self.inner.has_generics()
     }
-    fn concat_ident_hash(&self, ident: &Ident) -> String {
+}
+
+pub trait GlobalMacroArgs: Parse + std::hash::Hash {
+    type Input;
+    type ToTokensFn: Fn(&Self, Self::Input) -> syn::Result<MacroStream>;
+    fn target_path_with_ident(&self, ident: &Ident) -> Path {
+        let generics = &self.generics();
+        parse_quote!( #ident::<#generics> )
+    }
+    fn generics(&self) -> Option<&TypeList>;
+    fn plugin(&self) -> &Path;
+    fn to_input(self, ident: &Ident) -> Self::Input;
+
+    fn _concat_ident_hash(&self, ident: &Ident) -> String {
         use std::hash::{Hash, Hasher};
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         ident.hash(&mut hasher);
@@ -68,14 +111,44 @@ impl GlobalStructOrEnumAttributeArgs {
         format!("{:x}", hasher.finish())
     }
 
-    fn get_unique_ident_string(&self, prefix: &'static str, ident: &Ident) -> String {
-        let hash = self.concat_ident_hash(ident);
+    fn _get_unique_ident_string(&self, prefix: &'static str, ident: &Ident) -> String {
+        let hash = self._concat_ident_hash(ident);
         format!("{prefix}_{hash}")
     }
 
-    pub fn get_unique_ident(&self, prefix: &'static str, ident: &Ident) -> Ident {
-        let ident_string = self.get_unique_ident_string(prefix, ident);
+    fn get_unique_ident(&self, prefix: &'static str, ident: &Ident) -> Ident {
+        let ident_string = self._get_unique_ident_string(prefix, ident);
         Ident::new(&ident_string, ident.span())
+    }
+}
+
+impl GlobalMacroArgs for GlobalStructOrEnumAttributeArgs {
+    type Input = Path;
+    type ToTokensFn = fn(&Self, Self::Input) -> syn::Result<MacroStream>;
+    fn generics(&self) -> Option<&TypeList> {
+        self.inner.generics.as_ref()
+    }
+    fn plugin(&self) -> &Path {
+        &self.plugin
+    }
+    fn to_input(self, ident: &Ident) -> Self::Input {
+        self.target_path_with_ident(ident)
+    }
+}
+
+impl GlobalMacroArgs for GlobalAddSystemArgs {
+    type Input = AddSystemWithTargetArgs;
+    type ToTokensFn = fn(&Self, Self::Input) -> syn::Result<MacroStream>;
+    fn generics(&self) -> Option<&TypeList> {
+        self.generics.as_ref()
+    }
+    fn plugin(&self) -> &Path {
+        &self.plugin
+    }
+    fn to_input(self, ident: &Ident) -> Self::Input {
+        let target = self.target_path_with_ident(ident);
+        let add_system_args = AddSystemArgs::from(self);
+        AddSystemWithTargetArgs::from_macro_attr(target, add_system_args)
     }
 }
 
@@ -96,7 +169,7 @@ impl StructOrEnumAttributeArgs {
     }
 }
 
-#[derive(FromMeta, Debug)]
+#[derive(FromMeta, Debug, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct ScheduleConfigArgs {
     pub schedule: Path,
@@ -135,98 +208,148 @@ pub struct ScheduleConfigSerializedArgs {
 }
 
 impl ScheduleConfigSerializedArgs {
-    pub fn from_macro_attr(system: &Path, attr: &ScheduleConfigArgs) -> Self {
+    pub fn to_tokens(self) -> syn::Result<MacroStream> {
+        ScheduleConfigWithSystemArgs::try_from(self)?.to_tokens()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ScheduleConfigWithSystemArgs {
+    pub schedule_path: Path,
+    pub scheduled_item_path: Path,
+    pub in_set_path: Option<Path>,
+    pub before_path: Option<Path>,
+    pub after_path: Option<Path>,
+    pub run_if_path: Option<Path>,
+    pub distributive_run_if_path: Option<Path>,
+    pub ambiguous_with_path: Option<Path>,
+    pub ambiguous_with_all_flag: Option<bool>,
+    pub after_ignore_deferred_path: Option<Path>,
+    pub before_ignore_deferred_path: Option<Path>,
+}
+
+impl ScheduleConfigWithSystemArgs {
+    pub fn from_macro_attr(system: Path, attr: ScheduleConfigArgs) -> Self {
         Self {
-            schedule_path_string: path_to_string_with_spaces(&attr.schedule),
-            scheduled_item_path_string: path_to_string_with_spaces(system),
-            in_set_path_string: attr.in_set.as_ref().map(path_to_string_with_spaces),
-            before_path_string: attr.before.as_ref().map(path_to_string_with_spaces),
-            after_path_string: attr.after.as_ref().map(path_to_string_with_spaces),
-            run_if_path_string: attr.run_if.as_ref().map(path_to_string_with_spaces),
-            distributive_run_if_path_string: attr
-                .distributive_run_if
-                .as_ref()
-                .map(path_to_string_with_spaces),
-            ambiguous_with_path_string: attr
-                .ambiguous_with
-                .as_ref()
-                .map(path_to_string_with_spaces),
+            schedule_path: attr.schedule,
+            scheduled_item_path: system,
+            in_set_path: attr.in_set,
+            before_path: attr.before,
+            after_path: attr.after,
+            run_if_path: attr.run_if,
+            distributive_run_if_path: attr.distributive_run_if,
+            ambiguous_with_path: attr.ambiguous_with,
             ambiguous_with_all_flag: attr.ambiguous_with_all,
-            before_ignore_deferred_path_string: attr
-                .before_ignore_deferred
-                .as_ref()
-                .map(path_to_string_with_spaces),
-            after_ignore_deferred_path_string: attr
-                .after_ignore_deferred
-                .as_ref()
-                .map(path_to_string_with_spaces),
+            before_ignore_deferred_path: attr.before_ignore_deferred,
+            after_ignore_deferred_path: attr.after_ignore_deferred,
         }
     }
     pub fn to_tokens(&self) -> syn::Result<MacroStream> {
         let mut output = quote! {};
-        if let Some(in_set) = &self.in_set_path_string {
-            let in_set = syn::parse_str::<Path>(in_set)?;
-            output = quote! {
-                #output
-                    .in_set(#in_set)
-            };
+        if let Some(in_set) = &self.in_set_path {
+            output.extend(quote! {
+                .in_set(#in_set)
+            });
         }
-        if let Some(before) = &self.before_path_string {
-            let before = syn::parse_str::<Path>(before)?;
-            output = quote! {
-                #output
-                    .before(#before)
-            };
+        if let Some(before) = &self.before_path {
+            output.extend(quote! {
+                .before(#before)
+            });
         }
-        if let Some(after) = &self.after_path_string {
-            let after = syn::parse_str::<Path>(after)?;
-            output = quote! {
-                #output
-                    .after(#after)
-            }
+        if let Some(after) = &self.after_path {
+            output.extend(quote! {
+                .after(#after)
+            });
         }
-        if let Some(run_if) = &self.run_if_path_string {
-            let run_if = syn::parse_str::<Path>(run_if)?;
-            output = quote! {
-                #output
-                    .run_if(#run_if)
-            }
+        if let Some(run_if) = &self.run_if_path {
+            output.extend(quote! {
+                .run_if(#run_if)
+            });
         }
-        if let Some(distributive_run_if) = &self.distributive_run_if_path_string {
-            let distributive_run_if = syn::parse_str::<Path>(distributive_run_if)?;
-            output = quote! {
-                #output
-                    .distributive_run_if(#distributive_run_if)
-            }
+        if let Some(distributive_run_if) = &self.distributive_run_if_path {
+            output.extend(quote! {
+                .distributive_run_if(#distributive_run_if)
+            });
         }
-        if let Some(ambiguous_with) = &self.ambiguous_with_path_string {
-            let ambiguous_with = syn::parse_str::<Path>(ambiguous_with)?;
-            output = quote! {
-                #output
-                    .ambiguous_with(#ambiguous_with)
-            }
+        if let Some(ambiguous_with) = &self.ambiguous_with_path {
+            output.extend(quote! {
+                .ambiguous_with(#ambiguous_with)
+            });
         }
         if let Some(true) = self.ambiguous_with_all_flag {
-            output = quote! {
-                #output
-                    .ambiguous_with_all()
-            }
+            output.extend(quote! {
+                .ambiguous_with_all()
+            });
         }
-        if let Some(before_ignore_deferred) = &self.before_ignore_deferred_path_string {
-            let before_ignore_deferred = syn::parse_str::<Path>(before_ignore_deferred)?;
-            output = quote! {
-                #output
-                    .before_ignore_deferred(#before_ignore_deferred)
-            }
+        if let Some(before_ignore_deferred) = &self.before_ignore_deferred_path {
+            output.extend(quote! {
+                .before_ignore_deferred(#before_ignore_deferred)
+            });
         }
-        if let Some(after_ignore_deferred) = &self.after_ignore_deferred_path_string {
-            let after_ignore_deferred = syn::parse_str::<Path>(after_ignore_deferred)?;
-            output = quote! {
-                #output
-                    .after_ignore_deferred(#after_ignore_deferred)
-            }
+        if let Some(after_ignore_deferred) = &self.after_ignore_deferred_path {
+            output.extend(quote! {
+                .after_ignore_deferred(#after_ignore_deferred)
+            });
         }
         Ok(output)
+    }
+}
+
+impl TryFrom<ScheduleConfigSerializedArgs> for ScheduleConfigWithSystemArgs {
+    type Error = syn::Error;
+    fn try_from(value: ScheduleConfigSerializedArgs) -> Result<Self, Self::Error> {
+        fn parse(value_str: String) -> syn::Result<Path> {
+            parse_str::<Path>(&value_str)
+        }
+        fn parse_opt(value_str: Option<String>) -> syn::Result<Option<Path>> {
+            let Some(value_str) = value_str else {
+                return Ok(None);
+            };
+            Ok(Some(parse(value_str)?))
+        }
+        Ok(Self {
+            schedule_path: parse(value.schedule_path_string)?,
+            scheduled_item_path: parse(value.scheduled_item_path_string)?,
+            in_set_path: parse_opt(value.in_set_path_string)?,
+            before_path: parse_opt(value.before_path_string)?,
+            after_path: parse_opt(value.after_path_string)?,
+            run_if_path: parse_opt(value.run_if_path_string)?,
+            distributive_run_if_path: parse_opt(value.distributive_run_if_path_string)?,
+            ambiguous_with_path: parse_opt(value.ambiguous_with_path_string)?,
+            ambiguous_with_all_flag: value.ambiguous_with_all_flag,
+            after_ignore_deferred_path: parse_opt(value.after_ignore_deferred_path_string)?,
+            before_ignore_deferred_path: parse_opt(value.before_ignore_deferred_path_string)?,
+        })
+    }
+}
+
+impl From<ScheduleConfigWithSystemArgs> for ScheduleConfigSerializedArgs {
+    fn from(value: ScheduleConfigWithSystemArgs) -> Self {
+        Self {
+            schedule_path_string: path_to_string_with_spaces(&value.schedule_path),
+            scheduled_item_path_string: path_to_string_with_spaces(&value.scheduled_item_path),
+            in_set_path_string: value.in_set_path.as_ref().map(path_to_string_with_spaces),
+            before_path_string: value.before_path.as_ref().map(path_to_string_with_spaces),
+            after_path_string: value.after_path.as_ref().map(path_to_string_with_spaces),
+            run_if_path_string: value.run_if_path.as_ref().map(path_to_string_with_spaces),
+            distributive_run_if_path_string: value
+                .distributive_run_if_path
+                .as_ref()
+                .map(path_to_string_with_spaces),
+            ambiguous_with_path_string: value
+                .ambiguous_with_path
+                .as_ref()
+                .map(path_to_string_with_spaces),
+            ambiguous_with_all_flag: value.ambiguous_with_all_flag,
+            after_ignore_deferred_path_string: value
+                .after_ignore_deferred_path
+                .as_ref()
+                .map(path_to_string_with_spaces),
+            before_ignore_deferred_path_string: value
+                .before_ignore_deferred_path
+                .as_ref()
+                .map(path_to_string_with_spaces),
+        }
     }
 }
 
@@ -236,7 +359,7 @@ pub struct AddSystemSerializedArgs {
 }
 
 impl AddSystemSerializedArgs {
-    pub fn from_macro_attr(system: &Path, attr: &AddSystemArgs) -> Self {
+    pub fn from_macro_attr(system: Path, attr: AddSystemArgs) -> Self {
         let system_path_tokens = if system.has_generics() {
             quote! { #system }
         } else {
@@ -251,18 +374,74 @@ impl AddSystemSerializedArgs {
         let system = parse2::<Path>(system_path_tokens).expect("failed to parse system path");
 
         Self {
-            schedule_config: ScheduleConfigSerializedArgs::from_macro_attr(
-                &system,
-                &attr.schedule_config,
-            ),
+            schedule_config: ScheduleConfigWithSystemArgs::from_macro_attr(
+                system,
+                attr.schedule_config,
+            )
+            .into(),
         }
     }
-    pub fn to_tokens(&self, app_ident: &Ident) -> syn::Result<MacroStream> {
+    pub fn to_tokens(self, app_ident: &Ident) -> syn::Result<MacroStream> {
+        let schedule = parse_str::<Path>(&self.schedule_config.schedule_path_string)?;
+        let system = parse_str::<Path>(&self.schedule_config.scheduled_item_path_string)?;
         let config_tokens = self.schedule_config.to_tokens()?;
-        let schedule = syn::parse_str::<Path>(&self.schedule_config.schedule_path_string)?;
-        let system = syn::parse_str::<Path>(&self.schedule_config.scheduled_item_path_string)?;
         Ok(quote! {
             #app_ident.add_systems(#schedule, #system #config_tokens);
         })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct AddSystemWithTargetArgs {
+    pub schedule_config: ScheduleConfigWithSystemArgs,
+}
+
+impl AddSystemWithTargetArgs {
+    pub fn from_macro_attr(system: Path, attr: AddSystemArgs) -> Self {
+        let system_path_tokens = if system.has_generics() {
+            quote! { #system }
+        } else {
+            let generics = attr
+                .generics
+                .as_ref()
+                .map(TokenStream::from)
+                .unwrap_or_default();
+            quote! { #system::<#generics> }
+        };
+        // TODO: return result
+        let system = parse2::<Path>(system_path_tokens).expect("failed to parse system path");
+
+        Self {
+            schedule_config: ScheduleConfigWithSystemArgs::from_macro_attr(
+                system,
+                attr.schedule_config,
+            )
+            .into(),
+        }
+    }
+    pub fn to_tokens(self, app_ident: &Ident) -> syn::Result<MacroStream> {
+        let config_tokens = self.schedule_config.to_tokens()?;
+        let schedule = self.schedule_config.schedule_path;
+        let system = self.schedule_config.scheduled_item_path;
+        Ok(quote! {
+            #app_ident.add_systems(#schedule, #system #config_tokens);
+        })
+    }
+}
+
+impl TryFrom<AddSystemSerializedArgs> for AddSystemWithTargetArgs {
+    type Error = syn::Error;
+    fn try_from(value: AddSystemSerializedArgs) -> Result<Self, Self::Error> {
+        Ok(Self {
+            schedule_config: ScheduleConfigWithSystemArgs::try_from(value.schedule_config)?,
+        })
+    }
+}
+
+impl From<AddSystemWithTargetArgs> for AddSystemSerializedArgs {
+    fn from(value: AddSystemWithTargetArgs) -> Self {
+        Self {
+            schedule_config: value.schedule_config.into(),
+        }
     }
 }

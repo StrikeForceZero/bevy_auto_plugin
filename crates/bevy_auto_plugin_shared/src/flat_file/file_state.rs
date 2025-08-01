@@ -73,7 +73,7 @@ pub fn update_state(
             TargetData::AddSystem { system, params } => entry
                 .context
                 .add_systems
-                .insert(AddSystemSerializedArgs::from_macro_attr(&system, &params)),
+                .insert(AddSystemSerializedArgs::from_macro_attr(system, params)),
         };
         if !inserted {
             return Err(UpdateStateError::Duplicate);

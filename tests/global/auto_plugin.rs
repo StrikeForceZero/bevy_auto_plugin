@@ -13,6 +13,11 @@ struct Test;
 #[auto_register_type(plugin = Test)]
 struct Foo;
 
+#[derive(Resource, Default, Reflect)]
+#[reflect(Resource)]
+#[auto_register_type(plugin = Test)]
+struct FooRes(usize);
+
 fn app() -> App {
     let mut app = create_minimal_app();
     app.add_plugins(Test);
