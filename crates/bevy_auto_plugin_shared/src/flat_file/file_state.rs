@@ -70,10 +70,14 @@ pub fn update_state(
                 .context
                 .auto_names
                 .insert(path_to_string_with_spaces(&path)),
-            TargetData::AddSystem { system, params } => entry
-                .context
-                .add_systems
-                .insert(AddSystemSerializedArgs::from_macro_attr(system, params)),
+            TargetData::AddSystem { system, params } => {
+                entry
+                    .context
+                    .add_systems
+                    .insert(AddSystemSerializedArgs::try_from_macro_attr(
+                        system, params,
+                    )?)
+            }
         };
         if !inserted {
             return Err(UpdateStateError::Duplicate);
@@ -134,4 +138,6 @@ pub enum UpdateStateError {
     Duplicate,
     #[error("plugin already registered above, move plugin fn to the bottom of the file")]
     PluginAlreadyRegistered,
+    #[error("parse error: {0}")]
+    ParseError(#[from] syn::Error),
 }

@@ -53,6 +53,7 @@ pub struct GlobalAutoPluginFnAttributeArgs {
 #[darling(derive_syn_parse)]
 pub struct GlobalAddSystemArgs {
     pub plugin: Path,
+    #[darling(default)]
     pub generics: Option<TypeList>,
     #[darling(flatten)]
     pub schedule_config: ScheduleConfigArgs,
@@ -101,7 +102,7 @@ pub trait GlobalMacroArgs: Parse + std::hash::Hash {
     }
     fn generics(&self) -> Option<&TypeList>;
     fn plugin(&self) -> &Path;
-    fn to_input(self, ident: &Ident) -> Self::Input;
+    fn to_input(self, ident: &Ident) -> syn::Result<Self::Input>;
 
     fn _concat_ident_hash(&self, ident: &Ident) -> String {
         use std::hash::{Hash, Hasher};
@@ -131,8 +132,8 @@ impl GlobalMacroArgs for GlobalStructOrEnumAttributeArgs {
     fn plugin(&self) -> &Path {
         &self.plugin
     }
-    fn to_input(self, ident: &Ident) -> Self::Input {
-        self.target_path_with_ident(ident)
+    fn to_input(self, ident: &Ident) -> syn::Result<Self::Input> {
+        Ok(self.target_path_with_ident(ident))
     }
 }
 
@@ -145,10 +146,10 @@ impl GlobalMacroArgs for GlobalAddSystemArgs {
     fn plugin(&self) -> &Path {
         &self.plugin
     }
-    fn to_input(self, ident: &Ident) -> Self::Input {
+    fn to_input(self, ident: &Ident) -> syn::Result<Self::Input> {
         let target = self.target_path_with_ident(ident);
         let add_system_args = AddSystemArgs::from(self);
-        AddSystemWithTargetArgs::from_macro_attr(target, add_system_args)
+        AddSystemWithTargetArgs::try_from_macro_attr(target, add_system_args)
     }
 }
 
@@ -190,6 +191,15 @@ pub struct AddSystemArgs {
     pub generics: Option<TypeList>,
     #[darling(flatten)]
     pub schedule_config: ScheduleConfigArgs,
+}
+
+impl AddSystemArgs {
+    pub fn has_generics(&self) -> bool {
+        self.generics
+            .as_ref()
+            .map(|types| !types.0.is_empty())
+            .unwrap_or(false)
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
@@ -359,35 +369,11 @@ pub struct AddSystemSerializedArgs {
 }
 
 impl AddSystemSerializedArgs {
-    pub fn from_macro_attr(system: Path, attr: AddSystemArgs) -> Self {
-        let system_path_tokens = if system.has_generics() {
-            quote! { #system }
-        } else {
-            let generics = attr
-                .generics
-                .as_ref()
-                .map(TokenStream::from)
-                .unwrap_or_default();
-            quote! { #system::<#generics> }
-        };
-        // TODO: return result
-        let system = parse2::<Path>(system_path_tokens).expect("failed to parse system path");
-
-        Self {
-            schedule_config: ScheduleConfigWithSystemArgs::from_macro_attr(
-                system,
-                attr.schedule_config,
-            )
-            .into(),
-        }
+    pub fn try_from_macro_attr(system: Path, attr: AddSystemArgs) -> syn::Result<Self> {
+        Ok(AddSystemWithTargetArgs::try_from_macro_attr(system, attr)?.into())
     }
     pub fn to_tokens(self, app_ident: &Ident) -> syn::Result<MacroStream> {
-        let schedule = parse_str::<Path>(&self.schedule_config.schedule_path_string)?;
-        let system = parse_str::<Path>(&self.schedule_config.scheduled_item_path_string)?;
-        let config_tokens = self.schedule_config.to_tokens()?;
-        Ok(quote! {
-            #app_ident.add_systems(#schedule, #system #config_tokens);
-        })
+        AddSystemWithTargetArgs::try_from(self)?.to_tokens(app_ident)
     }
 }
 
@@ -397,8 +383,8 @@ pub struct AddSystemWithTargetArgs {
 }
 
 impl AddSystemWithTargetArgs {
-    pub fn from_macro_attr(system: Path, attr: AddSystemArgs) -> Self {
-        let system_path_tokens = if system.has_generics() {
+    pub fn try_from_macro_attr(system: Path, attr: AddSystemArgs) -> syn::Result<Self> {
+        let system_path_tokens = if system.has_generics() || !attr.has_generics() {
             quote! { #system }
         } else {
             let generics = attr
@@ -408,16 +394,14 @@ impl AddSystemWithTargetArgs {
                 .unwrap_or_default();
             quote! { #system::<#generics> }
         };
-        // TODO: return result
-        let system = parse2::<Path>(system_path_tokens).expect("failed to parse system path");
+        let system = parse2::<Path>(system_path_tokens)?;
 
-        Self {
+        Ok(Self {
             schedule_config: ScheduleConfigWithSystemArgs::from_macro_attr(
                 system,
                 attr.schedule_config,
-            )
-            .into(),
-        }
+            ),
+        })
     }
     pub fn to_tokens(self, app_ident: &Ident) -> syn::Result<MacroStream> {
         let config_tokens = self.schedule_config.to_tokens()?;

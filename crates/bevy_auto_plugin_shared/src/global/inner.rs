@@ -19,7 +19,7 @@ where
     let attr = attr.into();
     let input = input.into();
 
-    let item: Item = ok_or_return_compiler_error!(syn::parse2(input.clone()));
+    let item: Item = ok_or_return_compiler_error!(syn::parse2(input));
 
     let ident = ok_or_return_compiler_error!(require(&item));
 
@@ -48,11 +48,12 @@ where
         |ident, params, _item| {
             let unique_ident = params.get_unique_ident(prefix, ident);
             let plugin = params.plugin().clone();
-            let input = params.to_input(ident);
+            let input = params.to_input(ident)?;
             let app_ident = default_app_ident();
             let register = generate_fn(&app_ident, input)?;
             let expr: syn::ExprClosure = syn::parse_quote!(|#app_ident| { #register });
-            Ok(_plugin_entry_block(&unique_ident, &plugin, &expr))
+            let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
+            Ok(output)
         },
     )
 }

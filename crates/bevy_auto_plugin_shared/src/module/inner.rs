@@ -34,7 +34,9 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
                         Ok(args) => args,
                         Err(err) => return Err(err),
                     };
-                    Ok(AddSystemWithTargetArgs::from_macro_attr(item.path, args))
+                    Ok(AddSystemWithTargetArgs::try_from_macro_attr(
+                        item.path, args,
+                    )?)
                 })
                 .collect()
         }
