@@ -1,5 +1,6 @@
+use crate::attribute_args::StructOrEnumAttributeParams;
 use crate::type_list::TypeList;
-use crate::{AddSystemParams, AutoPluginAttribute, StructOrEnumAttributeParams};
+use crate::{AddSystemParams, AutoPluginAttribute};
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::{ToTokens, quote};

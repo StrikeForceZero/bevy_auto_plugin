@@ -71,14 +71,16 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 
 /* Flat File */
 
+use bevy_auto_plugin_shared::attribute_args::{
+    GlobalAutoPluginDeriveParams, GlobalAutoPluginFnAttributeParams,
+    GlobalStructOrEnumAttributeParams, StructOrEnumAttributeParams,
+};
 use bevy_auto_plugin_shared::bevy_app_code_gen::generate_register_type;
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
 use bevy_auto_plugin_shared::global::__internal::_plugin_entry_block;
 use bevy_auto_plugin_shared::util::TargetRequirePath;
 use bevy_auto_plugin_shared::{
-    AddSystemParams, GlobalAutoPluginDeriveParams, GlobalAutoPluginFnAttributeParams,
-    GlobalStructOrEnumAttributeParams, StructOrEnumAttributeParams, default_app_ident, flat_file,
-    get_unique_ident_for_global_struct_or_enum_attribute, ok_or_return_compiler_error,
+    AddSystemParams, default_app_ident, flat_file, ok_or_return_compiler_error,
 };
 use proc_macro2::Span;
 use quote::{ToTokens, quote};
@@ -292,11 +294,7 @@ pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) ->
         Ok(params) => params,
         Err(err) => return err.into_compile_error().into(),
     };
-    let unique_ident = get_unique_ident_for_global_struct_or_enum_attribute(
-        "_global_plugin_register_type_",
-        ident,
-        &params,
-    );
+    let unique_ident = params.get_unique_ident("_global_plugin_register_type_", ident);
     let generics = &params.inner.generics;
     let target = quote! {
         #ident::<#generics>

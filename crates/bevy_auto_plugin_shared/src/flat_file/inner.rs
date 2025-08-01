@@ -1,3 +1,5 @@
+use crate::AddSystemParams;
+use crate::attribute_args::StructOrEnumAttributeParams;
 use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
     generate_init_states, generate_register_state_types, generate_register_types,
@@ -8,7 +10,6 @@ use crate::util::{
     FnParamMutabilityCheckErrMessages, LocalFile, StructOrEnumRef, TargetData, TargetRequirePath,
     is_fn_param_mutable_reference, resolve_local_file, resolve_path_from_item_or_args,
 };
-use crate::{AddSystemParams, StructOrEnumAttributeParams};
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
