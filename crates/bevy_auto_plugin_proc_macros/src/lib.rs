@@ -72,16 +72,14 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 /* Flat File */
 
 use bevy_auto_plugin_shared::attribute_args::{
-    GlobalAutoPluginDeriveArgs, GlobalAutoPluginFnAttributeArgs, GlobalStructOrEnumAttributeArgs,
-    StructOrEnumAttributeArgs,
+    AddSystemArgs, GlobalAutoPluginDeriveArgs, GlobalAutoPluginFnAttributeArgs,
+    GlobalStructOrEnumAttributeArgs, StructOrEnumAttributeArgs,
 };
 use bevy_auto_plugin_shared::bevy_app_code_gen::generate_register_type;
 use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
 use bevy_auto_plugin_shared::global::__internal::_plugin_entry_block;
 use bevy_auto_plugin_shared::util::TargetRequirePath;
-use bevy_auto_plugin_shared::{
-    AddSystemParams, default_app_ident, flat_file, ok_or_return_compiler_error,
-};
+use bevy_auto_plugin_shared::{default_app_ident, flat_file, ok_or_return_compiler_error};
 use proc_macro2::Span;
 use quote::{ToTokens, quote};
 use syn::Item;
@@ -176,7 +174,7 @@ pub fn flat_file_auto_register_state_type(
 pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     let cloned_input = input.clone();
     let item = parse_macro_input!(input as ItemFn);
-    let args = parse_macro_input!(attr as AddSystemParams);
+    let args = parse_macro_input!(attr as AddSystemArgs);
     flat_file::inner::handle_add_system_attribute_outer(item, args, Span::call_site())
         .map(|_| cloned_input)
         .unwrap_or_else(|err| err.to_compile_error().into())

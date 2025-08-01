@@ -1,6 +1,6 @@
-use crate::attribute_args::StructOrEnumAttributeArgs;
+use crate::AutoPluginAttribute;
+use crate::attribute_args::{AddSystemArgs, StructOrEnumAttributeArgs};
 use crate::type_list::TypeList;
-use crate::{AddSystemParams, AutoPluginAttribute};
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::{ToTokens, quote};
@@ -63,10 +63,7 @@ pub enum TargetData {
     InitResources(Path),
     InitStates(Path),
     RequiredComponentAutoName(Path),
-    AddSystem {
-        system: Path,
-        params: AddSystemParams,
-    },
+    AddSystem { system: Path, params: AddSystemArgs },
 }
 
 impl TargetData {

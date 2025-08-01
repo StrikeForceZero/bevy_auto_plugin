@@ -1,5 +1,6 @@
+use crate::AutoPluginContext;
+use crate::attribute_args::AddSystemSerializedArgs;
 use crate::util::{TargetData, path_to_string_with_spaces};
-use crate::{AddSystemSerializedParams, AutoPluginContext};
 use quote::quote;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -72,7 +73,7 @@ pub fn update_state(
             TargetData::AddSystem { system, params } => entry
                 .context
                 .add_systems
-                .insert(AddSystemSerializedParams::from_macro_attr(&system, &params)),
+                .insert(AddSystemSerializedArgs::from_macro_attr(&system, &params)),
         };
         if !inserted {
             return Err(UpdateStateError::Duplicate);

@@ -1,3 +1,5 @@
+use crate::AutoPluginAttribute;
+use crate::attribute_args::{AddSystemArgs, AddSystemSerializedArgs};
 use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
     generate_init_states, generate_register_state_types, generate_register_types,
@@ -7,7 +9,6 @@ use crate::util::{
     FnRef, ItemWithAttributeMatch, inject_module, items_with_attribute_macro,
     struct_or_enum_items_with_attribute_macro,
 };
-use crate::{AddSystemParams, AddSystemSerializedParams, AutoPluginAttribute};
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
@@ -27,16 +28,14 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
 
         fn map_to_add_system_serialized_params(
             iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
-        ) -> darling::Result<Vec<AddSystemSerializedParams>> {
+        ) -> darling::Result<Vec<AddSystemSerializedArgs>> {
             iter.into_iter()
                 .map(|item| {
-                    let args = match AddSystemParams::from_meta(&item.attributes.meta) {
+                    let args = match AddSystemArgs::from_meta(&item.attributes.meta) {
                         Ok(args) => args,
                         Err(err) => return Err(err),
                     };
-                    Ok(AddSystemSerializedParams::from_macro_attr(
-                        &item.path, &args,
-                    ))
+                    Ok(AddSystemSerializedArgs::from_macro_attr(&item.path, &args))
                 })
                 .collect()
         }

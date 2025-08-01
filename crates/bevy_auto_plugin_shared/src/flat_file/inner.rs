@@ -1,4 +1,4 @@
-use crate::AddSystemParams;
+use crate::attribute_args::AddSystemArgs;
 use crate::attribute_args::StructOrEnumAttributeArgs;
 use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
@@ -166,7 +166,7 @@ pub fn handle_attribute_inner(
 
 pub fn handle_add_system_attribute_outer(
     item: ItemFn,
-    args: AddSystemParams,
+    args: AddSystemArgs,
     attr_span: Span,
 ) -> syn::Result<()> {
     extract_or_noop!(
@@ -180,7 +180,7 @@ pub fn handle_add_system_attribute_outer(
 pub fn handle_add_system_attribute_inner(
     file_path: String,
     item: ItemFn,
-    args: AddSystemParams,
+    args: AddSystemArgs,
     attr_span: Span,
 ) -> syn::Result<()> {
     let ident = &item.sig.ident;

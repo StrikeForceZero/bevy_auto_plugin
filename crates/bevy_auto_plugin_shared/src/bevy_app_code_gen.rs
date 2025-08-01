@@ -1,4 +1,5 @@
-use crate::{AddSystemSerializedParams, util::path_to_string};
+use crate::attribute_args::AddSystemSerializedArgs;
+use crate::util::path_to_string;
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
 
@@ -147,6 +148,6 @@ impl_custom!(
     generate_add_system,
     generate_add_systems,
     "generated add_systems",
-    AddSystemSerializedParams,
-    |app_ident, item| AddSystemSerializedParams::to_tokens(&item, app_ident),
+    AddSystemSerializedArgs,
+    |app_ident, item| AddSystemSerializedArgs::to_tokens(&item, app_ident),
 );
