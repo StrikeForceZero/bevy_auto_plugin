@@ -1,6 +1,6 @@
 use bevy_auto_plugin_shared::module::inner::expand_module;
 use proc_macro::TokenStream as CompilerStream;
-use proc_macro2::TokenStream as MacroStream;
+use proc_macro2::{Ident, TokenStream as MacroStream};
 use syn::{Error, ItemFn, Path, parse_macro_input, parse_str};
 
 fn to_compile_error(err: Error) -> MacroStream {
@@ -276,37 +276,56 @@ pub fn global_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
     output.into()
 }
 
+fn require_struct_or_enum(item: &Item) -> Result<&Ident, Error> {
+    match item {
+        Item::Struct(s) => Ok(&s.ident),
+        Item::Enum(e) => Ok(&e.ident),
+        _ => Err(Error::new_spanned(
+            item,
+            "Only struct and enum can be registered",
+        )),
+    }
+}
+
+fn global_attribute_inner<A, F>(
+    attr: impl Into<MacroStream>,
+    input: impl Into<MacroStream>,
+    parse_attr: fn(MacroStream) -> syn::Result<A>,
+    body: F,
+) -> MacroStream
+where
+    F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
+{
+    let attr = attr.into();
+    let input = input.into();
+
+    let item: Item = ok_or_return_compiler_error!(syn::parse2(input.clone()));
+
+    let ident = ok_or_return_compiler_error!(require_struct_or_enum(&item));
+
+    let args = ok_or_return_compiler_error!(parse_attr(attr));
+
+    let output = ok_or_return_compiler_error!(body(ident, args, &item));
+
+    quote!( #item #output )
+}
+
 #[proc_macro_attribute]
 pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let item = parse_macro_input!(input as Item);
-    let ident = match &item {
-        Item::Struct(item_struct) => &item_struct.ident,
-        Item::Enum(item_enum) => &item_enum.ident,
-        _ => {
-            return Error::new(Span::call_site(), "Only struct and enum can be registered")
-                .into_compile_error()
-                .into();
-        }
-    };
-    let params = match syn::parse::<GlobalStructOrEnumAttributeArgs>(attr) {
-        Ok(params) => params,
-        Err(err) => return err.into_compile_error().into(),
-    };
-    let unique_ident = params.get_unique_ident("_global_plugin_register_type_", ident);
-    let generics = &params.inner.generics;
-    let target = quote! {
-        #ident::<#generics>
-    };
-    let app_ident = default_app_ident();
-    let register_tokens = match generate_register_type(&app_ident, target.to_string()) {
-        Ok(tokens) => tokens,
-        Err(err) => return err.into_compile_error().into(),
-    };
-    let expr = syn::parse_quote! { |#app_ident| { #register_tokens } };
-    let registration = _plugin_entry_block(&unique_ident, &params.plugin, &expr);
-    let output = quote! {
-        #item
-        #registration
-    };
-    output.into()
+    global_attribute_inner(
+        attr,
+        input,
+        syn::parse2::<GlobalStructOrEnumAttributeArgs>,
+        |ident, params, _item| {
+            let unique_ident = params.get_unique_ident("_global_plugin_register_type_", ident);
+            let generics = &params.inner.generics;
+            let target = quote!( #ident::<#generics> );
+
+            let app_ident = default_app_ident();
+            let register = generate_register_type(&app_ident, target.to_string())?;
+            let expr: syn::ExprClosure = syn::parse_quote!( |#app_ident| { #register } );
+            Ok(_plugin_entry_block(&unique_ident, &params.plugin, &expr))
+        },
+    )
+    .into()
 }
