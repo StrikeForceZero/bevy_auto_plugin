@@ -339,8 +339,8 @@ pub fn generate_register_types(
         .map(|item| generate_register_type(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
     Ok(quote! {
+        /// generated register_types
         {
-            // register_types
             #(#register_types)*
         }
     })
@@ -361,8 +361,8 @@ pub fn generate_add_events(
         .map(|item| generate_add_event(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
     Ok(quote! {
+        /// generated add_events
         {
-            // add_events
             #(#add_events)*
         }
     })
@@ -383,8 +383,8 @@ pub fn generate_init_resources(
         .map(|item| generate_init_resource(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
     Ok(quote! {
+        /// generated init_resources
         {
-            // init_resources
             #(#init_resources)*
         }
     })
@@ -406,8 +406,8 @@ pub fn generate_auto_names(
         .map(|item| generate_auto_name(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
     Ok(quote! {
+        /// generated auto_names
         {
-            // auto_names
             #(#auto_names)*
         }
     })
@@ -429,8 +429,8 @@ pub fn generate_register_state_types(
         .map(|item| generate_register_state_type(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
     Ok(quote! {
+        /// generated register_state_types
         {
-            // register_state_types
             #(#register_state_types)*
         }
     })
@@ -451,8 +451,8 @@ pub fn generate_init_states(
         .map(|item| generate_init_state(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
     Ok(quote! {
+        /// generated init_states
         {
-            // init_states
             #(#init_states)*
         }
     })
@@ -473,8 +473,8 @@ pub fn generate_add_systems(
         .map(|item| generate_add_system(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
     Ok(quote! {
+        /// generated add_systems
         {
-            // add_systems
             #(#output)*
         }
     })
