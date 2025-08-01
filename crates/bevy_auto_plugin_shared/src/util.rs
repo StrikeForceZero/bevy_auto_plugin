@@ -685,7 +685,7 @@ pub fn require_fn(item: &Item) -> syn::Result<&Ident> {
         Item::Fn(f) => Ok(&f.sig.ident),
         _ => Err(Error::new_spanned(
             item,
-            "Only functions and enum can use this attribute macro",
+            "Only functions use this attribute macro",
         )),
     }
 }
