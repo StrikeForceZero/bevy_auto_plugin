@@ -1,8 +1,8 @@
-use bevy_app::prelude::*;
+use bevy::prelude::*;
 use bevy_auto_plugin::global::prelude::*;
-use bevy_ecs::prelude::*;
-use bevy_reflect::Reflect;
+use bevy_state::app::StatesPlugin;
 use internal_test_util::{create_minimal_app, type_id_of};
+use std::ops::Deref;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -20,6 +20,20 @@ struct FooComponent;
 #[auto_init_resource(plugin = Test)]
 struct FooRes(usize);
 
+#[derive(Event, Debug, Default, PartialEq, Reflect)]
+#[auto_register_type(plugin = Test)]
+#[auto_add_event(plugin = Test)]
+struct FooEvent(usize);
+
+#[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
+#[auto_init_state(plugin = Test)]
+#[auto_register_state_type(plugin = Test)]
+enum FooState {
+    #[default]
+    Start,
+    End,
+}
+
 #[auto_add_system(plugin = Test, schedule = Update)]
 fn foo_system(mut foo_res: ResMut<FooRes>) {
     foo_res.0 += 1;
@@ -27,6 +41,7 @@ fn foo_system(mut foo_res: ResMut<FooRes>) {
 
 fn app() -> App {
     let mut app = create_minimal_app();
+    app.add_plugins(StatesPlugin);
     app.add_plugins(Test);
     app
 }
@@ -81,5 +96,38 @@ fn test_auto_add_system_foo_system() {
         app.world().get_resource::<FooRes>(),
         Some(&FooRes(1)),
         "did not register system"
+    );
+}
+
+#[test]
+fn test_auto_add_event_foo_event() {
+    let mut app = app();
+    assert!(app.world_mut().send_event(FooEvent(1)).is_some());
+}
+
+#[test]
+fn test_auto_register_state_type_foo_state() {
+    let app = app();
+    let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
+    let type_registry = type_registry.read();
+    assert!(
+        type_registry.contains(type_id_of::<State<FooState>>()),
+        "did not auto register type"
+    );
+    assert!(
+        type_registry.contains(type_id_of::<NextState<FooState>>()),
+        "did not auto register type"
+    );
+}
+
+#[test]
+fn test_auto_init_state_type_foo_state() {
+    let app = app();
+    assert_eq!(
+        app.world()
+            .get_resource::<State<FooState>>()
+            .map(Deref::deref),
+        Some(&FooState::Start),
+        "did not auto init state"
     );
 }
