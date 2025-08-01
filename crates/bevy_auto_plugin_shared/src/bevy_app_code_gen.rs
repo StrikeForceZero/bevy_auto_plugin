@@ -12,7 +12,7 @@ where
 {
     let tokens = items
         .into_iter()
-        .map(|item| build(&app_ident, item))
+        .map(|item| build(app_ident, item))
         .collect::<syn::Result<Vec<_>>>()?;
 
     Ok(quote! {

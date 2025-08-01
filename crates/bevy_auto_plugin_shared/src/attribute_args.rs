@@ -393,9 +393,7 @@ impl AddSystemSerializedArgs {
         system: Path,
         attr: AddSystemArgs,
     ) -> syn::Result<impl Iterator<Item = Self>> {
-        Ok(AddSystemWithTargetArgs::try_from_macro_attr(system, attr)?
-            .into_iter()
-            .map(Self::from))
+        Ok(AddSystemWithTargetArgs::try_from_macro_attr(system, attr)?.map(Self::from))
     }
     pub fn to_tokens(self, app_ident: &Ident) -> syn::Result<MacroStream> {
         AddSystemWithTargetArgs::try_from(self)?.to_tokens(app_ident)

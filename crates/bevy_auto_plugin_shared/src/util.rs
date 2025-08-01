@@ -23,7 +23,7 @@ where
     let paths = if args.has_generics() {
         let generics = &args.generics;
         generics
-            .into_iter()
+            .iter()
             .map(|generics| {
                 let path_tokens = quote! { #ident::<#generics> };
                 let path = Path::from_string(&path_tokens.to_string())?;
@@ -258,7 +258,7 @@ impl CountGenerics for StructOrEnumAttributeArgs {
     }
 
     fn count(&self) -> usize {
-        self.generics.iter().count()
+        self.generics.len()
     }
 }
 
@@ -565,7 +565,7 @@ pub fn legacy_generics_from_path(
         ));
     }
     validate_generic_counts(struct_or_enum_ref.generics, &path)?;
-    Ok(path.generics()?)
+    path.generics()
 }
 
 pub fn debug_pat(pat: &Pat) -> &'static str {
