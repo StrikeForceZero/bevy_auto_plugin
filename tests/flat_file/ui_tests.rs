@@ -135,7 +135,13 @@ mod tests {
         #[cfg(nightly)]
         t.compile_fail(get_trybuild_path_string(SubDir::Nightly));
         #[cfg(stable)]
-        t.compile_fail(get_trybuild_path_string(SubDir::Stable));
+        {
+            // prevent rust rovers runner from triggering nightly
+            unsafe {
+                std::env::remove_var("RUSTC_BOOTSTRAP");
+            }
+            t.compile_fail(get_trybuild_path_string(SubDir::Stable));
+        }
     }
 
     #[test]
