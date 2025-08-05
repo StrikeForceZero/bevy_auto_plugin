@@ -5,9 +5,7 @@ use std::hash::Hash;
 
 pub mod attribute_args;
 pub mod bevy_app_code_gen;
-pub mod flat_file;
-pub mod global;
-pub mod module;
+pub mod modes;
 mod type_list;
 pub mod util;
 

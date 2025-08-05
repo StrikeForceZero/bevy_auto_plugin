@@ -4,7 +4,7 @@ use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
     generate_init_states, generate_register_state_types, generate_register_types,
 };
-use crate::module::attribute::ModuleArgs;
+use crate::modes::module::attribute::ModuleArgs;
 use crate::util::{
     FnRef, ItemWithAttributeMatch, inject_module, items_with_attribute_macro,
     struct_or_enum_items_with_attribute_macro,

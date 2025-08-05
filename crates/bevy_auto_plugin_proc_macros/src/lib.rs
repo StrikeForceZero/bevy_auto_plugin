@@ -1,4 +1,4 @@
-use bevy_auto_plugin_shared::module::inner::expand_module;
+use bevy_auto_plugin_shared::modes::module::inner::expand_module;
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
 use syn::{Error, ItemFn, Path, parse_macro_input, parse_str};
@@ -75,10 +75,11 @@ use bevy_auto_plugin_shared::attribute_args::{
     AddSystemArgs, GlobalAddSystemArgs, GlobalAutoPluginDeriveArgs,
     GlobalAutoPluginFnAttributeArgs, GlobalStructOrEnumAttributeArgs, StructOrEnumAttributeArgs,
 };
-use bevy_auto_plugin_shared::flat_file::inner::expand_flat_file;
-use bevy_auto_plugin_shared::global::inner;
+use bevy_auto_plugin_shared::modes::flat_file;
+use bevy_auto_plugin_shared::modes::flat_file::inner::expand_flat_file;
+use bevy_auto_plugin_shared::modes::global::inner;
 use bevy_auto_plugin_shared::util::TargetRequirePath;
-use bevy_auto_plugin_shared::{flat_file, ok_or_return_compiler_error, util};
+use bevy_auto_plugin_shared::{ok_or_return_compiler_error, util};
 use proc_macro2::Span;
 use quote::{ToTokens, quote};
 use syn::Item;
@@ -198,7 +199,7 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
     let mut output = MacroStream::new();
 
     output.extend(quote! {
-        impl #impl_generics ::bevy_auto_plugin_shared::global::__internal::AutoPluginTypeId
+        impl #impl_generics ::bevy_auto_plugin_shared::modes::global::__internal::AutoPluginTypeId
             for #ident #ty_generics #where_clause
         {
             fn type_id() -> std::any::TypeId {
@@ -225,24 +226,24 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
             };
 
             output.extend(quote! {
-                impl ::bevy_auto_plugin_shared::global::__internal::bevy_app::Plugin for #path_with_generics {
-                    fn build(&self, app: &mut ::bevy_auto_plugin_shared::global::__internal::bevy_app::App) {
-                        <Self as ::bevy_auto_plugin_shared::global::__internal::AutoPlugin>::build(self, app);
+                impl ::bevy_auto_plugin_shared::modes::global::__internal::bevy_app::Plugin for #path_with_generics {
+                    fn build(&self, app: &mut ::bevy_auto_plugin_shared::modes::global::__internal::bevy_app::App) {
+                        <Self as ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin>::build(self, app);
                     }
                 }
 
-                impl ::bevy_auto_plugin_shared::global::__internal::AutoPlugin for #path_with_generics {}
+                impl ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin for #path_with_generics {}
             });
         }
     }
 
     if params.auto_plugin.impl_generic_plugin_trait {
         output.extend(quote! {
-            impl #impl_generics ::bevy_auto_plugin_shared::global::__internal::bevy_app::Plugin
+            impl #impl_generics ::bevy_auto_plugin_shared::modes::global::__internal::bevy_app::Plugin
                 for #ident #ty_generics #where_clause
             {
-                fn build(&self, app: &mut ::bevy_auto_plugin_shared::global::__internal::bevy_app::App) {
-                    <Self as ::bevy_auto_plugin_shared::global::__internal::AutoPlugin>::build(self, app);
+                fn build(&self, app: &mut ::bevy_auto_plugin_shared::modes::global::__internal::bevy_app::App) {
+                    <Self as ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin>::build(self, app);
                 }
             }
         });
@@ -250,7 +251,7 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
 
     if params.auto_plugin.impl_generic_auto_plugin_trait {
         output.extend(quote! {
-            impl #impl_generics ::bevy_auto_plugin_shared::global::__internal::AutoPlugin
+            impl #impl_generics ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin
                 for #ident #ty_generics #where_clause
             {}
         });

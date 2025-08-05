@@ -4,8 +4,8 @@ use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
     generate_init_states, generate_register_state_types, generate_register_types,
 };
-use crate::flat_file::attribute::FlatFileArgs;
-use crate::flat_file::file_state::{update_file_state, update_state};
+use crate::modes::flat_file::attribute::FlatFileArgs;
+use crate::modes::flat_file::file_state::{update_file_state, update_state};
 use crate::util::{
     FnParamMutabilityCheckErrMessages, LocalFile, StructOrEnumRef, TargetData, TargetRequirePath,
     is_fn_param_mutable_reference, resolve_local_file, resolve_paths_from_item_or_args,
@@ -38,7 +38,7 @@ pub fn auto_plugin_inner(
 
     #[cfg(feature = "missing_auto_plugin_check")]
     let injected_code = {
-        use crate::flat_file::file_state::files_missing_plugin_ts;
+        use crate::modes::flat_file::file_state::files_missing_plugin_ts;
         let output = files_missing_plugin_ts();
         quote! {
             #output

@@ -1,5 +1,5 @@
 use crate::attribute_args::GlobalMacroArgs;
-use crate::global::__internal::_plugin_entry_block;
+use crate::modes::global::__internal::_plugin_entry_block;
 use crate::{default_app_ident, ok_or_return_compiler_error};
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
