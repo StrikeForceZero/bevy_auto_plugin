@@ -1,8 +1,12 @@
-use crate::attribute_args::StructOrEnumAttributeArgs;
-use crate::attribute_args::{AddSystemArgs, AddSystemSerializedArgs, AddSystemWithTargetArgs};
+use crate::attribute_args::{
+    AddSystemArgs, AddSystemSerializedArgs, AddSystemWithTargetArgs, InsertResourceArgsWithPath,
+    InsertResourceSerializedArgsWithPath,
+};
+use crate::attribute_args::{InsertResourceArgs, StructOrEnumAttributeArgs};
 use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
-    generate_init_states, generate_register_state_types, generate_register_types,
+    generate_init_states, generate_insert_resources, generate_register_state_types,
+    generate_register_types,
 };
 use crate::modes::flat_file::attribute::FlatFileArgs;
 use crate::modes::flat_file::file_state::{update_file_state, update_state};
@@ -85,6 +89,14 @@ pub fn auto_plugin_inner_to_stream(
                 .map(|str| parse_str::<Path>(&str))
                 .collect::<syn::Result<Vec<_>>>()
         }
+        fn map_to_insert_resource(
+            input: impl IntoIterator<Item = InsertResourceSerializedArgsWithPath>,
+        ) -> syn::Result<Vec<InsertResourceArgsWithPath>> {
+            input
+                .into_iter()
+                .map(InsertResourceArgsWithPath::try_from)
+                .collect::<syn::Result<Vec<_>>>()
+        }
         fn map_to_add_systems(
             input: impl IntoIterator<Item = AddSystemSerializedArgs>,
         ) -> syn::Result<Vec<AddSystemWithTargetArgs>> {
@@ -110,6 +122,10 @@ pub fn auto_plugin_inner_to_stream(
             app_param_name,
             map_to_path(file_state.context.init_resources.drain())?,
         )?;
+        let insert_resources = generate_insert_resources(
+            app_param_name,
+            map_to_insert_resource(file_state.context.insert_resources.drain())?,
+        )?;
         let init_states = generate_init_states(
             app_param_name,
             map_to_path(file_state.context.init_states.drain())?,
@@ -127,6 +143,7 @@ pub fn auto_plugin_inner_to_stream(
             #register_state_types
             #add_events
             #init_resources
+            #insert_resources
             #init_states
             #auto_names
             #add_systems
@@ -159,6 +176,53 @@ fn resolve_local_file_spanned(span: Span) -> syn::Result<ValueOrNoop<String>> {
         LocalFile::Noop => ValueOrNoop::Noop,
         LocalFile::Error(err) => return Err(Error::new(span, err)),
     })
+}
+
+pub fn handle_insert_resource_outer(
+    item: Item,
+    attr_span: Span,
+    resource_args: InsertResourceArgs,
+) -> syn::Result<()> {
+    extract_or_noop!(
+        file_path,
+        resolve_local_file_spanned(attr_span)?,
+        return Ok(())
+    );
+    handle_insert_resource_inner(item, file_path, attr_span, resource_args)
+}
+
+pub fn handle_insert_resource_inner(
+    item: Item,
+    file_path: String,
+    attr_span: Span,
+    resource_args: InsertResourceArgs,
+) -> syn::Result<()> {
+    let paths = resolve_paths_from_item_or_args::<StructOrEnumRef>(
+        &item,
+        StructOrEnumAttributeArgs {
+            generics: resource_args
+                .generics
+                .as_ref()
+                .map(|generics| vec![generics.clone()])
+                .unwrap_or_default(),
+        },
+    )?;
+    let mut paths = paths.into_iter();
+    let path = paths
+        .next()
+        .ok_or_else(|| Error::new(attr_span, "failed to resolve any path"))?;
+    if paths.next().is_some() {
+        return Err(Error::new(attr_span, "failed to resolve single path"));
+    }
+    update_state(
+        file_path,
+        TargetData::InsertResource(InsertResourceArgsWithPath {
+            path,
+            resource_args,
+        }),
+    )
+    .map_err(|err| Error::new(attr_span, err))?;
+    Ok(())
 }
 
 pub fn handle_attribute_outer(

@@ -73,7 +73,8 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 
 use bevy_auto_plugin_shared::attribute_args::{
     AddSystemArgs, GlobalAddSystemArgs, GlobalAutoPluginDeriveArgs,
-    GlobalAutoPluginFnAttributeArgs, GlobalStructOrEnumAttributeArgs, StructOrEnumAttributeArgs,
+    GlobalAutoPluginFnAttributeArgs, GlobalStructOrEnumAttributeArgs, InsertResourceArgs,
+    StructOrEnumAttributeArgs,
 };
 use bevy_auto_plugin_shared::modes::flat_file;
 use bevy_auto_plugin_shared::modes::flat_file::inner::expand_flat_file;
@@ -176,6 +177,23 @@ pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) ->
     let item = parse_macro_input!(input as ItemFn);
     let args = parse_macro_input!(attr as AddSystemArgs);
     flat_file::inner::handle_add_system_attribute_outer(item, args, Span::call_site())
+        .map(|_| cloned_input)
+        .unwrap_or_else(|err| err.to_compile_error().into())
+}
+
+#[proc_macro_attribute]
+pub fn flat_file_auto_insert_resource(
+    attr: CompilerStream,
+    input: CompilerStream,
+) -> CompilerStream {
+    let cloned_input = input.clone();
+    let item = parse_macro_input!(input as Item);
+    // TODO: compiler error if multiple auto_insert_resource attributes found for same type
+    let insert_resource_args = parse_macro_input!(attr as InsertResourceArgs);
+    if let Err(err) = insert_resource_args.validate_resource() {
+        return err.to_compile_error().into();
+    }
+    flat_file::inner::handle_insert_resource_outer(item, Span::call_site(), insert_resource_args)
         .map(|_| cloned_input)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }

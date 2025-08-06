@@ -1,5 +1,5 @@
 use crate::AutoPluginContext;
-use crate::attribute_args::AddSystemSerializedArgs;
+use crate::attribute_args::{AddSystemSerializedArgs, InsertResourceSerializedArgsWithPath};
 use crate::util::{TargetData, path_to_string_with_spaces};
 use quote::quote;
 use std::cell::RefCell;
@@ -80,6 +80,10 @@ pub fn update_state(
                 }
                 new
             }
+            TargetData::InsertResource(args) => entry
+                .context
+                .insert_resources
+                .insert(InsertResourceSerializedArgsWithPath::from(args)),
         };
         if !inserted {
             return Err(UpdateStateError::Duplicate);

@@ -7,6 +7,8 @@ mod auto_add_systems_with_set;
 mod auto_init_resource;
 mod auto_init_resource_generic;
 mod auto_init_state;
+mod auto_insert_resource;
+mod auto_insert_resource_with_generics;
 mod auto_name;
 mod auto_name_with_generics;
 mod auto_plugin_default_param;

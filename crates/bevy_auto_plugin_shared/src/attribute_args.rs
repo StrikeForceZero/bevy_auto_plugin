@@ -1,10 +1,11 @@
+use crate::expr_value::ExprValue;
 use crate::type_list::TypeList;
 use crate::util::{PathExt, path_to_string_with_spaces};
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
-use proc_macro2::{Ident, TokenStream as MacroStream};
-use quote::quote;
+use proc_macro2::{Ident, Span, TokenStream as MacroStream};
+use quote::{ToTokens, quote};
 use syn::parse::Parse;
-use syn::{Attribute, Generics, Path, Type, Visibility, parse_quote, parse_str};
+use syn::{Attribute, Expr, Generics, Path, Type, Visibility, parse_quote, parse_str};
 
 #[allow(dead_code)]
 #[derive(Debug, FromField)]
@@ -451,6 +452,96 @@ impl From<AddSystemWithTargetArgs> for AddSystemSerializedArgs {
     fn from(value: AddSystemWithTargetArgs) -> Self {
         Self {
             schedule_config: value.schedule_config.into(),
+        }
+    }
+}
+
+#[derive(FromMeta, Debug)]
+#[darling(derive_syn_parse)]
+pub struct InsertResourceArgs {
+    // only allow single
+    #[darling(default)]
+    pub generics: Option<TypeList>,
+    pub resource: ExprValue,
+}
+
+impl InsertResourceArgs {
+    pub fn validate_resource(&self) -> syn::Result<()> {
+        if !matches!(
+            self.resource.0,
+            Expr::Call(_) // Foo(_)  or Foo::Bar(_)
+            | Expr::Path(_) // Foo or Foo::Bar
+            | Expr::Struct(_) // Foo { .. } or Foo::Bar { .. }
+        ) {
+            return Err(syn::Error::new(
+                Span::call_site(),
+                "Expected a struct or enum value",
+            ));
+        }
+        Ok(())
+    }
+}
+
+impl TryFrom<InsertResourceSerializedArgsWithPath> for InsertResourceArgs {
+    type Error = syn::Error;
+
+    fn try_from(value: InsertResourceSerializedArgsWithPath) -> Result<Self, Self::Error> {
+        Ok(Self {
+            generics: value
+                .generics_string
+                .map(|s| {
+                    let type_list = syn::parse_str::<TypeList>(&s)?;
+                    syn::Result::Ok(Some(type_list))
+                })
+                .unwrap_or(Ok(None))?,
+            resource: parse_str::<ExprValue>(&value.resource_expr_string)?,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct InsertResourceArgsWithPath {
+    pub path: Path,
+    pub resource_args: InsertResourceArgs,
+}
+impl InsertResourceArgsWithPath {
+    pub fn to_tokens(self, app_ident: &Ident) -> syn::Result<MacroStream> {
+        let expected_path = &self.path;
+        let resource = &self.resource_args.resource;
+
+        Ok(quote! {
+            #app_ident.insert_resource::<#expected_path>(#resource);
+        })
+    }
+}
+
+impl TryFrom<InsertResourceSerializedArgsWithPath> for InsertResourceArgsWithPath {
+    type Error = syn::Error;
+    fn try_from(value: InsertResourceSerializedArgsWithPath) -> Result<Self, Self::Error> {
+        Ok(Self {
+            path: parse_str(&value.path_string)?,
+            resource_args: InsertResourceArgs::try_from(value)?,
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct InsertResourceSerializedArgsWithPath {
+    pub path_string: String,
+    pub generics_string: Option<String>,
+    pub resource_expr_string: String,
+}
+
+impl From<InsertResourceArgsWithPath> for InsertResourceSerializedArgsWithPath {
+    fn from(value: InsertResourceArgsWithPath) -> Self {
+        Self {
+            path_string: path_to_string_with_spaces(&value.path),
+            generics_string: value
+                .resource_args
+                .generics
+                .as_ref()
+                .map(|generics| generics.to_token_stream().to_string()),
+            resource_expr_string: value.resource_args.resource.to_token_stream().to_string(),
         }
     }
 }

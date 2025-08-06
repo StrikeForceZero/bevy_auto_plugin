@@ -1,4 +1,4 @@
-use crate::attribute_args::AddSystemWithTargetArgs;
+use crate::attribute_args::{AddSystemWithTargetArgs, InsertResourceArgsWithPath};
 use crate::util::path_to_string;
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
@@ -110,6 +110,14 @@ impl_simple!(
     generate_init_resources,
     "generated init_resources",
     |app_ident, path| quote! { #app_ident.init_resource::<#path>(); },
+);
+
+impl_custom!(
+    generate_insert_resource,
+    generate_insert_resources,
+    "generated insert_resources",
+    InsertResourceArgsWithPath,
+    |app_ident, item| InsertResourceArgsWithPath::to_tokens(item, app_ident),
 );
 
 impl_simple!(

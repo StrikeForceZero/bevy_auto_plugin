@@ -1,5 +1,5 @@
 use crate::AutoPluginAttribute;
-use crate::attribute_args::{AddSystemArgs, StructOrEnumAttributeArgs};
+use crate::attribute_args::{AddSystemArgs, InsertResourceArgsWithPath, StructOrEnumAttributeArgs};
 use crate::type_list::TypeList;
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
@@ -69,6 +69,7 @@ pub enum TargetData {
     InitResources(Path),
     InitStates(Path),
     RequiredComponentAutoName(Path),
+    InsertResource(InsertResourceArgsWithPath),
     AddSystem { system: Path, params: AddSystemArgs },
 }
 
@@ -311,6 +312,9 @@ pub fn get_all_items_in_module_by_attribute(
         }
         AutoPluginAttribute::InitResource => {
             struct_or_enum_items_with_attribute_macro(items, attribute)?
+        }
+        AutoPluginAttribute::InsertResource => {
+            todo!()
         }
         AutoPluginAttribute::InitState => {
             struct_or_enum_items_with_attribute_macro(items, attribute)?
