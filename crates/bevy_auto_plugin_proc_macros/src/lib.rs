@@ -1,7 +1,7 @@
 use bevy_auto_plugin_shared::modes::module::inner::expand_module;
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
-use syn::{Error, ItemFn, Path, parse_macro_input, parse_str};
+use syn::{Error, FnArg, ItemFn, Path, parse_macro_input, parse_str};
 
 fn to_compile_error(err: Error) -> MacroStream {
     err.to_compile_error()
@@ -86,11 +86,14 @@ use bevy_auto_plugin_shared::attribute_args::{
 use bevy_auto_plugin_shared::modes::flat_file;
 use bevy_auto_plugin_shared::modes::flat_file::inner::expand_flat_file;
 use bevy_auto_plugin_shared::modes::global::inner;
-use bevy_auto_plugin_shared::util::TargetRequirePath;
-use bevy_auto_plugin_shared::{ok_or_return_compiler_error, util};
+use bevy_auto_plugin_shared::util::{
+    FnParamMutabilityCheckErrMessages, TargetRequirePath, is_fn_param_mutable_reference,
+};
+use bevy_auto_plugin_shared::{default_app_ident, ok_or_return_compiler_error, util};
 use proc_macro2::Span;
 use quote::{ToTokens, quote};
 use syn::Item;
+use syn::spanned::Spanned;
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[proc_macro_attribute]
@@ -233,6 +236,8 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
         }
     });
 
+    let mut auto_plugin_implemented = false;
+
     if params.auto_plugin.impl_plugin_trait {
         let full_names = if params.auto_plugin.generics.is_empty() {
             vec![ident.to_string()]
@@ -249,6 +254,8 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
                 Ok(p) => p,
                 Err(err) => return err.into_compile_error().into(),
             };
+
+            auto_plugin_implemented = true;
 
             output.extend(quote! {
                 impl ::bevy_auto_plugin_shared::modes::global::__internal::bevy_app::Plugin for #path_with_generics {
@@ -274,12 +281,42 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
         });
     }
 
+    // TODO: maybe default to this behavior
     if params.auto_plugin.impl_generic_auto_plugin_trait {
         output.extend(quote! {
             impl #impl_generics ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin
                 for #ident #ty_generics #where_clause
             {}
         });
+    } else if !auto_plugin_implemented {
+        auto_plugin_implemented = true;
+
+        let full_names = if params.auto_plugin.generics.is_empty() {
+            vec![ident.to_string()]
+        } else {
+            params
+                .auto_plugin
+                .generics
+                .iter()
+                .map(|tl| format!("{}::<{}>", ident, tl.to_token_stream()))
+                .collect()
+        };
+        for full_name in full_names {
+            let path_with_generics = match parse_str::<Path>(&full_name) {
+                Ok(p) => p,
+                Err(err) => return err.into_compile_error().into(),
+            };
+
+            auto_plugin_implemented = true;
+
+            output.extend(quote! {
+                impl ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin for #path_with_generics {}
+            });
+        }
+    }
+
+    if auto_plugin_implemented {
+        // satisfy linter #[warn(unused_assignments)]
     }
 
     output.into()
@@ -288,16 +325,61 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
 #[allow(unused_variables, unused_mut, unreachable_code)]
 #[proc_macro_attribute]
 pub fn global_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    let input_cloned = input.clone();
     let item = parse_macro_input!(input as ItemFn);
-    let params = match syn::parse::<GlobalAutoPluginFnAttributeArgs>(input_cloned) {
+    let params = match syn::parse::<GlobalAutoPluginFnAttributeArgs>(attr) {
         Ok(params) => params,
         Err(err) => return err.into_compile_error().into(),
     };
-    let mut output = quote! {
-        #item
+    let vis = &item.vis;
+    let attrs = &item.attrs;
+    let sig = &item.sig;
+    let block = &item.block;
+    let ident = &sig.ident;
+    let generics = &sig.generics;
+    let inputs = &sig.inputs;
+    let self_args = inputs
+        .into_iter()
+        .flat_map(|input| match input {
+            FnArg::Receiver(recv) => Some(syn::Ident::new("self", recv.span())),
+            FnArg::Typed(_) => None,
+        })
+        .take(1)
+        .collect::<Vec<_>>();
+    let self_arg = self_args.first();
+
+    let default_app_ident = default_app_ident();
+    let app_param_ident = params.app_param.as_ref().unwrap_or(&default_app_ident);
+
+    if let Err(err) = is_fn_param_mutable_reference(
+        &item,
+        app_param_ident,
+        FnParamMutabilityCheckErrMessages {
+            not_mutable_message: format!("bevy app param: {app_param_ident} is not mutable"),
+            not_found_message: format!("bevy app param: {app_param_ident} not found"),
+        },
+    ) {
+        return err.to_compile_error().into();
+    }
+
+    let auto_plugin = if let Some(self_arg) = self_arg {
+        quote! {
+            <Self as ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin>::build(#self_arg, #app_param_ident);
+        }
+    } else {
+        quote! {
+            ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin::build(#app_param_ident);
+        }
     };
-    todo!();
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let mut output = quote! {
+        #(#attrs)*
+        #vis #sig
+        {
+            #auto_plugin
+            #block
+        }
+    };
     output.into()
 }
 
