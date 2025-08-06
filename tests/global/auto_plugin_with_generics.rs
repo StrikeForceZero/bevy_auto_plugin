@@ -26,7 +26,17 @@ where
 #[reflect(Resource)]
 #[auto_register_type(plugin = Test::<u8, bool>, generics(u8, bool))]
 #[auto_init_resource(plugin = Test::<u8, bool>, generics(u8, bool))]
+#[auto_insert_resource(plugin = Test::<u8, bool>, generics(u8, bool), resource(FooRes(1, true)))]
 struct FooRes<T1, T2>(T1, T2)
+where
+    T1: Default + Send + Sync + 'static,
+    T2: Default + Send + Sync + 'static;
+
+#[derive(Resource, Debug, Default, PartialEq, Reflect)]
+#[reflect(Resource)]
+#[auto_register_type(plugin = Test::<u8, bool>, generics(u8, bool))]
+#[auto_init_resource(plugin = Test::<u8, bool>, generics(u8, bool))]
+struct FooDefaultRes<T1, T2>(T1, T2)
 where
     T1: Default + Send + Sync + 'static,
     T2: Default + Send + Sync + 'static;
@@ -126,11 +136,21 @@ fn test_auto_name_foo_component() {
 }
 
 #[internal_test_proc_macro::xtest]
-fn test_auto_init_resource_foo_res() {
+fn test_auto_init_resource_foo_default_res() {
+    let app = app();
+    assert_eq!(
+        app.world().get_resource::<FooDefaultRes<u8, bool>>(),
+        Some(&FooDefaultRes::<u8, bool>::default()),
+        "did not auto init resource"
+    );
+}
+
+#[internal_test_proc_macro::xtest]
+fn test_auto_insert_resource_foo_res() {
     let app = app();
     assert_eq!(
         app.world().get_resource::<FooRes<u8, bool>>(),
-        Some(&FooRes::<u8, bool>::default()),
+        Some(&FooRes(1, true)),
         "did not auto init resource"
     );
 }
@@ -140,13 +160,13 @@ fn test_auto_add_system_foo_system() {
     let mut app = app();
     assert_eq!(
         app.world().get_resource::<FooRes<u8, bool>>(),
-        Some(&FooRes::<u8, bool>::default()),
+        Some(&FooRes(1, true)),
         "did not auto init resource"
     );
     app.update();
     assert_eq!(
         app.world().get_resource::<FooRes<u8, bool>>(),
-        Some(&FooRes(1u8, false)),
+        Some(&FooRes(2, true)),
         "did not register system"
     );
 }

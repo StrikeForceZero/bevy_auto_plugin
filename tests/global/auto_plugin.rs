@@ -18,6 +18,13 @@ struct FooComponent;
 #[reflect(Resource)]
 #[auto_register_type(plugin = Test)]
 #[auto_init_resource(plugin = Test)]
+struct FooDefaultRes(usize);
+
+#[derive(Resource, Debug, Default, PartialEq, Reflect)]
+#[reflect(Resource)]
+#[auto_register_type(plugin = Test)]
+#[auto_init_resource(plugin = Test)]
+#[auto_insert_resource(plugin = Test, resource(FooRes(1)))]
 struct FooRes(usize);
 
 #[derive(Event, Debug, Default, PartialEq, Reflect)]
@@ -74,12 +81,22 @@ fn test_auto_name_foo_component() {
 }
 
 #[internal_test_proc_macro::xtest]
-fn test_auto_init_resource_foo_res() {
+fn test_auto_init_resource_foo_default_res() {
+    let app = app();
+    assert_eq!(
+        app.world().get_resource::<FooDefaultRes>(),
+        Some(&FooDefaultRes::default()),
+        "did not auto init resource"
+    );
+}
+
+#[internal_test_proc_macro::xtest]
+fn test_auto_insert_resource_foo_res() {
     let app = app();
     assert_eq!(
         app.world().get_resource::<FooRes>(),
-        Some(&FooRes(0)),
-        "did not auto init resource"
+        Some(&FooRes(1)),
+        "did not auto insert resource"
     );
 }
 
@@ -88,13 +105,13 @@ fn test_auto_add_system_foo_system() {
     let mut app = app();
     assert_eq!(
         app.world().get_resource::<FooRes>(),
-        Some(&FooRes(0)),
+        Some(&FooRes(1)),
         "did not auto init resource"
     );
     app.update();
     assert_eq!(
         app.world().get_resource::<FooRes>(),
-        Some(&FooRes(1)),
+        Some(&FooRes(2)),
         "did not register system"
     );
 }

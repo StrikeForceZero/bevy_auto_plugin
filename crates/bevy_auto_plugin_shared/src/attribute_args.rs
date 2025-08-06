@@ -94,6 +94,24 @@ impl GlobalStructOrEnumAttributeArgs {
     }
 }
 
+#[derive(FromMeta, Debug, PartialEq, Hash)]
+#[darling(derive_syn_parse)]
+pub struct GlobalInsertResourceAttributeArgs {
+    pub plugin: Path,
+    #[darling(flatten)]
+    pub inner: InsertResourceArgs,
+}
+
+impl GlobalInsertResourceAttributeArgs {
+    pub fn has_generics(&self) -> bool {
+        self.inner
+            .generics
+            .as_ref()
+            .map(|generics| !generics.is_empty())
+            .unwrap_or(false)
+    }
+}
+
 pub trait GlobalMacroArgs: Parse + std::hash::Hash {
     type Input;
     type ToTokensFn: Fn(&Self, Self::Input) -> syn::Result<MacroStream>;
@@ -146,6 +164,36 @@ impl GlobalMacroArgs for GlobalStructOrEnumAttributeArgs {
     }
     fn to_input(self, ident: &Ident) -> syn::Result<impl Iterator<Item = Self::Input>> {
         Ok(self.target_paths_with_ident(ident).into_iter())
+    }
+}
+
+impl GlobalMacroArgs for GlobalInsertResourceAttributeArgs {
+    type Input = InsertResourceArgsWithPath;
+    type ToTokensFn = fn(&Self, Self::Input) -> syn::Result<MacroStream>;
+    fn generics(&self) -> &[TypeList] {
+        if let Some(g) = &self.inner.generics {
+            std::slice::from_ref(g)
+        } else {
+            &[]
+        }
+    }
+    fn plugin(&self) -> &Path {
+        &self.plugin
+    }
+
+    fn to_input(self, ident: &Ident) -> syn::Result<impl Iterator<Item = Self::Input>> {
+        let target_paths = self.target_paths_with_ident(ident);
+        let mut result_vec = Vec::with_capacity(target_paths.len());
+
+        for target in target_paths {
+            let item = InsertResourceArgsWithPath {
+                path: target,
+                resource_args: self.inner.clone(),
+            };
+            result_vec.push(item);
+        }
+
+        Ok(result_vec.into_iter())
     }
 }
 
@@ -456,7 +504,7 @@ impl From<AddSystemWithTargetArgs> for AddSystemSerializedArgs {
     }
 }
 
-#[derive(FromMeta, Debug)]
+#[derive(FromMeta, Debug, PartialEq, Hash, Clone)]
 #[darling(derive_syn_parse)]
 pub struct InsertResourceArgs {
     // only allow single

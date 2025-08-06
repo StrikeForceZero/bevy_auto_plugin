@@ -80,8 +80,8 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 
 use bevy_auto_plugin_shared::attribute_args::{
     AddSystemArgs, GlobalAddSystemArgs, GlobalAutoPluginDeriveArgs,
-    GlobalAutoPluginFnAttributeArgs, GlobalStructOrEnumAttributeArgs, InsertResourceArgs,
-    StructOrEnumAttributeArgs,
+    GlobalAutoPluginFnAttributeArgs, GlobalInsertResourceAttributeArgs,
+    GlobalStructOrEnumAttributeArgs, InsertResourceArgs, StructOrEnumAttributeArgs,
 };
 use bevy_auto_plugin_shared::modes::flat_file;
 use bevy_auto_plugin_shared::modes::flat_file::inner::expand_flat_file;
@@ -333,6 +333,18 @@ pub fn global_auto_init_resource(attr: CompilerStream, input: CompilerStream) ->
         "_global_plugin_init_resource_",
         util::require_struct_or_enum,
         bevy_auto_plugin_shared::bevy_app_code_gen::generate_init_resource,
+    )
+    .into()
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_insert_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    inner::global_attribute_outer::<GlobalInsertResourceAttributeArgs>(
+        attr,
+        input,
+        "_global_plugin_insert_resource_",
+        util::require_struct_or_enum,
+        bevy_auto_plugin_shared::bevy_app_code_gen::generate_insert_resource,
     )
     .into()
 }

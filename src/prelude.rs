@@ -539,6 +539,7 @@ pub mod global {
         pub use bevy_auto_plugin_proc_macros::global_auto_add_system as auto_add_system;
         pub use bevy_auto_plugin_proc_macros::global_auto_init_resource as auto_init_resource;
         pub use bevy_auto_plugin_proc_macros::global_auto_init_state as auto_init_state;
+        pub use bevy_auto_plugin_proc_macros::global_auto_insert_resource as auto_insert_resource;
         pub use bevy_auto_plugin_proc_macros::global_auto_name as auto_name;
         pub use bevy_auto_plugin_proc_macros::global_auto_plugin;
         pub use bevy_auto_plugin_proc_macros::global_auto_register_state_type as auto_register_state_type;
