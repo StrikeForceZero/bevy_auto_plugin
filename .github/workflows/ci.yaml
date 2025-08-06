@@ -94,11 +94,20 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          target: wasm32-unknown-unknown   # installs the target via rustup
+          target: wasm32-unknown-unknown
 
-      - name: Verify crate for wasm32
+      - name: Setup Node (for wasm-bindgen test runner)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-bindgen CLI (provides the test runner)
+        run: cargo install wasm-bindgen-cli --locked
+
+      - name: Run wasm tests
         run: |
-          echo "Building/tests (compile-only) for wasm32 with features: ${{ matrix.feature-set }}"
-          cargo test --target wasm32-unknown-unknown --no-run --features "${{ matrix.feature-set }}"
-          # To run the tests instead of just compiling, replace the line above with:
-          # wasm-pack test --node --features "${{ matrix.feature-set }}"
+          echo "Test wasm32 with features: ${{ matrix['feature-set'] }}"
+          cargo test --target wasm32-unknown-unknown --features "${{ matrix['feature-set'] }}"

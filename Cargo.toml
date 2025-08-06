@@ -65,6 +65,7 @@ internal_test_util = { path = "crates/internal_test_util" }
 trybuild = "1.0"
 # used in feature tests
 log = { workspace = true }
+wasm-bindgen-test = { version = "0.3" }
 
 [build-dependencies]
 rustc_version = "0.4"
