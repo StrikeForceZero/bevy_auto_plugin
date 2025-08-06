@@ -24,7 +24,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_register_type() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();

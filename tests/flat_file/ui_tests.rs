@@ -124,7 +124,7 @@ mod utils {
 
 mod tests {
     use super::*;
-    #[test]
+    #[internal_test_proc_macro::xtest]
     fn ui_tests() {
         let t = trybuild::TestCases::new();
         t.compile_fail(get_trybuild_path_string(SubDir::Root));
@@ -144,7 +144,8 @@ mod tests {
         }
     }
 
-    #[test]
+    #[cfg(not(wasm))]
+    #[internal_test_proc_macro::xtest]
     fn ensure_ui_tests_for_nightly_and_stable_are_identical() -> std::io::Result<()> {
         let nightly_dir = get_tests_path_string(SubDir::Nightly);
         let stable_dir = get_tests_path_string(SubDir::Stable);

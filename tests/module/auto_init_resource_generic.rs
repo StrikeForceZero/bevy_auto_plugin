@@ -22,7 +22,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_init_resource_generic() {
     let app = app();
     assert!(

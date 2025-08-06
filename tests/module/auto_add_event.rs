@@ -21,7 +21,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_add_event() {
     let mut app = app();
     let mut events = app.world_mut().resource_mut::<Events<Test>>();

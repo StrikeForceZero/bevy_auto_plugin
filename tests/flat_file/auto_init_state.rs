@@ -30,7 +30,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_init_state() {
     let app = app();
     assert!(

@@ -32,7 +32,7 @@ fn test_eq(app: &App, b: i32) {
     assert_eq!(app.world().resource::<Test>(), &Test(b));
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_register_systems() {
     let mut app = app();
     test_eq(&app, 0);

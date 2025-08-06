@@ -46,7 +46,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_register_systems() {
     let mut app = app();
     app.update();

@@ -46,7 +46,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_register_type_foo_component() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
@@ -57,7 +57,7 @@ fn test_auto_register_type_foo_component() {
     );
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_name_foo_component() {
     let mut app = app();
     app.world_mut().spawn(FooComponent);
@@ -73,7 +73,7 @@ fn test_auto_name_foo_component() {
     );
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_init_resource_foo_res() {
     let app = app();
     assert_eq!(
@@ -83,7 +83,7 @@ fn test_auto_init_resource_foo_res() {
     );
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_add_system_foo_system() {
     let mut app = app();
     assert_eq!(
@@ -99,13 +99,13 @@ fn test_auto_add_system_foo_system() {
     );
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_add_event_foo_event() {
     let mut app = app();
     assert!(app.world_mut().send_event(FooEvent(1)).is_some());
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_register_state_type_foo_state() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
@@ -120,7 +120,7 @@ fn test_auto_register_state_type_foo_state() {
     );
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_init_state_type_foo_state() {
     let app = app();
     assert_eq!(

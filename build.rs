@@ -10,4 +10,7 @@ fn main() {
     } else {
         println!("cargo:rustc-cfg=stable");
     }
+    cfg_aliases::cfg_aliases! {
+        wasm: { target_arch = "wasm32" },
+    }
 }
