@@ -401,7 +401,7 @@ fn struct_or_enum_item_with_attribute_macro(
                 })
                 .map(StructOrEnumAttributeArgs::from)
                 .map_err(|legacy_err| {
-                    Error::new(err.span(), format!("new: {err}\nlegacy: {legacy_err}"))
+                    Error::new(err.span(), format!("\nnew: {err}\nlegacy: {legacy_err}"))
                 }),
         };
         let user_provided_generic_values = user_provided_generic_values?;

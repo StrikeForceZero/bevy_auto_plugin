@@ -121,7 +121,7 @@ fn flat_file_handle_attribute(
                     })
                     .map(StructOrEnumAttributeArgs::from)
                     .map_err(|legacy_err| {
-                        Error::new(err.span(), format!("new: {err}\nlegacy: {legacy_err}"))
+                        Error::new(err.span(), format!("\nnew: {err}\nlegacy: {legacy_err}"))
                     })
             }
         }

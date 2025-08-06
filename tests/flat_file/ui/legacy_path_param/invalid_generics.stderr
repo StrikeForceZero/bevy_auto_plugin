@@ -1,4 +1,5 @@
-error: failed to parse: new: Unknown field: `Test`
+error: failed to parse:
+       new: Unknown field: `Test`. Available values: `generics`
        legacy: expected 1 generic parameters, found 0
  --> tests/flat_file/ui/legacy_path_param/invalid_generics.rs:4:1
   |
