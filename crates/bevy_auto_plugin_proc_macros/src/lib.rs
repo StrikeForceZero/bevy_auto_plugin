@@ -38,6 +38,13 @@ pub fn module_auto_init_resource(_args: CompilerStream, input: CompilerStream) -
     input
 }
 
+/// Automatically inserts a resource in the Bevy `App`.
+#[proc_macro_attribute]
+pub fn module_auto_insert_resource(_args: CompilerStream, input: CompilerStream) -> CompilerStream {
+    // Just return the input unchanged; this acts as a marker.
+    input
+}
+
 /// Automatically associates a required component `Name` with the default value set to the ident in the Bevy `App`.
 #[proc_macro_attribute]
 pub fn module_auto_name(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {

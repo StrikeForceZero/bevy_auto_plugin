@@ -136,6 +136,7 @@ pub mod module {
         /// }
         /// ```
         pub use bevy_auto_plugin_proc_macros::module_auto_init_state as auto_init_state;
+        pub use bevy_auto_plugin_proc_macros::module_auto_insert_resource as auto_insert_resource;
         #[doc(inline)]
         ///
         /// # Example (without generics)

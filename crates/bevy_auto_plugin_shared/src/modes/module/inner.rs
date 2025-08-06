@@ -1,8 +1,9 @@
 use crate::AutoPluginAttribute;
-use crate::attribute_args::{AddSystemArgs, AddSystemWithTargetArgs};
+use crate::attribute_args::{AddSystemArgs, AddSystemWithTargetArgs, InsertResourceArgsWithPath};
 use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
-    generate_init_states, generate_register_state_types, generate_register_types,
+    generate_init_states, generate_insert_resources, generate_register_state_types,
+    generate_register_types,
 };
 use crate::modes::module::attribute::ModuleArgs;
 use crate::util::{
@@ -25,11 +26,17 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
             iter.into_iter().map(ItemWithAttributeMatch::path_owned)
         }
 
+        fn map_to_insert_resource(
+            iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
+        ) -> impl Iterator<Item = syn::Result<InsertResourceArgsWithPath>> {
+            iter.into_iter().map(InsertResourceArgsWithPath::try_from)
+        }
+
         fn map_to_add_system_args(
             iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
         ) -> darling::Result<Vec<AddSystemWithTargetArgs>> {
             iter.into_iter().try_fold(Vec::new(), |mut acc, item| {
-                let args = AddSystemArgs::from_meta(&item.attributes.meta)?;
+                let args = AddSystemArgs::from_meta(&item.matched_attribute.meta)?;
                 let it = AddSystemWithTargetArgs::try_from_macro_attr(item.path, args)
                     .map_err(darling::Error::from)?;
                 acc.extend(it);
@@ -49,6 +56,17 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
         let auto_init_resources =
             struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::InitResource)?;
         let auto_init_resources = map_to_path(auto_init_resources);
+
+        let auto_insert_resources =
+            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::InsertResource)?;
+        let auto_insert_resources = map_to_insert_resource(auto_insert_resources);
+        let auto_insert_resources =
+            auto_insert_resources
+                .into_iter()
+                .try_fold(vec![], |mut res, next| {
+                    res.push(next?);
+                    syn::Result::Ok(res)
+                })?;
 
         let auto_names =
             struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::Name)?;
@@ -74,6 +92,8 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
             let auto_add_events = generate_add_events(&app_param_ident, auto_add_events)?;
             let auto_init_resources =
                 generate_init_resources(&app_param_ident, auto_init_resources)?;
+            let auto_insert_resources =
+                generate_insert_resources(&app_param_ident, auto_insert_resources)?;
             let auto_names = generate_auto_names(&app_param_ident, auto_names)?;
             let auto_register_state_types =
                 generate_register_state_types(&app_param_ident, auto_register_state_types)?;
@@ -85,6 +105,7 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
                 #auto_register_state_types
                 #auto_add_events
                 #auto_init_resources
+                #auto_insert_resources
                 #auto_init_states
                 #auto_names
                 #auto_add_systems

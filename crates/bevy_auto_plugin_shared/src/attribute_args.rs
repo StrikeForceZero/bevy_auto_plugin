@@ -1,6 +1,6 @@
 use crate::expr_value::ExprValue;
 use crate::type_list::TypeList;
-use crate::util::{PathExt, path_to_string_with_spaces};
+use crate::util::{ItemWithAttributeMatch, PathExt, path_to_string_with_spaces};
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::{ToTokens, quote};
@@ -499,6 +499,15 @@ impl TryFrom<InsertResourceSerializedArgsWithPath> for InsertResourceArgs {
     }
 }
 
+impl TryFrom<ItemWithAttributeMatch> for InsertResourceArgs {
+    type Error = syn::Error;
+    fn try_from(value: ItemWithAttributeMatch) -> Result<Self, Self::Error> {
+        Ok(InsertResourceArgs::from_meta(
+            &value.matched_attribute.meta,
+        )?)
+    }
+}
+
 #[derive(Debug)]
 pub struct InsertResourceArgsWithPath {
     pub path: Path,
@@ -525,6 +534,17 @@ impl TryFrom<InsertResourceSerializedArgsWithPath> for InsertResourceArgsWithPat
     }
 }
 
+impl TryFrom<ItemWithAttributeMatch> for InsertResourceArgsWithPath {
+    type Error = syn::Error;
+
+    fn try_from(value: ItemWithAttributeMatch) -> Result<Self, Self::Error> {
+        Ok(Self {
+            path: value.path.clone(),
+            resource_args: InsertResourceArgs::try_from(value)?,
+        })
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct InsertResourceSerializedArgsWithPath {
     pub path_string: String,
@@ -543,5 +563,15 @@ impl From<InsertResourceArgsWithPath> for InsertResourceSerializedArgsWithPath {
                 .map(|generics| generics.to_token_stream().to_string()),
             resource_expr_string: value.resource_args.resource.to_token_stream().to_string(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn try_from_item_with_attribute_match_for_insert_resource_args() {
+        let attr: Attribute = parse_quote! { #[foo(generics(usize), resource(Foo(1)))] };
+        println!("{:?}", attr);
     }
 }

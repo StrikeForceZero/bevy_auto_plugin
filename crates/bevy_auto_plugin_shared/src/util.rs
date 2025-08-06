@@ -1,5 +1,7 @@
 use crate::AutoPluginAttribute;
-use crate::attribute_args::{AddSystemArgs, InsertResourceArgsWithPath, StructOrEnumAttributeArgs};
+use crate::attribute_args::{
+    AddSystemArgs, InsertResourceArgs, InsertResourceArgsWithPath, StructOrEnumAttributeArgs,
+};
 use crate::type_list::TypeList;
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
@@ -259,7 +261,40 @@ impl CountGenerics for StructOrEnumAttributeArgs {
     }
 
     fn count(&self) -> usize {
-        self.generics.len()
+        let iter = self.generics.iter().map(|g| g.len()).collect::<Vec<_>>();
+        let &max = iter.iter().max().unwrap_or(&0);
+        let &min = iter.iter().min().unwrap_or(&0);
+        // TODO: return result
+        assert_eq!(
+            max, min,
+            "inconsistent number of generics specified min: {min}, max: {max}"
+        );
+        max
+    }
+}
+
+impl CountGenerics for InsertResourceArgs {
+    fn get_span(&self) -> Span {
+        use syn::spanned::Spanned;
+        self.generics.span()
+    }
+
+    fn count(&self) -> usize {
+        let Some(generics) = &self.generics else {
+            return 0;
+        };
+        generics.len()
+    }
+}
+
+impl CountGenerics for TypeList {
+    fn get_span(&self) -> Span {
+        use syn::spanned::Spanned;
+        self.span()
+    }
+
+    fn count(&self) -> usize {
+        self.len()
     }
 }
 
@@ -314,7 +349,7 @@ pub fn get_all_items_in_module_by_attribute(
             struct_or_enum_items_with_attribute_macro(items, attribute)?
         }
         AutoPluginAttribute::InsertResource => {
-            todo!()
+            struct_or_enum_items_with_attribute_macro(items, attribute)?
         }
         AutoPluginAttribute::InitState => {
             struct_or_enum_items_with_attribute_macro(items, attribute)?
@@ -341,10 +376,13 @@ pub fn inject_module(
     Ok(())
 }
 
+#[derive(Debug)]
 pub struct ItemWithAttributeMatch {
     pub item: Item,
     pub path: Path,
-    pub attributes: Attribute,
+    pub target: AutoPluginAttribute,
+    pub matched_attribute: Attribute,
+    pub attributes: Vec<Attribute>,
 }
 
 impl ItemWithAttributeMatch {
@@ -358,7 +396,7 @@ impl ItemWithAttributeMatch {
 
 pub fn items_with_attribute_macro<'a, T>(
     items: &'a Vec<Item>,
-    attribute: AutoPluginAttribute,
+    target: AutoPluginAttribute,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>>
 where
     T: IdentGenericsAttrs<'a>,
@@ -371,12 +409,14 @@ where
         for attr in matched_item
             .attributes()
             .iter()
-            .filter(|a| a.meta.path().is_ident(attribute.ident_str()))
+            .filter(|a| a.meta.path().is_ident(target.ident_str()))
         {
             matched_items.push(ItemWithAttributeMatch {
                 item: item.clone(),
                 path: ident_to_path(matched_item.ident()),
-                attributes: attr.clone(),
+                matched_attribute: attr.clone(),
+                attributes: matched_item.attributes().to_vec(),
+                target,
             })
         }
     }
@@ -387,6 +427,8 @@ fn struct_or_enum_item_with_attribute_macro(
     item: &Item,
     struct_or_enum_ref: &StructOrEnumRef,
     attr: &Attribute,
+    attrs: &[Attribute],
+    target: AutoPluginAttribute,
 ) -> syn::Result<impl Iterator<Item = ItemWithAttributeMatch>> {
     let path = ident_to_path(struct_or_enum_ref.ident());
     let mut has_args = false;
@@ -394,46 +436,121 @@ fn struct_or_enum_item_with_attribute_macro(
         has_args = true;
         Ok(())
     });
+
     let paths = if has_args {
-        let user_provided_generic_values = StructOrEnumAttributeArgs::from_meta(&attr.meta);
-        #[cfg(feature = "legacy_path_param")]
-        let user_provided_generic_values = match user_provided_generic_values {
-            Ok(v) => Ok(v),
-            Err(err) => StructOrEnumRef::try_from(item)
-                .and_then(|se_ref| {
-                    legacy_generics_from_path(&se_ref, attr.meta.require_list()?.tokens.clone())
-                })
-                .map(StructOrEnumAttributeArgs::from)
-                .map_err(|legacy_err| {
-                    Error::new(err.span(), format!("\nnew: {err}\nlegacy: {legacy_err}"))
-                }),
+        #[derive(Debug)]
+        enum UserProvidedGenericValues {
+            InsertResource(InsertResourceArgs),
+            StructOrEnum(StructOrEnumAttributeArgs),
+        }
+
+        impl UserProvidedGenericValues {
+            fn generics(&self) -> Vec<TypeList> {
+                match self {
+                    UserProvidedGenericValues::InsertResource(item) => {
+                        item.generics.clone().map(|g| vec![g]).unwrap_or_default()
+                    }
+                    UserProvidedGenericValues::StructOrEnum(item) => item.generics.clone(),
+                }
+            }
+        }
+
+        impl CountGenerics for UserProvidedGenericValues {
+            fn get_span(&self) -> Span {
+                match self {
+                    Self::InsertResource(item) => CountGenerics::get_span(item),
+                    Self::StructOrEnum(item) => CountGenerics::get_span(item),
+                }
+            }
+
+            fn count(&self) -> usize {
+                match self {
+                    Self::InsertResource(item) => CountGenerics::count(item),
+                    Self::StructOrEnum(item) => CountGenerics::count(item),
+                }
+            }
+        }
+
+        let user_provided_generic_values = match target {
+            // insert resource never had legacy path param usage
+            AutoPluginAttribute::InsertResource => {
+                let user_provided_generic_values =
+                    InsertResourceArgs::from_meta(&attr.meta).map_err(Error::from);
+                let user_provided_generic_values = user_provided_generic_values?;
+                UserProvidedGenericValues::InsertResource(user_provided_generic_values)
+            }
+            // check if path param is legacy or standard
+            _ => {
+                let user_provided_generic_values =
+                    StructOrEnumAttributeArgs::from_meta(&attr.meta).map_err(Error::from);
+
+                #[cfg(feature = "legacy_path_param")]
+                let user_provided_generic_values = match user_provided_generic_values {
+                    Ok(v) => Ok(v),
+                    Err(err) => StructOrEnumRef::try_from(item)
+                        .and_then(|se_ref| {
+                            legacy_generics_from_path(
+                                &se_ref,
+                                attr.meta.require_list()?.tokens.clone(),
+                            )
+                        })
+                        .map(StructOrEnumAttributeArgs::from)
+                        .map_err(|legacy_err| {
+                            Error::new(err.span(), format!("\nnew: {err}\nlegacy: {legacy_err}"))
+                        }),
+                };
+                let user_provided_generic_values = user_provided_generic_values?;
+                UserProvidedGenericValues::StructOrEnum(user_provided_generic_values)
+            }
         };
-        let user_provided_generic_values = user_provided_generic_values?;
         validate_generic_counts(struct_or_enum_ref.generics, &user_provided_generic_values)?;
-        user_provided_generic_values
-            .generics
-            .into_iter()
-            .map(|generics| parse_quote!(#path::<#generics>))
-            .collect::<Vec<Path>>()
+        let expand_generics = |item: UserProvidedGenericValues| {
+            item.generics()
+                .into_iter()
+                .map(|generics| parse_quote!(#path::<#generics>))
+                .collect::<Vec<Path>>()
+        };
+        // TODO: convoluted...
+        // ensure we return at least one path for insert resource since we always need to have args
+        match &user_provided_generic_values {
+            UserProvidedGenericValues::InsertResource(item) => {
+                if CountGenerics::count(item) == 0 {
+                    vec![path]
+                } else {
+                    expand_generics(user_provided_generic_values)
+                }
+            }
+            UserProvidedGenericValues::StructOrEnum(_) => {
+                expand_generics(user_provided_generic_values)
+            }
+        }
     } else {
         vec![path]
     };
     Ok(paths.into_iter().map(move |path| ItemWithAttributeMatch {
         item: item.clone(),
         path,
-        attributes: attr.clone(),
+        target,
+        matched_attribute: attr.clone(),
+        attributes: attrs.to_vec(),
     }))
 }
 
 fn do_with_struct_or_enum_items_with_attribute_macro<F>(
     items: &Vec<syn::Item>,
-    attribute: AutoPluginAttribute,
+    target: AutoPluginAttribute,
     cb: F,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>>
 where
-    F: Fn(&Item, &StructOrEnumRef, &Attribute) -> syn::Result<Vec<ItemWithAttributeMatch>>,
+    F: Fn(
+        &Item,
+        &StructOrEnumRef,
+        &Attribute,
+        &[Attribute],
+        AutoPluginAttribute,
+    ) -> syn::Result<Vec<ItemWithAttributeMatch>>,
 {
-    let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(attribute.ident_str()) };
+    let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(target.ident_str()) };
 
     let mut matched_items = vec![];
     for item in items {
@@ -441,7 +558,13 @@ where
             continue;
         };
         for attr in struct_or_enum_ref.attributes.iter().filter(is_marker) {
-            let matched_item = cb(item, &struct_or_enum_ref, attr)?;
+            let matched_item = cb(
+                item,
+                &struct_or_enum_ref,
+                attr,
+                struct_or_enum_ref.attributes,
+                target,
+            )?;
             matched_items.extend(matched_item);
         }
     }
@@ -450,14 +573,21 @@ where
 
 pub fn struct_or_enum_items_with_attribute_macro(
     items: &Vec<syn::Item>,
-    attribute: AutoPluginAttribute,
+    target: AutoPluginAttribute,
 ) -> syn::Result<Vec<ItemWithAttributeMatch>> {
     do_with_struct_or_enum_items_with_attribute_macro(
         items,
-        attribute,
-        |item, struct_or_enum_ref, attr| {
+        target,
+        |item, struct_or_enum_ref, attr, attrs, target| {
             // TODO: this got ugly
-            Ok(struct_or_enum_item_with_attribute_macro(item, struct_or_enum_ref, attr)?.collect())
+            Ok(struct_or_enum_item_with_attribute_macro(
+                item,
+                struct_or_enum_ref,
+                attr,
+                attrs,
+                target,
+            )?
+            .collect())
         },
     )
 }
