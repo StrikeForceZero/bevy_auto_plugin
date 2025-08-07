@@ -5,11 +5,12 @@ use crate::bevy_app_code_gen::{
     generate_init_states, generate_insert_resources, generate_register_state_types,
     generate_register_types,
 };
+use crate::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_macro};
 use crate::modes::module::attribute::ModuleArgs;
-use crate::util::{
-    FnRef, ItemWithAttributeMatch, inject_module, items_with_attribute_macro,
-    struct_or_enum_items_with_attribute_macro, to_compile_error,
-};
+use crate::util::item_fn::FnRef;
+use crate::util::module::inject_module;
+use crate::util::struct_or_enum_ref::struct_or_enum_items_with_attribute_macro;
+use crate::util::tokens::to_compile_error;
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};

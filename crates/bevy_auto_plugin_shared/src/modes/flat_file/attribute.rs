@@ -1,4 +1,4 @@
-use crate::util::{debug_pat, debug_ty};
+use crate::util::debug::{debug_pat, debug_ty};
 use darling::FromMeta;
 use proc_macro2::Ident;
 use syn::spanned::Spanned;

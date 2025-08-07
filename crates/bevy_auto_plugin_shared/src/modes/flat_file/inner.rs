@@ -10,11 +10,12 @@ use crate::bevy_app_code_gen::{
 };
 use crate::modes::flat_file::attribute::FlatFileArgs;
 use crate::modes::flat_file::file_state::{update_file_state, update_state};
-use crate::util::{
-    FnParamMutabilityCheckErrMessages, LocalFile, StructOrEnumRef, TargetData, TargetRequirePath,
-    is_fn_param_mutable_reference, resolve_local_file, resolve_paths_from_item_or_args,
-    to_compile_error,
-};
+use crate::target::{TargetData, TargetRequirePath};
+use crate::util::concrete_path::resolve_paths_from_item_or_args;
+use crate::util::item_fn::{FnParamMutabilityCheckErrMessages, is_fn_param_mutable_reference};
+use crate::util::local_file::{LocalFile, resolve_local_file};
+use crate::util::struct_or_enum_ref::StructOrEnumRef;
+use crate::util::tokens::to_compile_error;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
 use darling::FromMeta;
 use darling::ast::NestedMeta;
@@ -350,9 +351,11 @@ pub fn flat_file_handle_attribute(
             }
             #[cfg(feature = "legacy_path_param")]
             {
-                use crate::util::StructOrEnumRef;
+                use crate::util::struct_or_enum_ref::StructOrEnumRef;
                 StructOrEnumRef::try_from(&parsed_item)
-                    .and_then(|se_ref| crate::util::legacy_generics_from_path(&se_ref, attr_cloned))
+                    .and_then(|se_ref| {
+                        crate::util::concrete_path::legacy_generics_from_path(&se_ref, attr_cloned)
+                    })
                     .map(StructOrEnumAttributeArgs::from)
                     .map_err(|legacy_err| {
                         syn::Error::new(err.span(), format!("\nnew: {err}\nlegacy: {legacy_err}"))
