@@ -3,11 +3,7 @@ use crate::attribute_args::{
     InsertResourceSerializedArgsWithPath,
 };
 use crate::attribute_args::{InsertResourceArgs, StructOrEnumAttributeArgs};
-use crate::bevy_app_code_gen::{
-    generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,
-    generate_init_states, generate_insert_resources, generate_register_state_types,
-    generate_register_types,
-};
+use crate::bevy_app_code_gen::{InputSets, expand_input_sets};
 use crate::modes::flat_file::attribute::FlatFileArgs;
 use crate::modes::flat_file::file_state::{update_file_state, update_state};
 use crate::target::{TargetData, TargetRequirePath};
@@ -111,48 +107,30 @@ pub fn auto_plugin_inner_to_stream(
                 .collect::<syn::Result<Vec<_>>>()
         }
         file_state.plugin_registered = true;
-        let register_types = generate_register_types(
+
+        let register_types = map_to_path(file_state.context.register_types.drain())?;
+        let register_state_types = map_to_path(file_state.context.register_state_types.drain())?;
+        let auto_names = map_to_path(file_state.context.auto_names.drain())?;
+        let add_events = map_to_path(file_state.context.add_events.drain())?;
+        let add_systems = map_to_add_systems(file_state.context.add_systems.drain())?;
+        let insert_resources = map_to_insert_resource(file_state.context.insert_resources.drain())?;
+        let init_states = map_to_path(file_state.context.init_states.drain())?;
+        let init_resources = map_to_path(file_state.context.init_resources.drain())?;
+
+        let pipeline_tokens = expand_input_sets(
             app_param_name,
-            map_to_path(file_state.context.register_types.drain())?,
+            InputSets {
+                register_types,
+                register_state_types,
+                auto_names,
+                add_events,
+                add_systems,
+                insert_resources,
+                init_states,
+                init_resources,
+            },
         )?;
-        let register_state_types = generate_register_state_types(
-            app_param_name,
-            map_to_path(file_state.context.register_state_types.drain())?,
-        )?;
-        let add_events = generate_add_events(
-            app_param_name,
-            map_to_path(file_state.context.add_events.drain())?,
-        )?;
-        let init_resources = generate_init_resources(
-            app_param_name,
-            map_to_path(file_state.context.init_resources.drain())?,
-        )?;
-        let insert_resources = generate_insert_resources(
-            app_param_name,
-            map_to_insert_resource(file_state.context.insert_resources.drain())?,
-        )?;
-        let init_states = generate_init_states(
-            app_param_name,
-            map_to_path(file_state.context.init_states.drain())?,
-        )?;
-        let auto_names = generate_auto_names(
-            app_param_name,
-            map_to_path(file_state.context.auto_names.drain())?,
-        )?;
-        let add_systems = generate_add_systems(
-            app_param_name,
-            map_to_add_systems(file_state.context.add_systems.drain())?,
-        )?;
-        Ok(quote! {
-            #register_types
-            #register_state_types
-            #add_events
-            #init_resources
-            #insert_resources
-            #init_states
-            #auto_names
-            #add_systems
-        })
+        Ok(pipeline_tokens)
     })
 }
 

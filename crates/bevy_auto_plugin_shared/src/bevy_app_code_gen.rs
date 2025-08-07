@@ -1,7 +1,8 @@
 use crate::attribute_args::{AddSystemWithTargetArgs, InsertResourceArgsWithPath};
 use crate::util::path_fmt::path_to_string;
-use proc_macro2::{Ident, TokenStream as MacroStream};
+use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::quote;
+use syn::Path;
 
 /// Generic code-gen for iterator of items passing each item to build param fn
 #[inline]
@@ -154,3 +155,39 @@ impl_custom!(
     AddSystemWithTargetArgs,
     |app_ident, item| AddSystemWithTargetArgs::to_tokens(item, app_ident),
 );
+
+/// code-gen input data
+#[derive(Default)]
+pub struct InputSets {
+    pub register_types: Vec<Path>,
+    pub register_state_types: Vec<Path>,
+    pub auto_names: Vec<Path>,
+    pub add_events: Vec<Path>,
+    pub add_systems: Vec<AddSystemWithTargetArgs>,
+    pub insert_resources: Vec<InsertResourceArgsWithPath>,
+    pub init_states: Vec<Path>,
+    pub init_resources: Vec<Path>,
+}
+
+/// Expands codegen from [`InputSets`]
+pub fn expand_input_sets(app_ident: &Ident, sets: InputSets) -> syn::Result<TokenStream> {
+    let register_types = generate_register_types(app_ident, sets.register_types)?;
+    let register_state_types = generate_register_state_types(app_ident, sets.register_state_types)?;
+    let auto_names = generate_auto_names(app_ident, sets.auto_names)?;
+    let add_events = generate_add_events(app_ident, sets.add_events)?;
+    let add_systems = generate_add_systems(app_ident, sets.add_systems)?;
+    let insert_resources = generate_insert_resources(app_ident, sets.insert_resources)?;
+    let init_states = generate_init_states(app_ident, sets.init_states)?;
+    let init_resources = generate_init_resources(app_ident, sets.init_resources)?;
+
+    Ok(quote! {
+        #register_types
+        #register_state_types
+        #auto_names
+        #add_events
+        #add_systems
+        #insert_resources
+        #init_states
+        #init_resources
+    })
+}
