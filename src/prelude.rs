@@ -537,15 +537,199 @@ pub mod flat_file {
 #[cfg(feature = "mode_global")]
 pub mod global {
     pub mod prelude {
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// // Plugin will automatically implement the Plugin trait
+        /// // and include all registered components, events, resources, etc.
+        /// ```
         pub use bevy_auto_plugin_proc_macros::AutoPlugin;
+
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// #[derive(Event, Debug, Default, PartialEq, Reflect)]
+        /// #[auto_register_type(plugin = MyPlugin)]
+        /// #[auto_add_event(plugin = MyPlugin)]
+        /// struct FooEvent(usize);
+        /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_add_event as auto_add_event;
+
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// #[derive(Resource, Debug, Default)]
+        /// struct FooResource(usize);
+        ///
+        /// #[auto_add_system(plugin = MyPlugin, schedule = Update)]
+        /// fn foo_system(mut foo_res: ResMut<FooResource>) {
+        ///     foo_res.0 += 1;
+        /// }
+        /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_add_system as auto_add_system;
+
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// #[derive(Resource, Debug, Default, PartialEq, Reflect)]
+        /// #[reflect(Resource)]
+        /// #[auto_register_type(plugin = MyPlugin)]
+        /// #[auto_init_resource(plugin = MyPlugin)]
+        /// struct FooResource(usize);
+        /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_init_resource as auto_init_resource;
+
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// #[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
+        /// #[auto_init_state(plugin = MyPlugin)]
+        /// #[auto_register_state_type(plugin = MyPlugin)]
+        /// enum FooState {
+        ///     #[default]
+        ///     Start,
+        ///     End,
+        /// }
+        /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_init_state as auto_init_state;
+
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// #[derive(Resource, Debug, Default, PartialEq, Reflect)]
+        /// #[reflect(Resource)]
+        /// #[auto_register_type(plugin = MyPlugin)]
+        /// #[auto_insert_resource(plugin = MyPlugin, resource(FooResource(42)))]
+        /// struct FooResource(usize);
+        /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_insert_resource as auto_insert_resource;
+
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// #[derive(Component, Reflect)]
+        /// #[reflect(Component)]
+        /// #[auto_register_type(plugin = MyPlugin)]
+        /// #[auto_name(plugin = MyPlugin)]
+        /// struct FooComponent;
+        ///
+        /// // This will automatically add a Name component to any entity with FooComponent
+        /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_name as auto_name;
+
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// // This macro enables the struct to act as a plugin that automatically
+        /// // registers all types, resources, events, etc. marked with appropriate macros
+        /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_plugin;
+
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// #[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
+        /// #[auto_init_state(plugin = MyPlugin)]
+        /// #[auto_register_state_type(plugin = MyPlugin)]
+        /// enum FooState {
+        ///     #[default]
+        ///     Start,
+        ///     End,
+        /// }
+        ///
+        /// // This will register both State<FooState> and NextState<FooState> with the type registry
+        /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_register_state_type as auto_register_state_type;
+
+        #[doc(inline)]
+        ///
+        /// # Example
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// #[auto_plugin(impl_plugin_trait)]
+        /// struct MyPlugin;
+        ///
+        /// #[derive(Component, Reflect)]
+        /// #[reflect(Component)]
+        /// #[auto_register_type(plugin = MyPlugin)]
+        /// struct FooComponent;
+        ///
+        /// // This will register FooComponent with the type registry
+        /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_register_type as auto_register_type;
     }
 }
