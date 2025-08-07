@@ -61,7 +61,7 @@ pub fn module_auto_init_state(_attr: CompilerStream, input: CompilerStream) -> C
     input
 }
 
-/// Automatically registers a State<T> and NextState<T> in the Bevy `App`.
+/// Automatically registers a `State<T>` and `NextState<T>` in the Bevy `App`.
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
 pub fn module_auto_register_state_type(

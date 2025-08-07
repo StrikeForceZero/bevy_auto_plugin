@@ -376,7 +376,7 @@ pub mod module {
         pub use bevy_auto_plugin_proc_macros::module_auto_plugin as auto_plugin;
 
         #[doc(inline)]
-        /// Automatically registers State<T> and NextState<T> types with the app in module mode.
+        /// Automatically registers `State<T>` and `NextState<T>` types with the app in module mode.
         ///
         /// # Example (without generics)
         /// ```
@@ -752,7 +752,7 @@ pub mod flat_file {
         pub use bevy_auto_plugin_proc_macros::flat_file_auto_plugin as auto_plugin;
 
         #[doc(inline)]
-        /// Automatically registers State<T> and NextState<T> types with the app.
+        /// Automatically registers `State<T>` and `NextState<T>` types with the app.
         ///
         /// # Example (without generics)
         /// ```
@@ -1105,7 +1105,7 @@ pub mod global {
         pub use bevy_auto_plugin_proc_macros::global_auto_plugin;
 
         #[doc(inline)]
-        /// Automatically registers State<T> and NextState<T> types with the app in global mode.
+        /// Automatically registers `State<T>` and `NextState<T>` types with the app in global mode.
         ///
         /// # Parameters
         /// - `plugin = PluginType` - Required. Specifies which plugin should register these state types.

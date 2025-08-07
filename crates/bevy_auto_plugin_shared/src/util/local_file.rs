@@ -20,7 +20,7 @@ pub enum LocalFile {
 
 /// Panics if called from outside a procedural macro.
 ///
-/// TODO: remove when rust-analyzer fully implements local_file https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147
+/// TODO: remove when rust-analyzer fully implements local_file <https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147>
 pub fn resolve_local_file() -> LocalFile {
     match crate::modes::flat_file::file_state::get_file_path() {
         Some(p) => LocalFile::File(p),
