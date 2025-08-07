@@ -11,6 +11,9 @@ publish = true
 [lib]
 
 [features]
+mode_flat_file = []
+mode_module = []
+mode_global = []
 inventory = []
 legacy_path_param = []
 log_plugin_build = ["log"]

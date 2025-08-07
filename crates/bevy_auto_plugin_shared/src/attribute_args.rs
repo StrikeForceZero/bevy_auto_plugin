@@ -625,3 +625,7 @@ mod tests {
         println!("{:?}", attr);
     }
 }
+
+pub fn default_app_ident() -> Ident {
+    Ident::new("app", Span::call_site())
+}

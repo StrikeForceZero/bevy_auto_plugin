@@ -30,8 +30,8 @@ jobs:
 
       - name: Run tests
         run: |
-          echo "Testing with features: ${{ matrix.feature-set }}"
-          cargo test --features "${{ matrix.feature-set }}"
+          echo "Testing with features: ${{ matrix.feature-set }},all_modes"
+          cargo test --no-default-features --features "${{ matrix.feature-set }},all_modes"
 
   doc-test:
     runs-on: ubuntu-latest
@@ -109,5 +109,5 @@ jobs:
 
       - name: Run wasm tests
         run: |
-          echo "Test wasm32 with features: ${{ matrix['feature-set'] }}"
-          cargo test --target wasm32-unknown-unknown --features "${{ matrix['feature-set'] }}"
+          echo "Test wasm32 with features: ${{ matrix['feature-set'] }},all_modes"
+          cargo test --target wasm32-unknown-unknown --no-default-features --features "${{ matrix['feature-set'] }},all_modes"

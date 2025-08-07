@@ -1,4 +1,4 @@
-use crate::AutoPluginAttribute;
+use crate::attribute::AutoPluginAttribute;
 use crate::attribute_args::{AddSystemArgs, AddSystemWithTargetArgs, InsertResourceArgsWithPath};
 use crate::bevy_app_code_gen::{
     generate_add_events, generate_add_systems, generate_auto_names, generate_init_resources,

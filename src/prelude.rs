@@ -1,3 +1,4 @@
+#[cfg(feature = "mode_module")]
 pub mod module {
     pub mod prelude {
         #[doc(inline)]
@@ -315,6 +316,7 @@ pub mod module {
     }
 }
 
+#[cfg(feature = "mode_flat_file")]
 pub mod flat_file {
     pub mod prelude {
         #[doc(inline)]
@@ -532,6 +534,7 @@ pub mod flat_file {
     }
 }
 
+#[cfg(feature = "mode_global")]
 pub mod global {
     pub mod prelude {
         pub use bevy_auto_plugin_proc_macros::AutoPlugin;

@@ -1,5 +1,5 @@
-use crate::AutoPluginContext;
 use crate::attribute_args::{AddSystemSerializedArgs, InsertResourceSerializedArgsWithPath};
+use crate::context::AutoPluginContext;
 use crate::util::{TargetData, path_to_string_with_spaces};
 use quote::quote;
 use std::cell::RefCell;
