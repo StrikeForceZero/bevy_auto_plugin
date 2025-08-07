@@ -129,6 +129,68 @@ pub struct FnRef<'a> {
     pub attributes: &'a Vec<Attribute>,
 }
 
+/// Build the concrete paths for an item based on user-provided generic values.
+fn resolve_user_provided_generic_paths(
+    target: AutoPluginAttribute,
+    attr: &Attribute,
+    item: &Item,
+    struct_or_enum_ref: &StructOrEnumRef,
+    base_path: &Path,
+) -> syn::Result<Vec<Path>> {
+    // A small utility for turning generic lists into `Path`s.
+    let build_paths = |lists: Vec<TypeList>| -> Vec<Path> {
+        if lists.is_empty() {
+            vec![base_path.clone()]
+        } else {
+            lists
+                .into_iter()
+                .map(|generics| parse_quote!(#base_path::<#generics>))
+                .collect()
+        }
+    };
+
+    match target {
+        // --------------------------------- InsertResource ---------------------------------
+        // InsertResource uses its own darling args type and never allowed the legacy path
+        // syntax, so the parsing is straightforward.
+        AutoPluginAttribute::InsertResource => {
+            let insert_args = InsertResourceArgs::from_meta(&attr.meta).map_err(Error::from)?;
+            validate_generic_counts(struct_or_enum_ref.generics, &insert_args)?;
+            let lists = insert_args
+                .generics
+                .clone()
+                .map(|g| vec![g])
+                .unwrap_or_default();
+            Ok(build_paths(lists))
+        }
+
+        // ------------------------------- All other targets -------------------------------
+        _ => {
+            // Parse modern form first …
+            let modern_args_res =
+                StructOrEnumAttributeArgs::from_meta(&attr.meta).map_err(Error::from);
+
+            // … then, if enabled, fall back to the legacy `Foo<T>` path syntax.
+            #[cfg(feature = "legacy_path_param")]
+            let modern_args_res = match modern_args_res {
+                Ok(v) => Ok(v),
+                Err(err) => StructOrEnumRef::try_from(item)
+                    .and_then(|se_ref| {
+                        legacy_generics_from_path(&se_ref, attr.meta.require_list()?.tokens.clone())
+                    })
+                    .map(StructOrEnumAttributeArgs::from)
+                    .map_err(|legacy_err| {
+                        Error::new(err.span(), format!("\nnew: {err}\nlegacy: {legacy_err}"))
+                    }),
+            };
+
+            let modern_args = modern_args_res?;
+            validate_generic_counts(struct_or_enum_ref.generics, &modern_args)?;
+            Ok(build_paths(modern_args.generics.clone()))
+        }
+    }
+}
+
 impl<'a> FnRef<'a> {
     fn new(ident: &'a Ident, generics: &'a Generics, attributes: &'a Vec<Attribute>) -> Self {
         Self {
@@ -438,92 +500,7 @@ fn struct_or_enum_item_with_attribute_macro(
     });
 
     let paths = if has_args {
-        #[derive(Debug)]
-        enum UserProvidedGenericValues {
-            InsertResource(InsertResourceArgs),
-            StructOrEnum(StructOrEnumAttributeArgs),
-        }
-
-        impl UserProvidedGenericValues {
-            fn generics(&self) -> Vec<TypeList> {
-                match self {
-                    UserProvidedGenericValues::InsertResource(item) => {
-                        item.generics.clone().map(|g| vec![g]).unwrap_or_default()
-                    }
-                    UserProvidedGenericValues::StructOrEnum(item) => item.generics.clone(),
-                }
-            }
-        }
-
-        impl CountGenerics for UserProvidedGenericValues {
-            fn get_span(&self) -> Span {
-                match self {
-                    Self::InsertResource(item) => CountGenerics::get_span(item),
-                    Self::StructOrEnum(item) => CountGenerics::get_span(item),
-                }
-            }
-
-            fn count(&self) -> usize {
-                match self {
-                    Self::InsertResource(item) => CountGenerics::count(item),
-                    Self::StructOrEnum(item) => CountGenerics::count(item),
-                }
-            }
-        }
-
-        let user_provided_generic_values = match target {
-            // insert resource never had legacy path param usage
-            AutoPluginAttribute::InsertResource => {
-                let user_provided_generic_values =
-                    InsertResourceArgs::from_meta(&attr.meta).map_err(Error::from);
-                let user_provided_generic_values = user_provided_generic_values?;
-                UserProvidedGenericValues::InsertResource(user_provided_generic_values)
-            }
-            // check if path param is legacy or standard
-            _ => {
-                let user_provided_generic_values =
-                    StructOrEnumAttributeArgs::from_meta(&attr.meta).map_err(Error::from);
-
-                #[cfg(feature = "legacy_path_param")]
-                let user_provided_generic_values = match user_provided_generic_values {
-                    Ok(v) => Ok(v),
-                    Err(err) => StructOrEnumRef::try_from(item)
-                        .and_then(|se_ref| {
-                            legacy_generics_from_path(
-                                &se_ref,
-                                attr.meta.require_list()?.tokens.clone(),
-                            )
-                        })
-                        .map(StructOrEnumAttributeArgs::from)
-                        .map_err(|legacy_err| {
-                            Error::new(err.span(), format!("\nnew: {err}\nlegacy: {legacy_err}"))
-                        }),
-                };
-                let user_provided_generic_values = user_provided_generic_values?;
-                UserProvidedGenericValues::StructOrEnum(user_provided_generic_values)
-            }
-        };
-        validate_generic_counts(struct_or_enum_ref.generics, &user_provided_generic_values)?;
-        let expand_generics = |item: UserProvidedGenericValues| {
-            item.generics()
-                .into_iter()
-                .map(|generics| parse_quote!(#path::<#generics>))
-                .collect::<Vec<Path>>()
-        };
-        // TODO: convoluted...
-        // ensure we return at least one path for insert resource since we always need to have args
-        match &user_provided_generic_values {
-            UserProvidedGenericValues::InsertResource(item) => {
-                if CountGenerics::count(item) == 0 {
-                    vec![path]
-                } else {
-                    expand_generics(user_provided_generic_values)
-                }
-            }
-            UserProvidedGenericValues::StructOrEnum(_) => {
-                expand_generics(user_provided_generic_values)
-            }
-        }
+        resolve_user_provided_generic_paths(target, attr, item, struct_or_enum_ref, &path)?
     } else {
         vec![path]
     };
