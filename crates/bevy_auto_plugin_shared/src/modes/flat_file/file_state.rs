@@ -1,7 +1,7 @@
 use crate::attribute_args::{AddSystemSerializedArgs, InsertResourceSerializedArgsWithPath};
 use crate::context::AutoPluginContext;
 use crate::target::TargetData;
-use crate::util::path::path_to_string_with_spaces;
+use crate::util::path_fmt::path_to_string_with_spaces;
 use quote::quote;
 use std::cell::RefCell;
 use std::collections::HashMap;

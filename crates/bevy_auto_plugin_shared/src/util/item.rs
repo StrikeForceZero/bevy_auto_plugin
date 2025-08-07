@@ -1,5 +1,5 @@
 use proc_macro2::Ident;
-use syn::{Attribute, Error, Generics, Item};
+use syn::{Error, Item};
 
 pub fn require_fn(item: &Item) -> syn::Result<&Ident> {
     match item {
@@ -20,10 +20,4 @@ pub fn require_struct_or_enum(item: &Item) -> syn::Result<&Ident> {
             "Only struct and enum can use this attribute macro",
         )),
     }
-}
-
-pub trait IdentGenericsAttrs<'a>: TryFrom<&'a Item, Error = Error> {
-    fn ident(&self) -> &Ident;
-    fn generics(&self) -> &Generics;
-    fn attributes(&self) -> &Vec<Attribute>;
 }

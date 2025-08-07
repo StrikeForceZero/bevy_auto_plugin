@@ -1,7 +1,7 @@
 use crate::attribute_args::{InsertResourceArgs, StructOrEnumAttributeArgs};
 use crate::type_list::TypeList;
 use crate::util::extensions::path::PathExt;
-use crate::util::struct_or_enum_ref::StructOrEnumRef;
+use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use proc_macro2::Span;
 use syn::Path;
 
@@ -67,7 +67,7 @@ impl CountGenerics for TypeList {
     }
 }
 
-impl CountGenerics for StructOrEnumRef<'_> {
+impl CountGenerics for StructOrEnumMeta<'_> {
     fn get_span(&self) -> Span {
         use syn::spanned::Spanned;
         self.generics.span()

@@ -1,8 +1,7 @@
 use crate::attribute::AutoPluginAttribute;
 use crate::item_with_attr_match;
 use crate::item_with_attr_match::ItemWithAttributeMatch;
-use crate::util::item_fn::FnRef;
-use crate::util::struct_or_enum_ref;
+use crate::util::meta::fn_meta::FnMeta;
 use syn::ItemMod;
 
 pub fn get_all_items_in_module_by_attribute(
@@ -16,28 +15,28 @@ pub fn get_all_items_in_module_by_attribute(
     // Find all items with the provided [`attribute_name`] #[...] attribute
     let matched_items = match attribute {
         AutoPluginAttribute::RegisterType => {
-            struct_or_enum_ref::struct_or_enum_items_with_attribute_macro(items, attribute)?
+            item_with_attr_match::struct_or_enum_items_with_attribute_macro(items, attribute)?
         }
         AutoPluginAttribute::AddEvent => {
-            struct_or_enum_ref::struct_or_enum_items_with_attribute_macro(items, attribute)?
+            item_with_attr_match::struct_or_enum_items_with_attribute_macro(items, attribute)?
         }
         AutoPluginAttribute::InitResource => {
-            struct_or_enum_ref::struct_or_enum_items_with_attribute_macro(items, attribute)?
+            item_with_attr_match::struct_or_enum_items_with_attribute_macro(items, attribute)?
         }
         AutoPluginAttribute::InsertResource => {
-            struct_or_enum_ref::struct_or_enum_items_with_attribute_macro(items, attribute)?
+            item_with_attr_match::struct_or_enum_items_with_attribute_macro(items, attribute)?
         }
         AutoPluginAttribute::InitState => {
-            struct_or_enum_ref::struct_or_enum_items_with_attribute_macro(items, attribute)?
+            item_with_attr_match::struct_or_enum_items_with_attribute_macro(items, attribute)?
         }
         AutoPluginAttribute::Name => {
-            struct_or_enum_ref::struct_or_enum_items_with_attribute_macro(items, attribute)?
+            item_with_attr_match::struct_or_enum_items_with_attribute_macro(items, attribute)?
         }
         AutoPluginAttribute::RegisterStateType => {
-            struct_or_enum_ref::struct_or_enum_items_with_attribute_macro(items, attribute)?
+            item_with_attr_match::struct_or_enum_items_with_attribute_macro(items, attribute)?
         }
         AutoPluginAttribute::AddSystem => {
-            item_with_attr_match::items_with_attribute_macro::<FnRef>(items, attribute)?
+            item_with_attr_match::items_with_attribute_macro::<FnMeta>(items, attribute)?
         }
     };
     Ok(matched_items)

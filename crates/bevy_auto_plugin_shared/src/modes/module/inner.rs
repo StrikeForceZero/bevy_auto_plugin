@@ -5,11 +5,11 @@ use crate::bevy_app_code_gen::{
     generate_init_states, generate_insert_resources, generate_register_state_types,
     generate_register_types,
 };
+use crate::item_with_attr_match::struct_or_enum_items_with_attribute_macro;
 use crate::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_macro};
 use crate::modes::module::attribute::ModuleArgs;
-use crate::util::item_fn::FnRef;
+use crate::util::meta::fn_meta::FnMeta;
 use crate::util::module::inject_module;
-use crate::util::struct_or_enum_ref::struct_or_enum_items_with_attribute_macro;
 use crate::util::tokens::to_compile_error;
 use darling::FromMeta;
 use darling::ast::NestedMeta;
@@ -84,7 +84,7 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
         let auto_init_states = map_to_path(auto_init_states);
 
         let auto_add_system =
-            items_with_attribute_macro::<FnRef>(items, AutoPluginAttribute::AddSystem)?;
+            items_with_attribute_macro::<FnMeta>(items, AutoPluginAttribute::AddSystem)?;
         let auto_add_system = map_to_add_system_args(auto_add_system)?;
 
         inject_module(&mut module, move || {

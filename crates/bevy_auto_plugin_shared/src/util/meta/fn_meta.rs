@@ -1,14 +1,14 @@
-use crate::util::item::IdentGenericsAttrs;
+use crate::util::meta::IdentGenericsAttrsMeta;
 use proc_macro2::Ident;
 use syn::{Attribute, Error, Generics, Item, ItemFn};
 
-pub struct FnRef<'a> {
+pub struct FnMeta<'a> {
     pub ident: &'a Ident,
     pub generics: &'a Generics,
     pub attributes: &'a Vec<Attribute>,
 }
 
-impl<'a> FnRef<'a> {
+impl<'a> FnMeta<'a> {
     fn new(ident: &'a Ident, generics: &'a Generics, attributes: &'a Vec<Attribute>) -> Self {
         Self {
             ident,
@@ -18,7 +18,7 @@ impl<'a> FnRef<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a Item> for FnRef<'a> {
+impl<'a> TryFrom<&'a Item> for FnMeta<'a> {
     type Error = Error;
 
     fn try_from(item: &'a Item) -> std::result::Result<Self, Self::Error> {
@@ -32,7 +32,7 @@ impl<'a> TryFrom<&'a Item> for FnRef<'a> {
     }
 }
 
-impl<'a> IdentGenericsAttrs<'a> for FnRef<'a> {
+impl<'a> IdentGenericsAttrsMeta<'a> for FnMeta<'a> {
     fn ident(&self) -> &Ident {
         self.ident
     }
@@ -54,7 +54,7 @@ pub fn is_fn_param_mutable_reference(
     param_ident: &Ident,
     messages: FnParamMutabilityCheckErrMessages,
 ) -> syn::Result<()> {
-    use crate::util::ty;
+    use crate::util::ty_classify;
     use syn::spanned::Spanned;
     use syn::{FnArg, Pat};
     for arg in &item.sig.inputs {
@@ -65,7 +65,7 @@ pub fn is_fn_param_mutable_reference(
             if *param_ident != pat_ident.ident {
                 continue;
             }
-            if !ty::is_mutable_reference(&pat_type.ty) {
+            if !ty_classify::is_mutable_reference(&pat_type.ty) {
                 return Err(Error::new(pat_type.span(), messages.not_mutable_message));
             }
             return Ok(());

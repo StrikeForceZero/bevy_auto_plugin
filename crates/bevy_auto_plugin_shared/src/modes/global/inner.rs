@@ -6,7 +6,9 @@ use crate::attribute_args::{
 use crate::bevy_app_code_gen::*;
 use crate::modes::global::__internal::_plugin_entry_block;
 use crate::util::item::{require_fn, require_struct_or_enum};
-use crate::util::item_fn::{FnParamMutabilityCheckErrMessages, is_fn_param_mutable_reference};
+use crate::util::meta::fn_meta::{
+    FnParamMutabilityCheckErrMessages, is_fn_param_mutable_reference,
+};
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;

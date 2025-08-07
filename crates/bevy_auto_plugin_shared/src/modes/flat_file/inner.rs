@@ -12,9 +12,11 @@ use crate::modes::flat_file::attribute::FlatFileArgs;
 use crate::modes::flat_file::file_state::{update_file_state, update_state};
 use crate::target::{TargetData, TargetRequirePath};
 use crate::util::concrete_path::resolve_paths_from_item_or_args;
-use crate::util::item_fn::{FnParamMutabilityCheckErrMessages, is_fn_param_mutable_reference};
 use crate::util::local_file::{LocalFile, resolve_local_file};
-use crate::util::struct_or_enum_ref::StructOrEnumRef;
+use crate::util::meta::fn_meta::{
+    FnParamMutabilityCheckErrMessages, is_fn_param_mutable_reference,
+};
+use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use crate::util::tokens::to_compile_error;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
 use darling::FromMeta;
@@ -200,7 +202,7 @@ pub fn handle_insert_resource_inner(
     attr_span: Span,
     resource_args: InsertResourceArgs,
 ) -> syn::Result<()> {
-    let paths = resolve_paths_from_item_or_args::<StructOrEnumRef>(
+    let paths = resolve_paths_from_item_or_args::<StructOrEnumMeta>(
         &item,
         StructOrEnumAttributeArgs {
             generics: resource_args
@@ -249,7 +251,7 @@ pub fn handle_attribute_inner(
     target: TargetRequirePath,
     args: StructOrEnumAttributeArgs,
 ) -> syn::Result<()> {
-    let paths = resolve_paths_from_item_or_args::<StructOrEnumRef>(&item, args)?;
+    let paths = resolve_paths_from_item_or_args::<StructOrEnumMeta>(&item, args)?;
     for path in paths {
         let target_data = TargetData::from_target_require_path(target, path);
         // TODO: cloning here feels dumb
@@ -351,8 +353,8 @@ pub fn flat_file_handle_attribute(
             }
             #[cfg(feature = "legacy_path_param")]
             {
-                use crate::util::struct_or_enum_ref::StructOrEnumRef;
-                StructOrEnumRef::try_from(&parsed_item)
+                use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
+                StructOrEnumMeta::try_from(&parsed_item)
                     .and_then(|se_ref| {
                         crate::util::concrete_path::legacy_generics_from_path(&se_ref, attr_cloned)
                     })

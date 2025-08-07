@@ -3,9 +3,9 @@ use crate::attribute_args::{InsertResourceArgs, StructOrEnumAttributeArgs};
 use crate::type_list::TypeList;
 use crate::util::extensions::path::PathExt;
 use crate::util::generics::CountGenerics;
-use crate::util::item::IdentGenericsAttrs;
-use crate::util::path;
-use crate::util::struct_or_enum_ref::StructOrEnumRef;
+use crate::util::meta::IdentGenericsAttrsMeta;
+use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
+use crate::util::path_fmt;
 use darling::FromMeta;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
@@ -16,7 +16,7 @@ pub fn resolve_paths_from_item_or_args<'a, T>(
     args: StructOrEnumAttributeArgs,
 ) -> syn::Result<impl Iterator<Item = Path>>
 where
-    T: IdentGenericsAttrs<'a>,
+    T: IdentGenericsAttrsMeta<'a>,
 {
     let struct_or_enum = T::try_from(item)?;
     let ident = struct_or_enum.ident();
@@ -32,7 +32,7 @@ where
             })
             .collect::<syn::Result<Vec<_>>>()?
     } else {
-        vec![path::ident_to_path(ident)]
+        vec![path_fmt::ident_to_path(ident)]
     };
     Ok(paths.into_iter())
 }
@@ -41,7 +41,7 @@ where
 pub fn resolve_user_provided_generic_paths(
     target: AutoPluginAttribute,
     attr: &Attribute,
-    struct_or_enum_ref: &StructOrEnumRef,
+    struct_or_enum_ref: &StructOrEnumMeta,
     base_path: &Path,
     #[cfg(feature = "legacy_path_param")] item: &Item,
 ) -> syn::Result<Vec<Path>> {
@@ -82,7 +82,7 @@ pub fn resolve_user_provided_generic_paths(
             #[cfg(feature = "legacy_path_param")]
             let modern_args_res = match modern_args_res {
                 Ok(v) => Ok(v),
-                Err(err) => StructOrEnumRef::try_from(item)
+                Err(err) => StructOrEnumMeta::try_from(item)
                     .and_then(|se_ref| {
                         legacy_generics_from_path(&se_ref, attr.meta.require_list()?.tokens.clone())
                     })
@@ -128,7 +128,7 @@ pub fn generics_from_path(path: &Path) -> syn::Result<TypeList> {
 }
 
 pub fn legacy_generics_from_path(
-    struct_or_enum_ref: &StructOrEnumRef,
+    struct_or_enum_ref: &StructOrEnumMeta,
     attr: MacroStream,
 ) -> syn::Result<TypeList> {
     let path = parse2::<Path>(attr)?;
@@ -173,7 +173,7 @@ mod tests {
         let attribute = quote! {
             Foo<T, U>
         };
-        let struct_or_enum_ref = StructOrEnumRef::try_from(&item)?;
+        let struct_or_enum_ref = StructOrEnumMeta::try_from(&item)?;
         let generics = legacy_generics_from_path(&struct_or_enum_ref, attribute)?;
         assert_eq!("T , U", generics.to_token_stream().to_string().trim());
         Ok(())

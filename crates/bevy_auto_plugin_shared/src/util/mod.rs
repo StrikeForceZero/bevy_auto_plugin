@@ -4,11 +4,10 @@ pub mod env;
 pub mod extensions;
 pub mod generics;
 pub mod item;
-pub mod item_fn;
 #[cfg(feature = "mode_flat_file")]
 pub mod local_file;
+pub mod meta;
 pub mod module;
-pub mod path;
-pub mod struct_or_enum_ref;
+pub mod path_fmt;
 pub mod tokens;
-pub mod ty;
+pub mod ty_classify;
