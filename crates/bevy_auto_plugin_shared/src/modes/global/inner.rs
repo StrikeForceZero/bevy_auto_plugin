@@ -6,9 +6,7 @@ use crate::attribute_args::{
 use crate::bevy_app_code_gen::*;
 use crate::modes::global::__internal::_plugin_entry_block;
 use crate::util::item::{require_fn, require_struct_or_enum};
-use crate::util::meta::fn_meta::{
-    FnParamMutabilityCheckErrMessages, is_fn_param_mutable_reference,
-};
+use crate::util::meta::fn_meta::require_fn_param_mutable_reference;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
@@ -97,14 +95,7 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
     let default_app_ident = default_app_ident();
     let app_param_ident = params.app_param.as_ref().unwrap_or(&default_app_ident);
 
-    if let Err(err) = is_fn_param_mutable_reference(
-        &item,
-        app_param_ident,
-        FnParamMutabilityCheckErrMessages {
-            not_mutable_message: format!("bevy app param: {app_param_ident} is not mutable"),
-            not_found_message: format!("bevy app param: {app_param_ident} not found"),
-        },
-    ) {
+    if let Err(err) = require_fn_param_mutable_reference(&item, app_param_ident, "bevy app") {
         return err.to_compile_error().into();
     }
 

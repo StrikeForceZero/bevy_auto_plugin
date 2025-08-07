@@ -9,9 +9,7 @@ use crate::modes::flat_file::file_state::{update_file_state, update_state};
 use crate::target::{TargetData, TargetRequirePath};
 use crate::util::concrete_path::resolve_paths_from_item_or_args;
 use crate::util::local_file::{LocalFile, resolve_local_file};
-use crate::util::meta::fn_meta::{
-    FnParamMutabilityCheckErrMessages, is_fn_param_mutable_reference,
-};
+use crate::util::meta::fn_meta::require_fn_param_mutable_reference;
 use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use crate::util::tokens::to_compile_error;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
@@ -32,12 +30,7 @@ pub fn auto_plugin_inner(
     let func_vis = &input.vis;
     let func_attrs = &input.attrs;
 
-    // TODO: tuple struct with &'static string and app_param_name ?
-    let app_param_mut_check_result = is_fn_param_mutable_reference(&input, &app_param_name, FnParamMutabilityCheckErrMessages {
-        not_mutable_message: "auto_plugin attribute must be used on a function with a `&mut bevy::app::App` parameter".to_string(),
-        not_found_message: format!("auto_plugin could not find the parameter named `{app_param_name}` in the function signature."),
-    });
-    app_param_mut_check_result?;
+    let _ = require_fn_param_mutable_reference(&input, &app_param_name, "auto_plugin")?;
 
     let injected_code = auto_plugin_inner_to_stream(file_path, &app_param_name)?;
 

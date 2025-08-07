@@ -76,3 +76,24 @@ pub fn is_fn_param_mutable_reference(
         messages.not_found_message,
     ))
 }
+
+pub fn require_fn_param_mutable_reference(
+    item: &ItemFn,
+    param_ident: &Ident,
+    context: &str,
+) -> syn::Result<()> {
+    let fn_ident = &item.sig.ident;
+    is_fn_param_mutable_reference(
+        item,
+        param_ident,
+        FnParamMutabilityCheckErrMessages {
+            not_mutable_message: format!(
+                "{context} - the function: {fn_ident} param: {param_ident} is not mutable"
+            ),
+            not_found_message: format!(
+                "{context} - the function: {fn_ident} param: {param_ident} not found in the function signature."
+            ),
+        },
+    )?;
+    Ok(())
+}
