@@ -56,10 +56,10 @@ mod utils {
 
     fn is_extension_factory(extension: Option<&str>) -> impl Fn(&DirEntry) -> bool {
         move |entry: &DirEntry| {
-            if let Some(extension) = extension {
-                if entry.path().extension().unwrap_or_default() != extension {
-                    return false;
-                }
+            if let Some(extension) = extension
+                && entry.path().extension().unwrap_or_default() != extension
+            {
+                return false;
             }
             true
         }
