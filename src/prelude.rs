@@ -1086,21 +1086,46 @@ pub mod global {
         pub use bevy_auto_plugin_proc_macros::global_auto_name as auto_name;
 
         #[doc(inline)]
-        /// Main attribute for global mode used on structs that will become plugins.
+        /// Attribute to mark the build function for the plugin, or impl Plugin trait build method for injection
         ///
         /// # Parameters
-        /// - `impl_plugin_trait` - Optional. When present, automatically implements the Plugin trait.
+        /// - `plugin = PluginType` - **Required for bare functions only.** Specifies the plugin this build function belongs to.  
+        ///   **Not allowed on `impl Plugin` methods**, since the plugin type is already known.
+        /// - `app_param = identifier` - *(Optional)* Specifies the name of the `App` parameter that code will be injected into.  
+        ///   Defaults to `app` if omitted.
         ///
-        /// # Example
+        /// # Example - impl Plugin
         /// ```
         /// use bevy::prelude::*;
         /// use bevy_auto_plugin::global::prelude::*;
         ///
-        /// #[auto_plugin(impl_plugin_trait)]
+        /// #[derive(AutoPlugin)]
         /// struct MyPlugin;
         ///
-        /// // This macro enables the struct to act as a plugin that automatically
-        /// // registers all types, resources, events, etc. marked with appropriate macros
+        /// impl Plugin for MyPlugin {
+        ///     #[global_auto_plugin(app_param=non_default_app_param_name)]
+        ///     fn build(&self, non_default_app_param_name: &mut App) {
+        ///         // code injected here
+        ///
+        ///         // your code
+        ///     }
+        /// }
+        /// ```
+        ///
+        /// # Example - bare fn
+        /// ```
+        /// use bevy::prelude::*;
+        /// use bevy_auto_plugin::global::prelude::*;
+        ///
+        /// #[derive(AutoPlugin)]
+        /// struct MyPlugin;
+        ///
+        /// #[global_auto_plugin(plugin = MyPlugin, app_param=non_default_app_param_name)]
+        /// fn build(non_default_app_param_name: &mut App) {
+        ///     // code injected here
+        ///
+        ///     // your code
+        /// }
         /// ```
         pub use bevy_auto_plugin_proc_macros::global_auto_plugin;
 

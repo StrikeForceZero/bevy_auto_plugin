@@ -81,6 +81,7 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
     let vis = &item.vis;
     let attrs = &item.attrs;
     let sig = &item.sig;
+    let fn_ident = &sig.ident;
     let block = &item.block;
     let inputs = &sig.inputs;
     let self_args = inputs
@@ -107,13 +108,46 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
         return err.to_compile_error().into();
     }
 
-    let auto_plugin = if let Some(self_arg) = self_arg {
+    let mut impl_plugin = quote! {};
+
+    let auto_plugin_hook = if let Some(self_arg) = self_arg {
+        if let Some(_) = &params.plugin {
+            return syn::Error::new(
+                params.plugin.span(),
+                "global_auto_plugin on trait impl can't specify plugin ident",
+            )
+            .to_compile_error()
+            .into();
+        };
         quote! {
             <Self as ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin>::build(#self_arg, #app_param_ident);
         }
     } else {
+        if sig.inputs.len() > 1 {
+            return syn::Error::new(
+                sig.inputs.span(),
+                "global_auto_plugin on bare fn can only accept a single parameter with the type &mut bevy::prelude::App",
+            )
+            .to_compile_error()
+            .into();
+        }
+        let Some(plugin_ident) = params.plugin else {
+            return syn::Error::new(
+                params.plugin.span(),
+                "global_auto_plugin on bare fn requires the plugin ident to be specified",
+            )
+            .to_compile_error()
+            .into();
+        };
+        impl_plugin.extend(quote! {
+            impl ::bevy_auto_plugin_shared::modes::global::__internal::bevy_app::Plugin for #plugin_ident {
+                fn build(&self, app: &mut ::bevy_auto_plugin_shared::modes::global::__internal::bevy_app::App) {
+                    #fn_ident(app);
+                }
+            }
+        });
         quote! {
-            ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin::build(#app_param_ident);
+            <#plugin_ident as ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin>::static_build(#app_param_ident);
         }
     };
 
@@ -121,9 +155,11 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
         #(#attrs)*
         #vis #sig
         {
-            #auto_plugin
+            #auto_plugin_hook
             #block
         }
+
+        #impl_plugin
     }
 }
 

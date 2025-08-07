@@ -62,9 +62,15 @@ pub mod __internal {
 
     pub trait AutoPlugin: bevy_app::Plugin + AutoPluginTypeId {
         fn name(&self) -> &'static str {
+            Self::static_name()
+        }
+        fn static_name() -> &'static str {
             type_name::<Self>()
         }
         fn build(&self, app: &mut bevy_app::App) {
+            Self::static_build(app);
+        }
+        fn static_build(app: &mut bevy_app::App) {
             let type_id = <Self as AutoPluginTypeId>::type_id();
             GLOBAL_AUTO_PLUGIN_REGISTRY
                 .get_entries(type_id)

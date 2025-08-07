@@ -48,6 +48,7 @@ pub struct GlobalAutoPluginStructOrEnumAttributeArgs {
 #[derive(FromMeta, Debug, Default)]
 #[darling(derive_syn_parse, default)]
 pub struct GlobalAutoPluginFnAttributeArgs {
+    pub plugin: Option<Ident>,
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     #[darling(default)]
