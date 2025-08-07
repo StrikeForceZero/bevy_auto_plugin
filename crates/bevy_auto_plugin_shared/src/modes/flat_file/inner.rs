@@ -13,7 +13,9 @@ use crate::modes::flat_file::file_state::{update_file_state, update_state};
 use crate::util::{
     FnParamMutabilityCheckErrMessages, LocalFile, StructOrEnumRef, TargetData, TargetRequirePath,
     is_fn_param_mutable_reference, resolve_local_file, resolve_paths_from_item_or_args,
+    to_compile_error,
 };
+use crate::{ok_or_return_compiler_error, parse_macro_input2};
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
@@ -255,6 +257,28 @@ pub fn handle_attribute_inner(
     Ok(())
 }
 
+pub fn handle_insert_resource_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
+    let cloned_input = input.clone();
+    let item = parse_macro_input2!(input as Item);
+    // TODO: compiler error if multiple auto_insert_resource attributes found for same type
+    let insert_resource_args = parse_macro_input2!(attr as InsertResourceArgs);
+    if let Err(err) = insert_resource_args.validate_resource() {
+        return err.to_compile_error().into();
+    }
+    handle_insert_resource_outer(item, Span::call_site(), insert_resource_args)
+        .map(|_| cloned_input)
+        .unwrap_or_else(to_compile_error)
+}
+
+pub fn handle_add_system_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
+    let cloned_input = input.clone();
+    let item = parse_macro_input2!(input as ItemFn);
+    let args = parse_macro_input2!(attr as AddSystemArgs);
+    handle_add_system_attribute_outer(item, args, Span::call_site())
+        .map(|_| cloned_input)
+        .unwrap_or_else(to_compile_error)
+}
+
 pub fn handle_add_system_attribute_outer(
     item: ItemFn,
     args: AddSystemArgs,
@@ -284,7 +308,11 @@ pub fn handle_add_system_attribute_inner(
     Ok(())
 }
 
-pub fn expand_flat_file(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
+pub fn expand_flat_file(attr: MacroStream, item: MacroStream) -> MacroStream {
+    expand_flat_file_inner(attr, item).unwrap_or_else(to_compile_error)
+}
+
+pub fn expand_flat_file_inner(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
     let attr_args: Vec<NestedMeta> = NestedMeta::parse_meta_list(attr)?;
     let args = FlatFileArgs::from_list(&attr_args)?;
     let item_fn: ItemFn = parse2(item)?;
@@ -294,4 +322,47 @@ pub fn expand_flat_file(attr: MacroStream, item: MacroStream) -> syn::Result<Mac
         return Ok(item_fn.to_token_stream());
     });
     auto_plugin_inner(file_path, item_fn, app_param)
+}
+
+/// Handle a flat-file attribute (e.g. `auto_register_type`) that targets a
+/// single [`TargetRequirePath`].
+pub fn flat_file_handle_attribute(
+    attr: MacroStream,
+    input: MacroStream,
+    target: TargetRequirePath,
+) -> MacroStream {
+    let cloned_input = input.clone();
+    let parsed_item: Item = match parse2(input) {
+        Ok(it) => it,
+        Err(err) => return err.to_compile_error(),
+    };
+
+    // LEGACY PATH PARAM SUPPORT (unchanged)
+    #[cfg(feature = "legacy_path_param")]
+    let attr_cloned = attr.clone();
+
+    let args: syn::Result<StructOrEnumAttributeArgs> = match syn::parse2(attr) {
+        Ok(a) => Ok(a),
+        Err(err) => {
+            #[cfg(not(feature = "legacy_path_param"))]
+            {
+                return err.to_compile_error();
+            }
+            #[cfg(feature = "legacy_path_param")]
+            {
+                use crate::util::StructOrEnumRef;
+                StructOrEnumRef::try_from(&parsed_item)
+                    .and_then(|se_ref| crate::util::legacy_generics_from_path(&se_ref, attr_cloned))
+                    .map(StructOrEnumAttributeArgs::from)
+                    .map_err(|legacy_err| {
+                        syn::Error::new(err.span(), format!("\nnew: {err}\nlegacy: {legacy_err}"))
+                    })
+            }
+        }
+    };
+    let args = ok_or_return_compiler_error!(args);
+
+    handle_attribute_outer(parsed_item, Span::call_site(), target, args)
+        .map(|_| cloned_input)
+        .unwrap_or_else(to_compile_error)
 }

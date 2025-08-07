@@ -8,7 +8,7 @@ use crate::bevy_app_code_gen::{
 use crate::modes::module::attribute::ModuleArgs;
 use crate::util::{
     FnRef, ItemWithAttributeMatch, inject_module, items_with_attribute_macro,
-    struct_or_enum_items_with_attribute_macro,
+    struct_or_enum_items_with_attribute_macro, to_compile_error,
 };
 use darling::FromMeta;
 use darling::ast::NestedMeta;
@@ -133,7 +133,11 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
     Ok(output)
 }
 
-pub fn expand_module(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
+pub fn expand_module(attr: MacroStream, item: MacroStream) -> MacroStream {
+    expand_module_inner(attr, item).unwrap_or_else(to_compile_error)
+}
+
+pub fn expand_module_inner(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
     let attr_args: Vec<NestedMeta> = NestedMeta::parse_meta_list(attr)?;
     let args = ModuleArgs::from_list(&attr_args)?;
     let item_mod: ItemMod = parse2(item)?;

@@ -837,3 +837,17 @@ pub fn require_struct_or_enum(item: &Item) -> syn::Result<&Ident> {
         )),
     }
 }
+
+#[macro_export]
+macro_rules! parse_macro_input2 {
+    ($ts:ident as $ty:ty) => {{
+        match syn::parse2::<$ty>($ts) {
+            Ok(v) => v,
+            Err(e) => return e.to_compile_error(),
+        }
+    }};
+}
+
+pub fn to_compile_error(err: syn::Error) -> MacroStream {
+    err.to_compile_error()
+}
