@@ -133,9 +133,9 @@ pub struct FnRef<'a> {
 fn resolve_user_provided_generic_paths(
     target: AutoPluginAttribute,
     attr: &Attribute,
-    item: &Item,
     struct_or_enum_ref: &StructOrEnumRef,
     base_path: &Path,
+    #[cfg(feature = "legacy_path_param")] item: &Item,
 ) -> syn::Result<Vec<Path>> {
     // A small utility for turning generic lists into `Path`s.
     let build_paths = |lists: Vec<TypeList>| -> Vec<Path> {
@@ -500,7 +500,14 @@ fn struct_or_enum_item_with_attribute_macro(
     });
 
     let paths = if has_args {
-        resolve_user_provided_generic_paths(target, attr, item, struct_or_enum_ref, &path)?
+        resolve_user_provided_generic_paths(
+            target,
+            attr,
+            struct_or_enum_ref,
+            &path,
+            #[cfg(feature = "legacy_path_param")]
+            item,
+        )?
     } else {
         vec![path]
     };
