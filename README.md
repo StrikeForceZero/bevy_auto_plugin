@@ -25,8 +25,8 @@ mod plugin_module {
     #[auto_name]
     pub struct FooComponent;
 
-    #[auto_register_type(FooComponentWithGeneric<bool>)]
-    #[auto_register_type(FooComponentWithGeneric<u32>)]
+    #[auto_register_type(generics(bool))]
+    #[auto_register_type(generics(u32))]
     #[derive(Component, Reflect)]
     #[reflect(Component)]
     pub struct FooComponentWithGeneric<T>(T);
@@ -36,7 +36,7 @@ mod plugin_module {
     #[derive(Event, Reflect)]
     pub struct FooEvent;
 
-    #[auto_register_type(FooEvent<bool>)]
+    #[auto_register_type(generics(bool))]
     #[auto_add_event]
     #[derive(Event, Reflect)]
     pub struct FooEventWithGeneric<T>(T);
@@ -47,7 +47,7 @@ mod plugin_module {
     #[reflect(Resource)]
     pub struct FooResource;
 
-    #[auto_register_type(FooResourceWithGeneric<bool>)]
+    #[auto_register_type(generics(bool))]
     #[auto_init_resource]
     #[derive(Resource, Default, Reflect)]
     #[reflect(Resource)]
@@ -98,8 +98,8 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[auto_name]
 struct FooComponent;
 
-#[auto_register_type(FooComponentWithGeneric<bool>)]
-#[auto_register_type(FooComponentWithGeneric<u32>)]
+#[auto_register_type(generics(bool))]
+#[auto_register_type(generics(u32))]
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 struct FooComponentWithGeneric<T>(T);
@@ -109,7 +109,7 @@ struct FooComponentWithGeneric<T>(T);
 #[derive(Event, Reflect)]
 struct FooEvent;
 
-#[auto_register_type(FooEvent<bool>)]
+#[auto_register_type(generics(bool))]
 #[auto_add_event]
 #[derive(Event, Reflect)]
 struct FooEventWithGeneric<T>(T);
@@ -120,7 +120,7 @@ struct FooEventWithGeneric<T>(T);
 #[reflect(Resource)]
 struct FooResource;
 
-#[auto_register_type(FooResourceWithGeneric<bool>)]
+#[auto_register_type(generics(bool))]
 #[auto_init_resource]
 #[derive(Resource, Default, Reflect)]
 #[reflect(Resource)]
