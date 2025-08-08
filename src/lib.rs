@@ -1,5 +1,9 @@
 pub mod modes;
 
+pub mod __internal {
+    pub use bevy_auto_plugin_shared as shared;
+}
+
 #[deprecated(
     since = "0.3.0",
     note = "use `bevy_auto_plugin::modes::flat_file` instead"

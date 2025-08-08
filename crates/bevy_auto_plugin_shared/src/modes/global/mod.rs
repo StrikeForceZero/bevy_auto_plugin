@@ -110,10 +110,10 @@ pub mod __internal {
         expr: &ExprClosure,
     ) -> MacroStream {
         quote! {
-            ::bevy_auto_plugin_shared::_plugin_entry!(
+            ::bevy_auto_plugin::__internal::shared::_plugin_entry!(
                 #static_ident,
-                ::bevy_auto_plugin_shared::modes::global::__internal::GlobalAutoPluginRegistryEntryFactory::new(
-                    || <#plugin as ::bevy_auto_plugin_shared::modes::global::__internal::AutoPluginTypeId>::type_id(),
+                ::bevy_auto_plugin::__internal::shared::modes::global::__internal::GlobalAutoPluginRegistryEntryFactory::new(
+                    || <#plugin as ::bevy_auto_plugin::__internal::shared::modes::global::__internal::AutoPluginTypeId>::type_id(),
                     #expr
                 )
             );
@@ -125,11 +125,11 @@ pub mod __internal {
     #[doc(hidden)]
     macro_rules! _plugin_entry {
         ($static_ident:ident, $entry:expr) => {
-            #[::bevy_auto_plugin_shared::modes::global::__internal::linkme::distributed_slice(::bevy_auto_plugin_shared::modes::global::__internal::GLOBAL_AUTO_PLUGINS)]
-            #[linkme(crate = ::bevy_auto_plugin_shared::modes::global::__internal::linkme)]
+            #[::bevy_auto_plugin::__internal::shared::modes::global::__internal::linkme::distributed_slice(::bevy_auto_plugin::__internal::shared::modes::global::__internal::GLOBAL_AUTO_PLUGINS)]
+            #[linkme(crate = ::bevy_auto_plugin::__internal::shared::modes::global::__internal::linkme)]
             #[allow(non_upper_case_globals)]
             static $static_ident:
-                ::bevy_auto_plugin_shared::modes::global::__internal::GlobalAutoPluginRegistryEntryFactory =
+                ::bevy_auto_plugin::__internal::shared::modes::global::__internal::GlobalAutoPluginRegistryEntryFactory =
                 $entry;
         };
     }
@@ -139,7 +139,9 @@ pub mod __internal {
     #[doc(hidden)]
     macro_rules! _plugin_entry {
         ($static_ident:ident, $entry:expr) => {
-            ::bevy_auto_plugin_shared::modes::global::__internal::inventory::submit!($entry);
+            ::bevy_auto_plugin::__internal::shared::modes::global::__internal::inventory::submit!(
+                $entry
+            );
         };
     }
 }
