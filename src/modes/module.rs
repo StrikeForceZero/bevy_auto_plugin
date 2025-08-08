@@ -25,4 +25,7 @@ pub mod prelude {
 
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::module_auto_register_type as auto_register_type;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::module_auto_add_observer as auto_add_observer;
 }

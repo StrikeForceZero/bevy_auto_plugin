@@ -1,6 +1,6 @@
 use crate::attribute_args::{
-    AddSystemArgs, AddSystemSerializedArgs, AddSystemWithTargetArgs, InsertResourceArgsWithPath,
-    InsertResourceSerializedArgsWithPath,
+    AddObserverArgs, AddSystemArgs, AddSystemSerializedArgs, AddSystemWithTargetArgs,
+    InsertResourceArgsWithPath, InsertResourceSerializedArgsWithPath,
 };
 use crate::attribute_args::{InsertResourceArgs, StructOrEnumAttributeArgs};
 use crate::bevy_app_code_gen::{InputSets, expand_input_sets};
@@ -9,7 +9,7 @@ use crate::modes::flat_file::file_state::{update_file_state, update_state};
 use crate::target::{TargetData, TargetRequirePath};
 use crate::util::concrete_path::resolve_paths_from_item_or_args;
 use crate::util::local_file::{LocalFile, resolve_local_file};
-use crate::util::meta::fn_meta::require_fn_param_mutable_reference;
+use crate::util::meta::fn_meta::{FnMeta, require_fn_param_mutable_reference};
 use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use crate::util::tokens::to_compile_error;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
@@ -227,6 +227,49 @@ pub fn handle_attribute_inner(
     let paths = resolve_paths_from_item_or_args::<StructOrEnumMeta>(&item, args)?;
     for path in paths {
         let target_data = TargetData::from_target_require_path(target, path);
+        // TODO: cloning here feels dumb
+        update_state(file_path.clone(), target_data).map_err(|err| Error::new(attr_span, err))?;
+    }
+    Ok(())
+}
+
+pub fn handle_add_observer_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
+    let cloned_input = input.clone();
+    let item = parse_macro_input2!(input as ItemFn);
+    let add_observer_args = parse_macro_input2!(attr as AddObserverArgs);
+    handle_add_observer_attribute_outer(item, Span::call_site(), add_observer_args)
+        .map(|_| cloned_input)
+        .unwrap_or_else(to_compile_error)
+}
+
+pub fn handle_add_observer_attribute_outer(
+    item: ItemFn,
+    attr_span: Span,
+    args: AddObserverArgs,
+) -> syn::Result<()> {
+    extract_or_noop!(
+        file_path,
+        resolve_local_file_spanned(attr_span)?,
+        return Ok(())
+    );
+    handle_add_observer_attribute_inner(file_path, item, attr_span, args)
+}
+
+pub fn handle_add_observer_attribute_inner(
+    file_path: String,
+    item: ItemFn,
+    attr_span: Span,
+    args: AddObserverArgs,
+) -> syn::Result<()> {
+    // TODO: rename StructOrEnumAttributeArgs to ItemWithGenericsAttributeArgs
+    let args = StructOrEnumAttributeArgs {
+        generics: args.generics,
+    };
+    let item = Item::Fn(item);
+    let paths = resolve_paths_from_item_or_args::<FnMeta>(&item, args)?;
+    for path in paths {
+        let target_data =
+            TargetData::from_target_require_path(TargetRequirePath::AddObserver, path);
         // TODO: cloning here feels dumb
         update_state(file_path.clone(), target_data).map_err(|err| Error::new(attr_span, err))?;
     }

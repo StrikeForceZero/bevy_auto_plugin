@@ -2,7 +2,7 @@ use crate::attribute::AutoPluginAttribute;
 use crate::attribute_args::{InsertResourceArgs, StructOrEnumAttributeArgs};
 use crate::type_list::TypeList;
 use crate::util::extensions::path::PathExt;
-use crate::util::generics::CountGenerics;
+use crate::util::generics::{CountGenerics, HasGenericCollection};
 use crate::util::meta::IdentGenericsAttrsMeta;
 use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use crate::util::path_fmt;
@@ -13,17 +13,18 @@ use syn::{Attribute, Error, Generics, Item, Path, PathArguments, parse_quote, pa
 
 pub fn resolve_paths_from_item_or_args<'a, T>(
     item: &'a Item,
-    args: StructOrEnumAttributeArgs,
+    args: impl HasGenericCollection + CountGenerics,
 ) -> syn::Result<impl Iterator<Item = Path>>
 where
     T: IdentGenericsAttrsMeta<'a>,
 {
+    // todo: rename to meta
     let struct_or_enum = T::try_from(item)?;
     let ident = struct_or_enum.ident();
-    let paths = if args.has_generics() {
-        let generics = &args.generics;
+    let paths = if args.count() > 0 {
+        let generics = args.generics()?;
         generics
-            .iter()
+            .into_iter()
             .map(|generics| {
                 let path_tokens = quote! { #ident::<#generics> };
                 let path = Path::from_string(&path_tokens.to_string())?;
@@ -145,7 +146,7 @@ pub fn legacy_generics_from_path(
         ));
     }
     validate_generic_counts(struct_or_enum_ref.generics, &path)?;
-    path.generics()
+    PathExt::generics(&path)
 }
 
 #[cfg(test)]

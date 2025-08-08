@@ -9,6 +9,7 @@ pub enum TargetRequirePath {
     InitResources,
     InitStates,
     RequiredComponentAutoName,
+    AddObserver,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -22,6 +23,7 @@ pub enum TargetData {
     RequiredComponentAutoName(Path),
     InsertResource(InsertResourceArgsWithPath),
     AddSystem { system: Path, params: AddSystemArgs },
+    AddObserver(Path),
 }
 
 impl TargetData {
@@ -33,6 +35,7 @@ impl TargetData {
             TargetRequirePath::InitResources => Self::InitResources(path),
             TargetRequirePath::InitStates => Self::InitStates(path),
             TargetRequirePath::RequiredComponentAutoName => Self::RequiredComponentAutoName(path),
+            TargetRequirePath::AddObserver => Self::AddObserver(path),
         }
     }
 }

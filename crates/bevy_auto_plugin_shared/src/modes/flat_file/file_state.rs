@@ -85,6 +85,10 @@ pub fn update_state(
                 .context
                 .insert_resources
                 .insert(InsertResourceSerializedArgsWithPath::from(args)),
+            TargetData::AddObserver(path) => entry
+                .context
+                .add_observers
+                .insert(path_to_string_with_spaces(&path)),
         };
         if !inserted {
             return Err(UpdateStateError::Duplicate);

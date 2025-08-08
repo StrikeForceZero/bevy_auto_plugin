@@ -531,6 +531,13 @@ impl From<AddSystemWithTargetArgs> for AddSystemSerializedArgs {
     }
 }
 
+#[derive(FromMeta, Debug, Default, PartialEq, Hash, Clone)]
+#[darling(derive_syn_parse, default)]
+pub struct AddObserverArgs {
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
+}
+
 #[derive(FromMeta, Debug, PartialEq, Hash, Clone)]
 #[darling(derive_syn_parse)]
 pub struct InsertResourceArgs {

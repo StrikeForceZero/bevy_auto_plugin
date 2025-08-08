@@ -89,6 +89,15 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
     input
 }
 
+/// Automatically adds an observer to the Bevy `App`.
+#[doc = include_str!("docs/module/auto_add_observer.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_module")]
+pub fn module_auto_add_observer(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    // Just return the input unchanged; this acts as a marker.
+    input
+}
+
 /* Flat File */
 #[cfg(feature = "mode_flat_file")]
 use bevy_auto_plugin_shared::modes::flat_file;
@@ -167,6 +176,14 @@ pub fn flat_file_auto_register_state_type(
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     flat_file::inner::handle_add_system_attribute(attr.into(), input.into()).into()
+}
+
+/// Automatically adds an observer to the Bevy `App`.
+#[doc = include_str!("docs/flat_file/auto_add_observer.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_flat_file")]
+pub fn flat_file_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    flat_file::inner::handle_add_observer_attribute(attr.into(), input.into()).into()
 }
 
 #[doc = include_str!("docs/flat_file/auto_insert_resource.md")]
