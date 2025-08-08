@@ -10,6 +10,65 @@ This crate is designed to reduce the boilerplate required when creating Bevy plu
 
 While there are ongoing discussions about auto-registering types by default in Bevy—potentially making part of this crate redundant—the remaining functionality should continue to provide quality-of-life improvements for bevy related development.
 
+
+## Usage - Global
+
+```rust
+use bevy::prelude::*;
+use bevy_auto_plugin::modes::global::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+#[auto_register_type(plugin = MyPlugin)]
+#[auto_name(plugin = MyPlugin)]
+struct FooComponent;
+
+#[derive(Resource, Debug, Default, Reflect)]
+#[reflect(Resource)]
+#[auto_register_type(plugin = MyPlugin)]
+#[auto_init_resource(plugin = MyPlugin)]
+struct FooDefaultResource(usize);
+
+#[derive(Resource, Debug, Default, Reflect)]
+#[reflect(Resource)]
+#[auto_register_type(plugin = MyPlugin)]
+#[auto_init_resource(plugin = MyPlugin)]
+#[auto_insert_resource(plugin = MyPlugin, resource(FooResource(1)))]
+struct FooResource(usize);
+
+#[derive(Event, Debug, Default, Reflect)]
+#[auto_register_type(plugin = MyPlugin)]
+#[auto_add_event(plugin = MyPlugin)]
+struct FooEvent(usize);
+
+#[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
+#[auto_init_state(plugin = MyPlugin)]
+#[auto_register_state_type(plugin = MyPlugin)]
+enum FooState {
+    #[default]
+    Start,
+    End,
+}
+
+#[auto_add_system(plugin = MyPlugin, schedule = Update)]
+fn foo_system(mut foo_resource: ResMut<FooResource>) {
+    foo_resource.0 += 1;
+}
+
+fn main() {
+    App::new()
+        .add_plugins(MyPlugin)
+        // ... other plugins and setup
+        .run();
+}
+```
+
+Which automatically implements the Plugin trait for `MyPlugin` and registers all the types, resources, events, and systems when the plugin is added to the app.
+
 ## Usage - Module
 ```rust
 use bevy::prelude::*;
