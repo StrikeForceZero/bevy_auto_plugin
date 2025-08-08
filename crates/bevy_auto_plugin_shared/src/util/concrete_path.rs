@@ -18,17 +18,16 @@ pub fn resolve_paths_from_item_or_args<'a, T>(
 where
     T: IdentGenericsAttrsMeta<'a>,
 {
-    // todo: rename to meta
-    let struct_or_enum = T::try_from(item)?;
-    let ident = struct_or_enum.ident();
-    let paths = if args.count() > 0 {
+    let item_meta = T::try_from(item)?;
+    let ident = item_meta.ident();
+    let paths = if args.count_generics() > 0 {
         let generics = args.generics()?;
         generics
             .into_iter()
             .map(|generics| {
                 let path_tokens = quote! { #ident::<#generics> };
                 let path = Path::from_string(&path_tokens.to_string())?;
-                validate_generic_counts(struct_or_enum.generics(), &path)?;
+                validate_generic_counts(item_meta.generics(), &path)?;
                 Ok(path)
             })
             .collect::<syn::Result<Vec<_>>>()?
@@ -106,7 +105,7 @@ where
 {
     let expected_generics_count = generics.type_params().count();
     if expected_generics_count > 0 {
-        let count = cg.count();
+        let count = cg.count_generics();
         if count != expected_generics_count {
             return Err(Error::new(
                 cg.get_span(),

@@ -261,10 +261,6 @@ pub fn handle_add_observer_attribute_inner(
     attr_span: Span,
     args: AddObserverArgs,
 ) -> syn::Result<()> {
-    // TODO: rename StructOrEnumAttributeArgs to ItemWithGenericsAttributeArgs
-    let args = StructOrEnumAttributeArgs {
-        generics: args.generics,
-    };
     let item = Item::Fn(item);
     let paths = resolve_paths_from_item_or_args::<FnMeta>(&item, args)?;
     for path in paths {

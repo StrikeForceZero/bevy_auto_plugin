@@ -2,11 +2,13 @@ use crate::expr_value::ExprValue;
 use crate::item_with_attr_match::ItemWithAttributeMatch;
 use crate::type_list::TypeList;
 use crate::util::extensions::path::PathExt;
+use crate::util::generics::{CountGenerics, HasGenericCollection};
 use crate::util::path_fmt::path_to_string_with_spaces;
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::{ToTokens, quote};
 use syn::parse::Parse;
+use syn::spanned::Spanned;
 use syn::{Attribute, Expr, Generics, Path, Type, Visibility, parse_quote, parse_str};
 
 #[allow(dead_code)]
@@ -536,6 +538,26 @@ impl From<AddSystemWithTargetArgs> for AddSystemSerializedArgs {
 pub struct AddObserverArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
+}
+
+impl HasGenericCollection for AddObserverArgs {
+    type CollectionItem = TypeList;
+    type Collection = Vec<TypeList>;
+    fn generics(&self) -> syn::Result<Self::Collection> {
+        Ok(self.generics.clone())
+    }
+}
+
+impl CountGenerics for AddObserverArgs {
+    fn get_span(&self) -> Span {
+        self.generics
+            .get(0)
+            .map_or_else(Span::call_site, |g| g.span())
+    }
+
+    fn count_generics(&self) -> usize {
+        self.generics.len()
+    }
 }
 
 #[derive(FromMeta, Debug, PartialEq, Hash, Clone)]

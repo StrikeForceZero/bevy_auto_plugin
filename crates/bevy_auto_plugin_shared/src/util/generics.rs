@@ -25,7 +25,7 @@ impl HasGenericCollection for Path {
 pub trait CountGenerics: HasGenericCollection {
     fn get_span(&self) -> Span;
     // TODO: rename to count_generics
-    fn count(&self) -> usize;
+    fn count_generics(&self) -> usize;
 }
 
 impl CountGenerics for Path {
@@ -33,7 +33,7 @@ impl CountGenerics for Path {
         syn::spanned::Spanned::span(&self)
     }
 
-    fn count(&self) -> usize {
+    fn count_generics(&self) -> usize {
         crate::util::extensions::path::PathExt::generic_count(self).unwrap_or(0)
     }
 }
@@ -56,7 +56,7 @@ impl CountGenerics for StructOrEnumAttributeArgs {
             .unwrap_or(Span::call_site())
     }
 
-    fn count(&self) -> usize {
+    fn count_generics(&self) -> usize {
         let iter = self.generics.iter().map(|g| g.len()).collect::<Vec<_>>();
         let &max = iter.iter().max().unwrap_or(&0);
         let &min = iter.iter().min().unwrap_or(&0);
@@ -86,7 +86,7 @@ impl CountGenerics for InsertResourceArgs {
         self.generics.span()
     }
 
-    fn count(&self) -> usize {
+    fn count_generics(&self) -> usize {
         let Some(generics) = &self.generics else {
             return 0;
         };
@@ -108,7 +108,7 @@ impl CountGenerics for TypeList {
         self.span()
     }
 
-    fn count(&self) -> usize {
+    fn count_generics(&self) -> usize {
         self.len()
     }
 }
@@ -127,7 +127,7 @@ impl CountGenerics for StructOrEnumMeta<'_> {
         self.generics.span()
     }
 
-    fn count(&self) -> usize {
+    fn count_generics(&self) -> usize {
         self.generics.params.len()
     }
 }
