@@ -74,7 +74,7 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
     let item = parse_macro_input2!(input as ItemFn);
     let params = match parse2::<GlobalAutoPluginFnAttributeArgs>(attr) {
         Ok(params) => params,
-        Err(err) => return err.into_compile_error().into(),
+        Err(err) => return err.into_compile_error(),
     };
     let vis = &item.vis;
     let attrs = &item.attrs;
@@ -96,19 +96,18 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
     let app_param_ident = params.app_param.as_ref().unwrap_or(&default_app_ident);
 
     if let Err(err) = require_fn_param_mutable_reference(&item, app_param_ident, "bevy app") {
-        return err.to_compile_error().into();
+        return err.to_compile_error();
     }
 
     let mut impl_plugin = quote! {};
 
     let auto_plugin_hook = if let Some(self_arg) = self_arg {
-        if let Some(_) = &params.plugin {
+        if params.plugin.is_some() {
             return syn::Error::new(
                 params.plugin.span(),
                 "global_auto_plugin on trait impl can't specify plugin ident",
             )
-            .to_compile_error()
-            .into();
+            .to_compile_error();
         };
         quote! {
             <Self as ::bevy_auto_plugin_shared::modes::global::__internal::AutoPlugin>::build(#self_arg, #app_param_ident);
@@ -119,16 +118,14 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
                 sig.inputs.span(),
                 "global_auto_plugin on bare fn can only accept a single parameter with the type &mut bevy::prelude::App",
             )
-            .to_compile_error()
-            .into();
+            .to_compile_error();
         }
         let Some(plugin_ident) = params.plugin else {
             return syn::Error::new(
                 params.plugin.span(),
                 "global_auto_plugin on bare fn requires the plugin ident to be specified",
             )
-            .to_compile_error()
-            .into();
+            .to_compile_error();
         };
         impl_plugin.extend(quote! {
             impl ::bevy_auto_plugin_shared::modes::global::__internal::bevy_app::Plugin for #plugin_ident {
@@ -163,7 +160,7 @@ pub fn expand_global_derive_global_auto_plugin(input: MacroStream) -> MacroStrea
     let derive_input = parse_macro_input2!(input as DeriveInput);
     let params = match GlobalAutoPluginDeriveArgs::from_derive_input(&derive_input) {
         Ok(params) => params,
-        Err(err) => return err.write_errors().into(),
+        Err(err) => return err.write_errors(),
     };
     let ident = &params.ident; // `Test`
     let generics = &params.generics; // `<T1, T2>`
@@ -197,7 +194,7 @@ pub fn expand_global_derive_global_auto_plugin(input: MacroStream) -> MacroStrea
         for full_name in full_names {
             let path_with_generics = match syn::parse_str::<syn::Path>(&full_name) {
                 Ok(p) => p,
-                Err(err) => return err.into_compile_error().into(),
+                Err(err) => return err.into_compile_error(),
             };
 
             auto_plugin_implemented = true;
@@ -249,7 +246,7 @@ pub fn expand_global_derive_global_auto_plugin(input: MacroStream) -> MacroStrea
         for full_name in full_names {
             let path_with_generics = match syn::parse_str::<syn::Path>(&full_name) {
                 Ok(p) => p,
-                Err(err) => return err.into_compile_error().into(),
+                Err(err) => return err.into_compile_error(),
             };
 
             auto_plugin_implemented = true;
@@ -264,7 +261,7 @@ pub fn expand_global_derive_global_auto_plugin(input: MacroStream) -> MacroStrea
         // satisfy linter #[warn(unused_assignments)]
     }
 
-    output.into()
+    output
 }
 
 pub fn global_auto_register_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {

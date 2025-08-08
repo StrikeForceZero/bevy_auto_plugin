@@ -30,7 +30,7 @@ pub fn auto_plugin_inner(
     let func_vis = &input.vis;
     let func_attrs = &input.attrs;
 
-    let _ = require_fn_param_mutable_reference(&input, &app_param_name, "auto_plugin")?;
+    require_fn_param_mutable_reference(&input, &app_param_name, "auto_plugin")?;
 
     let injected_code = auto_plugin_inner_to_stream(file_path, &app_param_name)?;
 
@@ -237,7 +237,7 @@ pub fn handle_insert_resource_attribute(attr: MacroStream, input: MacroStream) -
     // TODO: compiler error if multiple auto_insert_resource attributes found for same type
     let insert_resource_args = parse_macro_input2!(attr as InsertResourceArgs);
     if let Err(err) = insert_resource_args.validate_resource() {
-        return err.to_compile_error().into();
+        return err.to_compile_error();
     }
     handle_insert_resource_outer(item, Span::call_site(), insert_resource_args)
         .map(|_| cloned_input)
