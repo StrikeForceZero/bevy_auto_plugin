@@ -92,6 +92,8 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 /* Flat File */
 #[cfg(feature = "mode_flat_file")]
 use bevy_auto_plugin_shared::modes::flat_file;
+#[cfg(feature = "mode_flat_file")]
+use bevy_auto_plugin_shared::target::TargetRequirePath;
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[doc = include_str!("docs/flat_file/auto_plugin.md")]
@@ -181,8 +183,6 @@ pub fn flat_file_auto_insert_resource(
 
 #[cfg(feature = "mode_global")]
 use bevy_auto_plugin_shared::modes::global;
-#[cfg(feature = "mode_flat_file")]
-use bevy_auto_plugin_shared::target::TargetRequirePath;
 
 /// thin adapter converting between the compiler-level and proc_macro2 streams
 #[cfg(feature = "mode_global")]
