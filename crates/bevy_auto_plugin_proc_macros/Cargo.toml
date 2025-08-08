@@ -12,9 +12,9 @@ publish = true
 proc-macro = true
 
 [features]
-mode_flat_file = ["bevy_auto_plugin_shared/mode_flat_file"]
-mode_module = ["bevy_auto_plugin_shared/mode_module"]
-mode_global = ["bevy_auto_plugin_shared/mode_global"]
+mode_flat_file = ["bevy_auto_plugin_shared/mode_flat_file", "bevy_auto_plugin/mode_flat_file"]
+mode_module = ["bevy_auto_plugin_shared/mode_module", "bevy_auto_plugin/mode_module"]
+mode_global = ["bevy_auto_plugin_shared/mode_global", "bevy_auto_plugin/mode_global"]
 legacy_path_param = ["bevy_auto_plugin_shared/legacy_path_param"]
 inventory = ["bevy_auto_plugin_shared/inventory"]
 log_plugin_build = ["bevy_auto_plugin_shared/log_plugin_build"]
@@ -30,3 +30,9 @@ syn = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 darling = { workspace = true }
+
+[dev-dependencies]
+# needed for doc-tests
+bevy = { workspace = true }
+bevy_app = { workspace = true }
+bevy_auto_plugin = { path = "../../.", default-features = false }
