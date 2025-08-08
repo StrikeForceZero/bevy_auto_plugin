@@ -13,7 +13,7 @@ While there are ongoing discussions about auto-registering types by default in B
 ## Usage - Module
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 mod plugin_module {
@@ -90,7 +90,7 @@ mod plugin_module {
 
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_register_type]
 #[derive(Component, Reflect)]
@@ -160,7 +160,7 @@ fn plugin(app: &mut App) {
 - All items need to be in the same module. This won't work:
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 mod foo {
     use super::*;
