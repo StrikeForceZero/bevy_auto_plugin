@@ -670,16 +670,6 @@ impl From<InsertResourceArgsWithPath> for InsertResourceSerializedArgsWithPath {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn try_from_item_with_attribute_match_for_insert_resource_args() {
-        let attr: Attribute = parse_quote! { #[foo(generics(usize), resource(Foo(1)))] };
-        println!("{:?}", attr);
-    }
-}
-
 pub fn default_app_ident() -> Ident {
     Ident::new("app", Span::call_site())
 }
