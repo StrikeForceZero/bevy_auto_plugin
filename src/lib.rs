@@ -4,6 +4,7 @@ pub mod modes;
     since = "0.3.0",
     note = "use `bevy_auto_plugin::modes::flat_file` instead"
 )]
+#[cfg(feature = "mode_flat_file")]
 pub mod auto_plugin {
     pub use crate::modes::flat_file::*;
 }
@@ -12,6 +13,7 @@ pub mod auto_plugin {
     since = "0.3.0",
     note = "use `bevy_auto_plugin::modes::module` instead"
 )]
+#[cfg(feature = "mode_module")]
 pub mod auto_plugin_module {
     pub use crate::modes::module::*;
 }
@@ -20,6 +22,7 @@ pub mod auto_plugin_module {
     since = "0.4.0",
     note = "use `bevy_auto_plugin::modes::flat_file` instead"
 )]
+#[cfg(feature = "mode_flat_file")]
 pub mod flat_file {
     pub use crate::modes::flat_file::*;
 }
@@ -27,6 +30,7 @@ pub mod flat_file {
     since = "0.4.0",
     note = "use `bevy_auto_plugin::modes::global` instead"
 )]
+#[cfg(feature = "mode_global")]
 pub mod global {
     pub use crate::modes::global::*;
 }
@@ -34,6 +38,7 @@ pub mod global {
     since = "0.4.0",
     note = "use `bevy_auto_plugin::modes::module` instead"
 )]
+#[cfg(feature = "mode_module")]
 pub mod module {
     pub use crate::modes::module::*;
 }
