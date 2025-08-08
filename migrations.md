@@ -18,3 +18,7 @@
 ### Enable `flat_file`, `module` modes
 
 `features = [mode_flat_file, mode_module]` or `features = [all_modes]`
+
+### Updated Imports
+- `use bevy_auto_plugin::flat_file::prelude::*` -> `use bevy_auto_plugin::modes::flat_file::prelude::*`
+- `use bevy_auto_plugin::module::prelude::*` -> `use bevy_auto_plugin::modes::module::prelude::*`
