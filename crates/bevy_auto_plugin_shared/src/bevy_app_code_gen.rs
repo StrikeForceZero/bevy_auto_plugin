@@ -156,6 +156,13 @@ impl_custom!(
     |app_ident, item| AddSystemWithTargetArgs::to_tokens(item, app_ident),
 );
 
+impl_simple!(
+    generate_add_observer,
+    generate_add_observers,
+    "generated add_systems",
+    |app_ident, path| quote! { #app_ident.add_observer(#path); },
+);
+
 /// code-gen input data
 #[derive(Default)]
 pub struct InputSets {
@@ -164,6 +171,7 @@ pub struct InputSets {
     pub auto_names: Vec<Path>,
     pub add_events: Vec<Path>,
     pub add_systems: Vec<AddSystemWithTargetArgs>,
+    pub add_observers: Vec<Path>,
     pub insert_resources: Vec<InsertResourceArgsWithPath>,
     pub init_states: Vec<Path>,
     pub init_resources: Vec<Path>,
@@ -176,6 +184,7 @@ pub fn expand_input_sets(app_ident: &Ident, sets: InputSets) -> syn::Result<Toke
     let auto_names = generate_auto_names(app_ident, sets.auto_names)?;
     let add_events = generate_add_events(app_ident, sets.add_events)?;
     let add_systems = generate_add_systems(app_ident, sets.add_systems)?;
+    let add_observers = generate_add_observers(app_ident, sets.add_observers)?;
     let insert_resources = generate_insert_resources(app_ident, sets.insert_resources)?;
     let init_states = generate_init_states(app_ident, sets.init_states)?;
     let init_resources = generate_init_resources(app_ident, sets.init_resources)?;
@@ -186,6 +195,7 @@ pub fn expand_input_sets(app_ident: &Ident, sets: InputSets) -> syn::Result<Toke
         #auto_names
         #add_events
         #add_systems
+        #add_observers
         #insert_resources
         #init_states
         #init_resources

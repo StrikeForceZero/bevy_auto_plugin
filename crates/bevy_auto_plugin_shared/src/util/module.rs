@@ -38,6 +38,9 @@ pub fn get_all_items_in_module_by_attribute(
         AutoPluginAttribute::AddSystem => {
             item_with_attr_match::items_with_attribute_macro::<FnMeta>(items, attribute)?
         }
+        AutoPluginAttribute::AddObserver => {
+            item_with_attr_match::struct_or_enum_items_with_attribute_macro(items, attribute)?
+        }
     };
     Ok(matched_items)
 }

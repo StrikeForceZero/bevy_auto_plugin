@@ -117,6 +117,14 @@ impl GlobalInsertResourceAttributeArgs {
     }
 }
 
+#[derive(FromMeta, Debug, PartialEq, Hash)]
+#[darling(derive_syn_parse)]
+pub struct GlobalObserverAttributeArgs {
+    pub plugin: Path,
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
+}
+
 pub trait GlobalMacroArgs: Parse + std::hash::Hash {
     type Input;
     type ToTokensFn: Fn(&Self, Self::Input) -> syn::Result<MacroStream>;
@@ -222,6 +230,20 @@ impl GlobalMacroArgs for GlobalAddSystemArgs {
         }
 
         Ok(result_vec.into_iter())
+    }
+}
+
+impl GlobalMacroArgs for GlobalObserverAttributeArgs {
+    type Input = Path;
+    type ToTokensFn = fn(&Self, Self::Input) -> syn::Result<MacroStream>;
+    fn generics(&self) -> &[TypeList] {
+        &self.generics
+    }
+    fn plugin(&self) -> &Path {
+        &self.plugin
+    }
+    fn to_input(self, ident: &Ident) -> syn::Result<impl Iterator<Item = Self::Input>> {
+        Ok(self.target_paths_with_ident(ident).into_iter())
     }
 }
 

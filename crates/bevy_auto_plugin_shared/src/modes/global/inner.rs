@@ -1,7 +1,7 @@
 use crate::attribute_args::{
     GlobalAddSystemArgs, GlobalAutoPluginDeriveArgs, GlobalAutoPluginFnAttributeArgs,
-    GlobalInsertResourceAttributeArgs, GlobalMacroArgs, GlobalStructOrEnumAttributeArgs,
-    default_app_ident,
+    GlobalInsertResourceAttributeArgs, GlobalMacroArgs, GlobalObserverAttributeArgs,
+    GlobalStructOrEnumAttributeArgs, default_app_ident,
 };
 use crate::bevy_app_code_gen::*;
 use crate::modes::global::__internal::_plugin_entry_block;
@@ -334,5 +334,15 @@ pub fn global_auto_add_system_outer(attr: MacroStream, input: MacroStream) -> Ma
         "_global_plugin_add_system_",
         require_fn,
         generate_add_system,
+    )
+}
+
+pub fn global_auto_add_observer_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+    global_attribute_outer::<GlobalObserverAttributeArgs>(
+        attr,
+        input,
+        "_global_plugin_add_observer_",
+        require_fn,
+        generate_add_observer,
     )
 }

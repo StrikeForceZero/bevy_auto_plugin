@@ -84,6 +84,10 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
             items_with_attribute_macro::<FnMeta>(items, AutoPluginAttribute::AddSystem)?;
         let add_systems = map_to_add_system_args(add_systems)?;
 
+        let add_observers =
+            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::AddObserver)?;
+        let add_observers = map_to_path(add_observers);
+
         inject_module(&mut module, move || {
             let func_body = expand_input_sets(
                 &app_param_ident,
@@ -93,6 +97,7 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
                     auto_names,
                     add_events,
                     add_systems,
+                    add_observers,
                     insert_resources,
                     init_states,
                     init_resources,

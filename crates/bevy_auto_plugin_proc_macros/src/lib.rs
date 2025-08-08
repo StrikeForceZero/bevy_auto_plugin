@@ -275,3 +275,10 @@ pub fn global_auto_register_state_type(
 pub fn global_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     global_handle_attribute(global::inner::global_auto_add_system_outer, attr, input)
 }
+
+#[doc = include_str!("docs/global/auto_add_observer.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
+pub fn global_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    global_handle_attribute(global::inner::global_auto_add_observer_outer, attr, input)
+}

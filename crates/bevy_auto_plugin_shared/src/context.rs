@@ -11,4 +11,5 @@ pub struct AutoPluginContext {
     pub init_states: HashSet<String>,
     pub auto_names: HashSet<String>,
     pub add_systems: HashSet<AddSystemSerializedArgs>,
+    pub add_observers: HashSet<String>,
 }

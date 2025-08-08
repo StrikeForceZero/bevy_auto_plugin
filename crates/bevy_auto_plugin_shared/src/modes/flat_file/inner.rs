@@ -106,6 +106,7 @@ pub fn auto_plugin_inner_to_stream(
         let auto_names = map_to_path(file_state.context.auto_names.drain())?;
         let add_events = map_to_path(file_state.context.add_events.drain())?;
         let add_systems = map_to_add_systems(file_state.context.add_systems.drain())?;
+        let add_observers = map_to_path(file_state.context.add_observers.drain())?;
         let insert_resources = map_to_insert_resource(file_state.context.insert_resources.drain())?;
         let init_states = map_to_path(file_state.context.init_states.drain())?;
         let init_resources = map_to_path(file_state.context.init_resources.drain())?;
@@ -118,6 +119,7 @@ pub fn auto_plugin_inner_to_stream(
                 auto_names,
                 add_events,
                 add_systems,
+                add_observers,
                 insert_resources,
                 init_states,
                 init_resources,

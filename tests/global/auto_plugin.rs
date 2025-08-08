@@ -46,6 +46,29 @@ fn foo_system(mut foo_res: ResMut<FooRes>) {
     foo_res.0 += 1;
 }
 
+#[derive(Resource, Debug, Default, PartialEq, Reflect)]
+#[reflect(Resource)]
+#[auto_register_type(plugin = Test)]
+#[auto_init_resource(plugin = Test)]
+struct FooComponentState {
+    is_added: bool,
+}
+
+#[auto_add_observer(plugin = Test)]
+fn foo_observer(
+    trigger: Trigger<OnAdd, FooComponent>,
+    added_foo_q: Query<Ref<FooComponent>, Added<FooComponent>>,
+    mut foo_component_added: ResMut<FooComponentState>,
+) {
+    assert!(
+        added_foo_q
+            .get(trigger.target())
+            .expect("FooComponent not spawned")
+            .is_added()
+    );
+    foo_component_added.is_added = true;
+}
+
 fn app() -> App {
     let mut app = create_minimal_app();
     app.add_plugins(StatesPlugin);
@@ -146,5 +169,25 @@ fn test_auto_init_state_type_foo_state() {
             .map(Deref::deref),
         Some(&FooState::Start),
         "did not auto init state"
+    );
+}
+
+#[internal_test_proc_macro::xtest]
+fn test_auto_add_observer_foo_observer() {
+    let mut app = app();
+    assert!(
+        !app.world()
+            .get_resource::<FooComponentState>()
+            .unwrap()
+            .is_added,
+        "FooComponent should not be added yet"
+    );
+    app.world_mut().spawn(FooComponent);
+    assert!(
+        app.world()
+            .get_resource::<FooComponentState>()
+            .unwrap()
+            .is_added,
+        "FooComponent should be added"
     );
 }
