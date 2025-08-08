@@ -3,7 +3,6 @@ Automatically adds an observer to the Bevy `App`.
 This attribute marks a function as an observer that will be automatically registered with the Bevy App when the module is initialized.
 
 # Parameters
-- `priority = <value>` - Optional. Sets the priority for the observer.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
 
 # Example

@@ -1,7 +1,6 @@
 Automatically adds an observer to the Bevy `App`.
 
 # Parameters
-- `priority = <value>` - Optional. Sets the priority for the observer.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
 
 # Example
