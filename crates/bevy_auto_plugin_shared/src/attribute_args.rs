@@ -64,7 +64,7 @@ pub struct GlobalAddSystemArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     #[darling(flatten)]
-    pub schedule_config: ScheduleConfigArgs,
+    pub schedule_config: ScheduleWithScheduleConfigArgs,
 }
 
 impl GlobalAddSystemArgs {
@@ -272,8 +272,15 @@ impl StructOrEnumAttributeArgs {
 
 #[derive(FromMeta, Clone, Debug, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
-pub struct ScheduleConfigArgs {
+pub struct ScheduleWithScheduleConfigArgs {
     pub schedule: Path,
+    #[darling(flatten)]
+    pub config: ScheduleConfigArgs,
+}
+
+#[derive(FromMeta, Clone, Debug, Default, PartialEq, Hash)]
+#[darling(derive_syn_parse, default)]
+pub struct ScheduleConfigArgs {
     pub in_set: Option<Path>,
     pub before: Option<Path>,
     pub after: Option<Path>,
@@ -285,13 +292,63 @@ pub struct ScheduleConfigArgs {
     pub before_ignore_deferred: Option<Path>,
 }
 
+impl ToTokens for ScheduleConfigArgs {
+    fn to_tokens(&self, tokens: &mut MacroStream) {
+        if let Some(in_set) = &self.in_set {
+            tokens.extend(quote! {
+                .in_set(#in_set)
+            });
+        }
+        if let Some(before) = &self.before {
+            tokens.extend(quote! {
+                .before(#before)
+            });
+        }
+        if let Some(after) = &self.after {
+            tokens.extend(quote! {
+                .after(#after)
+            });
+        }
+        if let Some(run_if) = &self.run_if {
+            tokens.extend(quote! {
+                .run_if(#run_if)
+            });
+        }
+        if let Some(distributive_run_if) = &self.distributive_run_if {
+            tokens.extend(quote! {
+                .distributive_run_if(#distributive_run_if)
+            });
+        }
+        if let Some(ambiguous_with) = &self.ambiguous_with {
+            tokens.extend(quote! {
+                .ambiguous_with(#ambiguous_with)
+            });
+        }
+        if let Some(true) = self.ambiguous_with_all {
+            tokens.extend(quote! {
+                .ambiguous_with_all()
+            });
+        }
+        if let Some(before_ignore_deferred) = &self.before_ignore_deferred {
+            tokens.extend(quote! {
+                .before_ignore_deferred(#before_ignore_deferred)
+            });
+        }
+        if let Some(after_ignore_deferred) = &self.after_ignore_deferred {
+            tokens.extend(quote! {
+                .after_ignore_deferred(#after_ignore_deferred)
+            });
+        }
+    }
+}
+
 #[derive(FromMeta, Debug)]
 #[darling(derive_syn_parse)]
 pub struct AddSystemArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     #[darling(flatten)]
-    pub schedule_config: ScheduleConfigArgs,
+    pub schedule_config: ScheduleWithScheduleConfigArgs,
 }
 
 impl AddSystemArgs {
@@ -337,21 +394,23 @@ pub struct ScheduleConfigWithSystemArgs {
 }
 
 impl ScheduleConfigWithSystemArgs {
-    pub fn from_macro_attr(system: Path, attr: ScheduleConfigArgs) -> Self {
+    pub fn from_macro_attr(system: Path, attr: ScheduleWithScheduleConfigArgs) -> Self {
+        let config = attr.config;
         Self {
             schedule_path: attr.schedule,
             scheduled_item_path: system,
-            in_set_path: attr.in_set,
-            before_path: attr.before,
-            after_path: attr.after,
-            run_if_path: attr.run_if,
-            distributive_run_if_path: attr.distributive_run_if,
-            ambiguous_with_path: attr.ambiguous_with,
-            ambiguous_with_all_flag: attr.ambiguous_with_all,
-            before_ignore_deferred_path: attr.before_ignore_deferred,
-            after_ignore_deferred_path: attr.after_ignore_deferred,
+            in_set_path: config.in_set,
+            before_path: config.before,
+            after_path: config.after,
+            run_if_path: config.run_if,
+            distributive_run_if_path: config.distributive_run_if,
+            ambiguous_with_path: config.ambiguous_with,
+            ambiguous_with_all_flag: config.ambiguous_with_all,
+            before_ignore_deferred_path: config.before_ignore_deferred,
+            after_ignore_deferred_path: config.after_ignore_deferred,
         }
     }
+    // TODO: use ToTokens
     pub fn to_tokens(&self) -> syn::Result<MacroStream> {
         let mut output = quote! {};
         if let Some(in_set) = &self.in_set_path {
