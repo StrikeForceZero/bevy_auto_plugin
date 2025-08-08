@@ -1,10 +1,10 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_reflect::prelude::*;
-use std::any::Any;
+use internal_test_util::type_id_of;
 
-#[auto_register_type(Test<bool>)]
+#[auto_register_type(generics(bool))]
 #[derive(Reflect)]
 struct Test<T>(T);
 
@@ -17,13 +17,13 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_register_type_generic() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
     assert!(
-        type_registry.contains(Test(true).type_id()),
+        type_registry.contains(type_id_of::<Test<bool>>()),
         "did not auto register type"
     );
 }

@@ -1,10 +1,10 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 use bevy_ecs::name::Name;
 use bevy_ecs::prelude::*;
 
 #[derive(Component)]
-#[auto_name(Test<bool>)]
+#[auto_name(generics(bool))]
 pub struct Test<T>(T);
 
 #[auto_plugin(app=app)]
@@ -16,7 +16,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_name() {
     let mut app = app();
     let entity = app.world_mut().spawn(Test(true)).id();

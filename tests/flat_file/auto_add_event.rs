@@ -1,5 +1,5 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 use bevy_ecs::prelude::*;
 
 #[auto_add_event]
@@ -15,7 +15,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_add_event() {
     let mut app = app();
     let mut events = app.world_mut().resource_mut::<Events<Test>>();

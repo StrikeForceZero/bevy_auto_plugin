@@ -1,0 +1,9 @@
+error: failed to parse:
+       new: Unknown field: `Test`. Available values: `generics`
+       legacy: expected 1 generic parameters, found 0
+ --> tests/flat_file/ui/legacy_path_param/invalid_generics.rs:3:1
+  |
+3 | #[auto_register_type(Test)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `auto_register_type` (in Nightly builds, run with -Z macro-backtrace for more info)

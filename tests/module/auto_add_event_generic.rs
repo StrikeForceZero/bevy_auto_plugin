@@ -1,11 +1,11 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 use bevy_ecs::prelude::*;
 
 #[auto_plugin(init_name=init)]
 mod plugin_module {
     use super::*;
-    #[auto_add_event(Test<bool>)]
+    #[auto_add_event(generics(bool))]
     #[derive(Event, Debug, PartialEq)]
     pub struct Test<T>(pub T);
 }
@@ -21,7 +21,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_add_event_generic() {
     let mut app = app();
     let mut events = app.world_mut().resource_mut::<Events<Test<bool>>>();
