@@ -22,7 +22,7 @@ impl HasGenericCollection for Path {
     }
 }
 
-pub trait CountGenerics: HasGenericCollection {
+pub trait CountGenerics {
     fn get_span(&self) -> Span;
     // TODO: rename to count_generics
     fn count_generics(&self) -> usize;
