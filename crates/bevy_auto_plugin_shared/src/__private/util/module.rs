@@ -1,7 +1,7 @@
-use crate::attribute::AutoPluginAttribute;
-use crate::item_with_attr_match;
-use crate::item_with_attr_match::ItemWithAttributeMatch;
-use crate::util::meta::fn_meta::FnMeta;
+use crate::__private::attribute::AutoPluginAttribute;
+use crate::__private::item_with_attr_match;
+use crate::__private::item_with_attr_match::ItemWithAttributeMatch;
+use crate::__private::util::meta::fn_meta::FnMeta;
 use syn::ItemMod;
 
 pub fn get_all_items_in_module_by_attribute(

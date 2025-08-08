@@ -1,6 +1,6 @@
-use crate::attribute_args::{InsertResourceArgs, StructOrEnumAttributeArgs};
-use crate::type_list::TypeList;
-use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
+use crate::__private::attribute_args::{InsertResourceArgs, StructOrEnumAttributeArgs};
+use crate::__private::type_list::TypeList;
+use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use proc_macro2::Span;
 use quote::ToTokens;
 use syn::Path;
@@ -16,9 +16,9 @@ impl HasGenericCollection for Path {
     type Collection = Vec<TypeList>;
 
     fn generics(&self) -> syn::Result<Self::Collection> {
-        Ok(vec![crate::util::extensions::path::PathExt::generics(
-            self,
-        )?])
+        Ok(vec![
+            crate::__private::util::extensions::path::PathExt::generics(self)?,
+        ])
     }
 }
 
@@ -34,7 +34,7 @@ impl CountGenerics for Path {
     }
 
     fn count_generics(&self) -> usize {
-        crate::util::extensions::path::PathExt::generic_count(self).unwrap_or(0)
+        crate::__private::util::extensions::path::PathExt::generic_count(self).unwrap_or(0)
     }
 }
 

@@ -1,14 +1,4 @@
-pub mod attribute;
-pub mod attribute_args;
-pub mod bevy_app_code_gen;
-pub mod context;
-mod expr_value;
-pub mod item_with_attr_match;
-mod macros;
-pub mod modes;
-pub mod target;
-mod type_list;
-pub mod util;
+pub mod __private;
 
 #[cfg(target_arch = "wasm32")]
 unsafe extern "C" {

@@ -1,4 +1,4 @@
-use crate::util::meta::IdentGenericsAttrsMeta;
+use crate::__private::util::meta::IdentGenericsAttrsMeta;
 use proc_macro2::Ident;
 use syn::{Attribute, Error, Generics, Item};
 

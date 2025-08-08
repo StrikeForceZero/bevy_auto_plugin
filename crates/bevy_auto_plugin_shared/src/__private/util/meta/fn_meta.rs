@@ -1,4 +1,4 @@
-use crate::util::meta::IdentGenericsAttrsMeta;
+use crate::__private::util::meta::IdentGenericsAttrsMeta;
 use proc_macro2::Ident;
 use syn::{Attribute, Error, Generics, Item, ItemFn};
 
@@ -54,7 +54,7 @@ pub fn is_fn_param_mutable_reference(
     param_ident: &Ident,
     messages: FnParamMutabilityCheckErrMessages,
 ) -> syn::Result<()> {
-    use crate::util::ty_classify;
+    use crate::__private::util::ty_classify;
     use syn::spanned::Spanned;
     use syn::{FnArg, Pat};
     for arg in &item.sig.inputs {

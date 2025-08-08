@@ -4,7 +4,7 @@ use proc_macro2::TokenStream as MacroStream;
 /* Module */
 
 #[cfg(feature = "mode_module")]
-use bevy_auto_plugin_shared::modes::module;
+use bevy_auto_plugin_shared::__private::modes::module;
 
 /// Attaches to a module and generates an initialization function that automatically registering types, events, and resources in the `App`.
 #[doc = include_str!("docs/module/auto_plugin.md")]
@@ -100,9 +100,9 @@ pub fn module_auto_add_observer(_attr: CompilerStream, input: CompilerStream) ->
 
 /* Flat File */
 #[cfg(feature = "mode_flat_file")]
-use bevy_auto_plugin_shared::modes::flat_file;
+use bevy_auto_plugin_shared::__private::modes::flat_file;
 #[cfg(feature = "mode_flat_file")]
-use bevy_auto_plugin_shared::target::TargetRequirePath;
+use bevy_auto_plugin_shared::__private::target::TargetRequirePath;
 
 /// Attaches to a function accepting `&mut bevy::prelude::App`, automatically registering types, events, and resources in the `App`.
 #[doc = include_str!("docs/flat_file/auto_plugin.md")]
@@ -199,7 +199,7 @@ pub fn flat_file_auto_insert_resource(
 /* global */
 
 #[cfg(feature = "mode_global")]
-use bevy_auto_plugin_shared::modes::global;
+use bevy_auto_plugin_shared::__private::modes::global;
 
 /// thin adapter converting between the compiler-level and proc_macro2 streams
 #[cfg(feature = "mode_global")]

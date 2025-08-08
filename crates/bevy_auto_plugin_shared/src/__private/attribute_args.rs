@@ -1,9 +1,9 @@
-use crate::expr_value::ExprValue;
-use crate::item_with_attr_match::ItemWithAttributeMatch;
-use crate::type_list::TypeList;
-use crate::util::extensions::path::PathExt;
-use crate::util::generics::{CountGenerics, HasGenericCollection};
-use crate::util::path_fmt::path_to_string_with_spaces;
+use crate::__private::expr_value::ExprValue;
+use crate::__private::item_with_attr_match::ItemWithAttributeMatch;
+use crate::__private::type_list::TypeList;
+use crate::__private::util::extensions::path::PathExt;
+use crate::__private::util::generics::{CountGenerics, HasGenericCollection};
+use crate::__private::util::path_fmt::path_to_string_with_spaces;
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::{ToTokens, quote};

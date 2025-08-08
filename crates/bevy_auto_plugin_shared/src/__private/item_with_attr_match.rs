@@ -1,7 +1,7 @@
-use crate::attribute::AutoPluginAttribute;
-use crate::util::meta::IdentGenericsAttrsMeta;
-use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
-use crate::util::{concrete_path, path_fmt};
+use crate::__private::attribute::AutoPluginAttribute;
+use crate::__private::util::meta::IdentGenericsAttrsMeta;
+use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
+use crate::__private::util::{concrete_path, path_fmt};
 use syn::{Attribute, Item, Path};
 
 #[derive(Debug)]

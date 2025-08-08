@@ -8,7 +8,7 @@ pub enum LocalFileError {
 
     /// Something went wrong while determining if called from rustc.
     #[error(transparent)]
-    RustcDetection(#[from] crate::util::env::RustcDetectionError),
+    RustcDetection(#[from] crate::__private::util::env::RustcDetectionError),
 }
 
 pub enum LocalFile {
@@ -22,12 +22,12 @@ pub enum LocalFile {
 ///
 /// TODO: remove when rust-analyzer fully implements local_file <https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147>
 pub fn resolve_local_file() -> LocalFile {
-    match crate::modes::flat_file::file_state::get_file_path() {
+    match crate::__private::modes::flat_file::file_state::get_file_path() {
         Some(p) => LocalFile::File(p),
         None => {
             #[cfg(feature = "lang_server_noop")]
             {
-                match crate::util::env::is_rustc() {
+                match crate::__private::util::env::is_rustc() {
                     Ok(false) => return LocalFile::Noop,
                     Err(e) => return LocalFile::Error(e.into()),
                     _ => {} // fall through

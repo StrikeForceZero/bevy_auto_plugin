@@ -1,4 +1,6 @@
-use crate::attribute_args::{AddSystemSerializedArgs, InsertResourceSerializedArgsWithPath};
+use crate::__private::attribute_args::{
+    AddSystemSerializedArgs, InsertResourceSerializedArgsWithPath,
+};
 use std::collections::HashSet;
 
 #[derive(Default)]

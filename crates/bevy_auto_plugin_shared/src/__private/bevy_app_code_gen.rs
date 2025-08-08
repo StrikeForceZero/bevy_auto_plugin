@@ -1,5 +1,5 @@
-use crate::attribute_args::{AddSystemWithTargetArgs, InsertResourceArgsWithPath};
-use crate::util::path_fmt::path_to_string;
+use crate::__private::attribute_args::{AddSystemWithTargetArgs, InsertResourceArgsWithPath};
+use crate::__private::util::path_fmt::path_to_string;
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::quote;
 use syn::Path;

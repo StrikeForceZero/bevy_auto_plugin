@@ -1,12 +1,14 @@
-use crate::attribute::AutoPluginAttribute;
-use crate::attribute_args::{AddSystemArgs, AddSystemWithTargetArgs, InsertResourceArgsWithPath};
-use crate::bevy_app_code_gen::{InputSets, expand_input_sets};
-use crate::item_with_attr_match::struct_or_enum_items_with_attribute_macro;
-use crate::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_macro};
-use crate::modes::module::attribute::ModuleArgs;
-use crate::util::meta::fn_meta::FnMeta;
-use crate::util::module::inject_module;
-use crate::util::tokens::to_compile_error;
+use crate::__private::attribute::AutoPluginAttribute;
+use crate::__private::attribute_args::{
+    AddSystemArgs, AddSystemWithTargetArgs, InsertResourceArgsWithPath,
+};
+use crate::__private::bevy_app_code_gen::{InputSets, expand_input_sets};
+use crate::__private::item_with_attr_match::struct_or_enum_items_with_attribute_macro;
+use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_macro};
+use crate::__private::modes::module::attribute::ModuleArgs;
+use crate::__private::util::meta::fn_meta::FnMeta;
+use crate::__private::util::module::inject_module;
+use crate::__private::util::tokens::to_compile_error;
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};

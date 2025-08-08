@@ -1,4 +1,4 @@
-use crate::attribute_args::{AddSystemArgs, InsertResourceArgsWithPath};
+use crate::__private::attribute_args::{AddSystemArgs, InsertResourceArgsWithPath};
 use syn::Path;
 
 #[derive(Debug, Clone, Copy)]
