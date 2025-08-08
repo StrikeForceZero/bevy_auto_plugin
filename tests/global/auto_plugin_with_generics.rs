@@ -79,6 +79,7 @@ struct FooComponentState {
     is_added: bool,
 }
 
+#[allow(clippy::type_complexity)]
 #[auto_add_observer(plugin = Test::<u8, bool>, generics(u8, bool))]
 fn foo_observer<T1, T2>(
     trigger: Trigger<OnAdd, FooComponent<T1, T2>>,

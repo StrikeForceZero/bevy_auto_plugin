@@ -551,7 +551,7 @@ impl HasGenericCollection for AddObserverArgs {
 impl CountGenerics for AddObserverArgs {
     fn get_span(&self) -> Span {
         self.generics
-            .get(0)
+            .first()
             .map_or_else(Span::call_site, |g| g.span())
     }
 
