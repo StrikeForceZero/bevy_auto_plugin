@@ -1,3 +1,4 @@
+#[doc(hidden)]
 pub mod __private;
 
 #[cfg(target_arch = "wasm32")]

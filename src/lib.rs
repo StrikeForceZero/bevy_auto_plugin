@@ -1,5 +1,7 @@
+/// Modes
 pub mod modes;
 
+#[doc(hidden)]
 pub mod __private {
     pub use bevy_auto_plugin_shared as shared;
 }
@@ -9,6 +11,7 @@ pub mod __private {
     note = "use `bevy_auto_plugin::modes::flat_file` instead"
 )]
 #[cfg(feature = "mode_flat_file")]
+/// Pre v0.3 exports
 pub mod auto_plugin {
     pub use crate::modes::flat_file::*;
 }
@@ -18,6 +21,7 @@ pub mod auto_plugin {
     note = "use `bevy_auto_plugin::modes::module` instead"
 )]
 #[cfg(feature = "mode_module")]
+/// Pre v0.3 exports
 pub mod auto_plugin_module {
     pub use crate::modes::module::*;
 }
@@ -27,6 +31,7 @@ pub mod auto_plugin_module {
     note = "use `bevy_auto_plugin::modes::flat_file` instead"
 )]
 #[cfg(feature = "mode_flat_file")]
+/// Pre v0.4 exports
 pub mod flat_file {
     pub use crate::modes::flat_file::*;
 }
@@ -35,6 +40,7 @@ pub mod flat_file {
     note = "use `bevy_auto_plugin::modes::global` instead"
 )]
 #[cfg(feature = "mode_global")]
+/// Pre v0.4 exports
 pub mod global {
     pub use crate::modes::global::*;
 }
@@ -43,6 +49,7 @@ pub mod global {
     note = "use `bevy_auto_plugin::modes::module` instead"
 )]
 #[cfg(feature = "mode_module")]
+/// Pre v0.4 exports
 pub mod module {
     pub use crate::modes::module::*;
 }

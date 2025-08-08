@@ -1,4 +1,5 @@
 #[macro_export]
+#[doc(hidden)]
 macro_rules! ok_or_return_compiler_error {
     // Case 1: Only expression
     ($expr:expr) => {
@@ -36,6 +37,7 @@ macro_rules! ok_or_return_compiler_error {
 }
 
 #[macro_export]
+#[doc(hidden)]
 macro_rules! parse_macro_input2 {
     ($ts:ident as $ty:ty) => {{
         match syn::parse2::<$ty>($ts) {
