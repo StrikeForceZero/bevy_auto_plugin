@@ -16,12 +16,12 @@ Automatically registers a system to be added to the app in module mode.
 # Example (basic)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[derive(Resource, Debug, Default)]
     pub(super) struct TestResource(pub i32);
@@ -41,12 +41,12 @@ fn plugin(app: &mut App) {
 # Example (with system set)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[derive(SystemSet, Debug, Copy, Clone, PartialEq, Eq, Hash)]
     pub(super) enum TestSet {

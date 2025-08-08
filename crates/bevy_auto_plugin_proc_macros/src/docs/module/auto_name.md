@@ -8,12 +8,12 @@ Automatically adds a Name component to entities with this component in module mo
 # Example (without generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_register_type]
     #[derive(Component, Reflect)]
@@ -36,12 +36,12 @@ fn plugin(app: &mut App) {
 # Example (with generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_register_type(generics(bool))]
     #[auto_register_type(generics(u32))]

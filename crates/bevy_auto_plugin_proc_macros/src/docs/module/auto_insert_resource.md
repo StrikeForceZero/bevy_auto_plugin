@@ -7,12 +7,12 @@ Automatically inserts a resource with a specific value into the app in module mo
 # Example (without generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_init_resource]
     #[auto_insert_resource(resource(Test(1)))]
@@ -34,12 +34,12 @@ fn plugin(app: &mut App) {
 # Example (with generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_insert_resource(resource(TestWithGeneric(1)), generics(usize))]
     #[derive(Resource, Default, Debug, PartialEq)]

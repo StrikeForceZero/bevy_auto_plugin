@@ -9,7 +9,7 @@ Automatically registers an event to be added to the app.
 
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_add_event]
 #[derive(Event, Reflect)]
@@ -26,7 +26,7 @@ fn plugin(app: &mut App) {
 
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_add_event(generics(bool))]
 #[derive(Event, Reflect)]

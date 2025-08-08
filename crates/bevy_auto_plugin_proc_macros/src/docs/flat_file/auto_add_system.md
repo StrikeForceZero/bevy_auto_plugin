@@ -16,7 +16,7 @@ Automatically registers a system to be added to the app.
 # Example (basic)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[derive(Resource, Debug, Default)]
 struct TestResource(i32);
@@ -37,7 +37,7 @@ fn plugin(app: &mut App) {
 # Example (with system set)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
 enum TestSet { First, Second }

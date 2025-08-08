@@ -6,12 +6,12 @@ The main attribute for module mode that processes all auto attributes in the mod
 # Example
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_register_type]
     #[derive(Component, Reflect)]

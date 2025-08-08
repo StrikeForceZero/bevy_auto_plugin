@@ -3,7 +3,7 @@ Automatically registers `State<T>` and `NextState<T>` types with the app.
 # Example (without generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_register_state_type]
 #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash, Reflect)]

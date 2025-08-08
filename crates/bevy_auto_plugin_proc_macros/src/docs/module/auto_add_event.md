@@ -7,12 +7,12 @@ Automatically registers an event to be added to the app in module mode.
 # Example (without generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_add_event]
     #[derive(Event, Reflect)]
@@ -32,12 +32,12 @@ fn plugin(app: &mut App) {
 # Example (with generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_add_event(generics(bool))]
     #[derive(Event, Reflect)]

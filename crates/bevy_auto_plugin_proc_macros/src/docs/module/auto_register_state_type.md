@@ -3,12 +3,12 @@ Automatically registers `State<T>` and `NextState<T>` types with the app in modu
 # Example (without generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 pub mod my_plugin {
     use bevy::prelude::*;
-    use bevy_auto_plugin::module::prelude::*;
+    use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_register_state_type]
     #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash, Reflect)]

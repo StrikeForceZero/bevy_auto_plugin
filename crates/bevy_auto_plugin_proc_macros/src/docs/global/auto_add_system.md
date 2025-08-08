@@ -17,7 +17,7 @@ Automatically registers a system to be added to the app in global mode.
 # Example
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::global::prelude::*;
+use bevy_auto_plugin::modes::global::prelude::*;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -35,7 +35,7 @@ fn foo_system(mut foo_res: ResMut<FooResource>) {
 # Example (with system set)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::global::prelude::*;
+use bevy_auto_plugin::modes::global::prelude::*;
 
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
 enum TestSet { First, Second }

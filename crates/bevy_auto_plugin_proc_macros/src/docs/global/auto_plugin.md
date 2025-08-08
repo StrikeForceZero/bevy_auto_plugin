@@ -9,7 +9,7 @@ Attribute to mark the build function for the plugin, or impl Plugin trait build 
 # Example - impl Plugin
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::global::prelude::*;
+use bevy_auto_plugin::modes::global::prelude::*;
 
 #[derive(AutoPlugin)]
 struct MyPlugin;
@@ -27,7 +27,7 @@ impl Plugin for MyPlugin {
 # Example - bare fn
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::global::prelude::*;
+use bevy_auto_plugin::modes::global::prelude::*;
 
 #[derive(AutoPlugin)]
 struct MyPlugin;

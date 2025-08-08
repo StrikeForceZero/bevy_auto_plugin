@@ -3,7 +3,7 @@ Automatically initializes a state in the app.
 # Example (without generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_init_state]
 #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]

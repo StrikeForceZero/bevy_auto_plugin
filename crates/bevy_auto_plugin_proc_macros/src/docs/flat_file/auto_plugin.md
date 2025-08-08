@@ -6,7 +6,7 @@ The main attribute for flat file mode that processes all auto attributes in the 
 # Example
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 // Example attributes or declarations for components, events, or resources
 // #[auto_register_type]

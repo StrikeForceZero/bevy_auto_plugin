@@ -7,7 +7,7 @@ Automatically inserts a resource with a specific value into the app.
 # Example (without generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
@@ -24,7 +24,7 @@ fn plugin(app: &mut App) {
 # Example (with generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]

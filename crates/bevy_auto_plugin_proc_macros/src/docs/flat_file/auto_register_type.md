@@ -7,7 +7,7 @@ Automatically registers a type with the app's type registry.
 # Example (without generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_register_type]
 #[derive(Component, Reflect)]
@@ -24,7 +24,7 @@ fn plugin(app: &mut App) {
 # Example (with generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_register_type(generics(bool))]
 #[auto_register_type(generics(u32))]
