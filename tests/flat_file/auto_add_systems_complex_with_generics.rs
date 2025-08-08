@@ -1,5 +1,5 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 use bevy_ecs::prelude::*;
 use std::fmt::Debug;
 use std::ops::{Add, AddAssign};

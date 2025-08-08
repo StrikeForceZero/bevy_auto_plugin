@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_auto_plugin::global::prelude::*;
+use bevy_auto_plugin::modes::global::prelude::*;
 use bevy_state::app::StatesPlugin;
 use internal_test_util::{create_minimal_app, type_id_of};
 use std::ops::Deref;

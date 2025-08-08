@@ -1,4 +1,4 @@
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_register_type(generics(u32))]
 struct Test<T1, T2>(T1, T2);

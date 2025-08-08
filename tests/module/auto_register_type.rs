@@ -1,5 +1,5 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_reflect::prelude::*;
 use internal_test_util::type_id_of;

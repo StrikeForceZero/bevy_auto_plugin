@@ -1,5 +1,4 @@
-use bevy_auto_plugin::flat_file::prelude::*;
-
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_plugin(app=_app)]
 fn plugin(_app: &mut bevy_app::App) {}
@@ -8,6 +7,4 @@ fn plugin(_app: &mut bevy_app::App) {}
 struct Test;
 
 // dummy main
-fn main() {
-    
-}
+fn main() {}

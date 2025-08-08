@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_auto_plugin::global::prelude::*;
+use bevy_auto_plugin::modes::global::prelude::*;
 use bevy_auto_plugin_proc_macros::{global_auto_init_resource, global_auto_insert_resource};
 
 #[derive(AutoPlugin)]
