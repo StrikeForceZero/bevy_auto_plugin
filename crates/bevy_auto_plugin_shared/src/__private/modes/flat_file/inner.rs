@@ -34,7 +34,7 @@ pub fn auto_plugin_inner(
 
     let injected_code = auto_plugin_inner_to_stream(file_path, &app_param_name)?;
 
-    #[cfg(feature = "missing_auto_plugin_check")]
+    #[cfg(feature = "flat_file_missing_auto_plugin_check")]
     let injected_code = {
         use crate::__private::modes::flat_file::file_state::files_missing_plugin_ts;
         let output = files_missing_plugin_ts();
@@ -134,7 +134,7 @@ macro_rules! extract_or_noop {
         #[allow(clippy::infallible_destructuring_match)]
         let $out = match $item {
             ValueOrNoop::Value(item) => item,
-            #[cfg(feature = "lang_server_noop")]
+            #[cfg(feature = "flat_file_lang_server_noop")]
             ValueOrNoop::Noop => $ok,
         };
     };
@@ -143,14 +143,14 @@ macro_rules! extract_or_noop {
 enum ValueOrNoop<T> {
     Value(T),
     // drops unreachable branches during compilation
-    #[cfg(feature = "lang_server_noop")]
+    #[cfg(feature = "flat_file_lang_server_noop")]
     Noop,
 }
 
 fn resolve_local_file_spanned(span: Span) -> syn::Result<ValueOrNoop<String>> {
     Ok(match resolve_local_file() {
         LocalFile::File(path) => ValueOrNoop::Value(path),
-        #[cfg(feature = "lang_server_noop")]
+        #[cfg(feature = "flat_file_lang_server_noop")]
         LocalFile::Noop => ValueOrNoop::Noop,
         LocalFile::Error(err) => return Err(Error::new(span, err)),
     })

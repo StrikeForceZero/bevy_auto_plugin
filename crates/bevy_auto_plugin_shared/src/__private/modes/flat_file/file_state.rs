@@ -123,7 +123,7 @@ pub fn files_missing_plugin_ts() -> proc_macro2::TokenStream {
             .into_iter()
             .map(|file_path| format!("missing #[auto_plugin(...)] attribute in file: {file_path}"))
             .collect::<Vec<_>>();
-        #[cfg(feature = "missing_auto_plugin_is_error")]
+        #[cfg(feature = "flat_file_missing_auto_plugin_is_error")]
         {
             output.extend(messages.iter().map(|message| {
                 quote! {
@@ -131,7 +131,7 @@ pub fn files_missing_plugin_ts() -> proc_macro2::TokenStream {
                 }
             }));
         }
-        #[cfg(feature = "missing_auto_plugin_is_warning")]
+        #[cfg(feature = "flat_file_missing_auto_plugin_is_warning")]
         {
             output.extend(messages.iter().map(|message| {
                 quote! {
@@ -139,7 +139,7 @@ pub fn files_missing_plugin_ts() -> proc_macro2::TokenStream {
                 }
             }));
         }
-        #[cfg(feature = "missing_auto_plugin_is_compile_error")]
+        #[cfg(feature = "flat_file_missing_auto_plugin_is_compile_error")]
         return syn::Error::new(Span::call_site(), messages.join("\n")).to_compile_error();
     }
     output

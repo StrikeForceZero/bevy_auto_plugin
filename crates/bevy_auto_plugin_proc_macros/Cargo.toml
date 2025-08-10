@@ -18,11 +18,11 @@ mode_global = ["bevy_auto_plugin_shared/mode_global", "bevy_auto_plugin/mode_glo
 legacy_path_param = ["bevy_auto_plugin_shared/legacy_path_param"]
 inventory = ["bevy_auto_plugin_shared/inventory"]
 log_plugin_build = ["bevy_auto_plugin_shared/log_plugin_build"]
-missing_auto_plugin_check = ["bevy_auto_plugin_shared/missing_auto_plugin_check"]
-missing_auto_plugin_is_compile_error = ["bevy_auto_plugin_shared/missing_auto_plugin_check"]
-missing_auto_plugin_is_error = ["bevy_auto_plugin_shared/missing_auto_plugin_check", "bevy_auto_plugin_shared/log"]
-missing_auto_plugin_is_warning = ["bevy_auto_plugin_shared/missing_auto_plugin_check", "bevy_auto_plugin_shared/log"]
-lang_server_noop = ["bevy_auto_plugin_shared/lang_server_noop"]
+flat_file_missing_auto_plugin_check = ["bevy_auto_plugin_shared/flat_file_missing_auto_plugin_check"]
+flat_file_missing_auto_plugin_is_compile_error = ["bevy_auto_plugin_shared/flat_file_missing_auto_plugin_check"]
+flat_file_missing_auto_plugin_is_error = ["bevy_auto_plugin_shared/flat_file_missing_auto_plugin_check", "bevy_auto_plugin_shared/log"]
+flat_file_missing_auto_plugin_is_warning = ["bevy_auto_plugin_shared/flat_file_missing_auto_plugin_check", "bevy_auto_plugin_shared/log"]
+flat_file_lang_server_noop = ["bevy_auto_plugin_shared/flat_file_lang_server_noop"]
 
 [dependencies]
 bevy_auto_plugin_shared = { workspace = true }

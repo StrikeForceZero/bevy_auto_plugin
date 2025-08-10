@@ -13,7 +13,7 @@ pub enum LocalFileError {
 
 pub enum LocalFile {
     File(String),
-    #[cfg(feature = "lang_server_noop")]
+    #[cfg(feature = "flat_file_lang_server_noop")]
     Noop,
     Error(LocalFileError),
 }
@@ -25,7 +25,7 @@ pub fn resolve_local_file() -> LocalFile {
     match crate::__private::modes::flat_file::file_state::get_file_path() {
         Some(p) => LocalFile::File(p),
         None => {
-            #[cfg(feature = "lang_server_noop")]
+            #[cfg(feature = "flat_file_lang_server_noop")]
             {
                 match crate::__private::util::env::is_rustc() {
                     Ok(false) => return LocalFile::Noop,
