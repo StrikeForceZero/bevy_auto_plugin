@@ -15,6 +15,9 @@ See [tests](tests) for a more comprehensive set of examples
 
 ## Usage - Global
 
+Features required:
+- `default` or `mode_global` or `all_modes`
+
 ```rust
 use bevy::prelude::*;
 use bevy_auto_plugin::modes::global::prelude::*;
@@ -72,6 +75,10 @@ fn main() {
 Which automatically implements the Plugin trait for `MyPlugin` and registers all the types, resources, events, and systems when the plugin is added to the app.
 
 ## Usage - Module
+
+Features required:
+- `mode_module` or `all_modes`
+
 ```rust
 use bevy::prelude::*;
 use bevy_auto_plugin::modes::module::prelude::*;
@@ -148,6 +155,10 @@ mod plugin_module {
 - Causes issues for ide's like RustRover
 
 ## Usage - Flat File
+
+Features required: 
+- `mode_flat_file` or `all_modes`,
+- Optional but recommended`flat_file_lang_server_noop`
 
 ```rust
 use bevy::prelude::*;
