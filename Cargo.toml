@@ -51,6 +51,8 @@ members = ["crates/*"]
 [workspace.dependencies]
 bevy_auto_plugin_shared = { version = "0.4.0", path = "crates/bevy_auto_plugin_shared" }
 bevy_auto_plugin_proc_macros = { version = "0.4.0", path = "crates/bevy_auto_plugin_proc_macros" }
+internal_test_util = { path = "crates/internal_test_util" }
+internal_test_proc_macro = { path = "crates/internal_test_proc_macro" }
 bevy = { version = "0.16", default-features = false, features = ["bevy_state"] }
 bevy_app = { version = "0.16", default-features = false }
 bevy_log = { version = "0.16", default-features = false }
@@ -79,12 +81,12 @@ bevy_app = { workspace = true }
 bevy_reflect = { workspace = true }
 bevy_ecs = { workspace = true }
 bevy_state = { workspace = true }
-internal_test_util = { path = "crates/internal_test_util" }
-internal_test_proc_macro = { path = "crates/internal_test_proc_macro" }
 trybuild = "1.0"
 # used in feature tests
 log = { workspace = true }
 wasm-bindgen-test = { version = "0.3" }
+internal_test_util = { workspace = true }
+internal_test_proc_macro = { workspace = true }
 
 [build-dependencies]
 rustc_version = "0.4"

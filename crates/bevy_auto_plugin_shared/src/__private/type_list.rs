@@ -8,7 +8,7 @@ use syn::{Meta, Token, Type, punctuated::Punctuated};
 pub struct TypeList(pub Vec<Type>);
 
 impl TypeList {
-    pub const fn new() -> Self {
+    pub const fn empty() -> Self {
         Self(vec![])
     }
     pub fn is_empty(&self) -> bool {

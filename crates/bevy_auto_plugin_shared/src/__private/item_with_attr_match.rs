@@ -1,33 +1,50 @@
-use crate::__private::attribute::AutoPluginAttribute;
+use crate::__private::attribute_args::ItemAttributeArgs;
+use crate::__private::util::concrete_path::ConcreteTargetPathWithGenericsCollection;
+use crate::__private::util::extensions::from_meta::FromMetaExt;
 use crate::__private::util::meta::IdentGenericsAttrsMeta;
 use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
-use crate::__private::util::{concrete_path, path_fmt};
-use syn::{Attribute, Item, Path};
+use crate::__private::util::path_fmt::PathWithoutGenerics;
+use syn::{Attribute, Item};
 
-#[derive(Debug)]
-pub struct ItemWithAttributeMatch {
+#[derive(Debug, Clone)]
+pub struct ItemWithAttributeMatch<A> {
     pub item: Item,
-    pub path: Path,
-    pub target: AutoPluginAttribute,
+    pub path: PathWithoutGenerics,
     pub matched_attribute: Attribute,
     pub attributes: Vec<Attribute>,
+    pub args: A,
 }
 
-impl ItemWithAttributeMatch {
-    pub fn path_owned(self) -> Path {
+impl<A> ItemWithAttributeMatch<A> {
+    pub fn path_owned(self) -> PathWithoutGenerics {
         self.path
     }
-    pub fn into_path_string(self) -> String {
-        path_fmt::path_to_string(&self.path, false)
+}
+
+impl<T> From<ItemWithAttributeMatch<T>> for ConcreteTargetPathWithGenericsCollection
+where
+    T: ItemAttributeArgs,
+{
+    fn from(value: ItemWithAttributeMatch<T>) -> Self {
+        ConcreteTargetPathWithGenericsCollection::from_args(value.path, &value.args)
     }
 }
 
-pub fn items_with_attribute_macro<'a, T>(
-    items: &'a Vec<Item>,
-    target: AutoPluginAttribute,
-) -> syn::Result<Vec<ItemWithAttributeMatch>>
+impl<T> From<&ItemWithAttributeMatch<T>> for ConcreteTargetPathWithGenericsCollection
+where
+    T: ItemAttributeArgs,
+{
+    fn from(value: &ItemWithAttributeMatch<T>) -> Self {
+        ConcreteTargetPathWithGenericsCollection::from_args(value.path.clone(), &value.args)
+    }
+}
+
+pub fn items_with_attribute_macro<'a, T, A>(
+    items: &'a [Item],
+) -> syn::Result<Vec<ItemWithAttributeMatch<A>>>
 where
     T: IdentGenericsAttrsMeta<'a>,
+    A: ItemAttributeArgs,
 {
     let mut matched_items = vec![];
     for item in items {
@@ -37,70 +54,49 @@ where
         for attr in matched_item
             .attributes()
             .iter()
-            .filter(|a| a.meta.path().is_ident(target.ident_str()))
+            .filter(|a| a.meta.path().is_ident(A::attribute().ident_str()))
         {
             matched_items.push(ItemWithAttributeMatch {
                 item: item.clone(),
-                path: path_fmt::ident_to_path(matched_item.ident()),
+                path: matched_item.ident().into(),
                 matched_attribute: attr.clone(),
                 attributes: matched_item.attributes().to_vec(),
-                target,
+                args: A::from_meta_ext(&attr.meta)?,
             })
         }
     }
     Ok(matched_items)
 }
 
-fn struct_or_enum_item_with_attribute_macro(
-    item: &Item,
+fn struct_or_enum_item_with_attribute_macro<A>(
+    item: Item,
     struct_or_enum_ref: &StructOrEnumMeta,
-    attr: &Attribute,
+    attr: Attribute,
     attrs: &[Attribute],
-    target: AutoPluginAttribute,
-) -> syn::Result<impl Iterator<Item = ItemWithAttributeMatch>> {
-    let path = path_fmt::ident_to_path(struct_or_enum_ref.ident());
-    let mut has_args = false;
-    let _ = attr.parse_nested_meta(|_| {
-        has_args = true;
-        Ok(())
-    });
-
-    let paths = if has_args {
-        concrete_path::resolve_user_provided_generic_paths(
-            target,
-            attr,
-            struct_or_enum_ref,
-            &path,
-            #[cfg(feature = "legacy_path_param")]
-            item,
-        )?
-    } else {
-        vec![path]
-    };
-    Ok(paths.into_iter().map(move |path| ItemWithAttributeMatch {
-        item: item.clone(),
+) -> syn::Result<ItemWithAttributeMatch<A>>
+where
+    A: ItemAttributeArgs,
+{
+    let path = PathWithoutGenerics::from(struct_or_enum_ref.ident());
+    Ok(ItemWithAttributeMatch {
+        item,
         path,
-        target,
-        matched_attribute: attr.clone(),
+        args: A::from_meta_ext(&attr.meta)?,
+        matched_attribute: attr,
         attributes: attrs.to_vec(),
-    }))
+    })
 }
 
-fn do_with_struct_or_enum_items_with_attribute_macro<F>(
-    items: &Vec<Item>,
-    target: AutoPluginAttribute,
+fn do_with_struct_or_enum_items_with_attribute_macro<F, R, A>(
+    items: &[Item],
     cb: F,
-) -> syn::Result<Vec<ItemWithAttributeMatch>>
+) -> syn::Result<Vec<R>>
 where
-    F: Fn(
-        &Item,
-        &StructOrEnumMeta,
-        &Attribute,
-        &[Attribute],
-        AutoPluginAttribute,
-    ) -> syn::Result<Vec<ItemWithAttributeMatch>>,
+    F: Fn(&Item, &StructOrEnumMeta, &Attribute, &[Attribute], A) -> syn::Result<Vec<R>>,
+    A: ItemAttributeArgs,
 {
-    let is_marker = |attr: &&Attribute| -> bool { attr.path().is_ident(target.ident_str()) };
+    let is_marker =
+        |attr: &&Attribute| -> bool { attr.path().is_ident(A::attribute().ident_str()) };
 
     let mut matched_items = vec![];
     for item in items {
@@ -113,7 +109,7 @@ where
                 &struct_or_enum_ref,
                 attr,
                 struct_or_enum_ref.attributes,
-                target,
+                A::from_meta_ext(&attr.meta)?,
             )?;
             matched_items.extend(matched_item);
         }
@@ -121,23 +117,29 @@ where
     Ok(matched_items)
 }
 
-pub fn struct_or_enum_items_with_attribute_macro(
-    items: &Vec<Item>,
-    target: AutoPluginAttribute,
-) -> syn::Result<Vec<ItemWithAttributeMatch>> {
-    do_with_struct_or_enum_items_with_attribute_macro(
+pub fn struct_or_enum_items_with_attribute_macro<A>(
+    items: &[Item],
+) -> syn::Result<Vec<ItemWithAttributeMatch<A>>>
+where
+    A: ItemAttributeArgs,
+{
+    do_with_struct_or_enum_items_with_attribute_macro::<_, _, A>(
         items,
-        target,
-        |item, struct_or_enum_ref, attr, attrs, target| {
-            // TODO: this got ugly
-            Ok(struct_or_enum_item_with_attribute_macro(
-                item,
+        |item, struct_or_enum_ref, attr, attrs, args| {
+            let concrete_paths = ConcreteTargetPathWithGenericsCollection::from_args(
+                A::resolve_item_ident(item)?.into(),
+                &args,
+            );
+            let matched = struct_or_enum_item_with_attribute_macro::<A>(
+                item.clone(),
                 struct_or_enum_ref,
-                attr,
+                attr.clone(),
                 attrs,
-                target,
-            )?
-            .collect())
+            )?;
+            Ok(concrete_paths
+                .into_iter()
+                .map(|_| matched.clone())
+                .collect::<Vec<_>>())
         },
     )
 }

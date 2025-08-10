@@ -1,4 +1,4 @@
-use crate::__private::attribute_args::{InsertResourceArgs, StructOrEnumAttributeArgs};
+use crate::__private::attribute_args::GenericsArgs;
 use crate::__private::type_list::TypeList;
 use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use proc_macro2::Span;
@@ -38,26 +38,24 @@ impl CountGenerics for Path {
     }
 }
 
-impl HasGenericCollection for StructOrEnumAttributeArgs {
-    type CollectionItem = TypeList;
-    type Collection = Vec<TypeList>;
-
-    fn generics(&self) -> syn::Result<Self::Collection> {
-        Ok(self.generics.clone())
-    }
-}
-
-impl CountGenerics for StructOrEnumAttributeArgs {
+impl<T> CountGenerics for T
+where
+    T: GenericsArgs,
+{
     fn get_span(&self) -> Span {
         use syn::spanned::Spanned;
-        self.generics
+        self.type_lists()
             .first()
             .map(|g| g.span())
             .unwrap_or(Span::call_site())
     }
 
     fn count_generics(&self) -> usize {
-        let iter = self.generics.iter().map(|g| g.len()).collect::<Vec<_>>();
+        let iter = self
+            .generics()
+            .into_iter()
+            .map(|g| g.count_generics())
+            .collect::<Vec<_>>();
         let &max = iter.iter().max().unwrap_or(&0);
         let &min = iter.iter().min().unwrap_or(&0);
         // TODO: return result
@@ -66,31 +64,6 @@ impl CountGenerics for StructOrEnumAttributeArgs {
             "inconsistent number of generics specified min: {min}, max: {max}"
         );
         max
-    }
-}
-
-impl HasGenericCollection for InsertResourceArgs {
-    type CollectionItem = TypeList;
-    type Collection = Vec<TypeList>;
-    fn generics(&self) -> syn::Result<Self::Collection> {
-        let Some(generics) = self.generics.clone() else {
-            return Ok(vec![]);
-        };
-        Ok(vec![generics])
-    }
-}
-
-impl CountGenerics for InsertResourceArgs {
-    fn get_span(&self) -> Span {
-        use syn::spanned::Spanned;
-        self.generics.span()
-    }
-
-    fn count_generics(&self) -> usize {
-        let Some(generics) = &self.generics else {
-            return 0;
-        };
-        generics.len()
     }
 }
 

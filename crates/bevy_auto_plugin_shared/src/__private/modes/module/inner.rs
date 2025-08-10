@@ -1,11 +1,13 @@
-use crate::__private::attribute::AutoPluginAttribute;
-use crate::__private::attribute_args::{
-    AddSystemArgs, AddSystemWithTargetArgs, InsertResourceArgsWithPath,
+use crate::__private::attribute_args::attributes::prelude::{
+    AddEventAttributeArgs, AddObserverAttributeArgs, AddSystemAttributeArgs, AutoNameAttributeArgs,
+    InitResourceAttributeArgs, InitStateAttributeArgs, InsertResourceAttributeArgs,
+    RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
-use crate::__private::bevy_app_code_gen::{InputSets, expand_input_sets};
+use crate::__private::context::{AutoPluginContext, ToTokenStringValue};
+use crate::__private::item_with_attr_match::items_with_attribute_macro;
 use crate::__private::item_with_attr_match::struct_or_enum_items_with_attribute_macro;
-use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_macro};
 use crate::__private::modes::module::attribute::ModuleArgs;
+use crate::__private::util::concrete_path::ConcreteTargetPathWithGenericsCollection;
 use crate::__private::util::meta::fn_meta::FnMeta;
 use crate::__private::util::module::inject_module;
 use crate::__private::util::tokens::to_compile_error;
@@ -19,92 +21,59 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
     let app_param_ident = Ident::new("app", Span::call_site());
     // Extract the content inside the module
     if let Some((_, items)) = &module.content {
-        fn map_to_path(iter: impl IntoIterator<Item = ItemWithAttributeMatch>) -> Vec<syn::Path> {
-            iter.into_iter()
-                .map(ItemWithAttributeMatch::path_owned)
-                .collect()
-        }
-
-        fn map_to_insert_resource(
-            iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
-        ) -> Vec<syn::Result<InsertResourceArgsWithPath>> {
-            iter.into_iter()
-                .map(InsertResourceArgsWithPath::try_from)
-                .collect()
-        }
-
-        fn map_to_add_system_args(
-            iter: impl IntoIterator<Item = ItemWithAttributeMatch>,
-        ) -> darling::Result<Vec<AddSystemWithTargetArgs>> {
-            iter.into_iter().try_fold(Vec::new(), |mut acc, item| {
-                let args = AddSystemArgs::from_meta(&item.matched_attribute.meta)?;
-                let it = AddSystemWithTargetArgs::try_from_macro_attr(item.path, args)
-                    .map_err(darling::Error::from)?;
-                acc.extend(it);
-                Ok(acc)
-            })
-        }
-
         // Find all items with the provided [`attribute_name`] #[...] attribute
         let register_types =
-            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::RegisterType)?;
-        let register_types = map_to_path(register_types);
+            struct_or_enum_items_with_attribute_macro::<RegisterTypeAttributeArgs>(items)?;
 
-        let add_events =
-            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::AddEvent)?;
-        let add_events = map_to_path(add_events);
+        let add_events = struct_or_enum_items_with_attribute_macro::<AddEventAttributeArgs>(items)?;
 
         let init_resources =
-            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::InitResource)?;
-        let init_resources = map_to_path(init_resources);
+            struct_or_enum_items_with_attribute_macro::<InitResourceAttributeArgs>(items)?;
 
         let insert_resources =
-            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::InsertResource)?;
-        let insert_resources = map_to_insert_resource(insert_resources);
-        let insert_resources = insert_resources
-            .into_iter()
-            .try_fold(vec![], |mut res, next| {
-                res.push(next?);
-                syn::Result::Ok(res)
-            })?;
+            struct_or_enum_items_with_attribute_macro::<InsertResourceAttributeArgs>(items)?;
 
-        let auto_names =
-            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::Name)?;
-        let auto_names = map_to_path(auto_names);
-
-        let register_state_types = struct_or_enum_items_with_attribute_macro(
-            items,
-            AutoPluginAttribute::RegisterStateType,
-        )?;
-        let register_state_types = map_to_path(register_state_types);
+        let auto_names = struct_or_enum_items_with_attribute_macro::<AutoNameAttributeArgs>(items)?;
+        let register_state_types =
+            struct_or_enum_items_with_attribute_macro::<RegisterStateTypeAttributeArgs>(items)?;
 
         let init_states =
-            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::InitState)?;
-        let init_states = map_to_path(init_states);
+            struct_or_enum_items_with_attribute_macro::<InitStateAttributeArgs>(items)?;
 
-        let add_systems =
-            items_with_attribute_macro::<FnMeta>(items, AutoPluginAttribute::AddSystem)?;
-        let add_systems = map_to_add_system_args(add_systems)?;
+        let add_systems = items_with_attribute_macro::<FnMeta, AddSystemAttributeArgs>(items)?;
 
         let add_observers =
-            struct_or_enum_items_with_attribute_macro(items, AutoPluginAttribute::AddObserver)?;
-        let add_observers = map_to_path(add_observers);
+            struct_or_enum_items_with_attribute_macro::<AddObserverAttributeArgs>(items)?;
+
+        let mut context = AutoPluginContext::default();
+
+        macro_rules! insert {
+            ($var:ident, $ident:ident) => {
+                $var.into_iter().for_each(|item| {
+                    // TODO: this turned out ugly
+                    ConcreteTargetPathWithGenericsCollection::from(&item)
+                        .into_iter()
+                        .for_each(|path| {
+                            context
+                                .$var
+                                .insert(ToTokenStringValue::<$ident>::from((path, &item.args)));
+                        });
+                });
+            };
+        }
+
+        insert!(register_types, RegisterTypeAttributeArgs);
+        insert!(add_events, AddEventAttributeArgs);
+        insert!(init_resources, InitResourceAttributeArgs);
+        insert!(insert_resources, InsertResourceAttributeArgs);
+        insert!(auto_names, AutoNameAttributeArgs);
+        insert!(register_state_types, RegisterStateTypeAttributeArgs);
+        insert!(init_states, InitStateAttributeArgs);
+        insert!(add_systems, AddSystemAttributeArgs);
+        insert!(add_observers, AddObserverAttributeArgs);
 
         inject_module(&mut module, move || {
-            let func_body = expand_input_sets(
-                &app_param_ident,
-                InputSets {
-                    register_types,
-                    register_state_types,
-                    auto_names,
-                    add_events,
-                    add_systems,
-                    add_observers,
-                    insert_resources,
-                    init_states,
-                    init_resources,
-                },
-            )?;
+            let func_body = context.expand_build(&app_param_ident);
 
             #[cfg(feature = "log_plugin_build")]
             let func_body = quote! {
