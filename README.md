@@ -10,10 +10,71 @@ This crate is designed to reduce the boilerplate required when creating Bevy plu
 
 While there are ongoing discussions about auto-registering types by default in Bevy—potentially making part of this crate redundant—the remaining functionality should continue to provide quality-of-life improvements for bevy related development.
 
+## Examples
+See [tests](tests) for a more comprehensive set of examples
+
+## Usage - Global
+
+```rust
+use bevy::prelude::*;
+use bevy_auto_plugin::modes::global::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+#[auto_register_type(plugin = MyPlugin)]
+#[auto_name(plugin = MyPlugin)]
+struct FooComponent;
+
+#[derive(Resource, Debug, Default, Reflect)]
+#[reflect(Resource)]
+#[auto_register_type(plugin = MyPlugin)]
+#[auto_init_resource(plugin = MyPlugin)]
+struct FooDefaultResource(usize);
+
+#[derive(Resource, Debug, Default, Reflect)]
+#[reflect(Resource)]
+#[auto_register_type(plugin = MyPlugin)]
+#[auto_init_resource(plugin = MyPlugin)]
+#[auto_insert_resource(plugin = MyPlugin, resource(FooResource(1)))]
+struct FooResource(usize);
+
+#[derive(Event, Debug, Default, Reflect)]
+#[auto_register_type(plugin = MyPlugin)]
+#[auto_add_event(plugin = MyPlugin)]
+struct FooEvent(usize);
+
+#[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
+#[auto_init_state(plugin = MyPlugin)]
+#[auto_register_state_type(plugin = MyPlugin)]
+enum FooState {
+    #[default]
+    Start,
+    End,
+}
+
+#[auto_add_system(plugin = MyPlugin, schedule = Update)]
+fn foo_system(mut foo_resource: ResMut<FooResource>) {
+    foo_resource.0 += 1;
+}
+
+fn main() {
+    App::new()
+        .add_plugins(MyPlugin)
+        // ... other plugins and setup
+        .run();
+}
+```
+
+Which automatically implements the Plugin trait for `MyPlugin` and registers all the types, resources, events, and systems when the plugin is added to the app.
+
 ## Usage - Module
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 
 #[auto_plugin(init_name=init)]
 mod plugin_module {
@@ -25,8 +86,8 @@ mod plugin_module {
     #[auto_name]
     pub struct FooComponent;
 
-    #[auto_register_type(FooComponentWithGeneric<bool>)]
-    #[auto_register_type(FooComponentWithGeneric<u32>)]
+    #[auto_register_type(generics(bool))]
+    #[auto_register_type(generics(u32))]
     #[derive(Component, Reflect)]
     #[reflect(Component)]
     pub struct FooComponentWithGeneric<T>(T);
@@ -36,7 +97,7 @@ mod plugin_module {
     #[derive(Event, Reflect)]
     pub struct FooEvent;
 
-    #[auto_register_type(FooEvent<bool>)]
+    #[auto_register_type(generics(bool))]
     #[auto_add_event]
     #[derive(Event, Reflect)]
     pub struct FooEventWithGeneric<T>(T);
@@ -47,7 +108,7 @@ mod plugin_module {
     #[reflect(Resource)]
     pub struct FooResource;
 
-    #[auto_register_type(FooResourceWithGeneric<bool>)]
+    #[auto_register_type(generics(bool))]
     #[auto_init_resource]
     #[derive(Resource, Default, Reflect)]
     #[reflect(Resource)]
@@ -90,7 +151,7 @@ mod plugin_module {
 
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_register_type]
 #[derive(Component, Reflect)]
@@ -98,8 +159,8 @@ use bevy_auto_plugin::flat_file::prelude::*;
 #[auto_name]
 struct FooComponent;
 
-#[auto_register_type(FooComponentWithGeneric<bool>)]
-#[auto_register_type(FooComponentWithGeneric<u32>)]
+#[auto_register_type(generics(bool))]
+#[auto_register_type(generics(u32))]
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 struct FooComponentWithGeneric<T>(T);
@@ -109,7 +170,7 @@ struct FooComponentWithGeneric<T>(T);
 #[derive(Event, Reflect)]
 struct FooEvent;
 
-#[auto_register_type(FooEvent<bool>)]
+#[auto_register_type(generics(bool))]
 #[auto_add_event]
 #[derive(Event, Reflect)]
 struct FooEventWithGeneric<T>(T);
@@ -120,7 +181,7 @@ struct FooEventWithGeneric<T>(T);
 #[reflect(Resource)]
 struct FooResource;
 
-#[auto_register_type(FooResourceWithGeneric<bool>)]
+#[auto_register_type(generics(bool))]
 #[auto_init_resource]
 #[derive(Resource, Default, Reflect)]
 #[reflect(Resource)]
@@ -160,7 +221,7 @@ fn plugin(app: &mut App) {
 - All items need to be in the same module. This won't work:
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::flat_file::prelude::*;
+use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 mod foo {
     use super::*;

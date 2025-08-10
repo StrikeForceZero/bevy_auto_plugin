@@ -1,12 +1,12 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 use bevy_ecs::prelude::*;
 
 #[auto_plugin(init_name=init)]
 mod plugin_module {
     use super::*;
 
-    #[auto_init_resource(Test<bool>)]
+    #[auto_init_resource(generics(bool))]
     #[derive(Resource, Default)]
     pub struct Test<T>(pub T);
 }
@@ -22,7 +22,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_init_resource_generic() {
     let app = app();
     assert!(

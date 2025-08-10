@@ -1,109 +1,113 @@
 name: CI
 
 on:
-    # Trigger the workflow on push and pull requests to the main branch
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
+  # Trigger the workflow on push and pull requests to the main branch
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 env:
-    CARGO_TERM_COLOR: always
-    RUSTFLAGS: --deny warnings
-    RUSTDOCFLAGS: --deny warnings
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: --deny warnings
+  RUSTDOCFLAGS: --deny warnings
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                toolchain: [stable]
-                feature-set: [default, missing_auto_plugin_is_compile_error]
-        steps:
-            # Checkout the repository
-            - name: Checkout code
-              uses: actions/checkout@v3
-            
-            # Install Rust for the selected toolchain
-            - name: Install Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: ${{ matrix.toolchain }}
-                  override: true
-            
-            # Run tests with the specified feature set
-            - name: Run tests
-              if: ${{ matrix.toolchain == 'stable' || matrix.toolchain == 'nightly' }}
-              run: |
-                  echo "Testing with ${{ matrix.toolchain }} and features: ${{ matrix.toolchain }},${{ matrix.feature-set }}"
-                  cargo test --features "${{ matrix.feature-set }}"
+  # ---------- native targets ----------
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        feature-set: [ default, missing_auto_plugin_is_compile_error, legacy_path_param, inventory ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    doc-test:
-        runs-on: ubuntu-latest
-        steps:
-            # Checkout the repository
-            -   name: Checkout code
-                uses: actions/checkout@v3
-            
-            # Install Rust with stable toolchain
-            -   name: Install Rust (stable)
-                uses: actions-rs/toolchain@v1
-                with:
-                    profile: minimal
-                    toolchain: stable
-                    override: true
-            
-            # Compile documentation with stable
-            -   name: Compile Rust documentation
-                run: |
-                    echo "Compiling Rust documentation"
-                    cargo +stable doc --no-deps
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
 
-    rustfmt:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
-    
-            - name: Install Rust (stable)
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: stable
-                  override: true
+      - name: Run tests
+        run: |
+          echo "Testing with features: ${{ matrix.feature-set }},all_modes"
+          cargo test --no-default-features --features "${{ matrix.feature-set }},all_modes"
 
-            - name: Install rustfmt
-              run: |
-                  echo "Installing rustfmt for stable"
-                  rustup component add rustfmt --toolchain stable
-    
-            - name: Run rustfmt
-              run: |
-                  echo "Checking code formatting with rustfmt (stable)"
-                  cargo +stable fmt --all -- --check
+  doc-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    clippy:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
+      - name: Setup Rust (stable)
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          override: true
 
-            - name: Install Rust (stable)
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: stable
-                  override: true
+      - name: Compile Rust documentation
+        run: cargo +stable doc --no-deps
 
-            - name: Install clippy
-              run: |
-                  echo "Installing clippy for stable"
-                  rustup component add clippy --toolchain stable
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-            - name: Run clippy
-              run: |
-                  echo "Running clippy for lint checks (stable)"
-                  cargo +stable clippy --all-targets --all-features -- -D warnings
+      - name: Setup Rust with rustfmt
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt
+          override: true
+
+      - name: Run rustfmt
+        run: cargo +stable fmt --all -- --check
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust with clippy
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+          override: true
+
+      - name: Run clippy
+        run: cargo +stable clippy --all-targets --all-features -- -D warnings
+
+  # ---------- WebAssembly target ----------
+  wasm-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        feature-set: [ default, missing_auto_plugin_is_compile_error, legacy_path_param, inventory ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust with wasm target
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+
+      - name: Setup Node (for wasm-bindgen test runner)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-bindgen CLI (provides the test runner)
+        run: cargo install wasm-bindgen-cli --locked
+
+      - name: Run wasm tests
+        run: |
+          echo "Test wasm32 with features: ${{ matrix['feature-set'] }},all_modes"
+          cargo test --target wasm32-unknown-unknown --no-default-features --features "${{ matrix['feature-set'] }},all_modes"

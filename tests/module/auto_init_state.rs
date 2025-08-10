@@ -1,5 +1,5 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 use bevy_state::app::StatesPlugin;
 use bevy_state::prelude::*;
 
@@ -37,7 +37,7 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_init_state() {
     let app = app();
     assert!(app.world().get_resource::<State<Test>>().is_some());

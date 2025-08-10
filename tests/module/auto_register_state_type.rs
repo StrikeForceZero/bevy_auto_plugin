@@ -1,9 +1,10 @@
 use bevy_app::prelude::*;
-use bevy_auto_plugin::module::prelude::*;
+use bevy_auto_plugin::modes::module::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_reflect::prelude::*;
 use bevy_state::app::StatesPlugin;
 use bevy_state::prelude::*;
+use internal_test_util::type_id_of;
 
 #[auto_plugin(init_name=init)]
 mod plugin_module {
@@ -41,26 +42,25 @@ fn app() -> App {
     app
 }
 
-#[test]
+#[internal_test_proc_macro::xtest]
 fn test_auto_register_state_type() {
-    use std::any::Any;
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
     assert!(
-        type_registry.contains(State::new(Test::A).type_id()),
+        type_registry.contains(type_id_of::<State<Test>>()),
         "did not auto init state"
     );
     assert!(
-        type_registry.contains(NextState::<Test>::Unchanged.type_id()),
+        type_registry.contains(type_id_of::<NextState<Test>>()),
         "did not auto init state"
     );
     assert!(
-        type_registry.contains(NextState::<InnerTest>::Unchanged.type_id()),
+        type_registry.contains(type_id_of::<NextState<InnerTest>>()),
         "did not auto register state type"
     );
     assert!(
-        type_registry.contains(State::new(InnerTest::A).type_id()),
+        type_registry.contains(type_id_of::<State<InnerTest>>()),
         "did not auto register state type"
     );
 }
