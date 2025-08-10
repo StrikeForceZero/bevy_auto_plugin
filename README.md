@@ -10,6 +10,8 @@ This crate is designed to reduce the boilerplate required when creating Bevy plu
 
 While there are ongoing discussions about auto-registering types by default in Bevy—potentially making part of this crate redundant—the remaining functionality should continue to provide quality-of-life improvements for bevy related development.
 
+## Examples
+See [tests](tests) for a more comprehensive set of examples
 
 ## Usage - Global
 
