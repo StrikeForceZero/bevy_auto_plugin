@@ -50,8 +50,8 @@ mod plugin_module {
         test.0 > two
     }
 
-    #[auto_add_system(schedule = Update, generics(u32), run_if = run_if_gt_2::<u32>, before = foo_system::<u32>)]
-    #[auto_add_system(schedule = Update, generics(i32), run_if = run_if_gt_2::<i32>, before = foo_system::<i32>)]
+    #[auto_add_system(schedule = Update, generics(u32), config(run_if = run_if_gt_2::<u32>, before = foo_system::<u32>))]
+    #[auto_add_system(schedule = Update, generics(i32), config(run_if = run_if_gt_2::<i32>, before = foo_system::<i32>))]
     pub(super) fn bar_system<T>(mut test: ResMut<Test<T>>)
     where
         T: TestNumber<T> + 'static,

@@ -12,15 +12,15 @@ enum TestSet {
 #[derive(Resource, Debug, Clone, Default, PartialEq)]
 struct Test(Vec<&'static str>);
 
-#[auto_add_system(schedule = Update, in_set = TestSet::First)]
+#[auto_add_system(schedule = Update, config(in_set = TestSet::First))]
 fn a_system(mut test: ResMut<Test>) {
     test.0.push("a");
 }
-#[auto_add_system(schedule = Update, in_set = TestSet::Second)]
+#[auto_add_system(schedule = Update, config(in_set = TestSet::Second))]
 fn b_system(mut test: ResMut<Test>) {
     test.0.push("b");
 }
-#[auto_add_system(schedule = Update, in_set = TestSet::Third)]
+#[auto_add_system(schedule = Update, config(in_set = TestSet::Third))]
 fn c_system(mut test: ResMut<Test>) {
     test.0.push("c");
 }

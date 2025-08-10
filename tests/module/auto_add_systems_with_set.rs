@@ -15,15 +15,15 @@ mod plugin_module {
     #[derive(Resource, Debug, Clone, Default, PartialEq)]
     pub(super) struct Test(pub Vec<&'static str>);
 
-    #[auto_add_system(schedule = Update, in_set = TestSet::First)]
+    #[auto_add_system(schedule = Update, config(in_set = TestSet::First))]
     pub(super) fn a_system(mut test: ResMut<Test>) {
         test.0.push("a");
     }
-    #[auto_add_system(schedule = Update, in_set = TestSet::Second)]
+    #[auto_add_system(schedule = Update, config(in_set = TestSet::Second))]
     pub(super) fn b_system(mut test: ResMut<Test>) {
         test.0.push("b");
     }
-    #[auto_add_system(schedule = Update, in_set = TestSet::Third)]
+    #[auto_add_system(schedule = Update, config(in_set = TestSet::Third))]
     pub(super) fn c_system(mut test: ResMut<Test>) {
         test.0.push("c");
     }

@@ -274,7 +274,7 @@ impl StructOrEnumAttributeArgs {
 #[darling(derive_syn_parse)]
 pub struct ScheduleWithScheduleConfigArgs {
     pub schedule: Path,
-    #[darling(flatten)]
+    #[darling(default)]
     pub config: ScheduleConfigArgs,
 }
 
