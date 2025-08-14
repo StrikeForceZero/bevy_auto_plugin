@@ -1,9 +1,11 @@
+#[cfg(feature = "mode_flat_file")]
 use bevy_auto_plugin_shared::__private::attribute_args::ItemAttributeArgs;
 #[cfg(feature = "mode_flat_file")]
 use bevy_auto_plugin_shared::__private::attribute_args::attributes::prelude::{
     AddEventAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
     InitStateAttributeArgs, RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
+#[cfg(feature = "mode_flat_file")]
 use bevy_auto_plugin_shared::__private::context::{
     AutoPluginContextInsert, SupportsAutoPluginContextInsert, ToTokenStringValue,
 };
