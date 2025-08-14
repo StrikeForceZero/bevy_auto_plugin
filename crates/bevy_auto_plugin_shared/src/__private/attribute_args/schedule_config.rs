@@ -7,7 +7,7 @@ use syn::Path;
 #[darling(derive_syn_parse)]
 pub struct ScheduleWithScheduleConfigArgs {
     pub schedule: Path,
-    #[darling(flatten, default)]
+    #[darling(default)]
     pub config: ScheduleConfigArgs,
 }
 

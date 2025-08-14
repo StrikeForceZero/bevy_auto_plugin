@@ -1,5 +1,5 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
-use crate::__private::attribute_args::schedule_config::ScheduleConfigArgs;
+use crate::__private::attribute_args::schedule_config::ScheduleWithScheduleConfigArgs;
 use crate::__private::attribute_args::{
     GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
@@ -11,16 +11,15 @@ use crate::__private::util::meta::fn_meta::FnMeta;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
-use syn::{Item, Path};
+use syn::Item;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct AddSystemAttributeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
-    pub schedule: Path,
-    #[darling(rename = "config", default)]
-    pub schedule_config: ScheduleConfigArgs,
+    #[darling(flatten)]
+    pub schedule_config: ScheduleWithScheduleConfigArgs,
 }
 
 impl ItemAttributeArgs for AddSystemAttributeArgs {
@@ -51,8 +50,8 @@ impl ToTokensWithConcreteTargetPath for AddSystemAttributeArgs {
         tokens: &mut TokenStream,
         target: &ConcreteTargetPath,
     ) {
-        let schedule = &self.schedule;
-        let config_tokens = self.schedule_config.to_token_stream();
+        let schedule = &self.schedule_config.schedule;
+        let config_tokens = self.schedule_config.config.to_token_stream();
         tokens.extend(quote! {
             .add_systems(#schedule, #target #config_tokens)
         })
