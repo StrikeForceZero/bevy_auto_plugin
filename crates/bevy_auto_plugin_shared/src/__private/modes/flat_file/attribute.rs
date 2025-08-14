@@ -1,4 +1,5 @@
 use crate::__private::util::debug::{debug_pat, debug_ty};
+use crate::__private::util::meta::fn_meta::require_fn_param_mutable_reference;
 use darling::FromMeta;
 use proc_macro2::Ident;
 use syn::spanned::Spanned;
@@ -66,7 +67,10 @@ impl FlatFileArgs {
                     .next()
                     .ok_or_else(|| err!("auto_plugin requires a method taking at least one parameter in addition to `&self`"))?;
                 match extract_param(first)? {
-                    ArgType::Named(name) => name,
+                    ArgType::Named(name) => {
+                        require_fn_param_mutable_reference(input, &name, "auto_plugin")?;
+                        name
+                    }
                     _ => unreachable!("invalid function signature, multiple receivers"),
                 }
             }
@@ -80,5 +84,58 @@ impl FlatFileArgs {
         }
 
         Ok(ident)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[internal_test_proc_macro::xtest]
+    fn test_resolve_app_param_name_default() {
+        let item = syn::parse_quote! {
+            fn foo(&mut self, foo: &mut App) {}
+        };
+        let args = FlatFileArgs::default();
+        let ident = args.resolve_app_param_name(&item).unwrap();
+        assert_eq!(ident, "foo");
+    }
+
+    #[internal_test_proc_macro::xtest]
+    #[should_panic = "auto_plugin requires a function taking at least one parameter"]
+    fn test_resolve_app_param_name_default_no_params() {
+        let item = syn::parse_quote! {
+            fn foo() {}
+        };
+        let args = FlatFileArgs::default();
+        match args.resolve_app_param_name(&item) {
+            Ok(_) => {}
+            Err(err) => panic!("{err:?}"),
+        }
+    }
+
+    #[internal_test_proc_macro::xtest]
+    #[should_panic = "auto_plugin requires a method taking at least one parameter in addition to `&self`"]
+    fn test_resolve_app_param_name_default_missing_param() {
+        let item = syn::parse_quote! {
+            fn foo(&mut self) {}
+        };
+        let args = FlatFileArgs::default();
+        match args.resolve_app_param_name(&item) {
+            Ok(_) => {}
+            Err(err) => panic!("{err:?}"),
+        }
+    }
+
+    #[internal_test_proc_macro::xtest]
+    #[should_panic = "auto_plugin - the function: foo param: foo is not mutable"]
+    fn test_resolve_app_param_name_default_wrong_type() {
+        let item = syn::parse_quote! {
+            fn foo(&mut self, foo: &Bar) {}
+        };
+        let args = FlatFileArgs::default();
+        match args.resolve_app_param_name(&item) {
+            Ok(_) => {}
+            Err(err) => panic!("{err:?}"),
+        }
     }
 }
