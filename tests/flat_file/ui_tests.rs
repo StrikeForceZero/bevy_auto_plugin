@@ -5,10 +5,6 @@ const STDERR_EXTENSION: &str = "stderr";
 
 enum SubDir {
     Root,
-    #[cfg(not(feature = "legacy_path_param"))]
-    Standard,
-    #[cfg(feature = "legacy_path_param")]
-    LegacyPathParam,
     Nightly,
     Stable,
 }
@@ -17,10 +13,6 @@ impl SubDir {
     fn as_str(&self) -> &'static str {
         match self {
             Self::Root => "",
-            #[cfg(not(feature = "legacy_path_param"))]
-            Self::Standard => "standard",
-            #[cfg(feature = "legacy_path_param")]
-            Self::LegacyPathParam => "legacy_path_param",
             Self::Nightly => "nightly",
             Self::Stable => "stable",
         }
@@ -128,10 +120,6 @@ mod tests {
     fn ui_tests() {
         let t = trybuild::TestCases::new();
         t.compile_fail(get_trybuild_path_string(SubDir::Root));
-        #[cfg(not(feature = "legacy_path_param"))]
-        t.compile_fail(get_trybuild_path_string(SubDir::Standard));
-        #[cfg(feature = "legacy_path_param")]
-        t.compile_fail(get_trybuild_path_string(SubDir::LegacyPathParam));
         #[cfg(nightly)]
         t.compile_fail(get_trybuild_path_string(SubDir::Nightly));
         #[cfg(stable)]

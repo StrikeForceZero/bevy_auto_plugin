@@ -4,7 +4,6 @@ use crate::__private::type_list::TypeList;
 use crate::__private::util::extensions::from_meta::FromMetaExt;
 use crate::__private::util::generics::CountGenerics;
 use crate::__private::util::meta::IdentGenericsAttrsMeta;
-use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use crate::__private::util::path_fmt::{PathWithoutGenerics, TryFromPathWithoutGenericsError};
 use darling::FromMeta;
 use proc_macro2::TokenStream as MacroStream;
@@ -158,32 +157,10 @@ pub fn generics_from_path(path: &Path) -> syn::Result<TypeList> {
     Ok(generics)
 }
 
-pub fn legacy_generics_from_path(
-    struct_or_enum_ref: &StructOrEnumMeta,
-    attr: MacroStream,
-) -> syn::Result<TypeList> {
-    let path = parse2::<Path>(attr)?;
-    let path_last_segment = path.segments.last();
-    let path_maybe_ident = path_last_segment.map(|s| &s.ident);
-    if Some(struct_or_enum_ref.ident) != path_maybe_ident {
-        use syn::spanned::Spanned;
-        return Err(syn::Error::new(
-            path.span(),
-            format!(
-                "path ident {} does not match struct or enum ident {:?}",
-                struct_or_enum_ref.ident, path_maybe_ident
-            ),
-        ));
-    }
-    validate_generic_counts(struct_or_enum_ref.generics, &path)?;
-    PathExt::generics(&path)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::__private::generics::Generics;
-    use syn::parse_quote;
 
     #[internal_test_proc_macro::xtest]
     fn test_generics_from_path() -> Result<(), syn::Error> {
@@ -193,21 +170,6 @@ mod tests {
         let generics = generics_from_path(&item).expect("no generics");
         let generics = quote! { #generics };
         assert_eq!("u32 , i32", generics.to_string());
-        Ok(())
-    }
-
-    #[internal_test_proc_macro::xtest]
-    fn test_legacy_generics_from_path() -> Result<(), syn::Error> {
-        let item = parse_quote! {
-            #[auto_register_types(Foo<T, U>)]
-            struct Foo<T, U>(T, U);
-        };
-        let attribute = quote! {
-            Foo<T, U>
-        };
-        let struct_or_enum_ref = StructOrEnumMeta::try_from(&item)?;
-        let generics = legacy_generics_from_path(&struct_or_enum_ref, attribute)?;
-        assert_eq!("T , U", generics.to_token_stream().to_string().trim());
         Ok(())
     }
 
