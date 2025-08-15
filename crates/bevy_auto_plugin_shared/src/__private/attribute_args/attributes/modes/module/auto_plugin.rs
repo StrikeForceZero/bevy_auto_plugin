@@ -2,14 +2,16 @@ use crate::__private::attribute_args::GenericsArgs;
 use crate::__private::type_list::TypeList;
 use darling::FromMeta;
 use proc_macro2::Ident;
+use proc_macro2::Span;
+use smart_default::SmartDefault;
 
-#[derive(FromMeta, Debug, Default, Clone, PartialEq)]
+#[derive(FromMeta, Debug, SmartDefault, Clone, PartialEq)]
 #[darling(derive_syn_parse, default)]
 pub struct AutoPluginArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
-    #[darling(default)]
-    pub init_name: Option<Ident>,
+    #[default(Ident::new("init", Span::call_site()))]
+    pub init_name: Ident,
 }
 
 impl GenericsArgs for AutoPluginArgs {

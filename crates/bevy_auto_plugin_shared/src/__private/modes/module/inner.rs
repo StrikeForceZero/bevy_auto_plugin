@@ -1,3 +1,4 @@
+use crate::__private::attribute_args::attributes::modes::module::auto_plugin::AutoPluginArgs;
 use crate::__private::attribute_args::attributes::prelude::{
     AddEventAttributeArgs, AddObserverAttributeArgs, AddSystemAttributeArgs, AutoNameAttributeArgs,
     InitResourceAttributeArgs, InitStateAttributeArgs, InsertResourceAttributeArgs,
@@ -6,7 +7,6 @@ use crate::__private::attribute_args::attributes::prelude::{
 use crate::__private::context::{AutoPluginContext, ToTokenStringValue};
 use crate::__private::item_with_attr_match::items_with_attribute_macro;
 use crate::__private::item_with_attr_match::struct_or_enum_items_with_attribute_macro;
-use crate::__private::modes::module::attribute::ModuleArgs;
 use crate::__private::util::concrete_path::ConcreteTargetPathWithGenericsCollection;
 use crate::__private::util::meta::fn_meta::FnMeta;
 use crate::__private::util::module::inject_module;
@@ -103,7 +103,7 @@ pub fn expand_module(attr: MacroStream, item: MacroStream) -> MacroStream {
 
 pub fn expand_module_inner(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
     let attr_args: Vec<NestedMeta> = NestedMeta::parse_meta_list(attr)?;
-    let args = ModuleArgs::from_list(&attr_args)?;
+    let args = AutoPluginArgs::from_list(&attr_args)?;
     let item_mod: ItemMod = parse2(item)?;
     auto_plugin_inner(item_mod, &args.init_name)
 }
