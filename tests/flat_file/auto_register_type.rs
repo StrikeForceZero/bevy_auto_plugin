@@ -8,7 +8,7 @@ use internal_test_util::type_id_of;
 #[derive(Reflect)]
 struct Test;
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {}
 
 fn app() -> App {

@@ -1,5 +1,5 @@
 error: auto_plugin requires specifying the name of the `&mut bevy::app::App` parameter when there’s more than one parameter, example:
-       #[auto_plugin(app=my_app)]
+       #[auto_plugin(app_param=my_app)]
        fn my_plugin(my_app: &mut App)
  --> tests/flat_file/ui/auto_plugin_missing_param_with_multiple.rs:3:1
   |

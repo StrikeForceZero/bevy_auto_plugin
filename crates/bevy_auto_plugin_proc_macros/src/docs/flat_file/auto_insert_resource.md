@@ -14,7 +14,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[auto_insert_resource(resource(FooResource(42)))]
 struct FooResource(usize);
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
     // app.insert_resource(FooResource(42));
@@ -31,7 +31,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[auto_insert_resource(resource(FooResourceWithGeneric(42)), generics(usize))]
 struct FooResourceWithGeneric<T>(T);
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
     // app.insert_resource(FooResourceWithGeneric::<usize>(42));

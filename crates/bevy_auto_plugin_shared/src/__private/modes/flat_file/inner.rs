@@ -1,12 +1,13 @@
 use crate::__private::attribute_args::ItemAttributeArgs;
 use crate::__private::attribute_args::attributes::add_observer::AddObserverAttributeArgs;
+use crate::__private::attribute_args::attributes::modes::flat_file::auto_plugin::AutoPluginArgs;
+use crate::__private::attribute_args::attributes::modes::resolve_app_param_name;
 use crate::__private::attribute_args::attributes::prelude::{
     AddSystemAttributeArgs, InsertResourceAttributeArgs,
 };
 use crate::__private::context::{
     AutoPluginContextInsert, SupportsAutoPluginContextInsert, ToTokenStringValue,
 };
-use crate::__private::modes::flat_file::attribute::FlatFileArgs;
 use crate::__private::modes::flat_file::file_state::{update_file_state, update_state};
 use crate::__private::util::concrete_path::{
     ConcreteTargetPathWithGenericsCollection, resolve_paths_from_item_or_args,
@@ -274,9 +275,9 @@ pub fn expand_flat_file(attr: MacroStream, item: MacroStream) -> MacroStream {
 
 pub fn expand_flat_file_inner(attr: MacroStream, item: MacroStream) -> syn::Result<MacroStream> {
     let attr_args: Vec<NestedMeta> = NestedMeta::parse_meta_list(attr)?;
-    let args = FlatFileArgs::from_list(&attr_args)?;
+    let args = AutoPluginArgs::from_list(&attr_args)?;
     let item_fn: ItemFn = parse2(item)?;
-    let app_param = args.resolve_app_param_name(&item_fn)?;
+    let app_param = resolve_app_param_name(&item_fn, args.app_param)?;
     extract_or_noop!(file_path, resolve_local_file_spanned(Span::call_site())?, {
         use quote::ToTokens;
         return Ok(item_fn.to_token_stream());

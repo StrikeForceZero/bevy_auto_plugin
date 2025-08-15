@@ -20,7 +20,7 @@ enum InnerTest {
     A,
 }
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {}
 
 fn app() -> App {
