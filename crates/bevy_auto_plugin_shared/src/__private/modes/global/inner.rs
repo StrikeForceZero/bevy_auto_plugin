@@ -6,6 +6,7 @@ use crate::__private::attribute_args::attributes::init_resource::InitResourceAtt
 use crate::__private::attribute_args::attributes::init_state::InitStateAttributeArgs;
 use crate::__private::attribute_args::attributes::insert_resource::InsertResourceAttributeArgs;
 use crate::__private::attribute_args::attributes::modes::global::auto_plugin::AutoPluginFnAttributeArgs;
+use crate::__private::attribute_args::attributes::modes::resolve_app_param_name;
 use crate::__private::attribute_args::attributes::register_state_type::RegisterStateTypeAttributeArgs;
 use crate::__private::attribute_args::attributes::register_type::RegisterTypeAttributeArgs;
 use crate::__private::attribute_args::derives::auto_plugin::GlobalAutoPluginDeriveArgs;
@@ -103,8 +104,11 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
         .collect::<Vec<_>>();
     let self_arg = self_args.first();
 
-    let default_app_ident = default_app_ident();
-    let app_param_ident = params.app_param.as_ref().unwrap_or(&default_app_ident);
+    // TODO: use helper
+    let app_param_ident = match resolve_app_param_name(&item, params.app_param.as_ref()) {
+        Ok(ident) => ident,
+        Err(err) => return err.into_compile_error(),
+    };
 
     if let Err(err) = require_fn_param_mutable_reference(&item, app_param_ident, "bevy app") {
         return err.to_compile_error();

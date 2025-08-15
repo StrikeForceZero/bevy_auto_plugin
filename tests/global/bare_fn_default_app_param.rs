@@ -15,8 +15,8 @@ pub struct MyResourceAuto(usize);
 pub struct MyResourceBuild(usize);
 
 #[auto_plugin(plugin = MyPlugin)]
-fn build(app: &mut App) {
-    app.insert_resource(MyResourceBuild(1));
+fn build(my_app: &mut App) {
+    my_app.insert_resource(MyResourceBuild(1));
 }
 
 #[internal_test_proc_macro::xtest]

@@ -26,8 +26,8 @@ use syn::{Error, Item, ItemFn, parse2};
 
 pub fn auto_plugin_inner(
     file_path: String,
-    input: ItemFn,
-    app_param_name: Ident,
+    input: &ItemFn,
+    app_param_name: &Ident,
 ) -> syn::Result<MacroStream> {
     let _func_name = &input.sig.ident;
     let func_body = &input.block;
@@ -277,12 +277,12 @@ pub fn expand_flat_file_inner(attr: MacroStream, item: MacroStream) -> syn::Resu
     let attr_args: Vec<NestedMeta> = NestedMeta::parse_meta_list(attr)?;
     let args = AutoPluginArgs::from_list(&attr_args)?;
     let item_fn: ItemFn = parse2(item)?;
-    let app_param = resolve_app_param_name(&item_fn, args.app_param)?;
+    let app_param = resolve_app_param_name(&item_fn, args.app_param.as_ref())?;
     extract_or_noop!(file_path, resolve_local_file_spanned(Span::call_site())?, {
         use quote::ToTokens;
         return Ok(item_fn.to_token_stream());
     });
-    auto_plugin_inner(file_path, item_fn, app_param)
+    auto_plugin_inner(file_path, &item_fn, app_param)
 }
 
 /// Handle a flat-file attribute
