@@ -15,7 +15,7 @@ pub struct MyResourceAuto(usize);
 pub struct MyResourceBuild(usize);
 
 impl Plugin for MyPlugin {
-    #[global_auto_plugin]
+    #[auto_plugin]
     fn build(&self, app: &mut App) {
         app.insert_resource(MyResourceBuild(1));
     }

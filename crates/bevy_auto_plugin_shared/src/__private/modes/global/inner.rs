@@ -116,7 +116,7 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
         if params.plugin.is_some() {
             return syn::Error::new(
                 params.plugin.span(),
-                "global_auto_plugin on trait impl can't specify plugin ident",
+                "auto_plugin on trait impl can't specify plugin ident",
             )
             .to_compile_error();
         };
@@ -127,14 +127,14 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
         if sig.inputs.len() > 1 {
             return syn::Error::new(
                 sig.inputs.span(),
-                "global_auto_plugin on bare fn can only accept a single parameter with the type &mut bevy::prelude::App",
+                "auto_plugin on bare fn can only accept a single parameter with the type &mut bevy::prelude::App",
             )
             .to_compile_error();
         }
         let Some(plugin_ident) = params.plugin else {
             return syn::Error::new(
                 params.plugin.span(),
-                "global_auto_plugin on bare fn requires the plugin ident to be specified",
+                "auto_plugin on bare fn requires the plugin ident to be specified",
             )
             .to_compile_error();
         };
