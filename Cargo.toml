@@ -67,6 +67,7 @@ smart-default = { version = "0.7" }
 darling = "0.21"
 inventory = "0.3"
 linkme = "0.3"
+trybuild = "1.0"
 
 [dependencies]
 bevy_auto_plugin_proc_macros = { workspace = true }
@@ -79,7 +80,7 @@ bevy_app = { workspace = true }
 bevy_reflect = { workspace = true }
 bevy_ecs = { workspace = true }
 bevy_state = { workspace = true }
-trybuild = "1.0"
+trybuild = { workspace = true }
 # used in feature tests
 log = { workspace = true }
 wasm-bindgen-test = { version = "0.3" }

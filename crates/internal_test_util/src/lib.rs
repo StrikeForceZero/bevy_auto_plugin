@@ -1,3 +1,5 @@
+pub mod ui_util;
+
 use bevy_app::App;
 use bevy_internal::MinimalPlugins;
 use std::any::TypeId;
