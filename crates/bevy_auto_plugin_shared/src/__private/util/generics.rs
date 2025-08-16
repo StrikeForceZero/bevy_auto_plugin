@@ -5,13 +5,13 @@ use proc_macro2::Span;
 use quote::ToTokens;
 use syn::Path;
 
-pub trait HasGenericCollection {
+pub trait HasGenericsCollection {
     type CollectionItem: ToTokens;
     type Collection: IntoIterator<Item = Self::CollectionItem>;
     fn generics(&self) -> syn::Result<Self::Collection>;
 }
 
-impl HasGenericCollection for Path {
+impl HasGenericsCollection for Path {
     type CollectionItem = TypeList;
     type Collection = Vec<TypeList>;
 
@@ -67,7 +67,7 @@ where
     }
 }
 
-impl HasGenericCollection for TypeList {
+impl HasGenericsCollection for TypeList {
     type CollectionItem = Self;
     type Collection = Vec<Self>;
     fn generics(&self) -> syn::Result<Self::Collection> {
@@ -86,7 +86,7 @@ impl CountGenerics for TypeList {
     }
 }
 
-impl<'a> HasGenericCollection for StructOrEnumMeta<'a> {
+impl<'a> HasGenericsCollection for StructOrEnumMeta<'a> {
     type CollectionItem = &'a syn::Generics;
     type Collection = Vec<&'a syn::Generics>;
     fn generics(&self) -> syn::Result<Self::Collection> {
