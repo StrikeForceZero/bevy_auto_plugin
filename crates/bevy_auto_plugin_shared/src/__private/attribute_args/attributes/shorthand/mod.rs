@@ -46,5 +46,6 @@ impl ToTokens for ExpandAttrs {
 }
 
 pub trait ShortHandAttribute {
+    fn expand_args(&self, mode: &Mode) -> MacroStream;
     fn expand_attrs(&self, mode: &Mode) -> ExpandAttrs;
 }

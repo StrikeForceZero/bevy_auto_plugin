@@ -4,6 +4,7 @@ use crate::__private::attribute_args::attributes::shorthand::{
 };
 use crate::__private::type_list::TypeList;
 use darling::FromMeta;
+use proc_macro2::TokenStream as MacroStream;
 use quote::quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
@@ -18,6 +19,24 @@ pub struct ComponentAttributeArgs {
 }
 
 impl ShortHandAttribute for ComponentAttributeArgs {
+    fn expand_args(&self, mode: &Mode) -> MacroStream {
+        let mut args = Vec::new();
+        if let Mode::Global { plugin } = &mode {
+            args.push(quote! { plugin = #plugin });
+        };
+        args.extend(self
+            .generics
+            .iter()
+            .filter_map(|g| {
+                if g.is_empty() {
+                    None
+                } else {
+                    Some(quote! { generics(#g) })
+                }
+            }));
+        quote! { #(#args),* }
+    }
+
     fn expand_attrs(&self, mode: &Mode) -> ExpandAttrs {
         let mut expanded_attrs = ExpandAttrs::default();
 
@@ -46,32 +65,17 @@ impl ShortHandAttribute for ComponentAttributeArgs {
             });
         }
 
-        let mut args = Vec::new();
-        if let Mode::Global { plugin } = &mode {
-            args.push(quote! { plugin = #plugin });
-        };
-        args.extend(self
-            .generics
-            .iter()
-            .filter_map(|g| {
-                if g.is_empty() {
-                    None
-                } else {
-                    Some(quote! { generics(#g) })
-                }
-            })
-            .collect::<Vec<_>>());
-
+        let args = self.expand_args(mode);
         if self.register {
             let macro_path = mode.resolve_macro_path(AutoPluginItemAttribute::RegisterType);
             expanded_attrs.attrs.push(quote! {
-                #[#macro_path(#(#args),*)]
+                #[#macro_path(#args)]
             });
         }
         if self.auto_name {
             let macro_path = mode.resolve_macro_path(AutoPluginItemAttribute::AutoName);
             expanded_attrs.attrs.push(quote! {
-                #[#macro_path(#(#args),*)]
+                #[#macro_path(#args)]
             });
         }
         expanded_attrs
