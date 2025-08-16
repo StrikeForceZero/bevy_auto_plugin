@@ -329,3 +329,23 @@ pub fn global_auto_component(attr: CompilerStream, input: CompilerStream) -> Com
         #input
     })
 }
+
+#[proc_macro_attribute]
+pub fn global_auto_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::resource::ResourceAttributeArgs;
+    use syn::parse_macro_input;
+    let args = parse_macro_input!(attr as GlobalArgs<ResourceAttributeArgs>);
+    let args_ts = args
+        .inner
+        .expand_attrs(&Mode::Global {
+            plugin: args.plugin,
+        })
+        .to_token_stream();
+    let input = proc_macro2::TokenStream::from(input);
+    CompilerStream::from(quote! {
+        #args_ts
+        #input
+    })
+}

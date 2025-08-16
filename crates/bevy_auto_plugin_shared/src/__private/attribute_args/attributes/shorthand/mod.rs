@@ -4,6 +4,7 @@ use quote::{ToTokens, quote};
 use syn::{Path, parse_quote};
 
 pub mod component;
+pub mod resource;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Mode {

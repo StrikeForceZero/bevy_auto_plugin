@@ -22,4 +22,7 @@ pub mod reflect {
     pub mod component {
         pub use bevy_ecs::reflect::ReflectComponent;
     }
+    pub mod resource {
+        pub use bevy_ecs::reflect::ReflectResource;
+    }
 }

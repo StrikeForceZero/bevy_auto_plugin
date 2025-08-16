@@ -32,6 +32,14 @@ struct FooDefaultRes(usize);
 #[auto_insert_resource(plugin = Test, resource(FooRes(1)))]
 struct FooRes(usize);
 
+#[auto_resource(plugin = Test, derive, register, reflect, init)]
+#[derive(Default)]
+struct FooRes2(usize);
+
+#[auto_resource(plugin = Test, derive, register, reflect, init)]
+#[derive(Default)]
+struct FooRes3(usize);
+
 #[derive(Event, Debug, Default, PartialEq, Reflect)]
 #[auto_register_type(plugin = Test)]
 #[auto_add_event(plugin = Test)]
