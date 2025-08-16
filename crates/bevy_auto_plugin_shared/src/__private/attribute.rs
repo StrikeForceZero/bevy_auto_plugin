@@ -1,17 +1,17 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum AutoPluginAttribute {
+pub enum AutoPluginItemAttribute {
     RegisterType,
     AddEvent,
     InitResource,
     InsertResource,
     InitState,
-    Name,
+    AutoName,
     RegisterStateType,
     AddSystem,
     AddObserver,
 }
 
-impl AutoPluginAttribute {
+impl AutoPluginItemAttribute {
     pub const fn ident_str(self) -> &'static str {
         match self {
             Self::RegisterType => "auto_register_type",
@@ -19,7 +19,7 @@ impl AutoPluginAttribute {
             Self::InitResource => "auto_init_resource",
             Self::InsertResource => "auto_insert_resource",
             Self::InitState => "auto_init_state",
-            Self::Name => "auto_name",
+            Self::AutoName => "auto_name",
             Self::RegisterStateType => "auto_register_state_type",
             Self::AddSystem => "auto_add_system",
             Self::AddObserver => "auto_add_observer",

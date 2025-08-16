@@ -25,7 +25,7 @@ enum InnerTest {
     B,
 }
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     app.init_state::<Test>();
 }

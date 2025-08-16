@@ -15,7 +15,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[derive(Event, Reflect)]
 struct FooEvent;
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
     // app.add_event::<FooEvent>();
@@ -32,7 +32,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[derive(Event, Reflect)]
 struct FooEventWithGeneric<T>(T);
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
     // app.add_event::<FooEventWithGeneric<bool>>();

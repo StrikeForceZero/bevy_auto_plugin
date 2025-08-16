@@ -157,7 +157,7 @@ fn test_auto_name_foo_component() {
         .expect("failed to query FooComponent");
     assert_eq!(
         name,
-        &Name::new("FooComponent<u8,bool>"),
+        &Name::new("FooComponent<u8, bool>"),
         "did not auto name FooComponent"
     );
 }

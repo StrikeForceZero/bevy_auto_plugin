@@ -26,3 +26,9 @@
 ### Updated Imports
 - `use bevy_auto_plugin::flat_file::prelude::*` -> `use bevy_auto_plugin::modes::flat_file::prelude::*`
 - `use bevy_auto_plugin::module::prelude::*` -> `use bevy_auto_plugin::modes::module::prelude::*`
+
+## v0.4 to v0.5
+
+### `global_auto_plugin(..)` is now just `auto_plugin(..)`
+
+### `auto_plugin(app=..)` is now `auto_plugin(app_param=..)` across all modes

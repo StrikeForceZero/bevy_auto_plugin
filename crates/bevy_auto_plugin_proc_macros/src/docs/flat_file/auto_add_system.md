@@ -27,7 +27,7 @@ fn test_system(mut res: ResMut<TestResource>) {
     res.0 += 1;
 }
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     app.init_resource::<TestResource>();
     /* generated code */
@@ -51,7 +51,7 @@ fn test_system(mut res: ResMut<TestResource>) {
     res.0 += 1;
 }
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     app.init_resource::<TestResource>();
     app.configure_sets(Update, TestSet::First);

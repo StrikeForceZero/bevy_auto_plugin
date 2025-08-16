@@ -1,9 +1,7 @@
-use crate::__private::attribute_args::{
-    AddSystemSerializedArgs, InsertResourceSerializedArgsWithPath,
+use crate::__private::attribute_args::ItemAttributeArgs;
+use crate::__private::context::{
+    AutoPluginContext, AutoPluginContextInsert, SupportsAutoPluginContextInsert,
 };
-use crate::__private::context::AutoPluginContext;
-use crate::__private::target::TargetData;
-use crate::__private::util::path_fmt::path_to_string_with_spaces;
 use quote::quote;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -38,60 +36,18 @@ pub fn update_file_state<R>(file_path: String, update_fn: impl FnOnce(&mut FileS
     })
 }
 
-pub fn update_state(
-    file_path: String,
-    target: TargetData,
-) -> std::result::Result<(), UpdateStateError> {
+pub fn update_state<T, I>(file_path: String, target: T) -> Result<(), UpdateStateError>
+where
+    T: AutoPluginContextInsert<Item = I>,
+    I: ItemAttributeArgs + SupportsAutoPluginContextInsert,
+{
     FILE_STATE_MAP.with(|map| {
         let mut map = map.borrow_mut();
         let entry = map.entry(file_path).or_default();
         if entry.plugin_registered {
             return Err(UpdateStateError::PluginAlreadyRegistered);
         }
-        let inserted = match target {
-            TargetData::RegisterTypes(path) => entry
-                .context
-                .register_types
-                .insert(path_to_string_with_spaces(&path)),
-            TargetData::RegisterStateTypes(path) => entry
-                .context
-                .register_state_types
-                .insert(path_to_string_with_spaces(&path)),
-            TargetData::AddEvents(path) => entry
-                .context
-                .add_events
-                .insert(path_to_string_with_spaces(&path)),
-            TargetData::InitResources(path) => entry
-                .context
-                .init_resources
-                .insert(path_to_string_with_spaces(&path)),
-            TargetData::InitStates(path) => entry
-                .context
-                .init_states
-                .insert(path_to_string_with_spaces(&path)),
-            TargetData::RequiredComponentAutoName(path) => entry
-                .context
-                .auto_names
-                .insert(path_to_string_with_spaces(&path)),
-            TargetData::AddSystem { system, params } => {
-                let mut new = false;
-                for add_system_args in AddSystemSerializedArgs::try_from_macro_attr(system, params)?
-                {
-                    if entry.context.add_systems.insert(add_system_args) {
-                        new = true;
-                    }
-                }
-                new
-            }
-            TargetData::InsertResource(args) => entry
-                .context
-                .insert_resources
-                .insert(InsertResourceSerializedArgsWithPath::from(args)),
-            TargetData::AddObserver(path) => entry
-                .context
-                .add_observers
-                .insert(path_to_string_with_spaces(&path)),
-        };
+        let inserted = target.insert_self(&mut entry.context);
         if !inserted {
             return Err(UpdateStateError::Duplicate);
         }

@@ -14,7 +14,7 @@ pub struct MyResourceAuto(usize);
 #[global_auto_init_resource(plugin = MyPlugin)]
 pub struct MyResourceBuild(usize);
 
-#[global_auto_plugin(plugin = MyPlugin, app_param = non_default_app_param_name)]
+#[auto_plugin(plugin = MyPlugin, app_param = non_default_app_param_name)]
 fn build(non_default_app_param_name: &mut App) {
     non_default_app_param_name.insert_resource(MyResourceBuild(1));
 }

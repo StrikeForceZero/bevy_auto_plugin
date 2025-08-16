@@ -1,7 +1,5 @@
 error: auto_plugin requires a method taking at least one parameter in addition to `&self`
- --> tests/flat_file/ui/auto_plugin_only_self.rs:6:5
+ --> tests/flat_file/ui/auto_plugin_only_self.rs:7:5
   |
-6 |     #[auto_plugin]
-  |     ^^^^^^^^^^^^^^
-  |
-  = note: this error originates in the attribute macro `auto_plugin` (in Nightly builds, run with -Z macro-backtrace for more info)
+7 |     fn plugin(&self) {}
+  |     ^^

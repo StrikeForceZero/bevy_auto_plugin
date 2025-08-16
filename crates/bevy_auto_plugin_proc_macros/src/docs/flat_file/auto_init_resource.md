@@ -16,7 +16,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[reflect(Resource)]
 struct FooResource;
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
     // app.init_resource::<FooResource>();
@@ -34,7 +34,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[reflect(Resource)]
 struct FooResourceWithGeneric<T>(T);
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
     // app.init_resource::<FooResourceWithGeneric<bool>>();

@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        feature-set: [ default, flat_file_missing_auto_plugin_is_compile_error, legacy_path_param, inventory ]
+        feature-set: [ default, flat_file_missing_auto_plugin_is_compile_error, inventory ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        feature-set: [ default, flat_file_missing_auto_plugin_is_compile_error, legacy_path_param, inventory ]
+        feature-set: [ default, flat_file_missing_auto_plugin_is_compile_error, inventory ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

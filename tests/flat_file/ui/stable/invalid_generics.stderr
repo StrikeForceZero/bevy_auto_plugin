@@ -1,0 +1,5 @@
+error: expected 2 generic parameters, found 1
+ --> tests/flat_file/ui/stable/invalid_generics.rs:3:31
+  |
+3 | #[auto_register_type(generics(u32))]
+  |                               ^^^

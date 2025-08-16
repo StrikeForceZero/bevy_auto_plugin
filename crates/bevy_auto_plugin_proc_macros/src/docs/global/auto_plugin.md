@@ -15,7 +15,7 @@ use bevy_auto_plugin::modes::global::prelude::*;
 struct MyPlugin;
 
 impl Plugin for MyPlugin {
-    #[global_auto_plugin(app_param=non_default_app_param_name)]
+    #[auto_plugin(app_param=non_default_app_param_name)]
     fn build(&self, non_default_app_param_name: &mut App) {
         // code injected here
 
@@ -32,7 +32,7 @@ use bevy_auto_plugin::modes::global::prelude::*;
 #[derive(AutoPlugin)]
 struct MyPlugin;
 
-#[global_auto_plugin(plugin = MyPlugin, app_param=non_default_app_param_name)]
+#[auto_plugin(plugin = MyPlugin, app_param=non_default_app_param_name)]
 fn build(non_default_app_param_name: &mut App) {
     // code injected here
 

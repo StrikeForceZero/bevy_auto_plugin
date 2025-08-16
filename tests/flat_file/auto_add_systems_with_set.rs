@@ -25,7 +25,7 @@ fn c_system(mut test: ResMut<Test>) {
     test.0.push("c");
 }
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     app.init_resource::<Test>();
     app.configure_sets(

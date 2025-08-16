@@ -198,13 +198,13 @@ struct FooResource;
 #[reflect(Resource)]
 struct FooResourceWithGeneric<T>(T);
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {}
 ```
 
 Which generates this code in your fn accepting `&mut App`
 ```rust
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     app.register_type::<FooComponent>();
     app.register_type::<FooComponentWithGeneric<bool>>();
@@ -242,7 +242,7 @@ mod foo {
     struct FooComponent;
 }
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     // ...
 }
