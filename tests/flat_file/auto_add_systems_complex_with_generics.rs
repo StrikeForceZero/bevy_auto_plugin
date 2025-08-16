@@ -55,7 +55,7 @@ where
     test.0 += T::ONE;
 }
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     app.init_resource::<Test<u32>>();
     app.init_resource::<Test<i32>>();

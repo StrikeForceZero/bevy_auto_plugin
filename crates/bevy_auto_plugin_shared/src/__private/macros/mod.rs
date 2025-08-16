@@ -1,22 +1,27 @@
 #[macro_export]
 #[doc(hidden)]
 macro_rules! ok_or_return_compiler_error {
-    // Case 1: Only expression
+    // Case: Only expression
     ($expr:expr) => {
         ok_or_return_compiler_error!(@internal ::proc_macro2::Span::call_site(), "failed to parse", $expr)
     };
 
-    // Case 2: Span, Expression
+    // Case: Expression, message ident
+    ($expr:expr, $message:ident) => {
+        ok_or_return_compiler_error!(@internal ::proc_macro2::Span::call_site(), $message, $expr)
+    };
+
+    // Case: Span, Expression
     ($span:expr, $expr:expr) => {
         ok_or_return_compiler_error!(@internal $span, "failed to parse", $expr)
     };
 
-    // Case 3: Expression, message
+    // Case: Expression, message
     ($expr:expr, $message:literal) => {
         ok_or_return_compiler_error!(@internal ::proc_macro2::Span::call_site(), $message, $expr)
     };
 
-    // Case 4: Span, message, Expression
+    // Case: Span, message, Expression
     ($span:expr, $message:literal, $expr:expr) => {
         ok_or_return_compiler_error!(@internal $span, $message, $expr)
     };

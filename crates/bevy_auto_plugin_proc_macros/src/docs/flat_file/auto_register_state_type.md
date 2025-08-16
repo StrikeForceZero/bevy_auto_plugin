@@ -9,7 +9,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[derive(States, Debug, Copy, Clone, Default, PartialEq, Eq, Hash, Reflect)]
 struct Foo;
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
     // app.register_type::<State<Foo>>();

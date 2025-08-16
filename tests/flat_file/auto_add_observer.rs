@@ -26,7 +26,7 @@ fn test_observer(
     foo_component_added.is_added = true;
 }
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {}
 
 fn app() -> App {

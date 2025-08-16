@@ -31,8 +31,6 @@ mode_global = [
     "bevy_auto_plugin_proc_macros/mode_global",
     "bevy_auto_plugin_shared/mode_global",
 ]
-# DEPRECATED - Only exists for migration purposes
-legacy_path_param = ["bevy_auto_plugin_proc_macros/legacy_path_param"]
 inventory = ["bevy_auto_plugin_proc_macros/inventory"]
 # optional extras
 log_plugin_build = ["bevy_auto_plugin_proc_macros/log_plugin_build"]
@@ -51,6 +49,8 @@ members = ["crates/*"]
 [workspace.dependencies]
 bevy_auto_plugin_shared = { version = "0.4.0", path = "crates/bevy_auto_plugin_shared" }
 bevy_auto_plugin_proc_macros = { version = "0.4.0", path = "crates/bevy_auto_plugin_proc_macros" }
+internal_test_util = { path = "crates/internal_test_util" }
+internal_test_proc_macro = { path = "crates/internal_test_proc_macro" }
 bevy = { version = "0.16", default-features = false, features = ["bevy_state"] }
 bevy_app = { version = "0.16", default-features = false }
 bevy_log = { version = "0.16", default-features = false }
@@ -67,6 +67,7 @@ smart-default = { version = "0.7" }
 darling = "0.21"
 inventory = "0.3"
 linkme = "0.3"
+trybuild = "1.0"
 
 [dependencies]
 bevy_auto_plugin_proc_macros = { workspace = true }
@@ -79,12 +80,12 @@ bevy_app = { workspace = true }
 bevy_reflect = { workspace = true }
 bevy_ecs = { workspace = true }
 bevy_state = { workspace = true }
-internal_test_util = { path = "crates/internal_test_util" }
-internal_test_proc_macro = { path = "crates/internal_test_proc_macro" }
-trybuild = "1.0"
+trybuild = { workspace = true }
 # used in feature tests
 log = { workspace = true }
 wasm-bindgen-test = { version = "0.3" }
+internal_test_util = { workspace = true }
+internal_test_proc_macro = { workspace = true }
 
 [build-dependencies]
 rustc_version = "0.4"

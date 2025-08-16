@@ -5,7 +5,7 @@ pub mod fn_meta;
 pub mod struct_or_enum_meta;
 
 pub trait IdentGenericsAttrsMeta<'a>: TryFrom<&'a Item, Error = Error> {
-    fn ident(&self) -> &Ident;
-    fn generics(&self) -> &Generics;
-    fn attributes(&self) -> &Vec<Attribute>;
+    fn ident(&self) -> &'a Ident;
+    fn generics(&self) -> &'a Generics;
+    fn attributes(&self) -> &'a [Attribute];
 }

@@ -15,7 +15,6 @@ mode_flat_file = []
 mode_module = []
 mode_global = []
 inventory = []
-legacy_path_param = []
 log_plugin_build = ["log"]
 flat_file_missing_auto_plugin_check = []
 flat_file_missing_auto_plugin_is_compile_error = ["flat_file_missing_auto_plugin_check"]
@@ -35,3 +34,6 @@ darling = { workspace = true }
 smart-default = { workspace = true }
 linkme = { workspace = true }
 inventory = { workspace = true }
+
+[dev-dependencies]
+internal_test_proc_macro = { workspace = true }

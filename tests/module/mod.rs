@@ -16,5 +16,3 @@ mod auto_plugin_param;
 mod auto_register_state_type;
 mod auto_register_type;
 mod auto_register_type_generic;
-#[cfg(feature = "legacy_path_param")]
-mod auto_register_type_generic_legacy;

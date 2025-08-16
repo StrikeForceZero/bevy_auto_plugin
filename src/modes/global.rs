@@ -21,7 +21,7 @@ pub mod prelude {
     pub use bevy_auto_plugin_proc_macros::global_auto_name as auto_name;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_plugin;
+    pub use bevy_auto_plugin_proc_macros::global_auto_plugin as auto_plugin;
 
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::global_auto_register_state_type as auto_register_state_type;

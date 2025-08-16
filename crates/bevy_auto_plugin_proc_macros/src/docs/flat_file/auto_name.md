@@ -16,7 +16,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[auto_name]
 struct FooComponent;
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
     // app.register_type::<FooComponent>();
@@ -36,7 +36,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 #[auto_name(generics(bool))]
 struct FooComponentWithGeneric<T>(T);
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
     // app.register_type::<FooComponentWithGeneric<bool>>();

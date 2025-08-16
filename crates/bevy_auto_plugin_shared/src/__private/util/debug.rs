@@ -1,4 +1,4 @@
-use syn::{Pat, Type};
+use syn::{Item, Pat, Type};
 
 pub fn debug_pat(pat: &Pat) -> &'static str {
     match pat {
@@ -40,6 +40,28 @@ pub fn debug_ty(ty: &Type) -> &'static str {
         Type::TraitObject(_) => "TraitObject",
         Type::Tuple(_) => "Tuple",
         Type::Verbatim(_) => "Verbatim",
+        _ => "<unknown>",
+    }
+}
+
+pub fn debug_item(item: &Item) -> &'static str {
+    match item {
+        Item::Const(_) => "Const",
+        Item::Enum(_) => "Enum",
+        Item::ExternCrate(_) => "ExternCrate",
+        Item::Fn(_) => "Fn",
+        Item::ForeignMod(_) => "ForeignMod",
+        Item::Impl(_) => "Impl",
+        Item::Macro(_) => "Macro",
+        Item::Mod(_) => "Mod",
+        Item::Static(_) => "Static",
+        Item::Struct(_) => "Struct",
+        Item::Trait(_) => "Trait",
+        Item::TraitAlias(_) => "TraitAlias",
+        Item::Type(_) => "Type",
+        Item::Union(_) => "Union",
+        Item::Use(_) => "Use",
+        Item::Verbatim(_) => "Verbatim",
         _ => "<unknown>",
     }
 }

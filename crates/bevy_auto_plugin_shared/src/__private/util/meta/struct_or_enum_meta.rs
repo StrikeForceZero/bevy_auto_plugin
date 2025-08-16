@@ -1,15 +1,16 @@
+use crate::__private::util::generics_traits::{CountGenerics, HasGenericsCollection};
 use crate::__private::util::meta::IdentGenericsAttrsMeta;
-use proc_macro2::Ident;
+use proc_macro2::{Ident, Span};
 use syn::{Attribute, Error, Generics, Item};
 
 pub struct StructOrEnumMeta<'a> {
     pub ident: &'a Ident,
     pub generics: &'a Generics,
-    pub attributes: &'a Vec<Attribute>,
+    pub attributes: &'a [Attribute],
 }
 
 impl<'a> StructOrEnumMeta<'a> {
-    fn new(ident: &'a Ident, generics: &'a Generics, attributes: &'a Vec<Attribute>) -> Self {
+    fn new(ident: &'a Ident, generics: &'a Generics, attributes: &'a [Attribute]) -> Self {
         Self {
             ident,
             generics,
@@ -38,13 +39,32 @@ impl<'a> TryFrom<&'a Item> for StructOrEnumMeta<'a> {
 }
 
 impl<'a> IdentGenericsAttrsMeta<'a> for StructOrEnumMeta<'a> {
-    fn ident(&self) -> &Ident {
+    fn ident(&self) -> &'a Ident {
         self.ident
     }
-    fn generics(&self) -> &Generics {
+    fn generics(&self) -> &'a Generics {
         self.generics
     }
-    fn attributes(&self) -> &Vec<Attribute> {
+    fn attributes(&self) -> &'a [Attribute] {
         self.attributes
+    }
+}
+
+impl<'a> HasGenericsCollection for StructOrEnumMeta<'a> {
+    type CollectionItem = &'a syn::Generics;
+    type Collection = Vec<&'a syn::Generics>;
+    fn generics(&self) -> syn::Result<Self::Collection> {
+        Ok(vec![self.generics])
+    }
+}
+
+impl CountGenerics for StructOrEnumMeta<'_> {
+    fn get_span(&self) -> Span {
+        use syn::spanned::Spanned;
+        self.generics.span()
+    }
+
+    fn count_generics(&self) -> syn::Result<usize> {
+        Ok(self.generics.params.len())
     }
 }

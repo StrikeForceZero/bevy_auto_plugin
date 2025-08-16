@@ -7,7 +7,7 @@ use bevy_ecs::prelude::*;
 #[derive(Resource, Debug, Default, PartialEq)]
 struct Test(usize);
 
-#[auto_plugin(app=app)]
+#[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {}
 
 fn app() -> App {

@@ -1,34 +1,44 @@
+use crate::__private::attribute_args::attributes::add_event::AddEventAttributeArgs;
+use crate::__private::attribute_args::attributes::add_observer::AddObserverAttributeArgs;
+use crate::__private::attribute_args::attributes::add_system::AddSystemAttributeArgs;
+use crate::__private::attribute_args::attributes::auto_name::AutoNameAttributeArgs;
+use crate::__private::attribute_args::attributes::init_resource::InitResourceAttributeArgs;
+use crate::__private::attribute_args::attributes::init_state::InitStateAttributeArgs;
+use crate::__private::attribute_args::attributes::insert_resource::InsertResourceAttributeArgs;
+use crate::__private::attribute_args::attributes::modes::global::auto_plugin::AutoPluginFnAttributeArgs;
+use crate::__private::attribute_args::attributes::modes::resolve_app_param_name;
+use crate::__private::attribute_args::attributes::register_state_type::RegisterStateTypeAttributeArgs;
+use crate::__private::attribute_args::attributes::register_type::RegisterTypeAttributeArgs;
+use crate::__private::attribute_args::derives::auto_plugin::GlobalAutoPluginDeriveArgs;
 use crate::__private::attribute_args::{
-    GlobalAddSystemArgs, GlobalAutoPluginDeriveArgs, GlobalAutoPluginFnAttributeArgs,
-    GlobalInsertResourceAttributeArgs, GlobalMacroArgs, GlobalObserverAttributeArgs,
-    GlobalStructOrEnumAttributeArgs, default_app_ident,
+    GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs, WithTargetPath,
 };
-use crate::__private::bevy_app_code_gen::*;
 use crate::__private::modes::global::_plugin_entry_block;
-use crate::__private::util::item::{require_fn, require_struct_or_enum};
-use crate::__private::util::meta::fn_meta::require_fn_param_mutable_reference;
+use crate::__private::util::debug::debug_item;
+use crate::__private::util::fn_param::require_fn_param_mutable_reference;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
-use proc_macro2::{Ident, TokenStream as MacroStream};
+use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
 use syn::{FnArg, Item, ItemFn, parse2};
 
 fn global_attribute_inner<A, F>(
     attr: impl Into<MacroStream>,
     input: impl Into<MacroStream>,
-    require: fn(&Item) -> syn::Result<&Ident>,
+    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
     parse_attr: fn(MacroStream) -> syn::Result<A>,
     body: F,
 ) -> MacroStream
 where
-    A: GlobalMacroArgs,
+    A: GlobalAttributeArgs,
     F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
 {
     let attr = attr.into();
     let input = input.into();
 
-    let item: Item = ok_or_return_compiler_error!(syn::parse2(input));
+    let item: Item = ok_or_return_compiler_error!(parse2(input));
 
-    let ident = ok_or_return_compiler_error!(require(&item));
+    let err_msg = format!("Attribute macro is not allowed on {}", debug_item(&item));
+    let ident = ok_or_return_compiler_error!(resolve_ident(&item), err_msg);
 
     let args = ok_or_return_compiler_error!(parse_attr(attr));
 
@@ -40,39 +50,47 @@ where
 pub fn global_attribute_outer<T>(
     attr: impl Into<MacroStream>,
     input: impl Into<MacroStream>,
-    prefix: &'static str,
-    require: fn(&Item) -> syn::Result<&Ident>,
-    generate_fn: impl Fn(&Ident, <T as GlobalMacroArgs>::Input) -> syn::Result<MacroStream>,
 ) -> MacroStream
 where
-    T: GlobalMacroArgs,
+    T: GlobalAttributeArgs,
 {
-    global_attribute_inner(attr, input, require, parse2::<T>, |ident, params, _item| {
-        let unique_ident = params.get_unique_ident(prefix, ident);
-        let plugin = params.plugin().clone();
-        let inputs = params.to_input(ident)?;
-        let output = inputs
-            .map(|input| {
-                let app_ident = default_app_ident();
-                let register = generate_fn(&app_ident, input)?;
-                let expr: syn::ExprClosure = syn::parse_quote!(|#app_ident| { #register });
-                let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
-                Ok(output)
-            })
-            .collect::<syn::Result<MacroStream>>()?;
-        assert!(
-            !output.is_empty(),
-            "No plugin entry points were generated for ident: {ident}"
-        );
-        Ok(output)
-    })
+    /// Maps [`crate::__private::util::resolve_ident_from_item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
+    fn resolve_item_ident<T: GlobalAttributeArgs>(item: &Item) -> syn::Result<&Ident> {
+        T::Inner::resolve_item_ident(item).map_err(|err| syn::Error::new(Span::call_site(), err))
+    }
+
+    global_attribute_inner(
+        attr,
+        input,
+        resolve_item_ident::<T>,
+        parse2::<T>,
+        |ident, params, _item| {
+            let unique_ident = params.get_unique_ident(ident);
+            let plugin = params.plugin().clone();
+            let with_target_path = WithTargetPath::from((ident.into(), params));
+            let output = with_target_path
+                .to_tokens_iter()
+                .map(|input| {
+                    let register = quote! { app #input ; };
+                    let expr: syn::ExprClosure = syn::parse_quote!(|app| { #register });
+                    let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
+                    Ok(output)
+                })
+                .collect::<syn::Result<MacroStream>>()?;
+            assert!(
+                !output.is_empty(),
+                "No plugin entry points were generated for ident: {ident}"
+            );
+            Ok(output)
+        },
+    )
 }
 
 pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream {
     use quote::quote;
     use syn::spanned::Spanned;
     let item = parse_macro_input2!(input as ItemFn);
-    let params = match parse2::<GlobalAutoPluginFnAttributeArgs>(attr) {
+    let params = match parse2::<AutoPluginFnAttributeArgs>(attr) {
         Ok(params) => params,
         Err(err) => return err.into_compile_error(),
     };
@@ -92,8 +110,11 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
         .collect::<Vec<_>>();
     let self_arg = self_args.first();
 
-    let default_app_ident = default_app_ident();
-    let app_param_ident = params.app_param.as_ref().unwrap_or(&default_app_ident);
+    // TODO: use helper
+    let app_param_ident = match resolve_app_param_name(&item, params.app_param.as_ref()) {
+        Ok(ident) => ident,
+        Err(err) => return err.into_compile_error(),
+    };
 
     if let Err(err) = require_fn_param_mutable_reference(&item, app_param_ident, "bevy app") {
         return err.to_compile_error();
@@ -105,7 +126,7 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
         if params.plugin.is_some() {
             return syn::Error::new(
                 params.plugin.span(),
-                "global_auto_plugin on trait impl can't specify plugin ident",
+                "auto_plugin on trait impl can't specify plugin ident",
             )
             .to_compile_error();
         };
@@ -116,14 +137,14 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
         if sig.inputs.len() > 1 {
             return syn::Error::new(
                 sig.inputs.span(),
-                "global_auto_plugin on bare fn can only accept a single parameter with the type &mut bevy::prelude::App",
+                "auto_plugin on bare fn can only accept a single parameter with the type &mut bevy::prelude::App",
             )
             .to_compile_error();
         }
         let Some(plugin_ident) = params.plugin else {
             return syn::Error::new(
                 params.plugin.span(),
-                "global_auto_plugin on bare fn requires the plugin ident to be specified",
+                "auto_plugin on bare fn requires the plugin ident to be specified",
             )
             .to_compile_error();
         };
@@ -265,84 +286,30 @@ pub fn expand_global_derive_global_auto_plugin(input: MacroStream) -> MacroStrea
 }
 
 pub fn global_auto_register_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
-        attr,
-        input,
-        "_global_plugin_register_type_",
-        require_struct_or_enum,
-        generate_register_type,
-    )
+    global_attribute_outer::<GlobalArgs<RegisterTypeAttributeArgs>>(attr, input)
 }
 pub fn global_auto_add_event_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
-        attr,
-        input,
-        "_global_plugin_add_event_",
-        require_struct_or_enum,
-        generate_add_event,
-    )
+    global_attribute_outer::<GlobalArgs<AddEventAttributeArgs>>(attr, input)
 }
 pub fn global_auto_init_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
-        attr,
-        input,
-        "_global_plugin_init_resource_",
-        require_struct_or_enum,
-        generate_init_resource,
-    )
+    global_attribute_outer::<GlobalArgs<InitResourceAttributeArgs>>(attr, input)
 }
 pub fn global_auto_insert_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalInsertResourceAttributeArgs>(
-        attr,
-        input,
-        "_global_plugin_insert_resource_",
-        require_struct_or_enum,
-        generate_insert_resource,
-    )
+    global_attribute_outer::<GlobalArgs<InsertResourceAttributeArgs>>(attr, input)
 }
 pub fn global_auto_init_state_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
-        attr,
-        input,
-        "_global_plugin_init_state_",
-        require_struct_or_enum,
-        generate_init_state,
-    )
+    global_attribute_outer::<GlobalArgs<InitStateAttributeArgs>>(attr, input)
 }
 pub fn global_auto_name_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
-        attr,
-        input,
-        "_global_plugin_name_",
-        require_struct_or_enum,
-        generate_auto_name,
-    )
+    global_attribute_outer::<GlobalArgs<AutoNameAttributeArgs>>(attr, input)
 }
 pub fn global_auto_register_state_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalStructOrEnumAttributeArgs>(
-        attr,
-        input,
-        "_global_plugin_register_state_type_",
-        require_struct_or_enum,
-        generate_register_state_type,
-    )
+    global_attribute_outer::<GlobalArgs<RegisterStateTypeAttributeArgs>>(attr, input)
 }
 pub fn global_auto_add_system_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalAddSystemArgs>(
-        attr,
-        input,
-        "_global_plugin_add_system_",
-        require_fn,
-        generate_add_system,
-    )
+    global_attribute_outer::<GlobalArgs<AddSystemAttributeArgs>>(attr, input)
 }
 
 pub fn global_auto_add_observer_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalObserverAttributeArgs>(
-        attr,
-        input,
-        "_global_plugin_add_observer_",
-        require_fn,
-        generate_add_observer,
-    )
+    global_attribute_outer::<GlobalArgs<AddObserverAttributeArgs>>(attr, input)
 }
