@@ -15,12 +15,6 @@ pub struct ItemWithAttributeMatch<A> {
     pub args: A,
 }
 
-impl<A> ItemWithAttributeMatch<A> {
-    pub fn path_owned(self) -> PathWithoutGenerics {
-        self.path
-    }
-}
-
 impl<T> From<ItemWithAttributeMatch<T>> for ConcreteTargetPathWithGenericsCollection
 where
     T: ItemAttributeArgs,
