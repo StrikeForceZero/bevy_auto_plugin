@@ -5,11 +5,11 @@ use syn::{Attribute, Error, Generics, Item};
 pub struct FnMeta<'a> {
     pub ident: &'a Ident,
     pub generics: &'a Generics,
-    pub attributes: &'a Vec<Attribute>,
+    pub attributes: &'a [Attribute],
 }
 
 impl<'a> FnMeta<'a> {
-    fn new(ident: &'a Ident, generics: &'a Generics, attributes: &'a Vec<Attribute>) -> Self {
+    fn new(ident: &'a Ident, generics: &'a Generics, attributes: &'a [Attribute]) -> Self {
         Self {
             ident,
             generics,
@@ -39,7 +39,7 @@ impl<'a> IdentGenericsAttrsMeta<'a> for FnMeta<'a> {
     fn generics(&self) -> &Generics {
         self.generics
     }
-    fn attributes(&self) -> &Vec<Attribute> {
+    fn attributes(&self) -> &[Attribute] {
         self.attributes
     }
 }
