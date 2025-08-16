@@ -58,8 +58,8 @@ impl CountGenerics for Generics {
         self.0.get_span()
     }
 
-    fn count_generics(&self) -> usize {
-        self.0.len()
+    fn count_generics(&self) -> syn::Result<usize> {
+        Ok(self.0.len())
     }
 }
 

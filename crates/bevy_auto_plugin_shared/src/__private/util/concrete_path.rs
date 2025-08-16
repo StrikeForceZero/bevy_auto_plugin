@@ -135,7 +135,7 @@ where
 {
     let expected_generics_count = generics.type_params().count();
     if expected_generics_count > 0 {
-        let count = cg.count_generics();
+        let count = cg.count_generics()?;
         if count != expected_generics_count {
             return Err(syn::Error::new(
                 cg.get_span(),

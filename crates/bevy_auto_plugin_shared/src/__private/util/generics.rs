@@ -24,8 +24,7 @@ impl HasGenericCollection for Path {
 
 pub trait CountGenerics {
     fn get_span(&self) -> Span;
-    // TODO: rename to count_generics
-    fn count_generics(&self) -> usize;
+    fn count_generics(&self) -> syn::Result<usize>;
 }
 
 impl CountGenerics for Path {
@@ -33,8 +32,8 @@ impl CountGenerics for Path {
         syn::spanned::Spanned::span(&self)
     }
 
-    fn count_generics(&self) -> usize {
-        crate::__private::util::extensions::path::PathExt::generic_count(self).unwrap_or(0)
+    fn count_generics(&self) -> syn::Result<usize> {
+        crate::__private::util::extensions::path::PathExt::generic_count(self)
     }
 }
 
@@ -50,20 +49,21 @@ where
             .unwrap_or(Span::call_site())
     }
 
-    fn count_generics(&self) -> usize {
+    fn count_generics(&self) -> syn::Result<usize> {
         let iter = self
             .generics()
             .into_iter()
             .map(|g| g.count_generics())
-            .collect::<Vec<_>>();
+            .collect::<syn::Result<Vec<_>>>()?;
         let &max = iter.iter().max().unwrap_or(&0);
         let &min = iter.iter().min().unwrap_or(&0);
-        // TODO: return result
-        assert_eq!(
-            max, min,
-            "inconsistent number of generics specified min: {min}, max: {max}"
-        );
-        max
+        if max != min {
+            return Err(syn::Error::new(
+                self.get_span(),
+                format!("inconsistent number of generics specified min: {min}, max: {max}"),
+            ));
+        }
+        Ok(max)
     }
 }
 
@@ -81,8 +81,8 @@ impl CountGenerics for TypeList {
         self.span()
     }
 
-    fn count_generics(&self) -> usize {
-        self.len()
+    fn count_generics(&self) -> syn::Result<usize> {
+        Ok(self.len())
     }
 }
 
@@ -100,7 +100,7 @@ impl CountGenerics for StructOrEnumMeta<'_> {
         self.generics.span()
     }
 
-    fn count_generics(&self) -> usize {
-        self.generics.params.len()
+    fn count_generics(&self) -> syn::Result<usize> {
+        Ok(self.generics.params.len())
     }
 }
