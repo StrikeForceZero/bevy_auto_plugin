@@ -14,9 +14,10 @@ use crate::__private::attribute_args::{
     GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs, WithTargetPath, default_app_ident,
 };
 use crate::__private::modes::global::_plugin_entry_block;
+use crate::__private::util::debug::debug_item;
 use crate::__private::util::meta::fn_meta::require_fn_param_mutable_reference;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
-use proc_macro2::{Ident, TokenStream as MacroStream};
+use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
 use syn::{FnArg, Item, ItemFn, parse2};
 
@@ -36,7 +37,8 @@ where
 
     let item: Item = ok_or_return_compiler_error!(parse2(input));
 
-    let ident = ok_or_return_compiler_error!(resolve_ident(&item));
+    let err_msg = format!("Attribute macro is not allowed on {}", debug_item(&item));
+    let ident = ok_or_return_compiler_error!(resolve_ident(&item), err_msg);
 
     let args = ok_or_return_compiler_error!(parse_attr(attr));
 
@@ -52,10 +54,15 @@ pub fn global_attribute_outer<T>(
 where
     T: GlobalAttributeArgs,
 {
+    /// Maps [`crate::__private::util::resolve_ident_from_item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
+    fn resolve_item_ident<T: GlobalAttributeArgs>(item: &Item) -> syn::Result<&Ident> {
+        T::Inner::resolve_item_ident(item).map_err(|err| syn::Error::new(Span::call_site(), err))
+    }
+
     global_attribute_inner(
         attr,
         input,
-        T::Inner::resolve_item_ident,
+        resolve_item_ident::<T>,
         parse2::<T>,
         |ident, params, _item| {
             let unique_ident = params.get_unique_ident(ident);

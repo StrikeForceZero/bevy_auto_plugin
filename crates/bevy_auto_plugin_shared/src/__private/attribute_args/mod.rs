@@ -10,6 +10,7 @@ use crate::__private::util::concrete_path::{
     ConcreteTargetPath, ConcreteTargetPathWithGenericsCollection,
 };
 use crate::__private::util::path_fmt::{PathWithoutGenerics, TryFromPathWithoutGenericsError};
+use crate::__private::util::resolve_ident_from_item::IdentFromItemResult;
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use std::hash::Hash;
@@ -46,7 +47,7 @@ pub trait ItemAttributeArgs:
 {
     fn global_build_prefix() -> &'static str;
     fn attribute() -> AutoPluginItemAttribute;
-    fn resolve_item_ident(item: &Item) -> syn::Result<&Ident>;
+    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;
     fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<Self>>>;
 }
 

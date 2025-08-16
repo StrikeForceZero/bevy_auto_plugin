@@ -6,10 +6,7 @@ use crate::__private::attribute_args::attributes::prelude::{
     RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
 use crate::__private::context::{AutoPluginContext, ToTokenStringValue};
-use crate::__private::item_with_attr_match::items_with_attribute_match;
 use crate::__private::util::concrete_path::ConcreteTargetPathWithGenericsCollection;
-use crate::__private::util::meta::fn_meta::FnMeta;
-use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use crate::__private::util::module::inject_module;
 use crate::__private::util::tokens::to_compile_error;
 use darling::FromMeta;

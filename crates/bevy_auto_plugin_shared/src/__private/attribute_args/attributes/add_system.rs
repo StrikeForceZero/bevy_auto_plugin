@@ -7,9 +7,9 @@ use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_
 use crate::__private::type_list::TypeList;
 use crate::__private::util::concrete_path::ConcreteTargetPath;
 use crate::__private::util::meta::fn_meta::FnMeta;
-use crate::__private::util::resolve_ident_from_item::resolve_ident_from_fn;
+use crate::__private::util::resolve_ident_from_item::{IdentFromItemResult, resolve_ident_from_fn};
 use darling::FromMeta;
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::Item;
 
@@ -29,7 +29,7 @@ impl ItemAttributeArgs for AddSystemAttributeArgs {
     fn attribute() -> AutoPluginItemAttribute {
         AutoPluginItemAttribute::AddSystem
     }
-    fn resolve_item_ident(item: &Item) -> syn::Result<&Ident> {
+    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_fn(item)
     }
     fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<Self>>> {
