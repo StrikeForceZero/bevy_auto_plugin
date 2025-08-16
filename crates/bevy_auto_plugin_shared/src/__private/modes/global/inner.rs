@@ -15,7 +15,7 @@ use crate::__private::attribute_args::{
 };
 use crate::__private::modes::global::_plugin_entry_block;
 use crate::__private::util::debug::debug_item;
-use crate::__private::util::meta::fn_meta::require_fn_param_mutable_reference;
+use crate::__private::util::fn_param::require_fn_param_mutable_reference;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;

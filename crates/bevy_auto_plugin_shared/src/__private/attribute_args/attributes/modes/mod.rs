@@ -1,4 +1,4 @@
-use crate::__private::util::meta::fn_meta::require_fn_param_mutable_reference;
+use crate::__private::util::fn_param::require_fn_param_mutable_reference;
 
 pub mod flat_file;
 pub mod global;

@@ -12,8 +12,9 @@ use crate::__private::modes::flat_file::file_state::{update_file_state, update_s
 use crate::__private::util::concrete_path::{
     ConcreteTargetPathWithGenericsCollection, resolve_paths_from_item_or_args,
 };
+use crate::__private::util::fn_param::require_fn_param_mutable_reference;
 use crate::__private::util::local_file::{LocalFile, resolve_local_file};
-use crate::__private::util::meta::fn_meta::{FnMeta, require_fn_param_mutable_reference};
+use crate::__private::util::meta::fn_meta::FnMeta;
 use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use crate::__private::util::path_fmt::PathWithoutGenerics;
 use crate::__private::util::tokens::to_compile_error;
