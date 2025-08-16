@@ -1,5 +1,5 @@
 use crate::__private::type_list::TypeList;
-use crate::__private::util::generics::CountGenerics;
+use crate::__private::util::generics_traits::CountGenerics;
 use proc_macro2::{Span, TokenStream as MacroStream};
 use quote::{ToTokens, quote};
 

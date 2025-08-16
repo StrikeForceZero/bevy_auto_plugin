@@ -2,7 +2,7 @@ use crate::__private::attribute_args::{GenericsArgs, ItemAttributeArgs, WithTarg
 use crate::__private::generics::{Generics, GenericsCollection};
 use crate::__private::type_list::TypeList;
 use crate::__private::util::extensions::from_meta::FromMetaExt;
-use crate::__private::util::generics::CountGenerics;
+use crate::__private::util::generics_traits::CountGenerics;
 use crate::__private::util::meta::IdentGenericsAttrsMeta;
 use crate::__private::util::path_fmt::{PathWithoutGenerics, TryFromPathWithoutGenericsError};
 use darling::FromMeta;

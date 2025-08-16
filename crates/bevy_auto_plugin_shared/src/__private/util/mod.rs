@@ -2,7 +2,7 @@ pub mod concrete_path;
 pub mod debug;
 pub mod env;
 pub mod extensions;
-pub mod generics;
+pub mod generics_traits;
 pub mod item;
 #[cfg(feature = "mode_flat_file")]
 pub mod local_file;

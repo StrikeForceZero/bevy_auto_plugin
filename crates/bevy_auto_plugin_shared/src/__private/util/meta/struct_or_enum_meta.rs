@@ -1,4 +1,4 @@
-use crate::__private::util::generics::{CountGenerics, HasGenericsCollection};
+use crate::__private::util::generics_traits::{CountGenerics, HasGenericsCollection};
 use crate::__private::util::meta::IdentGenericsAttrsMeta;
 use proc_macro2::{Ident, Span};
 use syn::{Attribute, Error, Generics, Item};
