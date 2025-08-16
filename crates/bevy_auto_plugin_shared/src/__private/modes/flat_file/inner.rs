@@ -35,9 +35,9 @@ pub fn auto_plugin_inner(
     let func_vis = &input.vis;
     let func_attrs = &input.attrs;
 
-    require_fn_param_mutable_reference(&input, &app_param_name, "auto_plugin")?;
+    require_fn_param_mutable_reference(input, app_param_name, "auto_plugin")?;
 
-    let injected_code = auto_plugin_inner_to_stream(file_path, &app_param_name)?;
+    let injected_code = auto_plugin_inner_to_stream(file_path, app_param_name)?;
 
     #[cfg(feature = "flat_file_missing_auto_plugin_check")]
     let injected_code = {

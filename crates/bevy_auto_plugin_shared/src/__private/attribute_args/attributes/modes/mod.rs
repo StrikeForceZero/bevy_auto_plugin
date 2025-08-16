@@ -50,8 +50,7 @@ pub fn resolve_app_param_name<'a>(
         return Err(syn::Error::new(
             err_span(),
             format!(
-                "auto_plugin provided app_param: `{}` but it was not found in the function signature",
-                given
+                "auto_plugin provided app_param: `{given}` but it was not found in the function signature"
             ),
         ));
     }
