@@ -1,3 +1,4 @@
+use crate::__private::attribute_args::ItemAttributeArgs;
 use crate::__private::attribute_args::attributes::modes::module::auto_plugin::AutoPluginArgs;
 use crate::__private::attribute_args::attributes::prelude::{
     AddEventAttributeArgs, AddObserverAttributeArgs, AddSystemAttributeArgs, AutoNameAttributeArgs,
@@ -22,30 +23,15 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
     // Extract the content inside the module
     if let Some((_, items)) = &module.content {
         // Find all items with the provided [`attribute_name`] #[...] attribute
-        let register_types =
-            items_with_attribute_match::<StructOrEnumMeta, RegisterTypeAttributeArgs>(items)?;
-
-        let add_events =
-            items_with_attribute_match::<StructOrEnumMeta, AddEventAttributeArgs>(items)?;
-
-        let init_resources =
-            items_with_attribute_match::<StructOrEnumMeta, InitResourceAttributeArgs>(items)?;
-
-        let insert_resources =
-            items_with_attribute_match::<StructOrEnumMeta, InsertResourceAttributeArgs>(items)?;
-
-        let auto_names =
-            items_with_attribute_match::<StructOrEnumMeta, AutoNameAttributeArgs>(items)?;
-        let register_state_types =
-            items_with_attribute_match::<StructOrEnumMeta, RegisterStateTypeAttributeArgs>(items)?;
-
-        let init_states =
-            items_with_attribute_match::<StructOrEnumMeta, InitStateAttributeArgs>(items)?;
-
-        let add_systems = items_with_attribute_match::<FnMeta, AddSystemAttributeArgs>(items)?;
-
-        let add_observers =
-            items_with_attribute_match::<StructOrEnumMeta, AddObserverAttributeArgs>(items)?;
+        let register_types = RegisterTypeAttributeArgs::match_items(items)?;
+        let add_events = AddEventAttributeArgs::match_items(items)?;
+        let init_resources = InitResourceAttributeArgs::match_items(items)?;
+        let insert_resources = InsertResourceAttributeArgs::match_items(items)?;
+        let auto_names = AutoNameAttributeArgs::match_items(items)?;
+        let register_state_types = RegisterStateTypeAttributeArgs::match_items(items)?;
+        let init_states = InitStateAttributeArgs::match_items(items)?;
+        let add_systems = AddSystemAttributeArgs::match_items(items)?;
+        let add_observers = AddObserverAttributeArgs::match_items(items)?;
 
         let mut context = AutoPluginContext::default();
 
