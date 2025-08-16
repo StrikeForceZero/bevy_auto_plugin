@@ -1,6 +1,5 @@
 use crate::__private::attribute_args::GenericsArgs;
 use crate::__private::type_list::TypeList;
-use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use proc_macro2::Span;
 use quote::ToTokens;
 use syn::Path;
@@ -64,43 +63,5 @@ where
             ));
         }
         Ok(max)
-    }
-}
-
-impl HasGenericsCollection for TypeList {
-    type CollectionItem = Self;
-    type Collection = Vec<Self>;
-    fn generics(&self) -> syn::Result<Self::Collection> {
-        Ok(vec![self.clone()])
-    }
-}
-
-impl CountGenerics for TypeList {
-    fn get_span(&self) -> Span {
-        use syn::spanned::Spanned;
-        self.span()
-    }
-
-    fn count_generics(&self) -> syn::Result<usize> {
-        Ok(self.len())
-    }
-}
-
-impl<'a> HasGenericsCollection for StructOrEnumMeta<'a> {
-    type CollectionItem = &'a syn::Generics;
-    type Collection = Vec<&'a syn::Generics>;
-    fn generics(&self) -> syn::Result<Self::Collection> {
-        Ok(vec![self.generics])
-    }
-}
-
-impl CountGenerics for StructOrEnumMeta<'_> {
-    fn get_span(&self) -> Span {
-        use syn::spanned::Spanned;
-        self.generics.span()
-    }
-
-    fn count_generics(&self) -> syn::Result<usize> {
-        Ok(self.generics.params.len())
     }
 }

@@ -1,5 +1,6 @@
+use crate::__private::util::generics::{CountGenerics, HasGenericsCollection};
 use crate::__private::util::meta::IdentGenericsAttrsMeta;
-use proc_macro2::Ident;
+use proc_macro2::{Ident, Span};
 use syn::{Attribute, Error, Generics, Item};
 
 pub struct StructOrEnumMeta<'a> {
@@ -46,5 +47,24 @@ impl<'a> IdentGenericsAttrsMeta<'a> for StructOrEnumMeta<'a> {
     }
     fn attributes(&self) -> &Vec<Attribute> {
         self.attributes
+    }
+}
+
+impl<'a> HasGenericsCollection for StructOrEnumMeta<'a> {
+    type CollectionItem = &'a syn::Generics;
+    type Collection = Vec<&'a syn::Generics>;
+    fn generics(&self) -> syn::Result<Self::Collection> {
+        Ok(vec![self.generics])
+    }
+}
+
+impl CountGenerics for StructOrEnumMeta<'_> {
+    fn get_span(&self) -> Span {
+        use syn::spanned::Spanned;
+        self.generics.span()
+    }
+
+    fn count_generics(&self) -> syn::Result<usize> {
+        Ok(self.generics.params.len())
     }
 }
