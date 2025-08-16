@@ -98,7 +98,7 @@ mod tests {
             quote! {
                 #[allow(unused_imports)]
                 use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
-                
+
                 #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)]
                 #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)]
                 #[reflect(Resource)]
@@ -119,7 +119,7 @@ mod tests {
             quote! {
                 #[allow(unused_imports)]
                 use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
-                
+
                 #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)]
                 #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)]
                 #[reflect(Resource)]
@@ -146,7 +146,7 @@ mod tests {
             quote! {
                 #[allow(unused_imports)]
                 use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
-                
+
                 #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)]
                 #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)]
                 #[reflect(Resource)]
@@ -172,7 +172,7 @@ mod tests {
             quote! {
                 #[allow(unused_imports)]
                 use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
-                
+
                 #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)]
                 #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)]
                 #[reflect(Resource)]
