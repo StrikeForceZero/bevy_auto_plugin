@@ -56,8 +56,10 @@ bevy_app = { version = "0.16", default-features = false }
 bevy_log = { version = "0.16", default-features = false }
 bevy_state = { version = "0.16" }
 bevy_reflect = { version = "0.16" }
+bevy_reflect_derive = { version = "0.16" }
 bevy_internal = { version = "0.16" }
 bevy_ecs = { version = "0.16" }
+bevy_ecs_macros = { version = "0.16" }
 proc-macro2 = "1"
 syn = { version = "2", features = ["full"] }
 quote = "1"
@@ -78,7 +80,9 @@ bevy_auto_plugin_shared = { workspace = true }
 bevy = { workspace = true }
 bevy_app = { workspace = true }
 bevy_reflect = { workspace = true }
+bevy_reflect_derive = { workspace = true }
 bevy_ecs = { workspace = true }
+bevy_ecs_macros = { workspace = true }
 bevy_state = { workspace = true }
 trybuild = { workspace = true }
 # used in feature tests

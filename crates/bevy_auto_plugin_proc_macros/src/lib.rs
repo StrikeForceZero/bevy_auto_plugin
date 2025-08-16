@@ -5,12 +5,14 @@ use bevy_auto_plugin_shared::__private::attribute_args::attributes::prelude::{
     AddEventAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
     InitStateAttributeArgs, RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
+use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
 #[cfg(feature = "mode_flat_file")]
 use bevy_auto_plugin_shared::__private::context::{
     AutoPluginContextInsert, SupportsAutoPluginContextInsert, ToTokenStringValue,
 };
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
+use quote::{ToTokens, quote};
 /* Module */
 
 #[cfg(feature = "mode_module")]
@@ -306,4 +308,24 @@ pub fn global_auto_add_system(attr: CompilerStream, input: CompilerStream) -> Co
 #[cfg(feature = "mode_global")]
 pub fn global_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     global_handle_attribute(global::inner::global_auto_add_observer_outer, attr, input)
+}
+
+#[proc_macro_attribute]
+pub fn global_auto_component(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
+    use syn::parse_macro_input;
+    let args = parse_macro_input!(attr as GlobalArgs<ComponentAttributeArgs>);
+    let args_ts = args
+        .inner
+        .expand_attrs(&Mode::Global {
+            plugin: args.plugin,
+        })
+        .to_token_stream();
+    let input = proc_macro2::TokenStream::from(input);
+    CompilerStream::from(quote! {
+        #args_ts
+        #input
+    })
 }

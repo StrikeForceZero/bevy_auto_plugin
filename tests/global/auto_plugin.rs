@@ -13,6 +13,11 @@ struct Test;
 #[auto_register_type(plugin = Test)]
 #[auto_name(plugin = Test)]
 struct FooComponent;
+#[auto_component(plugin = Test, derive, register, reflect, auto_name)]
+struct FooComponent2;
+
+#[auto_component(plugin = Test, derive, register, reflect, auto_name)]
+struct FooComponent3;
 
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
