@@ -24,16 +24,13 @@ impl ShortHandAttribute for ComponentAttributeArgs {
         if let Mode::Global { plugin } = &mode {
             args.push(quote! { plugin = #plugin });
         };
-        args.extend(self
-            .generics
-            .iter()
-            .filter_map(|g| {
-                if g.is_empty() {
-                    None
-                } else {
-                    Some(quote! { generics(#g) })
-                }
-            }));
+        args.extend(self.generics.iter().filter_map(|g| {
+            if g.is_empty() {
+                None
+            } else {
+                Some(quote! { generics(#g) })
+            }
+        }));
         quote! { #(#args),* }
     }
 

@@ -24,16 +24,13 @@ impl ShortHandAttribute for ResourceAttributeArgs {
         if let Mode::Global { plugin } = &mode {
             args.push(quote! { plugin = #plugin });
         };
-        args.extend(self
-            .generics
-            .iter()
-            .filter_map(|g| {
-                if g.is_empty() {
-                    None
-                } else {
-                    Some(quote! { generics(#g) })
-                }
-            }));
+        args.extend(self.generics.iter().filter_map(|g| {
+            if g.is_empty() {
+                None
+            } else {
+                Some(quote! { generics(#g) })
+            }
+        }));
         quote! { #(#args),* }
     }
 
@@ -94,8 +91,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_expand_module() -> syn::Result<()> {
-        let attr: Attribute =
-            parse_quote! { #[auto_resource(derive, reflect, register, init)] };
+        let attr: Attribute = parse_quote! { #[auto_resource(derive, reflect, register, init)] };
         let args = ResourceAttributeArgs::from_meta_ext(&attr.meta)?;
         assert_eq!(
             args.expand_attrs(&Mode::Module).to_token_stream().to_string(),
@@ -116,8 +112,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_expand_flat_file() -> syn::Result<()> {
-        let attr: Attribute =
-            parse_quote! { #[auto_resource(derive, reflect, register, init)] };
+        let attr: Attribute = parse_quote! { #[auto_resource(derive, reflect, register, init)] };
         let args = ResourceAttributeArgs::from_meta_ext(&attr.meta)?;
         assert_eq!(
             args.expand_attrs(&Mode::FlatFile).to_token_stream().to_string(),
