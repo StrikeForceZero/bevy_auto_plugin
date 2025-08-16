@@ -5,10 +5,10 @@ use crate::__private::attribute_args::attributes::prelude::{
     RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
 use crate::__private::context::{AutoPluginContext, ToTokenStringValue};
-use crate::__private::item_with_attr_match::items_with_attribute_macro;
-use crate::__private::item_with_attr_match::struct_or_enum_items_with_attribute_macro;
+use crate::__private::item_with_attr_match::items_with_attribute_match;
 use crate::__private::util::concrete_path::ConcreteTargetPathWithGenericsCollection;
 use crate::__private::util::meta::fn_meta::FnMeta;
+use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use crate::__private::util::module::inject_module;
 use crate::__private::util::tokens::to_compile_error;
 use darling::FromMeta;
@@ -23,27 +23,29 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
     if let Some((_, items)) = &module.content {
         // Find all items with the provided [`attribute_name`] #[...] attribute
         let register_types =
-            struct_or_enum_items_with_attribute_macro::<RegisterTypeAttributeArgs>(items)?;
+            items_with_attribute_match::<StructOrEnumMeta, RegisterTypeAttributeArgs>(items)?;
 
-        let add_events = struct_or_enum_items_with_attribute_macro::<AddEventAttributeArgs>(items)?;
+        let add_events =
+            items_with_attribute_match::<StructOrEnumMeta, AddEventAttributeArgs>(items)?;
 
         let init_resources =
-            struct_or_enum_items_with_attribute_macro::<InitResourceAttributeArgs>(items)?;
+            items_with_attribute_match::<StructOrEnumMeta, InitResourceAttributeArgs>(items)?;
 
         let insert_resources =
-            struct_or_enum_items_with_attribute_macro::<InsertResourceAttributeArgs>(items)?;
+            items_with_attribute_match::<StructOrEnumMeta, InsertResourceAttributeArgs>(items)?;
 
-        let auto_names = struct_or_enum_items_with_attribute_macro::<AutoNameAttributeArgs>(items)?;
+        let auto_names =
+            items_with_attribute_match::<StructOrEnumMeta, AutoNameAttributeArgs>(items)?;
         let register_state_types =
-            struct_or_enum_items_with_attribute_macro::<RegisterStateTypeAttributeArgs>(items)?;
+            items_with_attribute_match::<StructOrEnumMeta, RegisterStateTypeAttributeArgs>(items)?;
 
         let init_states =
-            struct_or_enum_items_with_attribute_macro::<InitStateAttributeArgs>(items)?;
+            items_with_attribute_match::<StructOrEnumMeta, InitStateAttributeArgs>(items)?;
 
-        let add_systems = items_with_attribute_macro::<FnMeta, AddSystemAttributeArgs>(items)?;
+        let add_systems = items_with_attribute_match::<FnMeta, AddSystemAttributeArgs>(items)?;
 
         let add_observers =
-            struct_or_enum_items_with_attribute_macro::<AddObserverAttributeArgs>(items)?;
+            items_with_attribute_match::<StructOrEnumMeta, AddObserverAttributeArgs>(items)?;
 
         let mut context = AutoPluginContext::default();
 

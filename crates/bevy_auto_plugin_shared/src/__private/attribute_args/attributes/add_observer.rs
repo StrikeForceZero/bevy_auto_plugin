@@ -2,7 +2,7 @@ use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::__private::attribute_args::{
     GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
-use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_macro};
+use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::__private::type_list::TypeList;
 use crate::__private::util::concrete_path::ConcreteTargetPath;
 use crate::__private::util::item::require_fn;
@@ -31,7 +31,7 @@ impl ItemAttributeArgs for AddObserverAttributeArgs {
     }
 
     fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<Self>>> {
-        items_with_attribute_macro::<FnMeta, AddObserverAttributeArgs>(items)
+        items_with_attribute_match::<FnMeta, AddObserverAttributeArgs>(items)
     }
 }
 

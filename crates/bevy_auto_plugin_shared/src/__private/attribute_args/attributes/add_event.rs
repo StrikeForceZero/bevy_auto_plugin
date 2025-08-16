@@ -2,12 +2,11 @@ use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::__private::attribute_args::{
     GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
-use crate::__private::item_with_attr_match::{
-    ItemWithAttributeMatch, struct_or_enum_items_with_attribute_macro,
-};
+use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::__private::type_list::TypeList;
 use crate::__private::util::concrete_path::ConcreteTargetPath;
 use crate::__private::util::item::require_struct_or_enum;
+use crate::__private::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
@@ -32,7 +31,7 @@ impl ItemAttributeArgs for AddEventAttributeArgs {
         require_struct_or_enum(item)
     }
     fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<Self>>> {
-        struct_or_enum_items_with_attribute_macro::<AddEventAttributeArgs>(items)
+        items_with_attribute_match::<StructOrEnumMeta, AddEventAttributeArgs>(items)
     }
 }
 
