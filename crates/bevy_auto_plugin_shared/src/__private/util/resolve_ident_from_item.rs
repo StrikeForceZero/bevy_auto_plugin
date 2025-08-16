@@ -1,7 +1,7 @@
 use proc_macro2::Ident;
 use syn::{Error, Item};
 
-pub fn require_fn(item: &Item) -> syn::Result<&Ident> {
+pub fn resolve_ident_from_fn(item: &Item) -> syn::Result<&Ident> {
     match item {
         Item::Fn(f) => Ok(&f.sig.ident),
         _ => Err(Error::new_spanned(
@@ -11,7 +11,7 @@ pub fn require_fn(item: &Item) -> syn::Result<&Ident> {
     }
 }
 
-pub fn require_struct_or_enum(item: &Item) -> syn::Result<&Ident> {
+pub fn resolve_ident_from_struct_or_enum(item: &Item) -> syn::Result<&Ident> {
     match item {
         Item::Struct(s) => Ok(&s.ident),
         Item::Enum(e) => Ok(&e.ident),

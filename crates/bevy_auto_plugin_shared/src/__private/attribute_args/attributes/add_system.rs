@@ -6,8 +6,8 @@ use crate::__private::attribute_args::{
 use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::__private::type_list::TypeList;
 use crate::__private::util::concrete_path::ConcreteTargetPath;
-use crate::__private::util::item::require_fn;
 use crate::__private::util::meta::fn_meta::FnMeta;
+use crate::__private::util::resolve_ident_from_item::resolve_ident_from_fn;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
@@ -30,7 +30,7 @@ impl ItemAttributeArgs for AddSystemAttributeArgs {
         AutoPluginItemAttribute::AddSystem
     }
     fn resolve_item_ident(item: &Item) -> syn::Result<&Ident> {
-        require_fn(item)
+        resolve_ident_from_fn(item)
     }
     fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<Self>>> {
         items_with_attribute_match::<FnMeta, AddSystemAttributeArgs>(items)
