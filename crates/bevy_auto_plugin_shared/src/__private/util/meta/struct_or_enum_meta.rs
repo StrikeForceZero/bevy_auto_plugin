@@ -39,13 +39,13 @@ impl<'a> TryFrom<&'a Item> for StructOrEnumMeta<'a> {
 }
 
 impl<'a> IdentGenericsAttrsMeta<'a> for StructOrEnumMeta<'a> {
-    fn ident(&self) -> &Ident {
+    fn ident(&self) -> &'a Ident {
         self.ident
     }
-    fn generics(&self) -> &Generics {
+    fn generics(&self) -> &'a Generics {
         self.generics
     }
-    fn attributes(&self) -> &[Attribute] {
+    fn attributes(&self) -> &'a [Attribute] {
         self.attributes
     }
 }

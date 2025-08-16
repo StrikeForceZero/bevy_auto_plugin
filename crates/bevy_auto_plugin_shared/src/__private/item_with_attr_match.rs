@@ -6,15 +6,15 @@ use crate::__private::util::path_fmt::PathWithoutGenerics;
 use syn::{Attribute, Item};
 
 #[derive(Debug, Clone)]
-pub struct ItemWithAttributeMatch<A> {
-    pub item: Item,
+pub struct ItemWithAttributeMatch<'a, A> {
+    pub item: &'a Item,
     pub path: PathWithoutGenerics,
-    pub matched_attribute: Attribute,
-    pub attributes: Vec<Attribute>,
+    pub matched_attribute: &'a Attribute,
+    pub attributes: &'a [Attribute],
     pub args: A,
 }
 
-impl<T> From<ItemWithAttributeMatch<T>> for ConcreteTargetPathWithGenericsCollection
+impl<'a, T> From<ItemWithAttributeMatch<'a, T>> for ConcreteTargetPathWithGenericsCollection
 where
     T: ItemAttributeArgs,
 {
@@ -23,7 +23,7 @@ where
     }
 }
 
-impl<T> From<&ItemWithAttributeMatch<T>> for ConcreteTargetPathWithGenericsCollection
+impl<'a, T> From<&ItemWithAttributeMatch<'a, T>> for ConcreteTargetPathWithGenericsCollection
 where
     T: ItemAttributeArgs,
 {
@@ -32,31 +32,34 @@ where
     }
 }
 
-pub fn items_with_attribute_match<'a, T, A>(
-    items: &'a [Item],
-) -> syn::Result<Vec<ItemWithAttributeMatch<A>>>
+pub fn items_with_attribute_match<'items, 'meta, T, A>(
+    items: &'items [Item],
+) -> syn::Result<Vec<ItemWithAttributeMatch<'items, A>>>
 where
-    T: IdentGenericsAttrsMeta<'a>,
+    T: IdentGenericsAttrsMeta<'items> + 'meta,
     A: ItemAttributeArgs,
+    'meta: 'items,
 {
-    let mut matched_items = vec![];
-    for item in items {
-        let Ok(matched_item) = T::try_from(item) else {
-            continue;
-        };
-        for attr in matched_item
-            .attributes()
-            .iter()
-            .filter(|a| a.meta.path().is_ident(A::attribute().ident_str()))
-        {
-            matched_items.push(ItemWithAttributeMatch {
-                item: item.clone(),
-                path: matched_item.ident().into(),
-                matched_attribute: attr.clone(),
-                attributes: matched_item.attributes().to_vec(),
-                args: A::from_meta_ext(&attr.meta)?,
-            })
-        }
-    }
-    Ok(matched_items)
+    items
+        .iter()
+        .filter_map(|item| {
+            T::try_from(item)
+                .ok()
+                .map(|meta| (item, meta.ident(), meta.attributes()))
+        })
+        .flat_map(|(item, ident, attributes)| {
+            attributes
+                .iter()
+                .filter(|a| a.meta.path().is_ident(A::attribute().ident_str()))
+                .map(|attr| {
+                    Ok(ItemWithAttributeMatch {
+                        item,
+                        path: ident.into(),
+                        matched_attribute: attr,
+                        attributes,
+                        args: A::from_meta_ext(&attr.meta)?,
+                    })
+                })
+        })
+        .collect::<syn::Result<Vec<_>>>()
 }
