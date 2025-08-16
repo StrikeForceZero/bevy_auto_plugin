@@ -12,7 +12,7 @@ use crate::__private::util::concrete_path::{
 use crate::__private::util::path_fmt::{PathWithoutGenerics, TryFromPathWithoutGenericsError};
 use crate::__private::util::resolve_ident_from_item::IdentFromItemResult;
 use darling::FromMeta;
-use proc_macro2::{Ident, Span, TokenStream as MacroStream};
+use proc_macro2::{Ident, TokenStream as MacroStream};
 use std::hash::Hash;
 use syn::parse::Parse;
 use syn::{Item, Path};
@@ -174,8 +174,4 @@ where
     fn plugin(&self) -> &Path {
         &self.plugin
     }
-}
-
-pub fn default_app_ident() -> Ident {
-    Ident::new("app", Span::call_site())
 }

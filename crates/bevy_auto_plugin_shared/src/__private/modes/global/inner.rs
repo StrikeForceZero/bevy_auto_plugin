@@ -11,7 +11,7 @@ use crate::__private::attribute_args::attributes::register_state_type::RegisterS
 use crate::__private::attribute_args::attributes::register_type::RegisterTypeAttributeArgs;
 use crate::__private::attribute_args::derives::auto_plugin::GlobalAutoPluginDeriveArgs;
 use crate::__private::attribute_args::{
-    GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs, WithTargetPath, default_app_ident,
+    GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs, WithTargetPath,
 };
 use crate::__private::modes::global::_plugin_entry_block;
 use crate::__private::util::debug::debug_item;
@@ -71,9 +71,8 @@ where
             let output = with_target_path
                 .to_tokens_iter()
                 .map(|input| {
-                    let app_ident = default_app_ident();
-                    let register = quote! { #app_ident #input ; };
-                    let expr: syn::ExprClosure = syn::parse_quote!(|#app_ident| { #register });
+                    let register = quote! { app #input ; };
+                    let expr: syn::ExprClosure = syn::parse_quote!(|app| { #register });
                     let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
                     Ok(output)
                 })
