@@ -49,8 +49,8 @@ impl ToTokensWithConcreteTargetPath for RegisterStateTypeAttributeArgs {
         target: &ConcreteTargetPath,
     ) {
         tokens.extend(quote! {
-            .register_type :: < State< #target > >()
-            .register_type :: < NextState< #target > >()
+            .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< #target > >()
+            .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< #target > >()
         })
     }
 }
@@ -70,8 +70,8 @@ mod tests {
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_type :: < State< FooTarget > >()
-                .register_type :: < NextState< FooTarget > >()
+                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< FooTarget > >()
+                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< FooTarget > >()
             }
             .to_string()
         );
@@ -88,8 +88,8 @@ mod tests {
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_type :: < State< FooTarget<u8, bool> > >()
-                .register_type :: < NextState< FooTarget<u8, bool> > >()
+                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< FooTarget<u8, bool> > >()
+                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< FooTarget<u8, bool> > >()
             }
             .to_string()
         );
@@ -109,16 +109,16 @@ mod tests {
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_type :: < State< FooTarget<u8, bool> > >()
-                .register_type :: < NextState< FooTarget<u8, bool> > >()
+                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< FooTarget<u8, bool> > >()
+                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< FooTarget<u8, bool> > >()
             }
             .to_string()
         );
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_type :: < State< FooTarget<bool, bool> > >()
-                .register_type :: < NextState< FooTarget<bool, bool> > >()
+                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< FooTarget<bool, bool> > >()
+                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< FooTarget<bool, bool> > >()
             }
             .to_string()
         );

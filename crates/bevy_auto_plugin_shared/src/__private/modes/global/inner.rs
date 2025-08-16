@@ -194,7 +194,7 @@ pub fn expand_global_derive_global_auto_plugin(input: MacroStream) -> MacroStrea
             for #ident #ty_generics #where_clause
         {
             fn type_id() -> std::any::TypeId {
-                std::any::TypeId::of::<Self>()
+                ::std::any::TypeId::of::<Self>()
             }
         }
     });

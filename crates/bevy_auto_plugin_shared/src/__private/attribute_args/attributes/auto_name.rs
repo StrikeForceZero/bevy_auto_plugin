@@ -57,7 +57,7 @@ impl ToTokensWithConcreteTargetPath for AutoNameAttributeArgs {
         // TODO: offer option to only remove all spaces?
         //  .replace(" ", "")
         tokens.extend(quote! {
-            .register_required_components_with::<#target, Name>(|| Name::new(#name))
+            .register_required_components_with::<#target, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new(#name))
         })
     }
 }
@@ -77,7 +77,7 @@ mod tests {
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_required_components_with::<FooTarget, Name>(|| Name::new("FooTarget"))
+                .register_required_components_with::<FooTarget, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new("FooTarget"))
             }
             .to_string()
         );
@@ -94,7 +94,7 @@ mod tests {
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_required_components_with::<FooTarget<u8, bool>, Name>(|| Name::new("FooTarget<u8, bool>"))
+                .register_required_components_with::<FooTarget<u8, bool>, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new("FooTarget<u8, bool>"))
             }
             .to_string()
         );
@@ -112,14 +112,14 @@ mod tests {
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_required_components_with::<FooTarget<u8, bool>, Name>(|| Name::new("FooTarget<u8, bool>"))
+                .register_required_components_with::<FooTarget<u8, bool>, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new("FooTarget<u8, bool>"))
             }
             .to_string()
         );
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_required_components_with::<FooTarget<bool, bool>, Name>(|| Name::new("FooTarget<bool, bool>"))
+                .register_required_components_with::<FooTarget<bool, bool>, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new("FooTarget<bool, bool>"))
             }
             .to_string()
         );
