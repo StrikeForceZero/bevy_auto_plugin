@@ -119,12 +119,14 @@ pub mod utils {
 #[macro_export]
 macro_rules! ui_tests {
     ($ident:ident) => {
+        #[cfg(not(wasm))]
+        #[cfg(test)]
         mod tests {
             use super::*;
             use internal_test_util::ui_util::SubDir;
             use internal_test_util::ui_util::UiTest;
             use internal_test_util::ui_util::utils;
-            #[internal_test_proc_macro::xtest]
+            #[test]
             fn ui_tests() {
                 let t = trybuild::TestCases::new();
                 t.compile_fail($ident::get_trybuild_path_string(SubDir::Root));
@@ -140,8 +142,7 @@ macro_rules! ui_tests {
                 }
             }
 
-            #[cfg(not(wasm))]
-            #[internal_test_proc_macro::xtest]
+            #[test]
             fn ensure_ui_tests_for_nightly_and_stable_are_identical() -> std::io::Result<()> {
                 let nightly_dir = $ident::get_tests_path_string(SubDir::Nightly);
                 let stable_dir = $ident::get_tests_path_string(SubDir::Stable);
