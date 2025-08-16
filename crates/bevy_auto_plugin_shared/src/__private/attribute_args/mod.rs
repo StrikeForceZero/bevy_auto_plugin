@@ -48,7 +48,7 @@ pub trait ItemAttributeArgs:
     fn global_build_prefix() -> &'static str;
     fn attribute() -> AutoPluginItemAttribute;
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;
-    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<Self>>>;
+    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<'_, Self>>>;
 }
 
 pub trait GlobalAttributeArgs:

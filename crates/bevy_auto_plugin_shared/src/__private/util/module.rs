@@ -4,7 +4,7 @@ use syn::ItemMod;
 
 pub fn get_all_items_in_module_by_attribute<A>(
     module: &ItemMod,
-) -> syn::Result<Vec<ItemWithAttributeMatch<A>>>
+) -> syn::Result<Vec<ItemWithAttributeMatch<'_, A>>>
 where
     A: ItemAttributeArgs,
 {

@@ -51,7 +51,7 @@ impl ItemAttributeArgs for InsertResourceAttributeArgs {
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_struct_or_enum(item)
     }
-    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<Self>>> {
+    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<'_, Self>>> {
         items_with_attribute_match::<StructOrEnumMeta, InsertResourceAttributeArgs>(items)
     }
 }

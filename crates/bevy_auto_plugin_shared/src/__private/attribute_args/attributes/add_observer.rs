@@ -30,7 +30,7 @@ impl ItemAttributeArgs for AddObserverAttributeArgs {
         resolve_ident_from_fn(item)
     }
 
-    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<Self>>> {
+    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<'_, Self>>> {
         items_with_attribute_match::<FnMeta, AddObserverAttributeArgs>(items)
     }
 }

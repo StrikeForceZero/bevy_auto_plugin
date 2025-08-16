@@ -32,7 +32,7 @@ impl ItemAttributeArgs for AddSystemAttributeArgs {
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_fn(item)
     }
-    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<Self>>> {
+    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<'_, Self>>> {
         items_with_attribute_match::<FnMeta, AddSystemAttributeArgs>(items)
     }
 }
