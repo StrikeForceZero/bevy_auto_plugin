@@ -1,4 +1,5 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::{
     GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
@@ -51,6 +52,12 @@ impl ToTokensWithConcreteTargetPath for InitResourceAttributeArgs {
         tokens.extend(quote! {
             .init_resource::< #target >()
         })
+    }
+}
+
+impl ArgsBackToTokens for InitResourceAttributeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.generics().to_attribute_arg_tokens());
     }
 }
 

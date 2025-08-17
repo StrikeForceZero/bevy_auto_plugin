@@ -10,7 +10,7 @@ pub mod tokens {
     use super::*;
     use crate::__private::attribute_args::ItemAttributeArgs;
     use crate::__private::attribute_args::attributes::prelude::{
-        AutoNameAttributeArgs, RegisterTypeAttributeArgs,
+        AutoNameAttributeArgs, InitResourceAttributeArgs, RegisterTypeAttributeArgs,
     };
 
     #[derive(Debug, Clone)]
@@ -82,6 +82,23 @@ pub mod tokens {
         }
     }
 
+    pub fn reflect_resource() -> ExpandAttrs {
+        ExpandAttrs {
+            attrs: vec![quote! {
+                // reflect is helper attribute and expects Ident
+                #[reflect(Resource)]
+            }],
+            use_items: vec![quote! {
+                // Make the helper available for #[reflect(Resource)]
+                // TODO: we could eliminate the need for globs if we pass the ident in
+                //  then we can do `ReflectResource as ReflectResource$ident`
+                //  #[reflect(Resource$ident)]
+                #[allow(unused_imports)]
+                use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
+            }],
+        }
+    }
+
     pub fn derive_component() -> MacroStream {
         quote! { #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Component)] }
     }
@@ -95,6 +112,9 @@ pub mod tokens {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
     pub fn auto_name(mode: Mode, args: AutoNameAttributeArgs) -> MacroStream {
+        ArgsWithMode::new(mode, args).to_token_stream()
+    }
+    pub fn auto_init_resource(mode: Mode, args: InitResourceAttributeArgs) -> MacroStream {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
 }

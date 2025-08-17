@@ -1,6 +1,7 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::GenericsArgs;
 use crate::__private::attribute_args::attributes::shorthand::{
-    ExpandAttrs, Mode, ShortHandAttribute,
+    ExpandAttrs, Mode, ShortHandAttribute, tokens,
 };
 use crate::__private::type_list::TypeList;
 use darling::FromMeta;
@@ -18,19 +19,21 @@ pub struct ResourceAttributeArgs {
     pub init: bool,
 }
 
+impl GenericsArgs for ResourceAttributeArgs {
+    fn type_lists(&self) -> &[TypeList] {
+        &self.generics
+    }
+}
+
 impl ShortHandAttribute for ResourceAttributeArgs {
     fn expand_args(&self, mode: &Mode) -> MacroStream {
         let mut args = Vec::new();
         if let Mode::Global { plugin } = &mode {
             args.push(quote! { plugin = #plugin });
         };
-        args.extend(self.generics.iter().filter_map(|g| {
-            if g.is_empty() {
-                None
-            } else {
-                Some(quote! { generics(#g) })
-            }
-        }));
+        if !self.generics().is_empty() {
+            args.extend(self.generics().to_attribute_arg_vec_tokens());
+        }
         quote! { #(#args),* }
     }
 
@@ -38,37 +41,28 @@ impl ShortHandAttribute for ResourceAttributeArgs {
         let mut expanded_attrs = ExpandAttrs::default();
 
         if self.derive {
-            expanded_attrs.attrs.push(quote! {
-                #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)]
-            });
+            expanded_attrs.attrs.push(tokens::derive_resource());
         }
         if self.reflect {
             if self.derive {
-                expanded_attrs.attrs.push(quote! {
-                    #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)]
-                });
+                expanded_attrs.attrs.push(tokens::derive_reflect());
             }
-            expanded_attrs.use_items.push(quote! {
-                // Make the helper available for #[reflect(Component)]
-                // TODO: we could eliminate the need for globs if we pass the ident in
-                //  then we can do `ReflectComponent as ReflectResource$ident`
-                //  #[reflect(Resource$ident)]
-                #[allow(unused_imports)]
-                use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
-            });
-            expanded_attrs.attrs.push(quote! {
-                // reflect is helper attribute and expects Ident
-                #[reflect(Resource)]
-            });
+            let reflect_expand_attrs = tokens::reflect_resource();
+            expanded_attrs
+                .use_items
+                .extend(reflect_expand_attrs.use_items);
+            expanded_attrs.attrs.extend(reflect_expand_attrs.attrs);
         }
 
         let args = self.expand_args(mode);
+        // TODO: use the tokens::auto_register_type(..)
         if self.register {
             let macro_path = mode.resolve_macro_path(AutoPluginItemAttribute::RegisterType);
             expanded_attrs.attrs.push(quote! {
                 #[#macro_path(#args)]
             });
         }
+        // TODO: use the tokens::auto_name(..)
         if self.init {
             let macro_path = mode.resolve_macro_path(AutoPluginItemAttribute::InitResource);
             expanded_attrs.attrs.push(quote! {
@@ -82,9 +76,14 @@ impl ShortHandAttribute for ResourceAttributeArgs {
 #[cfg(test)]
 mod tests {
     use crate::__private::attribute_args::GlobalArgs;
+    use crate::__private::attribute_args::attributes::prelude::{
+        InitResourceAttributeArgs, RegisterTypeAttributeArgs,
+    };
     use crate::__private::attribute_args::attributes::shorthand::Mode;
     use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
     use crate::__private::attribute_args::attributes::shorthand::resource::ResourceAttributeArgs;
+    use crate::__private::attribute_args::attributes::shorthand::tokens;
+    use crate::__private::type_list::TypeList;
     use crate::__private::util::extensions::from_meta::FromMetaExt;
     use quote::{ToTokens, quote};
     use syn::{Attribute, parse_quote};
@@ -93,19 +92,27 @@ mod tests {
     fn test_expand_module() -> syn::Result<()> {
         let attr: Attribute = parse_quote! { #[auto_resource(derive, reflect, register, init)] };
         let args = ResourceAttributeArgs::from_meta_ext(&attr.meta)?;
+        let mode = Mode::Module;
+        let (reflect_resource_use, reflect_resource_attrs) =
+            tokens::reflect_resource().to_use_attr_ts_tuple();
+        let derive_resource = tokens::derive_resource();
+        let derive_reflect = tokens::derive_reflect();
+        let auto_register_type =
+            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
+        let auto_init_resource =
+            tokens::auto_init_resource(mode.clone(), InitResourceAttributeArgs::default());
         assert_eq!(
-            args.expand_attrs(&Mode::Module).to_token_stream().to_string(),
+            args.expand_attrs(&mode).to_token_stream().to_string(),
             quote! {
-                #[allow(unused_imports)]
-                use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
+                #reflect_resource_use
 
-                #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)]
-                #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)]
-                #[reflect(Resource)]
-                #[::bevy_auto_plugin::modes::module::prelude::auto_register_type()]
-                #[::bevy_auto_plugin::modes::module::prelude::auto_init_resource()]
+                #derive_resource
+                #derive_reflect
+                #reflect_resource_attrs
+                #auto_register_type
+                #auto_init_resource
             }
-                .to_string()
+            .to_string()
         );
         Ok(())
     }
@@ -114,19 +121,27 @@ mod tests {
     fn test_expand_flat_file() -> syn::Result<()> {
         let attr: Attribute = parse_quote! { #[auto_resource(derive, reflect, register, init)] };
         let args = ResourceAttributeArgs::from_meta_ext(&attr.meta)?;
+        let mode = Mode::FlatFile;
+        let (reflect_resource_use, reflect_resource_attrs) =
+            tokens::reflect_resource().to_use_attr_ts_tuple();
+        let derive_resource = tokens::derive_resource();
+        let derive_reflect = tokens::derive_reflect();
+        let auto_register_type =
+            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
+        let auto_init_resource =
+            tokens::auto_init_resource(mode.clone(), InitResourceAttributeArgs::default());
         assert_eq!(
-            args.expand_attrs(&Mode::FlatFile).to_token_stream().to_string(),
+            args.expand_attrs(&mode).to_token_stream().to_string(),
             quote! {
-                #[allow(unused_imports)]
-                use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
+                #reflect_resource_use
 
-                #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)]
-                #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)]
-                #[reflect(Resource)]
-                #[::bevy_auto_plugin::modes::flat_file::prelude::auto_register_type()]
-                #[::bevy_auto_plugin::modes::flat_file::prelude::auto_init_resource()]
+                #derive_resource
+                #derive_reflect
+                #reflect_resource_attrs
+                #auto_register_type
+                #auto_init_resource
             }
-                .to_string()
+            .to_string()
         );
         Ok(())
     }
@@ -136,24 +151,29 @@ mod tests {
         let attr: Attribute =
             parse_quote! { #[auto_resource(plugin = Test, derive, reflect, register, init)] };
         let args = GlobalArgs::<ResourceAttributeArgs>::from_meta_ext(&attr.meta)?;
+        let mode = Mode::Global {
+            plugin: parse_quote!(Test),
+        };
+        let (reflect_resource_use, reflect_resource_attrs) =
+            tokens::reflect_resource().to_use_attr_ts_tuple();
+        let derive_resource = tokens::derive_resource();
+        let derive_reflect = tokens::derive_reflect();
+        let auto_register_type =
+            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
+        let auto_init_resource =
+            tokens::auto_init_resource(mode.clone(), InitResourceAttributeArgs::default());
         assert_eq!(
-            args.inner
-                .expand_attrs(&Mode::Global {
-                    plugin: args.plugin
-                })
-                .to_token_stream()
-                .to_string(),
+            args.inner.expand_attrs(&mode).to_token_stream().to_string(),
             quote! {
-                #[allow(unused_imports)]
-                use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
+                #reflect_resource_use
 
-                #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)]
-                #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)]
-                #[reflect(Resource)]
-                #[::bevy_auto_plugin::modes::global::prelude::auto_register_type(plugin = Test)]
-                #[::bevy_auto_plugin::modes::global::prelude::auto_init_resource(plugin = Test)]
+                #derive_resource
+                #derive_reflect
+                #reflect_resource_attrs
+                #auto_register_type
+                #auto_init_resource
             }
-                .to_string()
+            .to_string()
         );
         Ok(())
     }
@@ -162,24 +182,41 @@ mod tests {
     fn test_expand_global_generics() -> syn::Result<()> {
         let attr: Attribute = parse_quote! { #[auto_resource(plugin = Test, generics(u8, bool), generics(u32, f32), derive, reflect, register, init)] };
         let args = GlobalArgs::<ResourceAttributeArgs>::from_meta_ext(&attr.meta)?;
+        let mode = Mode::Global {
+            plugin: parse_quote!(Test),
+        };
+        let (reflect_resource_use, reflect_resource_attrs) =
+            tokens::reflect_resource().to_use_attr_ts_tuple();
+        let derive_resource = tokens::derive_resource();
+        let derive_reflect = tokens::derive_reflect();
+        let generics = vec![
+            TypeList(vec![parse_quote!(u8), parse_quote!(bool)]),
+            TypeList(vec![parse_quote!(u32), parse_quote!(f32)]),
+        ];
+        let auto_register_type = tokens::auto_register_type(
+            mode.clone(),
+            RegisterTypeAttributeArgs {
+                generics: generics.clone(),
+            },
+        );
+        let auto_init_resource = tokens::auto_init_resource(
+            mode.clone(),
+            InitResourceAttributeArgs {
+                generics: generics.clone(),
+            },
+        );
         assert_eq!(
-            args.inner
-                .expand_attrs(&Mode::Global {
-                    plugin: args.plugin
-                })
-                .to_token_stream()
-                .to_string(),
+            args.inner.expand_attrs(&mode).to_token_stream().to_string(),
             quote! {
-                #[allow(unused_imports)]
-                use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
+                #reflect_resource_use
 
-                #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)]
-                #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)]
-                #[reflect(Resource)]
-                #[::bevy_auto_plugin::modes::global::prelude::auto_register_type(plugin = Test, generics(u8, bool), generics(u32, f32))]
-                #[::bevy_auto_plugin::modes::global::prelude::auto_init_resource(plugin = Test, generics(u8, bool), generics(u32, f32))]
+                #derive_resource
+                #derive_reflect
+                #reflect_resource_attrs
+                #auto_register_type
+                #auto_init_resource
             }
-                .to_string()
+            .to_string()
         );
         Ok(())
     }
