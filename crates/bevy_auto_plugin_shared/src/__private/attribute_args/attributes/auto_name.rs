@@ -1,4 +1,5 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::{
     GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
@@ -59,6 +60,12 @@ impl ToTokensWithConcreteTargetPath for AutoNameAttributeArgs {
         tokens.extend(quote! {
             .register_required_components_with::<#target, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new(#name))
         })
+    }
+}
+
+impl ArgsBackToTokens for AutoNameAttributeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.generics().to_attribute_arg_tokens());
     }
 }
 

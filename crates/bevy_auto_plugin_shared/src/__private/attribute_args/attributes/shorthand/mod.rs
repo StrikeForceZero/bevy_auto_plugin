@@ -6,6 +6,99 @@ use syn::{Path, parse_quote};
 pub mod component;
 pub mod resource;
 
+pub mod tokens {
+    use super::*;
+    use crate::__private::attribute_args::ItemAttributeArgs;
+    use crate::__private::attribute_args::attributes::prelude::{
+        AutoNameAttributeArgs, RegisterTypeAttributeArgs,
+    };
+
+    #[derive(Debug, Clone)]
+    pub struct ArgsWithMode<T: ArgsBackToTokens> {
+        pub mode: Mode,
+        pub args: T,
+    }
+
+    impl<T> ArgsWithMode<T>
+    where
+        T: ArgsBackToTokens,
+    {
+        fn new(mode: Mode, args: T) -> Self {
+            Self { mode, args }
+        }
+        fn back_to_tokens(&self, tokens: &mut MacroStream) {
+            let macro_path = self.args.full_attribute_path(&self.mode);
+            let inner_args = self.args.back_to_inner_arg_token_stream();
+            let args = if let Mode::Global { plugin } = &self.mode {
+                let mut plugin_args = quote! { plugin = #plugin };
+                if !inner_args.is_empty() {
+                    plugin_args.extend(quote! { , #inner_args });
+                }
+                plugin_args
+            } else {
+                inner_args
+            };
+            tokens.extend(quote! {
+                #[#macro_path(#args)]
+            });
+        }
+    }
+
+    pub trait ArgsBackToTokens: ItemAttributeArgs {
+        fn full_attribute_path(&self, mode: &Mode) -> Path {
+            mode.resolve_macro_path(Self::attribute())
+        }
+        fn back_to_inner_arg_tokens(&self, tokens: &mut MacroStream);
+        fn back_to_inner_arg_token_stream(&self) -> MacroStream {
+            let mut tokens = MacroStream::new();
+            self.back_to_inner_arg_tokens(&mut tokens);
+            tokens
+        }
+    }
+
+    impl<T> ToTokens for ArgsWithMode<T>
+    where
+        T: ArgsBackToTokens,
+    {
+        fn to_tokens(&self, tokens: &mut MacroStream) {
+            self.back_to_tokens(tokens);
+        }
+    }
+
+    pub fn reflect_component() -> ExpandAttrs {
+        ExpandAttrs {
+            attrs: vec![quote! {
+                // reflect is helper attribute and expects Ident
+                #[reflect(Component)]
+            }],
+            use_items: vec![quote! {
+                // Make the helper available for #[reflect(Component)]
+                // TODO: we could eliminate the need for globs if we pass the ident in
+                //  then we can do `ReflectComponent as ReflectComponent$ident`
+                //  #[reflect(Component$ident)]
+                #[allow(unused_imports)]
+                use ::bevy_auto_plugin::__private::shared::__private::reflect::component::*;
+            }],
+        }
+    }
+
+    pub fn derive_component() -> MacroStream {
+        quote! { #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Component)] }
+    }
+    pub fn derive_resource() -> MacroStream {
+        quote! { #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)] }
+    }
+    pub fn derive_reflect() -> MacroStream {
+        quote! { #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)] }
+    }
+    pub fn auto_register_type(mode: Mode, args: RegisterTypeAttributeArgs) -> MacroStream {
+        ArgsWithMode::new(mode, args).to_token_stream()
+    }
+    pub fn auto_name(mode: Mode, args: AutoNameAttributeArgs) -> MacroStream {
+        ArgsWithMode::new(mode, args).to_token_stream()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Mode {
     Global { plugin: Path },
@@ -30,6 +123,21 @@ impl Mode {
 pub struct ExpandAttrs {
     pub attrs: Vec<MacroStream>,
     pub use_items: Vec<MacroStream>,
+}
+
+impl ExpandAttrs {
+    pub fn to_use_attr_ts_tuple(&self) -> (MacroStream, MacroStream) {
+        let use_items = &self.use_items;
+        let attrs = &self.attrs;
+        (
+            quote! {
+                #(#use_items)*
+            },
+            quote! {
+                #(#attrs)*
+            },
+        )
+    }
 }
 
 impl ToTokens for ExpandAttrs {
