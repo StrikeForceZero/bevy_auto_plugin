@@ -4,6 +4,7 @@ use quote::{ToTokens, quote};
 use syn::{Path, parse_quote};
 
 pub mod component;
+mod reflect_attr;
 pub mod resource;
 
 pub mod tokens {
@@ -12,6 +13,7 @@ pub mod tokens {
     use crate::__private::attribute_args::attributes::prelude::{
         AutoNameAttributeArgs, InitResourceAttributeArgs, RegisterTypeAttributeArgs,
     };
+    use proc_macro2::Ident;
 
     #[derive(Debug, Clone)]
     pub struct ArgsWithMode<T: ArgsBackToTokens> {
@@ -62,6 +64,45 @@ pub mod tokens {
     {
         fn to_tokens(&self, tokens: &mut MacroStream) {
             self.back_to_tokens(tokens);
+        }
+    }
+
+    pub fn reflect<'a>(idents: impl IntoIterator<Item = &'a Ident>) -> ExpandAttrs {
+        let idents = idents.into_iter().collect::<Vec<_>>();
+        let use_items = idents
+            .iter()
+            .copied()
+            .filter_map(|ident| {
+                Some(match ident.to_string().as_str() {
+                    "Component" => quote! {
+                        // Make the helper available for #[reflect(Component)]
+                        // TODO: we could eliminate the need for globs if we pass the ident in
+                        //  then we can do `ReflectComponent as ReflectComponent$ident`
+                        //  #[reflect(Component$ident)]
+                        #[allow(unused_imports)]
+                        use ::bevy_auto_plugin::__private::shared::__private::reflect::component::*;
+                    },
+                    "Resource" => quote! {
+                        // Make the helper available for #[reflect(Resource)]
+                        #[allow(unused_imports)]
+                        use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
+                    },
+                    "Default" => quote! {
+                        // Make the helper available for #[reflect(Default)]
+                        #[allow(unused_imports)]
+                        use ::bevy_auto_plugin::__private::shared::__private::reflect::std_traits::*;
+                    },
+                    // Debug, Copy, Clone, PartialEq, Eq, Hash appear to be built in?
+                    _ => return None,
+                })
+            })
+            .collect::<Vec<_>>();
+        ExpandAttrs {
+            attrs: vec![quote! {
+                // reflect is a helper attribute for Reflect derive and expects Ident
+                #[reflect(#(#idents),*)]
+            }],
+            use_items,
         }
     }
 
@@ -157,6 +198,10 @@ impl ExpandAttrs {
                 #(#attrs)*
             },
         )
+    }
+    pub fn append(&mut self, other: Self) {
+        self.attrs.extend(other.attrs);
+        self.use_items.extend(other.use_items);
     }
 }
 

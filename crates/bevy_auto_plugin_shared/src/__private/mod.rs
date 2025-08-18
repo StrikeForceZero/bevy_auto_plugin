@@ -19,6 +19,9 @@ pub use bevy_state;
 
 // module to allow single item globs
 pub mod reflect {
+    pub mod std_traits {
+        pub use bevy_reflect::std_traits::ReflectDefault;
+    }
     pub mod component {
         pub use bevy_ecs::reflect::ReflectComponent;
     }

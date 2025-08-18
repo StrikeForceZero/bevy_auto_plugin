@@ -1,12 +1,14 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::__private::attribute_args::GenericsArgs;
+use crate::__private::attribute_args::attributes::shorthand::reflect_attr::ReflectAttr;
 use crate::__private::attribute_args::attributes::shorthand::{
     ExpandAttrs, Mode, ShortHandAttribute, tokens,
 };
 use crate::__private::type_list::TypeList;
 use darling::FromMeta;
-use proc_macro2::TokenStream as MacroStream;
+use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
+use syn::parse_quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -14,7 +16,7 @@ pub struct ComponentAttributeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub derive: bool,
-    pub reflect: bool,
+    pub reflect: ReflectAttr,
     pub register: bool,
     pub auto_name: bool,
 }
@@ -43,15 +45,13 @@ impl ShortHandAttribute for ComponentAttributeArgs {
         if self.derive {
             expanded_attrs.attrs.push(tokens::derive_component());
         }
-        if self.reflect {
+        if self.reflect.present {
             if self.derive {
                 expanded_attrs.attrs.push(tokens::derive_reflect());
             }
-            let reflect_expand_attrs = tokens::reflect_component();
-            expanded_attrs
-                .use_items
-                .extend(reflect_expand_attrs.use_items);
-            expanded_attrs.attrs.extend(reflect_expand_attrs.attrs);
+            let component_ident: Ident = parse_quote!(Component);
+            let items = std::iter::once(&component_ident).chain(self.reflect.items.iter());
+            expanded_attrs.append(tokens::reflect(items))
         }
 
         let args = self.expand_args(mode);
@@ -78,14 +78,21 @@ mod tests {
     use crate::__private::attribute_args::GlobalArgs;
     use crate::__private::attribute_args::attributes::auto_name::AutoNameAttributeArgs;
     use crate::__private::attribute_args::attributes::prelude::RegisterTypeAttributeArgs;
-    use crate::__private::attribute_args::attributes::shorthand::Mode;
     use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
     use crate::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
     use crate::__private::attribute_args::attributes::shorthand::tokens;
+    use crate::__private::attribute_args::attributes::shorthand::{ExpandAttrs, Mode};
     use crate::__private::type_list::TypeList;
     use crate::__private::util::extensions::from_meta::FromMetaExt;
+    use proc_macro2::Ident;
     use quote::{ToTokens, quote};
     use syn::{Attribute, parse_quote};
+
+    fn reflect_component(extra_items: impl IntoIterator<Item = Ident>) -> ExpandAttrs {
+        let mut items = vec![parse_quote!(Component)];
+        items.extend(extra_items.into_iter());
+        tokens::reflect(items.iter())
+    }
 
     #[internal_test_proc_macro::xtest]
     fn test_expand_module() -> syn::Result<()> {
@@ -94,7 +101,7 @@ mod tests {
         let args = ComponentAttributeArgs::from_meta_ext(&attr.meta)?;
         let mode = Mode::Module;
         let (reflect_component_use, reflect_component_attrs) =
-            tokens::reflect_component().to_use_attr_ts_tuple();
+            reflect_component([]).to_use_attr_ts_tuple();
         let derive_component = tokens::derive_component();
         let derive_reflect = tokens::derive_reflect();
         let auto_register_type =
@@ -123,7 +130,7 @@ mod tests {
         let args = ComponentAttributeArgs::from_meta_ext(&attr.meta)?;
         let mode = Mode::FlatFile;
         let (reflect_component_use, reflect_component_attrs) =
-            tokens::reflect_component().to_use_attr_ts_tuple();
+            reflect_component([]).to_use_attr_ts_tuple();
         let derive_component = tokens::derive_component();
         let derive_reflect = tokens::derive_reflect();
         let auto_register_type =
@@ -154,7 +161,7 @@ mod tests {
             plugin: parse_quote!(Test),
         };
         let (reflect_component_use, reflect_component_attrs) =
-            tokens::reflect_component().to_use_attr_ts_tuple();
+            reflect_component([]).to_use_attr_ts_tuple();
         let derive_component = tokens::derive_component();
         let derive_reflect = tokens::derive_reflect();
         let auto_register_type =
@@ -184,7 +191,7 @@ mod tests {
             plugin: parse_quote!(Test),
         };
         let (reflect_component_use, reflect_component_attrs) =
-            tokens::reflect_component().to_use_attr_ts_tuple();
+            reflect_component([]).to_use_attr_ts_tuple();
         let derive_component = tokens::derive_component();
         let derive_reflect = tokens::derive_reflect();
         let generics = vec![
@@ -203,6 +210,36 @@ mod tests {
                 generics: generics.clone(),
             },
         );
+        assert_eq!(
+            args.inner.expand_attrs(&mode).to_token_stream().to_string(),
+            quote! {
+                #reflect_component_use
+
+                #derive_component
+                #derive_reflect
+                #reflect_component_attrs
+                #auto_register_type
+                #auto_name
+            }
+            .to_string()
+        );
+        Ok(())
+    }
+
+    #[internal_test_proc_macro::xtest]
+    fn test_expand_multiple_reflect() -> syn::Result<()> {
+        let attr: Attribute = parse_quote! { #[auto_component(plugin = Test, derive, reflect(Debug, Default), register, auto_name)] };
+        let args = GlobalArgs::<ComponentAttributeArgs>::from_meta_ext(&attr.meta)?;
+        let mode = Mode::Global {
+            plugin: parse_quote!(Test),
+        };
+        let (reflect_component_use, reflect_component_attrs) =
+            reflect_component([parse_quote!(Debug), parse_quote!(Default)]).to_use_attr_ts_tuple();
+        let derive_component = tokens::derive_component();
+        let derive_reflect = tokens::derive_reflect();
+        let auto_register_type =
+            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
+        let auto_name = tokens::auto_name(mode.clone(), AutoNameAttributeArgs::default());
         assert_eq!(
             args.inner.expand_attrs(&mode).to_token_stream().to_string(),
             quote! {
