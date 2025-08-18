@@ -4,7 +4,7 @@ use crate::__private::attribute_args::attributes::shorthand::{
     ExpandAttrs, Mode, ShortHandAttribute, tokens,
 };
 use crate::__private::flag_or_list::FlagOrList;
-use crate::__private::ident_or_path_with_ident::IdentOrPathWithIdent;
+use crate::__private::non_empty_path::NonEmptyPath;
 use crate::__private::type_list::TypeList;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream};
@@ -16,7 +16,7 @@ use syn::parse_quote;
 pub struct ComponentAttributeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
-    pub derive: FlagOrList<IdentOrPathWithIdent>,
+    pub derive: FlagOrList<NonEmptyPath>,
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
     pub auto_name: bool,

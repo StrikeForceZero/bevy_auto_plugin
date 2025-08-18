@@ -12,7 +12,7 @@ pub mod tokens {
     use crate::__private::attribute_args::attributes::prelude::{
         AutoNameAttributeArgs, InitResourceAttributeArgs, RegisterTypeAttributeArgs,
     };
-    use crate::__private::ident_or_path_with_ident::IdentOrPathWithIdent;
+    use crate::__private::non_empty_path::NonEmptyPath;
     use proc_macro2::Ident;
 
     #[derive(Debug, Clone)]
@@ -140,9 +140,7 @@ pub mod tokens {
         }
     }
 
-    pub fn derive_from<'a>(
-        items: impl IntoIterator<Item = &'a IdentOrPathWithIdent>,
-    ) -> MacroStream {
+    pub fn derive_from<'a>(items: impl IntoIterator<Item = &'a NonEmptyPath>) -> MacroStream {
         let paths = items.into_iter().collect::<Vec<_>>();
         quote! { #[derive(#(#paths),*)] }
     }
