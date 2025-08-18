@@ -1,9 +1,9 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::__private::attribute_args::GenericsArgs;
-use crate::__private::attribute_args::attributes::shorthand::reflect_attr::ReflectAttr;
 use crate::__private::attribute_args::attributes::shorthand::{
     ExpandAttrs, Mode, ShortHandAttribute, tokens,
 };
+use crate::__private::flag_or_list::FlagOrList;
 use crate::__private::type_list::TypeList;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream};
@@ -16,7 +16,7 @@ pub struct ComponentAttributeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub derive: bool,
-    pub reflect: ReflectAttr,
+    pub reflect: FlagOrList<Ident>,
     pub register: bool,
     pub auto_name: bool,
 }
