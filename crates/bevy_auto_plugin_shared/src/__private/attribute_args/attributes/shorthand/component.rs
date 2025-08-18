@@ -4,6 +4,7 @@ use crate::__private::attribute_args::attributes::shorthand::{
     ExpandAttrs, Mode, ShortHandAttribute, tokens,
 };
 use crate::__private::flag_or_list::FlagOrList;
+use crate::__private::ident_or_path_with_ident::IdentOrPathWithIdent;
 use crate::__private::type_list::TypeList;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream};
@@ -15,7 +16,7 @@ use syn::parse_quote;
 pub struct ComponentAttributeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
-    pub derive: bool,
+    pub derive: FlagOrList<IdentOrPathWithIdent>,
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
     pub auto_name: bool,
@@ -42,11 +43,16 @@ impl ShortHandAttribute for ComponentAttributeArgs {
     fn expand_attrs(&self, mode: &Mode) -> ExpandAttrs {
         let mut expanded_attrs = ExpandAttrs::default();
 
-        if self.derive {
+        if self.derive.present {
             expanded_attrs.attrs.push(tokens::derive_component());
+            if !self.derive.items.is_empty() {
+                expanded_attrs
+                    .attrs
+                    .push(tokens::derive_from(&self.derive.items))
+            }
         }
         if self.reflect.present {
-            if self.derive {
+            if self.derive.present {
                 expanded_attrs.attrs.push(tokens::derive_reflect());
             }
             let component_ident: Ident = parse_quote!(Component);

@@ -4,6 +4,7 @@ pub mod context;
 mod expr_value;
 mod flag_or_list;
 mod generics;
+mod ident_or_path_with_ident;
 pub mod item_with_attr_match;
 mod macros;
 pub mod modes;

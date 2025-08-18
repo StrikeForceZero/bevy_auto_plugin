@@ -12,6 +12,7 @@ pub mod tokens {
     use crate::__private::attribute_args::attributes::prelude::{
         AutoNameAttributeArgs, InitResourceAttributeArgs, RegisterTypeAttributeArgs,
     };
+    use crate::__private::ident_or_path_with_ident::IdentOrPathWithIdent;
     use proc_macro2::Ident;
 
     #[derive(Debug, Clone)]
@@ -139,11 +140,22 @@ pub mod tokens {
         }
     }
 
+    pub fn derive_from<'a>(
+        items: impl IntoIterator<Item = &'a IdentOrPathWithIdent>,
+    ) -> MacroStream {
+        let paths = items.into_iter().collect::<Vec<_>>();
+        quote! { #[derive(#(#paths),*)] }
+    }
+
     pub fn derive_component() -> MacroStream {
-        quote! { #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Component)] }
+        derive_from([&parse_quote!(
+            ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Component
+        )])
     }
     pub fn derive_resource() -> MacroStream {
-        quote! { #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)] }
+        derive_from([&parse_quote!(
+            ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource
+        )])
     }
     pub fn derive_reflect() -> MacroStream {
         quote! { #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)] }
