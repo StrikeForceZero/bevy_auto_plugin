@@ -44,7 +44,7 @@ impl ArgsBackToTokens for ComponentAttributeArgs {
             items.push(self.derive.to_outer_tokens("derive"));
         }
         if self.reflect.present {
-            items.push(self.derive.to_outer_tokens("reflect"));
+            items.push(self.reflect.to_outer_tokens("reflect"));
         }
         if self.register {
             items.push(quote!(register));
