@@ -44,12 +44,9 @@ impl ShortHandAttribute for ResourceAttributeArgs {
         let mut expanded_attrs = ExpandAttrs::default();
 
         if self.derive.present {
-            expanded_attrs.attrs.push(tokens::derive_resource());
-            if !self.derive.items.is_empty() {
-                expanded_attrs
-                    .attrs
-                    .push(tokens::derive_from(&self.derive.items))
-            }
+            expanded_attrs
+                .attrs
+                .push(tokens::derive_resource(&self.derive.items));
         }
         if self.reflect.present {
             if self.derive.present {
@@ -89,16 +86,24 @@ mod tests {
     use crate::__private::attribute_args::attributes::shorthand::resource::ResourceAttributeArgs;
     use crate::__private::attribute_args::attributes::shorthand::tokens;
     use crate::__private::attribute_args::attributes::shorthand::{ExpandAttrs, Mode};
+    use crate::__private::non_empty_path::NonEmptyPath;
     use crate::__private::type_list::TypeList;
     use crate::__private::util::extensions::from_meta::FromMetaExt;
-    use proc_macro2::Ident;
+    use proc_macro2::{Ident, TokenStream};
     use quote::{ToTokens, quote};
     use syn::{Attribute, parse_quote};
 
     fn reflect_resource(extra_items: impl IntoIterator<Item = Ident>) -> ExpandAttrs {
-        let mut items = vec![parse_quote!(Resource)];
-        items.extend(extra_items.into_iter());
-        tokens::reflect(items.iter())
+        let resource_ident: Ident = parse_quote!(Resource);
+        let mut items = vec![&resource_ident];
+        let extra_items = extra_items.into_iter().collect::<Vec<_>>();
+        items.extend(extra_items.iter());
+        tokens::reflect(items)
+    }
+
+    fn derive_resource(extra_items: impl IntoIterator<Item = NonEmptyPath>) -> TokenStream {
+        let extra_items = extra_items.into_iter().collect::<Vec<_>>();
+        tokens::derive_resource(&extra_items)
     }
 
     #[internal_test_proc_macro::xtest]
@@ -108,7 +113,7 @@ mod tests {
         let mode = Mode::Module;
         let (reflect_resource_use, reflect_resource_attrs) =
             reflect_resource([]).to_use_attr_ts_tuple();
-        let derive_resource = tokens::derive_resource();
+        let derive_resource = derive_resource([]);
         let derive_reflect = tokens::derive_reflect();
         let auto_register_type =
             tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
@@ -137,7 +142,7 @@ mod tests {
         let mode = Mode::FlatFile;
         let (reflect_resource_use, reflect_resource_attrs) =
             reflect_resource([]).to_use_attr_ts_tuple();
-        let derive_resource = tokens::derive_resource();
+        let derive_resource = derive_resource([]);
         let derive_reflect = tokens::derive_reflect();
         let auto_register_type =
             tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
@@ -169,7 +174,7 @@ mod tests {
         };
         let (reflect_resource_use, reflect_resource_attrs) =
             reflect_resource([]).to_use_attr_ts_tuple();
-        let derive_resource = tokens::derive_resource();
+        let derive_resource = derive_resource([]);
         let derive_reflect = tokens::derive_reflect();
         let auto_register_type =
             tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
@@ -200,7 +205,7 @@ mod tests {
         };
         let (reflect_resource_use, reflect_resource_attrs) =
             reflect_resource([]).to_use_attr_ts_tuple();
-        let derive_resource = tokens::derive_resource();
+        let derive_resource = derive_resource([]);
         let derive_reflect = tokens::derive_reflect();
         let generics = vec![
             TypeList(vec![parse_quote!(u8), parse_quote!(bool)]),
@@ -243,7 +248,38 @@ mod tests {
         };
         let (reflect_resource_use, reflect_resource_attrs) =
             reflect_resource([parse_quote!(Debug), parse_quote!(Default)]).to_use_attr_ts_tuple();
-        let derive_resource = tokens::derive_resource();
+        let derive_resource = derive_resource([]);
+        let derive_reflect = tokens::derive_reflect();
+        let auto_register_type =
+            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
+        let auto_init_resource =
+            tokens::auto_init_resource(mode.clone(), InitResourceAttributeArgs::default());
+        assert_eq!(
+            args.inner.expand_attrs(&mode).to_token_stream().to_string(),
+            quote! {
+                #reflect_resource_use
+
+                #derive_resource
+                #derive_reflect
+                #reflect_resource_attrs
+                #auto_register_type
+                #auto_init_resource
+            }
+            .to_string()
+        );
+        Ok(())
+    }
+
+    #[internal_test_proc_macro::xtest]
+    fn test_expand_multiple_derive() -> syn::Result<()> {
+        let attr: Attribute = parse_quote! { #[auto_resource(plugin = Test, derive(Debug, Default), reflect, register, init)] };
+        let args = GlobalArgs::<ResourceAttributeArgs>::from_meta_ext(&attr.meta)?;
+        let mode = Mode::Global {
+            plugin: parse_quote!(Test),
+        };
+        let (reflect_resource_use, reflect_resource_attrs) =
+            reflect_resource([]).to_use_attr_ts_tuple();
+        let derive_resource = derive_resource([parse_quote!(Debug), parse_quote!(Default)]);
         let derive_reflect = tokens::derive_reflect();
         let auto_register_type =
             tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());

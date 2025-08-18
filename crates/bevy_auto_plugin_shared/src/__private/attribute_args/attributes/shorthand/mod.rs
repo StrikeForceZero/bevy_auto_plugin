@@ -145,15 +145,31 @@ pub mod tokens {
         quote! { #[derive(#(#paths),*)] }
     }
 
-    pub fn derive_component() -> MacroStream {
-        derive_from([&parse_quote!(
-            ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Component
-        )])
+    pub fn derive_component<'a>(
+        extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
+    ) -> MacroStream {
+        derive_from(
+            [
+                vec![&parse_quote!(
+                    ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Component
+                )],
+                extra_items.into_iter().collect::<Vec<_>>(),
+            ]
+            .concat(),
+        )
     }
-    pub fn derive_resource() -> MacroStream {
-        derive_from([&parse_quote!(
-            ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource
-        )])
+    pub fn derive_resource<'a>(
+        extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
+    ) -> MacroStream {
+        derive_from(
+            [
+                vec![&parse_quote!(
+                    ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource
+                )],
+                extra_items.into_iter().collect::<Vec<_>>(),
+            ]
+            .concat(),
+        )
     }
     pub fn derive_reflect() -> MacroStream {
         quote! { #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)] }
