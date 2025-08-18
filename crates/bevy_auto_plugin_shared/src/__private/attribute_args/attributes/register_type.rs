@@ -1,7 +1,7 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::{
-    GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
+    AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
 use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::__private::type_list::TypeList;
@@ -22,12 +22,16 @@ pub struct RegisterTypeAttributeArgs {
     pub generics: Vec<TypeList>,
 }
 
+impl AutoPluginAttributeKind for RegisterTypeAttributeArgs {
+    type Attribute = AutoPluginItemAttribute;
+    fn attribute() -> AutoPluginItemAttribute {
+        AutoPluginItemAttribute::RegisterType
+    }
+}
+
 impl ItemAttributeArgs for RegisterTypeAttributeArgs {
     fn global_build_prefix() -> &'static str {
         "_global_auto_plugin_register_type_"
-    }
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::RegisterType
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_struct_or_enum(item)

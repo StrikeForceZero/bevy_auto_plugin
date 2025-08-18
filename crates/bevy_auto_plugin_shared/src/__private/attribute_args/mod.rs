@@ -2,7 +2,11 @@ pub mod attributes;
 pub mod derives;
 mod schedule_config;
 
-use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute::{AutoPluginAttribute, AutoPluginItemAttribute};
+use crate::__private::attribute_args::attributes::shorthand::Mode;
+use crate::__private::attribute_args::attributes::shorthand::tokens::{
+    ArgsBackToTokens, ArgsWithMode,
+};
 use crate::__private::generics::GenericsCollection;
 use crate::__private::item_with_attr_match::ItemWithAttributeMatch;
 use crate::__private::type_list::TypeList;
@@ -42,11 +46,20 @@ pub trait ToTokensWithConcreteTargetPath: GenericsArgs {
     }
 }
 
+pub trait AutoPluginAttributeKind {
+    type Attribute: AutoPluginAttribute;
+    fn attribute() -> Self::Attribute;
+}
+
 pub trait ItemAttributeArgs:
-    FromMeta + Parse + ToTokensWithConcreteTargetPath + Hash + Clone
+    AutoPluginAttributeKind<Attribute = AutoPluginItemAttribute>
+    + FromMeta
+    + Parse
+    + ToTokensWithConcreteTargetPath
+    + Hash
+    + Clone
 {
     fn global_build_prefix() -> &'static str;
-    fn attribute() -> AutoPluginItemAttribute;
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;
     fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<'_, Self>>>;
 }
@@ -137,6 +150,17 @@ pub struct GlobalArgs<T> {
     pub plugin: Path,
     #[darling(flatten)]
     pub inner: T,
+}
+
+impl<T: ArgsBackToTokens> From<GlobalArgs<T>> for ArgsWithMode<T> {
+    fn from(value: GlobalArgs<T>) -> Self {
+        ArgsWithMode::new(
+            Mode::Global {
+                plugin: value.plugin,
+            },
+            value.inner,
+        )
+    }
 }
 
 impl<T> GenericsArgs for GlobalArgs<T>

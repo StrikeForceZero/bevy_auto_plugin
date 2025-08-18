@@ -1,7 +1,7 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::__private::attribute_args::schedule_config::ScheduleWithScheduleConfigArgs;
 use crate::__private::attribute_args::{
-    GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
+    AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
 use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::__private::type_list::TypeList;
@@ -22,12 +22,16 @@ pub struct AddSystemAttributeArgs {
     pub schedule_config: ScheduleWithScheduleConfigArgs,
 }
 
+impl AutoPluginAttributeKind for AddSystemAttributeArgs {
+    type Attribute = AutoPluginItemAttribute;
+    fn attribute() -> AutoPluginItemAttribute {
+        AutoPluginItemAttribute::AddSystem
+    }
+}
+
 impl ItemAttributeArgs for AddSystemAttributeArgs {
     fn global_build_prefix() -> &'static str {
         "_global_auto_plugin_add_systems_"
-    }
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::AddSystem
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_fn(item)

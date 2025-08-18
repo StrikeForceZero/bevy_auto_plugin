@@ -1,4 +1,5 @@
-use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute::AutoPluginAttribute;
+use crate::__private::non_empty_path::NonEmptyPath;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
 use syn::{Path, parse_quote};
@@ -6,9 +7,30 @@ use syn::{Path, parse_quote};
 pub mod component;
 pub mod resource;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AutoPluginShortHandAttribute {
+    Component,
+    Resource,
+}
+
+impl AutoPluginShortHandAttribute {
+    pub const fn ident_str(&self) -> &'static str {
+        match self {
+            Self::Component => "auto_component",
+            Self::Resource => "auto_resource",
+        }
+    }
+}
+
+impl AutoPluginAttribute for AutoPluginShortHandAttribute {
+    fn ident_str(&self) -> &'static str {
+        Self::ident_str(self)
+    }
+}
+
 pub mod tokens {
     use super::*;
-    use crate::__private::attribute_args::ItemAttributeArgs;
+    use crate::__private::attribute_args::AutoPluginAttributeKind;
     use crate::__private::attribute_args::attributes::prelude::{
         AutoNameAttributeArgs, InitResourceAttributeArgs, RegisterTypeAttributeArgs,
     };
@@ -25,7 +47,7 @@ pub mod tokens {
     where
         T: ArgsBackToTokens,
     {
-        fn new(mode: Mode, args: T) -> Self {
+        pub fn new(mode: Mode, args: T) -> Self {
             Self { mode, args }
         }
         fn back_to_tokens(&self, tokens: &mut MacroStream) {
@@ -46,8 +68,8 @@ pub mod tokens {
         }
     }
 
-    pub trait ArgsBackToTokens: ItemAttributeArgs {
-        fn full_attribute_path(&self, mode: &Mode) -> Path {
+    pub trait ArgsBackToTokens: AutoPluginAttributeKind {
+        fn full_attribute_path(&self, mode: &Mode) -> NonEmptyPath {
             mode.resolve_macro_path(Self::attribute())
         }
         fn back_to_inner_arg_tokens(&self, tokens: &mut MacroStream);
@@ -193,7 +215,10 @@ pub enum Mode {
 }
 
 impl Mode {
-    fn resolve_macro_path(&self, attr: AutoPluginItemAttribute) -> Path {
+    pub fn resolve_macro_path<T>(&self, attr: T) -> NonEmptyPath
+    where
+        T: AutoPluginAttribute,
+    {
         let mode = match self {
             Mode::Global { .. } => "global",
             Mode::FlatFile => "flat_file",

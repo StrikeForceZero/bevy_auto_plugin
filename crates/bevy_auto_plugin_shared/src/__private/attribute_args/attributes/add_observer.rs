@@ -1,6 +1,6 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::__private::attribute_args::{
-    GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
+    AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
 use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::__private::type_list::TypeList;
@@ -19,12 +19,16 @@ pub struct AddObserverAttributeArgs {
     pub generics: Vec<TypeList>,
 }
 
+impl AutoPluginAttributeKind for AddObserverAttributeArgs {
+    type Attribute = AutoPluginItemAttribute;
+    fn attribute() -> AutoPluginItemAttribute {
+        AutoPluginItemAttribute::AddObserver
+    }
+}
+
 impl ItemAttributeArgs for AddObserverAttributeArgs {
     fn global_build_prefix() -> &'static str {
         "_global_auto_plugin_add_observer_"
-    }
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::AddObserver
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_fn(item)

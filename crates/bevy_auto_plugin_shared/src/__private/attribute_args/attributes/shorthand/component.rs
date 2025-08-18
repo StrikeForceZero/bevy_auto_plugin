@@ -1,13 +1,14 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
-use crate::__private::attribute_args::GenericsArgs;
+use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::attributes::shorthand::{
-    ExpandAttrs, Mode, ShortHandAttribute, tokens,
+    AutoPluginShortHandAttribute, ExpandAttrs, Mode, ShortHandAttribute, tokens,
 };
+use crate::__private::attribute_args::{AutoPluginAttributeKind, GenericsArgs};
 use crate::__private::flag_or_list::FlagOrList;
 use crate::__private::non_empty_path::NonEmptyPath;
 use crate::__private::type_list::TypeList;
 use darling::FromMeta;
-use proc_macro2::{Ident, TokenStream as MacroStream};
+use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::quote;
 use syn::parse_quote;
 
@@ -25,6 +26,33 @@ pub struct ComponentAttributeArgs {
 impl GenericsArgs for ComponentAttributeArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
+    }
+}
+
+impl AutoPluginAttributeKind for ComponentAttributeArgs {
+    type Attribute = AutoPluginShortHandAttribute;
+    fn attribute() -> Self::Attribute {
+        Self::Attribute::Component
+    }
+}
+
+impl ArgsBackToTokens for ComponentAttributeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        let mut items = vec![];
+        items.extend(self.generics().to_attribute_arg_vec_tokens());
+        if self.derive.present {
+            items.push(self.derive.to_outer_tokens("derive"));
+        }
+        if self.reflect.present {
+            items.push(self.derive.to_outer_tokens("reflect"));
+        }
+        if self.register {
+            items.push(quote!(register));
+        }
+        if self.auto_name {
+            items.push(quote!(auto_name));
+        }
+        tokens.extend(quote! { #(#items),* });
     }
 }
 
@@ -78,13 +106,14 @@ impl ShortHandAttribute for ComponentAttributeArgs {
 
 #[cfg(test)]
 mod tests {
-    use crate::__private::attribute_args::GlobalArgs;
     use crate::__private::attribute_args::attributes::auto_name::AutoNameAttributeArgs;
     use crate::__private::attribute_args::attributes::prelude::RegisterTypeAttributeArgs;
     use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
     use crate::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
     use crate::__private::attribute_args::attributes::shorthand::tokens;
+    use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsWithMode;
     use crate::__private::attribute_args::attributes::shorthand::{ExpandAttrs, Mode};
+    use crate::__private::attribute_args::{AutoPluginAttributeKind, GlobalArgs};
     use crate::__private::non_empty_path::NonEmptyPath;
     use crate::__private::type_list::TypeList;
     use crate::__private::util::extensions::from_meta::FromMetaExt;
@@ -293,6 +322,22 @@ mod tests {
                 #auto_name
             }
             .to_string()
+        );
+        Ok(())
+    }
+
+    #[internal_test_proc_macro::xtest]
+    fn test_expand_back_into_args() -> syn::Result<()> {
+        let macro_path = Mode::Global {
+            plugin: parse_quote!(Test),
+        }
+        .resolve_macro_path(ComponentAttributeArgs::attribute());
+        let input = quote! { #[#macro_path (plugin = Test, derive(Debug, Default), reflect(Debug, Default), register, auto_name)] };
+        let attr: Attribute = parse_quote! { #input };
+        let args = GlobalArgs::<ComponentAttributeArgs>::from_meta_ext(&attr.meta)?;
+        assert_eq!(
+            ArgsWithMode::from(args).to_token_stream().to_string(),
+            input.to_string()
         );
         Ok(())
     }

@@ -1,4 +1,6 @@
 use darling::{Error, FromMeta, Result};
+use proc_macro2::{Ident, TokenStream};
+use quote::{ToTokens, quote};
 use smart_default::SmartDefault;
 use syn::parse::Parse;
 use syn::punctuated::Punctuated;
@@ -13,6 +15,26 @@ where
     pub present: bool,
     /// The types inside `#[this_flag(...)]`, empty for the bare flag form
     pub items: Vec<T>,
+}
+
+impl<T> FlagOrList<T>
+where
+    T: ToTokens + Parse,
+{
+    pub fn to_outer_tokens(&self, flag_name: &str) -> TokenStream {
+        use syn::spanned::Spanned;
+        let flag_ident = Ident::new(flag_name, self.present.span());
+        if self.present {
+            let items = &self.items;
+            if !items.is_empty() {
+                quote! { #flag_ident(#(#items),*) }
+            } else {
+                quote! { #flag_ident }
+            }
+        } else {
+            quote! {}
+        }
+    }
 }
 
 impl<T> FromMeta for FlagOrList<T>
