@@ -1,3 +1,4 @@
+pub mod combo;
 pub mod concrete_path;
 pub mod debug;
 pub mod env;

@@ -65,3 +65,58 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use syn::parse_quote;
+
+    #[internal_test_proc_macro::xtest]
+    fn test_flag_or_list_to_outer_tokens_not_present() {
+        assert_eq!(
+            FlagOrList::<Ident>::default()
+                .to_outer_tokens("this_flag")
+                .to_string(),
+            quote! {}.to_string()
+        )
+    }
+
+    #[internal_test_proc_macro::xtest]
+    fn test_flag_or_list_to_outer_tokens_empty() {
+        assert_eq!(
+            FlagOrList::<Ident> {
+                present: true,
+                items: vec![]
+            }
+            .to_outer_tokens("this_flag")
+            .to_string(),
+            quote! { this_flag }.to_string()
+        )
+    }
+
+    #[internal_test_proc_macro::xtest]
+    fn test_flag_or_list_to_outer_tokens_single_item() {
+        assert_eq!(
+            FlagOrList::<Ident> {
+                present: true,
+                items: vec![parse_quote!(A)]
+            }
+            .to_outer_tokens("this_flag")
+            .to_string(),
+            quote! { this_flag(A) }.to_string()
+        )
+    }
+
+    #[internal_test_proc_macro::xtest]
+    fn test_flag_or_list_to_outer_tokens_multiple_item() {
+        assert_eq!(
+            FlagOrList::<Ident> {
+                present: true,
+                items: vec![parse_quote!(A), parse_quote!(B)]
+            }
+            .to_outer_tokens("this_flag")
+            .to_string(),
+            quote! { this_flag(A, B) }.to_string()
+        )
+    }
+}

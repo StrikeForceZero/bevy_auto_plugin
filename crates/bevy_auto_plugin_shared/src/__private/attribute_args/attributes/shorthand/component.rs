@@ -106,239 +106,35 @@ impl ShortHandAttribute for ComponentAttributeArgs {
 
 #[cfg(test)]
 mod tests {
-    use crate::__private::attribute_args::attributes::auto_name::AutoNameAttributeArgs;
-    use crate::__private::attribute_args::attributes::prelude::RegisterTypeAttributeArgs;
-    use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
-    use crate::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
-    use crate::__private::attribute_args::attributes::shorthand::tokens;
-    use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsWithMode;
-    use crate::__private::attribute_args::attributes::shorthand::{ExpandAttrs, Mode};
-    use crate::__private::attribute_args::{AutoPluginAttributeKind, GlobalArgs};
-    use crate::__private::non_empty_path::NonEmptyPath;
-    use crate::__private::type_list::TypeList;
-    use crate::__private::util::extensions::from_meta::FromMetaExt;
-    use proc_macro2::{Ident, TokenStream};
-    use quote::{ToTokens, quote};
-    use syn::{Attribute, parse_quote};
-
-    fn reflect_component(extra_items: impl IntoIterator<Item = Ident>) -> ExpandAttrs {
-        let component_ident: Ident = parse_quote!(Component);
-        let mut items = vec![&component_ident];
-        let extra_items = extra_items.into_iter().collect::<Vec<_>>();
-        items.extend(extra_items.iter());
-        tokens::reflect(items)
-    }
-
-    fn derive_component(extra_items: impl IntoIterator<Item = NonEmptyPath>) -> TokenStream {
-        let extra_items = extra_items.into_iter().collect::<Vec<_>>();
-        tokens::derive_component(&extra_items)
-    }
-
-    #[internal_test_proc_macro::xtest]
-    fn test_expand_module() -> syn::Result<()> {
-        let attr: Attribute =
-            parse_quote! { #[auto_component(derive, reflect, register, auto_name)] };
-        let args = ComponentAttributeArgs::from_meta_ext(&attr.meta)?;
-        let mode = Mode::Module;
-        let (reflect_component_use, reflect_component_attrs) =
-            reflect_component([]).to_use_attr_ts_tuple();
-        let derive_component = derive_component([]);
-        let derive_reflect = tokens::derive_reflect();
-        let auto_register_type =
-            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
-        let auto_name = tokens::auto_name(mode.clone(), AutoNameAttributeArgs::default());
-        assert_eq!(
-            args.expand_attrs(&mode).to_token_stream().to_string(),
-            quote! {
-                #reflect_component_use
-
-                #derive_component
-                #derive_reflect
-                #reflect_component_attrs
-                #auto_register_type
-                #auto_name
-            }
-            .to_string()
-        );
-        Ok(())
-    }
-
-    #[internal_test_proc_macro::xtest]
-    fn test_expand_flat_file() -> syn::Result<()> {
-        let attr: Attribute =
-            parse_quote! { #[auto_component(derive, reflect, register, auto_name)] };
-        let args = ComponentAttributeArgs::from_meta_ext(&attr.meta)?;
-        let mode = Mode::FlatFile;
-        let (reflect_component_use, reflect_component_attrs) =
-            reflect_component([]).to_use_attr_ts_tuple();
-        let derive_component = derive_component([]);
-        let derive_reflect = tokens::derive_reflect();
-        let auto_register_type =
-            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
-        let auto_name = tokens::auto_name(mode.clone(), AutoNameAttributeArgs::default());
-        assert_eq!(
-            args.expand_attrs(&mode).to_token_stream().to_string(),
-            quote! {
-                #reflect_component_use
-
-                #derive_component
-                #derive_reflect
-                #reflect_component_attrs
-                #auto_register_type
-                #auto_name
-            }
-            .to_string()
-        );
-        Ok(())
-    }
-
-    #[internal_test_proc_macro::xtest]
-    fn test_expand_global() -> syn::Result<()> {
-        let attr: Attribute =
-            parse_quote! { #[auto_component(plugin = Test, derive, reflect, register, auto_name)] };
-        let args = GlobalArgs::<ComponentAttributeArgs>::from_meta_ext(&attr.meta)?;
-        let mode = Mode::Global {
-            plugin: parse_quote!(Test),
-        };
-        let (reflect_component_use, reflect_component_attrs) =
-            reflect_component([]).to_use_attr_ts_tuple();
-        let derive_component = derive_component([]);
-        let derive_reflect = tokens::derive_reflect();
-        let auto_register_type =
-            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
-        let auto_name = tokens::auto_name(mode.clone(), AutoNameAttributeArgs::default());
-        assert_eq!(
-            args.inner.expand_attrs(&mode).to_token_stream().to_string(),
-            quote! {
-                #reflect_component_use
-
-                #derive_component
-                #derive_reflect
-                #reflect_component_attrs
-                #auto_register_type
-                #auto_name
-            }
-            .to_string()
-        );
-        Ok(())
-    }
-
-    #[internal_test_proc_macro::xtest]
-    fn test_expand_global_generics() -> syn::Result<()> {
-        let attr: Attribute = parse_quote! { #[auto_component(plugin = Test, generics(u8, bool), generics(u32, f32), derive, reflect, register, auto_name)] };
-        let args = GlobalArgs::<ComponentAttributeArgs>::from_meta_ext(&attr.meta)?;
-        let mode = Mode::Global {
-            plugin: parse_quote!(Test),
-        };
-        let (reflect_component_use, reflect_component_attrs) =
-            reflect_component([]).to_use_attr_ts_tuple();
-        let derive_component = derive_component([]);
-        let derive_reflect = tokens::derive_reflect();
-        let generics = vec![
-            TypeList(vec![parse_quote!(u8), parse_quote!(bool)]),
-            TypeList(vec![parse_quote!(u32), parse_quote!(f32)]),
-        ];
-        let auto_register_type = tokens::auto_register_type(
-            mode.clone(),
-            RegisterTypeAttributeArgs {
-                generics: generics.clone(),
-            },
-        );
-        let auto_name = tokens::auto_name(
-            mode.clone(),
-            AutoNameAttributeArgs {
-                generics: generics.clone(),
-            },
-        );
-        assert_eq!(
-            args.inner.expand_attrs(&mode).to_token_stream().to_string(),
-            quote! {
-                #reflect_component_use
-
-                #derive_component
-                #derive_reflect
-                #reflect_component_attrs
-                #auto_register_type
-                #auto_name
-            }
-            .to_string()
-        );
-        Ok(())
-    }
-
-    #[internal_test_proc_macro::xtest]
-    fn test_expand_multiple_reflect() -> syn::Result<()> {
-        let attr: Attribute = parse_quote! { #[auto_component(plugin = Test, derive, reflect(Debug, Default), register, auto_name)] };
-        let args = GlobalArgs::<ComponentAttributeArgs>::from_meta_ext(&attr.meta)?;
-        let mode = Mode::Global {
-            plugin: parse_quote!(Test),
-        };
-        let (reflect_component_use, reflect_component_attrs) =
-            reflect_component([parse_quote!(Debug), parse_quote!(Default)]).to_use_attr_ts_tuple();
-        let derive_component = derive_component([]);
-        let derive_reflect = tokens::derive_reflect();
-        let auto_register_type =
-            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
-        let auto_name = tokens::auto_name(mode.clone(), AutoNameAttributeArgs::default());
-        assert_eq!(
-            args.inner.expand_attrs(&mode).to_token_stream().to_string(),
-            quote! {
-                #reflect_component_use
-
-                #derive_component
-                #derive_reflect
-                #reflect_component_attrs
-                #auto_register_type
-                #auto_name
-            }
-            .to_string()
-        );
-        Ok(())
-    }
-
-    #[internal_test_proc_macro::xtest]
-    fn test_expand_multiple_derive() -> syn::Result<()> {
-        let attr: Attribute = parse_quote! { #[auto_component(plugin = Test, derive(Debug, Default), reflect, register, auto_name)] };
-        let args = GlobalArgs::<ComponentAttributeArgs>::from_meta_ext(&attr.meta)?;
-        let mode = Mode::Global {
-            plugin: parse_quote!(Test),
-        };
-        let (reflect_component_use, reflect_component_attrs) =
-            reflect_component([]).to_use_attr_ts_tuple();
-        let derive_component = derive_component([parse_quote!(Debug), parse_quote!(Default)]);
-        let derive_reflect = tokens::derive_reflect();
-        let auto_register_type =
-            tokens::auto_register_type(mode.clone(), RegisterTypeAttributeArgs::default());
-        let auto_name = tokens::auto_name(mode.clone(), AutoNameAttributeArgs::default());
-        assert_eq!(
-            args.inner.expand_attrs(&mode).to_token_stream().to_string(),
-            quote! {
-                #reflect_component_use
-
-                #derive_component
-                #derive_reflect
-                #reflect_component_attrs
-                #auto_register_type
-                #auto_name
-            }
-            .to_string()
-        );
-        Ok(())
-    }
+    use super::*;
+    use crate::__private::attribute_args::attributes::shorthand::Mode;
+    use crate::__private::util::combo::combos_one_per_group_or_skip;
+    use crate::test_vec_input_expand;
+    use syn::parse_quote;
 
     #[internal_test_proc_macro::xtest]
     fn test_expand_back_into_args() -> syn::Result<()> {
-        let macro_path = Mode::Global {
-            plugin: parse_quote!(Test),
+        for mode in [
+            Mode::Module,
+            Mode::FlatFile,
+            Mode::Global {
+                plugin: parse_quote!(Test),
+            },
+        ] {
+            for args in combos_one_per_group_or_skip(&[
+                vec![quote!(derive), quote!(derive(Debug, Default))],
+                vec![quote!(reflect), quote!(reflect(Debug, Default))],
+                vec![quote!(register)],
+                vec![quote!(auto_name)],
+            ]) {
+                println!(
+                    "checking mode: {}, args: {}",
+                    mode.as_str(),
+                    quote! { #(#args),*}
+                );
+                test_vec_input_expand!(mode, ComponentAttributeArgs, args);
+            }
         }
-        .resolve_macro_path(ComponentAttributeArgs::attribute());
-        let input = quote! { #[#macro_path (plugin = Test, derive(Debug, Default), reflect(Debug, Default), register, auto_name)] };
-        let attr: Attribute = parse_quote! { #input };
-        let args = GlobalArgs::<ComponentAttributeArgs>::from_meta_ext(&attr.meta)?;
-        assert_eq!(
-            ArgsWithMode::from(args).to_token_stream().to_string(),
-            input.to_string()
-        );
         Ok(())
     }
 }
