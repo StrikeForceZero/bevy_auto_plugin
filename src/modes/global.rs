@@ -45,5 +45,8 @@ pub mod prelude {
     pub use bevy_auto_plugin_proc_macros::global_auto_states as auto_states;
 
     #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_system as auto_system;
+
+    #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::global_auto_bind_plugin as auto_bind_plugin;
 }

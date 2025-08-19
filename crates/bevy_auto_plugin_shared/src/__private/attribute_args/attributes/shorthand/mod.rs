@@ -8,6 +8,7 @@ pub mod component;
 pub mod event;
 pub mod resource;
 pub mod states;
+pub mod system;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AutoPluginShortHandAttribute {
@@ -15,6 +16,7 @@ pub enum AutoPluginShortHandAttribute {
     Resource,
     Event,
     States,
+    System,
 }
 
 impl AutoPluginShortHandAttribute {
@@ -24,6 +26,7 @@ impl AutoPluginShortHandAttribute {
             Self::Resource => "auto_resource",
             Self::Event => "auto_event",
             Self::States => "auto_states",
+            Self::System => "auto_system",
         }
     }
 }
@@ -38,8 +41,8 @@ pub mod tokens {
     use super::*;
     use crate::__private::attribute_args::AutoPluginAttributeKind;
     use crate::__private::attribute_args::attributes::prelude::{
-        AutoNameAttributeArgs, InitResourceAttributeArgs, InitStateAttributeArgs,
-        RegisterTypeAttributeArgs,
+        AddSystemAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
+        InitStateAttributeArgs, RegisterTypeAttributeArgs,
     };
     use crate::__private::non_empty_path::NonEmptyPath;
     use proc_macro2::Ident;
@@ -234,6 +237,9 @@ pub mod tokens {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
     pub fn auto_init_states(mode: Mode, args: InitStateAttributeArgs) -> MacroStream {
+        ArgsWithMode::new(mode, args).to_token_stream()
+    }
+    pub fn auto_add_systems(mode: Mode, args: AddSystemAttributeArgs) -> MacroStream {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
 }

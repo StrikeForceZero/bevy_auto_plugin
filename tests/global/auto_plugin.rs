@@ -74,6 +74,11 @@ fn foo_system(mut foo_res: ResMut<FooRes>) {
     foo_res.0 += 1;
 }
 
+#[auto_system(plugin = Test, schedule = Update)]
+fn foo_system2() {
+    // TODO: add something
+}
+
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
 #[auto_register_type(plugin = Test)]

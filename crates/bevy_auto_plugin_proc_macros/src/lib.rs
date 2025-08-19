@@ -391,6 +391,26 @@ pub fn global_auto_states(attr: CompilerStream, input: CompilerStream) -> Compil
 }
 
 #[proc_macro_attribute]
+pub fn global_auto_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::system::SystemAttributeArgs;
+    use syn::parse_macro_input;
+    let args = parse_macro_input!(attr as GlobalArgs<SystemAttributeArgs>);
+    let args_ts = args
+        .inner
+        .expand_attrs(&Mode::Global {
+            plugin: args.plugin,
+        })
+        .to_token_stream();
+    let input = proc_macro2::TokenStream::from(input);
+    CompilerStream::from(quote! {
+        #args_ts
+        #input
+    })
+}
+
+#[proc_macro_attribute]
 pub fn global_auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
     use proc_macro2::Span;

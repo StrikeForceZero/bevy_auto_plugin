@@ -1,4 +1,5 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::schedule_config::ScheduleWithScheduleConfigArgs;
 use crate::__private::attribute_args::{
     AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
@@ -59,5 +60,16 @@ impl ToTokensWithConcreteTargetPath for AddSystemAttributeArgs {
         tokens.extend(quote! {
             .add_systems(#schedule, #target #config_tokens)
         })
+    }
+}
+
+impl ArgsBackToTokens for AddSystemAttributeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = vec![];
+        if !self.generics().is_empty() {
+            args.extend(self.generics().to_attribute_arg_vec_tokens());
+        }
+        args.extend(self.schedule_config.to_inner_arg_tokens_vec());
+        tokens.extend(quote! { #(#args),* });
     }
 }
