@@ -5,9 +5,6 @@ use bevy_auto_plugin_shared::__private::attribute_args::attributes::prelude::{
     AddEventAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
     InitStateAttributeArgs, RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
-use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
-use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::event::EventAttributeArgs;
-use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::states::StatesAttributeArgs;
 #[cfg(feature = "mode_flat_file")]
 use bevy_auto_plugin_shared::__private::context::{
     AutoPluginContextInsert, SupportsAutoPluginContextInsert, ToTokenStringValue,
@@ -316,6 +313,7 @@ pub fn global_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> 
 pub fn global_auto_component(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
     use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
     use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
     use syn::parse_macro_input;
     let args = parse_macro_input!(attr as GlobalArgs<ComponentAttributeArgs>);
@@ -336,6 +334,7 @@ pub fn global_auto_component(attr: CompilerStream, input: CompilerStream) -> Com
 pub fn global_auto_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
     use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
     use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::resource::ResourceAttributeArgs;
     use syn::parse_macro_input;
     let args = parse_macro_input!(attr as GlobalArgs<ResourceAttributeArgs>);
@@ -356,6 +355,8 @@ pub fn global_auto_resource(attr: CompilerStream, input: CompilerStream) -> Comp
 pub fn global_auto_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
     use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::event::EventAttributeArgs;
     use syn::parse_macro_input;
     let args = parse_macro_input!(attr as GlobalArgs<EventAttributeArgs>);
     let args_ts = args
@@ -375,6 +376,8 @@ pub fn global_auto_event(attr: CompilerStream, input: CompilerStream) -> Compile
 pub fn global_auto_states(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
     use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::states::StatesAttributeArgs;
     use syn::parse_macro_input;
     let args = parse_macro_input!(attr as GlobalArgs<StatesAttributeArgs>);
     let args_ts = args
@@ -394,6 +397,7 @@ pub fn global_auto_states(attr: CompilerStream, input: CompilerStream) -> Compil
 pub fn global_auto_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
     use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
+    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
     use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::system::SystemAttributeArgs;
     use syn::parse_macro_input;
     let args = parse_macro_input!(attr as GlobalArgs<SystemAttributeArgs>);
