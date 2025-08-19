@@ -31,7 +31,6 @@ pub mod reflect {
         pub use bevy_ecs::reflect::ReflectResource;
     }
 }
-
 #[cfg(test)]
 mod tests {
     #[macro_export]
@@ -106,12 +105,10 @@ mod tests {
 
     #[macro_export]
     macro_rules! assert_args_expand {
-        // with meta args
         ($mode:expr, $args_ident:ident, $( $args:meta ),+ $(,)?) => {
             $crate::assert_vec_args_expand!($mode, $args_ident, vec![$( $args ),+])
         };
 
-        // path-only form
         ($mode:expr, $args_ident:ident $(,)?) => {
             $crate::assert_vec_args_expand!($mode, $args_ident)
         };
@@ -119,114 +116,69 @@ mod tests {
 
     #[macro_export]
     macro_rules! assert_vec_args_expand {
-        ($mode:expr, $args_ident:ident, $args:ident $(,)?) => {
-            use quote::ToTokens;
+        ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {{
             let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident, $args);
-            assert_eq!(
-                args.to_token_stream().to_string(),
-                input.to_string(),
-                concat!(
-                    "failed to expand into expected tokens - args: ",
-                    stringify!($args_ident),
-                    ", mode: {:?}, args_inner: {}"
-                ),
-                mode,
-                input,
-            );
-        };
+            $crate::__private::tests::assert_tokens_match(mode, input, args);
+        }};
 
-        ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {
-            use quote::ToTokens;
-            let args = $args;
-            $crate::assert_vec_args_expand!($mode, $args_ident, args)
-        };
-
-        // path-only form
-        ($mode:expr, $args_ident:ident $(,)?) => {
-            use quote::ToTokens;
+        ($mode:expr, $args_ident:ident $(,)?) => {{
             let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident);
-            assert_eq!(
-                args.to_token_stream().to_string(),
-                input.to_string(),
-                concat!(
-                    "failed to expand into expected tokens - args: ",
-                    stringify!($args_ident),
-                    ", mode: {:?}, args_inner: {}"
-                ),
-                mode,
-                input,
-            );
-        };
+            $crate::__private::tests::assert_tokens_match(mode, input, args);
+        }};
     }
 
     #[macro_export]
     macro_rules! try_assert_args_expand {
-        ($mode:expr, $args_ident:ident, $args:ident $(,)?) => {{
-            use quote::ToTokens;
+        ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {{
             let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident, $args);
-            let res: darling::Result<()> =
-                if args.to_token_stream().to_string() != input.to_string() {
-                    ::darling::Result::Err(darling::Error::custom(format!(
-                        concat!(
-                            "failed to expand into expected tokens - args: ",
-                            stringify!($args_ident),
-                            ", mode: {:?}, args_inner: {}\n\texpected: {}\n\t     got: {}"
-                        ),
-                        mode,
-                        input,
-                        input,
-                        args.to_token_stream(),
-                    )))
-                } else {
-                    ::darling::Result::Ok(())
-                };
-            res
+            $crate::__private::tests::try_assert_tokens_match(mode, input, args)
         }};
 
-        ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {
-            use quote::ToTokens;
-            let args = $args;
-            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident, args);
-            let res: darling::Result<()> =
-                if args.to_token_stream().to_string() != input.to_string() {
-                    ::darling::Result::Err(darling::Error::custom(format!(
-                        concat!(
-                            "failed to expand into expected tokens - args: ",
-                            stringify!($args_ident),
-                            ", mode: {:?}, args_inner: {}\n\texpected: {}\n\t     got: {}"
-                        ),
-                        mode,
-                        input,
-                        input,
-                        args.to_token_stream(),
-                    )))
-                } else {
-                    ::darling::Result::Ok(())
-                };
-            res
-        };
-
-        // path-only form
         ($mode:expr, $args_ident:ident $(,)?) => {{
-            use quote::ToTokens;
             let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident);
-            let res: darling::Result<()> =
-                if args.to_token_stream().to_string() != input.to_string() {
-                    ::darling::Result::Err(darling::Error::custom(format!(
-                        concat!(
-                            "failed to expand into expected tokens - args: ",
-                            stringify!($args_ident),
-                            ", mode: {:?}, args_inner: {}\n\texpected: {}\n\t     got: {}"
-                        ),
-                        mode,
-                        input,
-                        input,
-                        args.to_token_stream(),
-                    )))
-                } else {
-                    ::darling::Result::Ok(())
-                };
-            res
+            $crate::__private::tests::try_assert_tokens_match(mode, input, args)
         }};
+    }
+
+    pub fn assert_tokens_match(
+        mode: impl std::fmt::Debug,
+        input: impl ToString,
+        args: impl quote::ToTokens,
+    ) {
+        let input = input.to_string();
+        assert_eq!(
+            args.to_token_stream().to_string(),
+            input,
+            concat!(
+                "failed to expand into expected tokens - args: ",
+                stringify!($args_ident),
+                ", mode: {:?}, args_inner: {}"
+            ),
+            mode,
+            input,
+        );
+    }
+
+    #[allow(dead_code)]
+    pub fn try_assert_tokens_match(
+        mode: impl std::fmt::Debug,
+        input: impl ToString,
+        args: impl quote::ToTokens,
+    ) -> darling::Result<()> {
+        let input = input.to_string();
+        if args.to_token_stream().to_string() != input {
+            Err(darling::Error::custom(format!(
+                concat!(
+                    "failed to expand into expected tokens - args: ",
+                    stringify!($args_ident),
+                    ", mode: {:?}\n\texpected: {}\n\t     got: {}"
+                ),
+                mode,
+                input,
+                args.to_token_stream(),
+            )))
+        } else {
+            Ok(())
+        }
     }
 }
