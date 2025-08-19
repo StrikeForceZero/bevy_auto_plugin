@@ -35,7 +35,7 @@ pub mod reflect {
 #[cfg(test)]
 mod tests {
     #[macro_export]
-    macro_rules! mode_input_args_tokens {
+    macro_rules! parse_attribute_args_with_mode {
         // with meta args
         ($mode:expr, $args_ident:ident, $tokens:expr $(,)?) => {{
             use quote::quote;
@@ -64,7 +64,7 @@ mod tests {
             (mode, input, args_with_mode)
         }};
 
-        // zero meta args → path-only form
+        // path-only form
         ($mode:expr, $args_ident:ident $(,)?) => {{
             use quote::quote;
             use $crate::__private::attribute_args::attributes::shorthand::Mode;
@@ -84,44 +84,44 @@ mod tests {
     }
 
     #[macro_export]
-    macro_rules! mode_input_args {
+    macro_rules! parse_meta_args {
         ($mode:expr, $args_ident:ident, $( $args:meta ),+ $(,)?) => {{
-            $crate::mode_input_args_tokens!($mode, $args_ident, quote! { $( $args ),+ })
+            $crate::parse_attribute_args_with_mode!($mode, $args_ident, quote! { $( $args ),+ })
         }};
 
         ($mode:expr, $args_ident:ident $(,)?) => {{
-            $crate::mode_input_args_tokens!($mode, $args_ident)
+            $crate::parse_attribute_args_with_mode!($mode, $args_ident)
         }};
     }
 
     #[macro_export]
-    macro_rules! mode_input_vec_args {
+    macro_rules! parse_vec_args {
         ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {{
             let args = $args;
-            $crate::mode_input_args_tokens!($mode, $args_ident, quote! { #(#args),* })
+            $crate::parse_attribute_args_with_mode!($mode, $args_ident, quote! { #(#args),* })
         }};
 
-        ($mode:expr, $args_ident:ident $(,)?) => {{ $crate::mode_input_args_tokens!($mode, $args_ident) }};
+        ($mode:expr, $args_ident:ident $(,)?) => {{ $crate::parse_attribute_args_with_mode!($mode, $args_ident) }};
     }
 
     #[macro_export]
-    macro_rules! test_input_expand {
+    macro_rules! assert_args_expand {
         // with meta args
         ($mode:expr, $args_ident:ident, $( $args:meta ),+ $(,)?) => {
-            $crate::test_vec_input_expand!($mode, $args_ident, vec![$( $args ),+])
+            $crate::assert_vec_args_expand!($mode, $args_ident, vec![$( $args ),+])
         };
 
-        // zero meta args → path-only form
+        // path-only form
         ($mode:expr, $args_ident:ident $(,)?) => {
-            $crate::test_vec_input_expand!($mode, $args_ident)
+            $crate::assert_vec_args_expand!($mode, $args_ident)
         };
     }
 
     #[macro_export]
-    macro_rules! test_vec_input_expand {
+    macro_rules! assert_vec_args_expand {
         ($mode:expr, $args_ident:ident, $args:ident $(,)?) => {
             use quote::ToTokens;
-            let (mode, input, args) = $crate::mode_input_vec_args!($mode, $args_ident, $args);
+            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident, $args);
             assert_eq!(
                 args.to_token_stream().to_string(),
                 input.to_string(),
@@ -138,13 +138,13 @@ mod tests {
         ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {
             use quote::ToTokens;
             let args = $args;
-            $crate::test_vec_input_expand!($mode, $args_ident, args)
+            $crate::assert_vec_args_expand!($mode, $args_ident, args)
         };
 
-        // zero meta args → path-only form
+        // path-only form
         ($mode:expr, $args_ident:ident $(,)?) => {
             use quote::ToTokens;
-            let (mode, input, args) = $crate::mode_input_vec_args!($mode, $args_ident);
+            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident);
             assert_eq!(
                 args.to_token_stream().to_string(),
                 input.to_string(),
@@ -160,10 +160,10 @@ mod tests {
     }
 
     #[macro_export]
-    macro_rules! test_vec_input_expand_result {
+    macro_rules! try_assert_args_expand {
         ($mode:expr, $args_ident:ident, $args:ident $(,)?) => {{
             use quote::ToTokens;
-            let (mode, input, args) = $crate::mode_input_vec_args!($mode, $args_ident, $args);
+            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident, $args);
             let res: darling::Result<()> =
                 if args.to_token_stream().to_string() != input.to_string() {
                     ::darling::Result::Err(darling::Error::custom(format!(
@@ -186,7 +186,7 @@ mod tests {
         ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {
             use quote::ToTokens;
             let args = $args;
-            let (mode, input, args) = $crate::mode_input_vec_args!($mode, $args_ident, args);
+            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident, args);
             let res: darling::Result<()> =
                 if args.to_token_stream().to_string() != input.to_string() {
                     ::darling::Result::Err(darling::Error::custom(format!(
@@ -206,10 +206,10 @@ mod tests {
             res
         };
 
-        // zero meta args → path-only form
+        // path-only form
         ($mode:expr, $args_ident:ident $(,)?) => {{
             use quote::ToTokens;
-            let (mode, input, args) = $crate::mode_input_vec_args!($mode, $args_ident);
+            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident);
             let res: darling::Result<()> =
                 if args.to_token_stream().to_string() != input.to_string() {
                     ::darling::Result::Err(darling::Error::custom(format!(

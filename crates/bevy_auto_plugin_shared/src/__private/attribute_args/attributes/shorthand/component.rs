@@ -109,7 +109,7 @@ mod tests {
     use super::*;
     use crate::__private::attribute_args::attributes::shorthand::Mode;
     use crate::__private::util::combo::combos_one_per_group_or_skip;
-    use crate::test_vec_input_expand;
+    use crate::assert_vec_args_expand;
     use syn::parse_quote;
 
     #[internal_test_proc_macro::xtest]
@@ -132,7 +132,7 @@ mod tests {
                     mode.as_str(),
                     quote! { #(#args),*}
                 );
-                test_vec_input_expand!(mode, ComponentAttributeArgs, args);
+                assert_vec_args_expand!(mode, ComponentAttributeArgs, args);
             }
         }
         Ok(())
