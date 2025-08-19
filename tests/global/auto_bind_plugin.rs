@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use bevy::prelude::*;
 use bevy_auto_plugin::modes::global::prelude::*;
 use bevy_state::app::StatesPlugin;
