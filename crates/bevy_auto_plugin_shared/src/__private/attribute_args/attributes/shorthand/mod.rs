@@ -131,40 +131,6 @@ pub mod tokens {
         }
     }
 
-    pub fn reflect_component() -> ExpandAttrs {
-        ExpandAttrs {
-            attrs: vec![quote! {
-                // reflect is helper attribute and expects Ident
-                #[reflect(Component)]
-            }],
-            use_items: vec![quote! {
-                // Make the helper available for #[reflect(Component)]
-                // TODO: we could eliminate the need for globs if we pass the ident in
-                //  then we can do `ReflectComponent as ReflectComponent$ident`
-                //  #[reflect(Component$ident)]
-                #[allow(unused_imports)]
-                use ::bevy_auto_plugin::__private::shared::__private::reflect::component::*;
-            }],
-        }
-    }
-
-    pub fn reflect_resource() -> ExpandAttrs {
-        ExpandAttrs {
-            attrs: vec![quote! {
-                // reflect is helper attribute and expects Ident
-                #[reflect(Resource)]
-            }],
-            use_items: vec![quote! {
-                // Make the helper available for #[reflect(Resource)]
-                // TODO: we could eliminate the need for globs if we pass the ident in
-                //  then we can do `ReflectResource as ReflectResource$ident`
-                //  #[reflect(Resource$ident)]
-                #[allow(unused_imports)]
-                use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
-            }],
-        }
-    }
-
     pub fn derive_from<'a>(items: impl IntoIterator<Item = &'a NonEmptyPath>) -> MacroStream {
         let paths = items.into_iter().collect::<Vec<_>>();
         quote! { #[derive(#(#paths),*)] }
