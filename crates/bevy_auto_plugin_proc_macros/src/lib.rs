@@ -369,3 +369,118 @@ pub fn global_auto_event(attr: CompilerStream, input: CompilerStream) -> Compile
         #input
     })
 }
+
+#[proc_macro_attribute]
+pub fn global_auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
+    use proc_macro2::Span;
+    use quote::quote;
+    use std::mem;
+    use syn::parse::Parser as _;
+    use syn::{Attribute, Item, Meta, MetaList, Token, parse_macro_input, punctuated::Punctuated};
+
+    // Parse the item and the macro's own args (we only need `plugin`)
+    let mut item: Item = parse_macro_input!(input as Item);
+    let args = parse_macro_input!(attr as GlobalArgs<()>);
+    let plugin = args.plugin;
+
+    // Helper: take attrs out of the item so we can transform & put them back.
+    fn take_attrs(item: &mut Item) -> Option<Vec<Attribute>> {
+        match item {
+            Item::Fn(f) => Some(mem::take(&mut f.attrs)),
+            Item::Struct(s) => Some(mem::take(&mut s.attrs)),
+            Item::Enum(e) => Some(mem::take(&mut e.attrs)),
+            _ => None,
+        }
+    }
+    fn put_attrs(item: &mut Item, attrs: Vec<Attribute>) {
+        match item {
+            Item::Fn(f) => f.attrs = attrs,
+            Item::Struct(s) => s.attrs = attrs,
+            Item::Enum(e) => e.attrs = attrs,
+            _ => {}
+        }
+    }
+
+    // Only functions/structs/enums are supported
+    let Some(orig_attrs) = take_attrs(&mut item) else {
+        return syn::Error::new(
+            Span::call_site(),
+            "auto_bind_plugin supports only functions, structs, or enums",
+        )
+        .into_compile_error()
+        .into();
+    };
+
+    // Detect whether a MetaList already has a `plugin` key
+    fn list_has_key(ml: &MetaList, key: &str) -> bool {
+        // Parse the inside of (...) as a comma-separated list of Meta
+        let parser = Punctuated::<Meta, Token![,]>::parse_terminated;
+        match parser.parse2(ml.tokens.clone()) {
+            Ok(list) => list.iter().any(|m| match m {
+                Meta::NameValue(nv) => nv.path.is_ident(key),
+                Meta::List(ml2) => ml2.path.is_ident(key),
+                Meta::Path(p) => p.is_ident(key),
+            }),
+            Err(_) => false, // If we can't parse, assume missing and try to inject
+        }
+    }
+
+    // Transform attributes: inject `plugin = #plugin` where needed
+    let mut new_attrs = Vec::with_capacity(orig_attrs.len());
+    for attr in orig_attrs {
+        let last = attr
+            .path()
+            .segments
+            .last()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default();
+
+        // Only touch attributes like #[auto_*]
+        if !last.starts_with("auto_") {
+            new_attrs.push(attr);
+            continue;
+        }
+
+        // If it already has a plugin arg, keep it as-is
+        let already_has_plugin = match &attr.meta {
+            Meta::List(ml) => list_has_key(ml, "plugin"),
+            Meta::Path(_) => false,
+            Meta::NameValue(_) => true, // odd form like #[auto_x = ...]; leave it alone
+        };
+        if already_has_plugin {
+            new_attrs.push(attr);
+            continue;
+        }
+
+        // Inject `plugin = #plugin` (preserving existing args when present)
+        match &attr.meta {
+            Meta::Path(p) => {
+                // #[auto_x] -> #[auto_x(plugin = #plugin)]
+                let p = p.clone();
+                let injected: Attribute = syn::parse_quote!( #[#p(plugin = #plugin)] );
+                new_attrs.push(injected);
+            }
+            Meta::List(ml) => {
+                // #[auto_x(...)] -> #[auto_x(plugin = #plugin, ...)]
+                let path = ml.path.clone();
+                let inner = ml.tokens.clone();
+                let injected: Attribute = if inner.is_empty() {
+                    syn::parse_quote!( #[#path(plugin = #plugin)] )
+                } else {
+                    syn::parse_quote!( #[#path(plugin = #plugin, #inner)] )
+                };
+                new_attrs.push(injected);
+            }
+            Meta::NameValue(_) => {
+                // Leave uncommon #[auto_x = ...] untouched
+                new_attrs.push(attr);
+            }
+        }
+    }
+
+    put_attrs(&mut item, new_attrs);
+
+    // Re-emit the modified item
+    CompilerStream::from(quote! { #item })
+}

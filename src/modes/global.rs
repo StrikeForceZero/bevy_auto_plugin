@@ -40,4 +40,7 @@ pub mod prelude {
 
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::global_auto_event as auto_event;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_bind_plugin as auto_bind_plugin;
 }
