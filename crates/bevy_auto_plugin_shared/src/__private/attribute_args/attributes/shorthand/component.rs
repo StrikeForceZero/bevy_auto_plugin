@@ -1,4 +1,6 @@
-use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::attributes::prelude::{
+    AutoNameAttributeArgs, RegisterTypeAttributeArgs,
+};
 use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::attributes::shorthand::{
     AutoPluginShortHandAttribute, ExpandAttrs, Mode, ShortHandAttribute, tokens,
@@ -33,6 +35,20 @@ impl AutoPluginAttributeKind for ComponentAttributeArgs {
     type Attribute = AutoPluginShortHandAttribute;
     fn attribute() -> Self::Attribute {
         Self::Attribute::Component
+    }
+}
+
+impl<'a> From<&'a ComponentAttributeArgs> for RegisterTypeAttributeArgs {
+    fn from(value: &'a ComponentAttributeArgs) -> Self {
+        Self {
+            generics: value.generics.clone(),
+        }
+    }
+}
+
+impl<'a> From<&'a ComponentAttributeArgs> for AutoNameAttributeArgs {
+    fn from(_: &'a ComponentAttributeArgs) -> Self {
+        Self::default()
     }
 }
 
@@ -84,21 +100,15 @@ impl ShortHandAttribute for ComponentAttributeArgs {
             let items = std::iter::once(&component_ident).chain(self.reflect.items.iter());
             expanded_attrs.append(tokens::reflect(items))
         }
-
-        let args = self.expand_args(mode);
-        // TODO: use the tokens::auto_register_type(..)
         if self.register {
-            let macro_path = mode.resolve_macro_path(AutoPluginItemAttribute::RegisterType);
-            expanded_attrs.attrs.push(quote! {
-                #[#macro_path(#args)]
-            });
+            expanded_attrs
+                .attrs
+                .push(tokens::auto_register_type(mode.clone(), self.into()));
         }
-        // TODO: use the tokens::auto_name(..)
         if self.auto_name {
-            let macro_path = mode.resolve_macro_path(AutoPluginItemAttribute::AutoName);
-            expanded_attrs.attrs.push(quote! {
-                #[#macro_path(#args)]
-            });
+            expanded_attrs
+                .attrs
+                .push(tokens::auto_name(mode.clone(), self.into()));
         }
         expanded_attrs
     }
@@ -107,9 +117,13 @@ impl ShortHandAttribute for ComponentAttributeArgs {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::__private::attribute_args::GlobalArgs;
     use crate::__private::attribute_args::attributes::shorthand::Mode;
     use crate::__private::util::combo::combos_one_per_group_or_skip;
     use crate::assert_vec_args_expand;
+    use darling::ast::NestedMeta;
+    use internal_test_util::{extract_punctuated_paths, vec_spread};
+    use quote::ToTokens;
     use syn::parse_quote;
 
     #[internal_test_proc_macro::xtest]
@@ -135,6 +149,46 @@ mod tests {
                 assert_vec_args_expand!(mode, ComponentAttributeArgs, args);
             }
         }
+        Ok(())
+    }
+
+    #[internal_test_proc_macro::xtest]
+    fn test_expand_attrs_global() -> syn::Result<()> {
+        let extras = extract_punctuated_paths(parse_quote!(Debug, Default))
+            .into_iter()
+            .map(NonEmptyPath::try_from)
+            .collect::<syn::Result<Vec<_>>>()?;
+        let args: NestedMeta = parse_quote! {_(
+            plugin = Test,
+            derive(#(#extras),*),
+            reflect(#(#extras),*),
+            register,
+            auto_name,
+        )};
+        let args = GlobalArgs::<ComponentAttributeArgs>::from_nested_meta(&args)?;
+        let mode = Mode::Global {
+            plugin: args.plugin.clone(),
+        };
+        let derive_args = vec_spread![tokens::derive_component_path(), ..extras.clone(),];
+        let derive_reflect_path = tokens::derive_reflect_path();
+        let reflect_args = vec_spread![parse_quote!(Component), ..extras,];
+        let reflect_attr = tokens::reflect(reflect_args.iter().map(NonEmptyPath::last_ident));
+        assert_eq!(
+            args.inner.expand_attrs(&mode).to_token_stream().to_string(),
+            ExpandAttrs {
+                use_items: reflect_attr.use_items,
+                attrs: vec![
+                    quote! { #[derive(#(#derive_args),*)] },
+                    // TODO: merge these derives
+                    quote! { #[derive(#derive_reflect_path)] },
+                    quote! { #[reflect(#(#reflect_args),*)] },
+                    tokens::auto_register_type(mode.clone(), (&args.inner).into()),
+                    tokens::auto_name(mode, (&args.inner).into()),
+                ]
+            }
+            .to_token_stream()
+            .to_string()
+        );
         Ok(())
     }
 }

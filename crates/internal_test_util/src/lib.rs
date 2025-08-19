@@ -2,7 +2,10 @@ pub mod ui_util;
 
 use bevy_app::App;
 use bevy_internal::MinimalPlugins;
+use darling::ast::NestedMeta;
 use std::any::TypeId;
+use syn::punctuated::Punctuated;
+use syn::token::Comma;
 
 pub fn create_minimal_app() -> App {
     let mut app = App::new();
@@ -15,6 +18,19 @@ where
     T: 'static,
 {
     TypeId::of::<T>()
+}
+
+pub fn extract_punctuated_paths(punctuated: Punctuated<NestedMeta, Comma>) -> Vec<syn::Path> {
+    punctuated
+        .into_iter()
+        .map(|nested_meta| match nested_meta {
+            NestedMeta::Meta(meta) => meta
+                .require_path_only()
+                .cloned()
+                .expect("expected path only"),
+            NestedMeta::Lit(_) => panic!("unexpected literal"),
+        })
+        .collect::<Vec<_>>()
 }
 
 /// `vec_spread![a, ..iter_or_collection, b, ..more]`

@@ -170,14 +170,28 @@ pub mod tokens {
         quote! { #[derive(#(#paths),*)] }
     }
 
+    pub fn derive_reflect_path() -> NonEmptyPath {
+        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)
+    }
+
+    pub fn derive_component_path() -> NonEmptyPath {
+        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Component)
+    }
+
+    pub fn derive_resource_path() -> NonEmptyPath {
+        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)
+    }
+
+    pub fn derive_event_path() -> NonEmptyPath {
+        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Event)
+    }
+
     pub fn derive_component<'a>(
         extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
     ) -> MacroStream {
         derive_from(
             [
-                vec![&parse_quote!(
-                    ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Component
-                )],
+                vec![&derive_component_path()],
                 extra_items.into_iter().collect::<Vec<_>>(),
             ]
             .concat(),
@@ -188,9 +202,7 @@ pub mod tokens {
     ) -> MacroStream {
         derive_from(
             [
-                vec![&parse_quote!(
-                    ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource
-                )],
+                vec![&derive_resource_path()],
                 extra_items.into_iter().collect::<Vec<_>>(),
             ]
             .concat(),
@@ -201,16 +213,15 @@ pub mod tokens {
     ) -> MacroStream {
         derive_from(
             [
-                vec![&parse_quote!(
-                    ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Event
-                )],
+                vec![&derive_event_path()],
                 extra_items.into_iter().collect::<Vec<_>>(),
             ]
             .concat(),
         )
     }
     pub fn derive_reflect() -> MacroStream {
-        quote! { #[derive(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)] }
+        let derive_reflect_path = derive_reflect_path();
+        quote! { #[derive(#derive_reflect_path)] }
     }
     pub fn auto_register_type(mode: Mode, args: RegisterTypeAttributeArgs) -> MacroStream {
         ArgsWithMode::new(mode, args).to_token_stream()
@@ -257,6 +268,12 @@ impl Mode {
 pub struct ExpandAttrs {
     pub attrs: Vec<MacroStream>,
     pub use_items: Vec<MacroStream>,
+}
+
+impl PartialEq for ExpandAttrs {
+    fn eq(&self, other: &Self) -> bool {
+        quote!(#self).to_token_stream().to_string() == quote!(#other).to_token_stream().to_string()
+    }
 }
 
 impl ExpandAttrs {

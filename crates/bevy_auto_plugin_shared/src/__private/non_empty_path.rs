@@ -19,6 +19,14 @@ impl NonEmptyPath {
     pub fn new_unchecked(path: Path) -> Self {
         Self(path)
     }
+    pub fn into_last_ident(self) -> Ident {
+        self.0
+            .segments
+            .into_iter()
+            .last()
+            .expect("non-empty path")
+            .ident
+    }
     pub fn last_ident(&self) -> &Ident {
         &self.0.segments.last().expect("non-empty path").ident
     }
@@ -33,6 +41,18 @@ impl NonEmptyPath {
 impl From<Ident> for NonEmptyPath {
     fn from(value: Ident) -> Self {
         Self(value.into())
+    }
+}
+
+impl From<&NonEmptyPath> for Ident {
+    fn from(value: &NonEmptyPath) -> Self {
+        value.last_ident().clone()
+    }
+}
+
+impl From<NonEmptyPath> for Ident {
+    fn from(value: NonEmptyPath) -> Self {
+        value.into_last_ident()
     }
 }
 
