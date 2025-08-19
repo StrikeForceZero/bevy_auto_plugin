@@ -1,4 +1,5 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::{
     AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
@@ -53,8 +54,15 @@ impl ToTokensWithConcreteTargetPath for InitStateAttributeArgs {
         target: &ConcreteTargetPath,
     ) {
         tokens.extend(quote! {
+            // TODO: requires bevy_state::app::AppExtStates;
             .init_state::< #target >()
         })
+    }
+}
+
+impl ArgsBackToTokens for InitStateAttributeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.generics().to_attribute_arg_tokens());
     }
 }
 

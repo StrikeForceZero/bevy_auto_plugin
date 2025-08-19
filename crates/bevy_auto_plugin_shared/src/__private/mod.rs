@@ -31,6 +31,14 @@ pub mod reflect {
         pub use bevy_ecs::reflect::ReflectResource;
     }
 }
+
+pub mod derive {
+    pub mod states {
+        pub use bevy_state::state::FreelyMutableState;
+        pub use bevy_state::state::States;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[macro_export]

@@ -7,12 +7,14 @@ use syn::{Path, parse_quote};
 pub mod component;
 pub mod event;
 pub mod resource;
+pub mod states;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AutoPluginShortHandAttribute {
     Component,
     Resource,
     Event,
+    States,
 }
 
 impl AutoPluginShortHandAttribute {
@@ -21,6 +23,7 @@ impl AutoPluginShortHandAttribute {
             Self::Component => "auto_component",
             Self::Resource => "auto_resource",
             Self::Event => "auto_event",
+            Self::States => "auto_states",
         }
     }
 }
@@ -35,7 +38,8 @@ pub mod tokens {
     use super::*;
     use crate::__private::attribute_args::AutoPluginAttributeKind;
     use crate::__private::attribute_args::attributes::prelude::{
-        AutoNameAttributeArgs, InitResourceAttributeArgs, RegisterTypeAttributeArgs,
+        AutoNameAttributeArgs, InitResourceAttributeArgs, InitStateAttributeArgs,
+        RegisterTypeAttributeArgs,
     };
     use crate::__private::non_empty_path::NonEmptyPath;
     use proc_macro2::Ident;
@@ -152,6 +156,11 @@ pub mod tokens {
         parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Event)
     }
 
+    pub fn derive_states_path() -> NonEmptyPath {
+        // bevy_ecs_macros::States creates scope issues with required traits
+        parse_quote!(::bevy_auto_plugin::__private::shared::__private::derive::states::States)
+    }
+
     pub fn derive_component<'a>(
         extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
     ) -> MacroStream {
@@ -185,6 +194,32 @@ pub mod tokens {
             .concat(),
         )
     }
+    pub fn derive_states<'a>(
+        extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
+    ) -> ExpandAttrs {
+        ExpandAttrs {
+            use_items: vec![quote! {
+                // required for derive(States)
+                #[allow(unused_imports)]
+                use ::bevy_auto_plugin::__private::shared::__private::derive::states::*;
+            }],
+            attrs: vec![derive_from(
+                [
+                    vec![
+                        &derive_states_path(),
+                        &parse_quote!(Debug),
+                        &parse_quote!(Default),
+                        &parse_quote!(Clone),
+                        &parse_quote!(PartialEq),
+                        &parse_quote!(Eq),
+                        &parse_quote!(Hash),
+                    ],
+                    extra_items.into_iter().collect::<Vec<_>>(),
+                ]
+                .concat(),
+            )],
+        }
+    }
     pub fn derive_reflect() -> MacroStream {
         let derive_reflect_path = derive_reflect_path();
         quote! { #[derive(#derive_reflect_path)] }
@@ -196,6 +231,9 @@ pub mod tokens {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
     pub fn auto_init_resource(mode: Mode, args: InitResourceAttributeArgs) -> MacroStream {
+        ArgsWithMode::new(mode, args).to_token_stream()
+    }
+    pub fn auto_init_states(mode: Mode, args: InitStateAttributeArgs) -> MacroStream {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
 }

@@ -62,6 +62,13 @@ enum FooState {
     End,
 }
 
+#[auto_states(plugin = Test, derive, register, reflect, init)]
+enum FooState2 {
+    #[default]
+    Start,
+    End,
+}
+
 #[auto_add_system(plugin = Test, schedule = Update)]
 fn foo_system(mut foo_res: ResMut<FooRes>) {
     foo_res.0 += 1;
