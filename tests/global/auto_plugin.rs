@@ -45,6 +45,12 @@ struct FooRes3(usize);
 #[auto_add_event(plugin = Test)]
 struct FooEvent(usize);
 
+#[auto_event(plugin = Test)]
+struct FooEvent2(usize);
+
+#[auto_event(plugin = Test)]
+struct FooEvent3(usize);
+
 #[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
 #[auto_init_state(plugin = Test)]
 #[auto_register_state_type(plugin = Test)]

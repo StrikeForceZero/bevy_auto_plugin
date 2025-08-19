@@ -1,0 +1,125 @@
+use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
+use crate::__private::attribute_args::attributes::shorthand::{
+    AutoPluginShortHandAttribute, ExpandAttrs, Mode, ShortHandAttribute, tokens,
+};
+use crate::__private::attribute_args::{AutoPluginAttributeKind, GenericsArgs};
+use crate::__private::flag_or_list::FlagOrList;
+use crate::__private::non_empty_path::NonEmptyPath;
+use crate::__private::type_list::TypeList;
+use darling::FromMeta;
+use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
+use quote::quote;
+
+#[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
+#[darling(derive_syn_parse, default)]
+pub struct EventAttributeArgs {
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
+    pub derive: FlagOrList<NonEmptyPath>,
+    pub reflect: FlagOrList<Ident>,
+    pub register: bool,
+}
+
+impl GenericsArgs for EventAttributeArgs {
+    fn type_lists(&self) -> &[TypeList] {
+        &self.generics
+    }
+}
+
+impl AutoPluginAttributeKind for EventAttributeArgs {
+    type Attribute = AutoPluginShortHandAttribute;
+    fn attribute() -> Self::Attribute {
+        Self::Attribute::Event
+    }
+}
+
+impl ArgsBackToTokens for EventAttributeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        let mut items = vec![];
+        items.extend(self.generics().to_attribute_arg_vec_tokens());
+        if self.derive.present {
+            items.push(self.derive.to_outer_tokens("derive"));
+        }
+        if self.reflect.present {
+            items.push(self.reflect.to_outer_tokens("reflect"));
+        }
+        if self.register {
+            items.push(quote!(register));
+        }
+        tokens.extend(quote! { #(#items),* });
+    }
+}
+
+impl ShortHandAttribute for EventAttributeArgs {
+    fn expand_args(&self, mode: &Mode) -> MacroStream {
+        let mut args = Vec::new();
+        if let Mode::Global { plugin } = &mode {
+            args.push(quote! { plugin = #plugin });
+        };
+        if !self.generics().is_empty() {
+            args.extend(self.generics().to_attribute_arg_vec_tokens());
+        }
+        quote! { #(#args),* }
+    }
+
+    fn expand_attrs(&self, mode: &Mode) -> ExpandAttrs {
+        let mut expanded_attrs = ExpandAttrs::default();
+
+        if self.derive.present {
+            expanded_attrs
+                .attrs
+                .push(tokens::derive_event(&self.derive.items));
+        }
+        if self.reflect.present {
+            if self.derive.present {
+                expanded_attrs.attrs.push(tokens::derive_reflect());
+            }
+            expanded_attrs.append(tokens::reflect(&self.reflect.items))
+        }
+
+        let args = self.expand_args(mode);
+        // TODO: use the tokens::auto_register_type(..)
+        if self.register {
+            let macro_path = mode.resolve_macro_path(AutoPluginItemAttribute::RegisterType);
+            expanded_attrs.attrs.push(quote! {
+                #[#macro_path(#args)]
+            });
+        }
+        expanded_attrs
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::__private::attribute_args::attributes::shorthand::Mode;
+    use crate::__private::util::combo::combos_one_per_group_or_skip;
+    use crate::assert_vec_args_expand;
+    use syn::parse_quote;
+
+    #[internal_test_proc_macro::xtest]
+    fn test_expand_back_into_args() -> syn::Result<()> {
+        for mode in [
+            Mode::Module,
+            Mode::FlatFile,
+            Mode::Global {
+                plugin: parse_quote!(Test),
+            },
+        ] {
+            for args in combos_one_per_group_or_skip(&[
+                vec![quote!(derive), quote!(derive(Debug, Default))],
+                vec![quote!(reflect), quote!(reflect(Debug, Default))],
+                vec![quote!(register)],
+            ]) {
+                println!(
+                    "checking mode: {}, args: {}",
+                    mode.as_str(),
+                    quote! { #(#args),*}
+                );
+                assert_vec_args_expand!(mode, EventAttributeArgs, args);
+            }
+        }
+        Ok(())
+    }
+}

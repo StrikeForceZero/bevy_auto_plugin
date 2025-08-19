@@ -5,12 +5,14 @@ use quote::{ToTokens, quote};
 use syn::{Path, parse_quote};
 
 pub mod component;
+pub mod event;
 pub mod resource;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AutoPluginShortHandAttribute {
     Component,
     Resource,
+    Event,
 }
 
 impl AutoPluginShortHandAttribute {
@@ -18,6 +20,7 @@ impl AutoPluginShortHandAttribute {
         match self {
             Self::Component => "auto_component",
             Self::Resource => "auto_resource",
+            Self::Event => "auto_event",
         }
     }
 }
@@ -187,6 +190,19 @@ pub mod tokens {
             [
                 vec![&parse_quote!(
                     ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource
+                )],
+                extra_items.into_iter().collect::<Vec<_>>(),
+            ]
+            .concat(),
+        )
+    }
+    pub fn derive_event<'a>(
+        extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
+    ) -> MacroStream {
+        derive_from(
+            [
+                vec![&parse_quote!(
+                    ::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Event
                 )],
                 extra_items.into_iter().collect::<Vec<_>>(),
             ]

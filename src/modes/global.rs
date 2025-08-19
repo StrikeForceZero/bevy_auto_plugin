@@ -37,4 +37,7 @@ pub mod prelude {
 
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::global_auto_resource as auto_resource;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_event as auto_event;
 }
