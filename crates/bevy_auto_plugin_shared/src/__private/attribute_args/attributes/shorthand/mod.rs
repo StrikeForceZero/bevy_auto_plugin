@@ -6,6 +6,7 @@ use syn::{Path, parse_quote};
 
 pub mod component;
 pub mod event;
+pub mod observer;
 pub mod resource;
 pub mod states;
 pub mod system;
@@ -17,6 +18,7 @@ pub enum AutoPluginShortHandAttribute {
     Event,
     States,
     System,
+    Observer,
 }
 
 impl AutoPluginShortHandAttribute {
@@ -27,6 +29,7 @@ impl AutoPluginShortHandAttribute {
             Self::Event => "auto_event",
             Self::States => "auto_states",
             Self::System => "auto_system",
+            Self::Observer => "auto_observer",
         }
     }
 }
@@ -40,6 +43,7 @@ impl AutoPluginAttribute for AutoPluginShortHandAttribute {
 pub mod tokens {
     use super::*;
     use crate::__private::attribute_args::AutoPluginAttributeKind;
+    use crate::__private::attribute_args::attributes::add_observer::AddObserverAttributeArgs;
     use crate::__private::attribute_args::attributes::prelude::{
         AddSystemAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
         InitStateAttributeArgs, RegisterTypeAttributeArgs,
@@ -78,6 +82,7 @@ pub mod tokens {
         }
     }
 
+    // TODO: break this out so theres one for attributes and generic one for just args in general
     pub trait ArgsBackToTokens: AutoPluginAttributeKind {
         fn full_attribute_path(&self, mode: &Mode) -> NonEmptyPath {
             mode.resolve_macro_path(Self::attribute())
@@ -240,6 +245,9 @@ pub mod tokens {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
     pub fn auto_add_systems(mode: Mode, args: AddSystemAttributeArgs) -> MacroStream {
+        ArgsWithMode::new(mode, args).to_token_stream()
+    }
+    pub fn auto_add_observer(mode: Mode, args: AddObserverAttributeArgs) -> MacroStream {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
 }

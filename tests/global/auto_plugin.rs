@@ -102,6 +102,9 @@ fn foo_observer(
     foo_component_added.is_added = true;
 }
 
+#[auto_observer(plugin = Test)]
+fn foo_observer2(_trigger: Trigger<OnAdd, FooComponent>) {}
+
 fn app() -> App {
     let mut app = create_minimal_app();
     app.add_plugins(StatesPlugin);
