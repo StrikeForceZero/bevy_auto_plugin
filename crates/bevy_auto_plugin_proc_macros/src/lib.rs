@@ -5,14 +5,13 @@ use bevy_auto_plugin_shared::__private::attribute_args::attributes::prelude::{
     AddEventAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
     InitStateAttributeArgs, RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
-use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::observer::ObserverAttributeArgs;
 #[cfg(feature = "mode_flat_file")]
 use bevy_auto_plugin_shared::__private::context::{
     AutoPluginContextInsert, SupportsAutoPluginContextInsert, ToTokenStringValue,
 };
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
-use quote::{ToTokens, quote};
+use quote::quote;
 /* Module */
 
 #[cfg(feature = "mode_module")]
@@ -312,127 +311,32 @@ pub fn global_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> 
 
 #[proc_macro_attribute]
 pub fn global_auto_component(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
-    use syn::parse_macro_input;
-    let args = parse_macro_input!(attr as GlobalArgs<ComponentAttributeArgs>);
-    let args_ts = args
-        .inner
-        .expand_attrs(&Mode::Global {
-            plugin: args.plugin,
-        })
-        .to_token_stream();
-    let input = proc_macro2::TokenStream::from(input);
-    CompilerStream::from(quote! {
-        #args_ts
-        #input
-    })
+    global_handle_attribute(global::inner::global_auto_component, attr, input)
 }
 
 #[proc_macro_attribute]
 pub fn global_auto_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::resource::ResourceAttributeArgs;
-    use syn::parse_macro_input;
-    let args = parse_macro_input!(attr as GlobalArgs<ResourceAttributeArgs>);
-    let args_ts = args
-        .inner
-        .expand_attrs(&Mode::Global {
-            plugin: args.plugin,
-        })
-        .to_token_stream();
-    let input = proc_macro2::TokenStream::from(input);
-    CompilerStream::from(quote! {
-        #args_ts
-        #input
-    })
+    global_handle_attribute(global::inner::global_auto_resource, attr, input)
 }
 
 #[proc_macro_attribute]
 pub fn global_auto_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::event::EventAttributeArgs;
-    use syn::parse_macro_input;
-    let args = parse_macro_input!(attr as GlobalArgs<EventAttributeArgs>);
-    let args_ts = args
-        .inner
-        .expand_attrs(&Mode::Global {
-            plugin: args.plugin,
-        })
-        .to_token_stream();
-    let input = proc_macro2::TokenStream::from(input);
-    CompilerStream::from(quote! {
-        #args_ts
-        #input
-    })
+    global_handle_attribute(global::inner::global_auto_event, attr, input)
 }
 
 #[proc_macro_attribute]
 pub fn global_auto_states(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::states::StatesAttributeArgs;
-    use syn::parse_macro_input;
-    let args = parse_macro_input!(attr as GlobalArgs<StatesAttributeArgs>);
-    let args_ts = args
-        .inner
-        .expand_attrs(&Mode::Global {
-            plugin: args.plugin,
-        })
-        .to_token_stream();
-    let input = proc_macro2::TokenStream::from(input);
-    CompilerStream::from(quote! {
-        #args_ts
-        #input
-    })
+    global_handle_attribute(global::inner::global_auto_states, attr, input)
 }
 
 #[proc_macro_attribute]
 pub fn global_auto_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::system::SystemAttributeArgs;
-    use syn::parse_macro_input;
-    let args = parse_macro_input!(attr as GlobalArgs<SystemAttributeArgs>);
-    let args_ts = args
-        .inner
-        .expand_attrs(&Mode::Global {
-            plugin: args.plugin,
-        })
-        .to_token_stream();
-    let input = proc_macro2::TokenStream::from(input);
-    CompilerStream::from(quote! {
-        #args_ts
-        #input
-    })
+    global_handle_attribute(global::inner::global_auto_system, attr, input)
 }
 
 #[proc_macro_attribute]
 pub fn global_auto_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    use bevy_auto_plugin_shared::__private::attribute_args::GlobalArgs;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::Mode;
-    use bevy_auto_plugin_shared::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
-    use syn::parse_macro_input;
-    let args = parse_macro_input!(attr as GlobalArgs<ObserverAttributeArgs>);
-    let args_ts = args
-        .inner
-        .expand_attrs(&Mode::Global {
-            plugin: args.plugin,
-        })
-        .to_token_stream();
-    let input = proc_macro2::TokenStream::from(input);
-    CompilerStream::from(quote! {
-        #args_ts
-        #input
-    })
+    global_handle_attribute(global::inner::global_auto_observer, attr, input)
 }
 
 #[proc_macro_attribute]

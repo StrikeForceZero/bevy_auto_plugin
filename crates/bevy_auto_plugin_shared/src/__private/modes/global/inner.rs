@@ -9,6 +9,13 @@ use crate::__private::attribute_args::attributes::modes::global::auto_plugin::Au
 use crate::__private::attribute_args::attributes::modes::resolve_app_param_name;
 use crate::__private::attribute_args::attributes::register_state_type::RegisterStateTypeAttributeArgs;
 use crate::__private::attribute_args::attributes::register_type::RegisterTypeAttributeArgs;
+use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
+use crate::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
+use crate::__private::attribute_args::attributes::shorthand::event::EventAttributeArgs;
+use crate::__private::attribute_args::attributes::shorthand::observer::ObserverAttributeArgs;
+use crate::__private::attribute_args::attributes::shorthand::resource::ResourceAttributeArgs;
+use crate::__private::attribute_args::attributes::shorthand::states::StatesAttributeArgs;
+use crate::__private::attribute_args::attributes::shorthand::system::SystemAttributeArgs;
 use crate::__private::attribute_args::derives::auto_plugin::GlobalAutoPluginDeriveArgs;
 use crate::__private::attribute_args::{
     GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs, WithTargetPath,
@@ -17,6 +24,7 @@ use crate::__private::modes::global::_plugin_entry_block;
 use crate::__private::util::debug::debug_item;
 use crate::__private::util::fn_param::require_fn_param_mutable_reference;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
+use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
 use syn::{FnArg, Item, ItemFn, parse2};
@@ -312,4 +320,47 @@ pub fn global_auto_add_system_outer(attr: MacroStream, input: MacroStream) -> Ma
 
 pub fn global_auto_add_observer_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<AddObserverAttributeArgs>>(attr, input)
+}
+
+fn global_auto_inner<T: ShortHandAttribute + FromMeta>(
+    attr: MacroStream,
+    input: MacroStream,
+) -> syn::Result<MacroStream> {
+    use crate::__private::attribute_args::GlobalArgs;
+    use crate::__private::attribute_args::attributes::shorthand::Mode;
+    let args = parse2::<GlobalArgs<T>>(attr)?;
+    let args_ts = args.inner.expand_attrs(&Mode::Global {
+        plugin: args.plugin,
+    });
+    let input = proc_macro2::TokenStream::from(input);
+    Ok(quote! {
+        #args_ts
+        #input
+    })
+}
+
+fn global_auto_outer<T: ShortHandAttribute + FromMeta>(
+    attr: MacroStream,
+    input: MacroStream,
+) -> MacroStream {
+    global_auto_inner::<T>(attr, input).unwrap_or_else(|err| err.to_compile_error())
+}
+
+pub fn global_auto_component(attr: MacroStream, input: MacroStream) -> MacroStream {
+    global_auto_outer::<ComponentAttributeArgs>(attr, input)
+}
+pub fn global_auto_resource(attr: MacroStream, input: MacroStream) -> MacroStream {
+    global_auto_outer::<ResourceAttributeArgs>(attr, input)
+}
+pub fn global_auto_system(attr: MacroStream, input: MacroStream) -> MacroStream {
+    global_auto_outer::<SystemAttributeArgs>(attr, input)
+}
+pub fn global_auto_event(attr: MacroStream, input: MacroStream) -> MacroStream {
+    global_auto_outer::<EventAttributeArgs>(attr, input)
+}
+pub fn global_auto_observer(attr: MacroStream, input: MacroStream) -> MacroStream {
+    global_auto_outer::<ObserverAttributeArgs>(attr, input)
+}
+pub fn global_auto_states(attr: MacroStream, input: MacroStream) -> MacroStream {
+    global_auto_outer::<StatesAttributeArgs>(attr, input)
 }
