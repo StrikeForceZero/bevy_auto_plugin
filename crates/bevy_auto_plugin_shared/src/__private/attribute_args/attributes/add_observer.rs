@@ -4,6 +4,7 @@ use crate::__private::attribute_args::{
     AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
 use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
+use crate::__private::trigger_arg::TriggerArg;
 use crate::__private::type_list::TypeList;
 use crate::__private::util::concrete_path::ConcreteTargetPath;
 use crate::__private::util::meta::fn_meta::FnMeta;
@@ -18,6 +19,7 @@ use syn::Item;
 pub struct AddObserverAttributeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
+    pub trigger: Option<TriggerArg>,
 }
 
 impl AutoPluginAttributeKind for AddObserverAttributeArgs {
@@ -64,6 +66,10 @@ impl ArgsBackToTokens for AddObserverAttributeArgs {
         let mut args = vec![];
         if !self.generics().is_empty() {
             args.extend(self.generics().to_attribute_arg_vec_tokens());
+        }
+        if let Some(trigger) = &self.trigger {
+            let trigger_inner_args = trigger.back_to_inner_arg_tokens();
+            args.push(quote! { trigger(#trigger_inner_args) });
         }
         tokens.extend(quote! { #(#args),* });
     }

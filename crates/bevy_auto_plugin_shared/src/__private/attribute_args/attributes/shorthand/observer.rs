@@ -17,6 +17,7 @@ use quote::quote;
 pub struct ObserverAttributeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
+    pub trigger: Option<TriggerArg>,
 }
 
 impl GenericsArgs for ObserverAttributeArgs {
@@ -44,7 +45,7 @@ impl<'a> From<&'a ObserverAttributeArgs> for AddObserverAttributeArgs {
     fn from(value: &'a ObserverAttributeArgs) -> Self {
         AddObserverAttributeArgs {
             generics: value.generics.clone(),
-            ..Default::default()
+            trigger: value.trigger.clone(),
         }
     }
 }
@@ -96,7 +97,7 @@ mod tests {
                 plugin: parse_quote!(Test),
             },
         ] {
-            let args = vec![quote! {  }];
+            let args = vec![quote! { trigger(Foo) }];
             println!(
                 "checking mode: {}, args: {}",
                 mode.as_str(),
@@ -110,6 +111,7 @@ mod tests {
     #[internal_test_proc_macro::xtest]
     fn test_expand_attrs_global() -> syn::Result<()> {
         let args: NestedMeta = parse_quote! {_(
+            trigger(Foo),
         )};
         let args = GlobalArgs::<ObserverAttributeArgs>::from_nested_meta(&args)?;
         let mode = Mode::Global {

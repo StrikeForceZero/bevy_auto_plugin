@@ -8,6 +8,8 @@ pub mod item_with_attr_match;
 mod macros;
 pub mod modes;
 mod non_empty_path;
+mod trigger_arg;
+mod trigger_type_arg;
 mod type_list;
 pub mod util;
 
