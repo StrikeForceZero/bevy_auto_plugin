@@ -32,3 +32,7 @@
 ### `global_auto_plugin(..)` is now just `auto_plugin(..)`
 
 ### `auto_plugin(app=..)` is now `auto_plugin(app_param=..)` across all modes
+
+### `flat_file` and `module` modes are deprecated 
+  - [see feedback issue if you are using these modes](https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19) or use `global`
+  - enable `ignore_flat_file_or_module_deprecation` to disable deprecation warnings if you commented and provided a use case for keeping the modes
