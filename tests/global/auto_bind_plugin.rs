@@ -10,84 +10,87 @@ use std::ops::Deref;
 #[auto_plugin(impl_plugin_trait)]
 struct Test;
 
+#[auto_bind_plugin(plugin = Test)]
 #[derive(Component, Reflect)]
 #[reflect(Component)]
-#[auto_register_type(plugin = Test)]
-#[auto_name(plugin = Test)]
+#[auto_register_type]
+#[auto_name]
 struct FooComponent;
-#[auto_component(plugin = Test, derive, register, reflect, auto_name)]
+
+#[auto_bind_plugin(plugin = Test)]
+#[auto_component(derive, register, reflect, auto_name)]
 struct FooComponent2;
 
-#[auto_component(plugin = Test, derive, register, reflect, auto_name)]
+#[auto_bind_plugin(plugin = Test)]
+#[auto_component(derive, register, reflect, auto_name)]
 struct FooComponent3;
 
+#[auto_bind_plugin(plugin = Test)]
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
-#[auto_register_type(plugin = Test)]
-#[auto_init_resource(plugin = Test)]
+#[auto_register_type]
+#[auto_init_resource]
 struct FooDefaultRes(usize);
 
+#[auto_bind_plugin(plugin = Test)]
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
-#[auto_register_type(plugin = Test)]
-#[auto_init_resource(plugin = Test)]
-#[auto_insert_resource(plugin = Test, resource(FooRes(1)))]
+#[auto_register_type]
+#[auto_init_resource]
+#[auto_insert_resource(resource(FooRes(1)))]
 struct FooRes(usize);
 
-#[auto_resource(plugin = Test, derive, register, reflect, init)]
+#[auto_bind_plugin(plugin = Test)]
+#[auto_resource(derive, register, reflect, init)]
 #[derive(Default)]
 struct FooRes2(usize);
 
-#[auto_resource(plugin = Test, derive, register, reflect, init)]
+#[auto_bind_plugin(plugin = Test)]
+#[auto_resource(derive, register, reflect, init)]
 #[derive(Default)]
 struct FooRes3(usize);
 
+#[auto_bind_plugin(plugin = Test)]
 #[derive(Event, Debug, Default, PartialEq, Reflect)]
-#[auto_register_type(plugin = Test)]
-#[auto_add_event(plugin = Test)]
+#[auto_register_type]
+#[auto_add_event]
 struct FooEvent(usize);
 
-#[auto_event(plugin = Test)]
+#[auto_bind_plugin(plugin = Test)]
+#[auto_event]
 struct FooEvent2(usize);
 
-#[auto_event(plugin = Test)]
+#[auto_bind_plugin(plugin = Test)]
+#[auto_event]
 struct FooEvent3(usize);
 
+#[auto_bind_plugin(plugin = Test)]
 #[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
-#[auto_init_state(plugin = Test)]
-#[auto_register_state_type(plugin = Test)]
+#[auto_init_state]
+#[auto_register_state_type]
 enum FooState {
     #[default]
     Start,
     End,
 }
 
-#[auto_states(plugin = Test, derive, register, reflect, init)]
-enum FooState2 {
-    #[default]
-    Start,
-    End,
-}
-
-#[auto_add_system(plugin = Test, schedule = Update)]
+#[auto_bind_plugin(plugin = Test)]
+#[auto_add_system(schedule = Update)]
 fn foo_system(mut foo_res: ResMut<FooRes>) {
     foo_res.0 += 1;
 }
 
-#[auto_system(plugin = Test, schedule = Update)]
-fn foo_system2() {
-    // TODO: add something
-}
-
+#[auto_bind_plugin(plugin = Test)]
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
-#[auto_register_type(plugin = Test)]
-#[auto_init_resource(plugin = Test)]
+#[auto_register_type]
+#[auto_init_resource]
 struct FooComponentState {
     is_added: bool,
 }
 
-#[auto_add_observer(plugin = Test)]
+#[auto_bind_plugin(plugin = Test)]
+#[auto_add_observer]
 fn foo_observer(
     trigger: Trigger<OnAdd, FooComponent>,
     added_foo_q: Query<Ref<FooComponent>, Added<FooComponent>>,
@@ -101,9 +104,6 @@ fn foo_observer(
     );
     foo_component_added.is_added = true;
 }
-
-#[auto_observer(plugin = Test)]
-fn foo_observer2(_trigger: Trigger<OnAdd, FooComponent>) {}
 
 fn app() -> App {
     let mut app = create_minimal_app();

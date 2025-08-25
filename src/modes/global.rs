@@ -31,4 +31,25 @@ pub mod prelude {
 
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::global_auto_add_observer as auto_add_observer;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_component as auto_component;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_resource as auto_resource;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_event as auto_event;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_states as auto_states;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_system as auto_system;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_observer as auto_observer;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_bind_plugin as auto_bind_plugin;
 }

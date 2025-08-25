@@ -1,3 +1,4 @@
+mod auto_bind_plugin;
 mod auto_plugin;
 mod auto_plugin_with_generics;
 mod bare_fn;

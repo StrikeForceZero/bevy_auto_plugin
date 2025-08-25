@@ -16,6 +16,19 @@ impl GenericsCollection {
 
         vec.into_iter()
     }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+    pub fn to_attribute_arg_vec_tokens(&self) -> Vec<MacroStream> {
+        self.0
+            .iter()
+            .map(|type_list| quote!(generics(#type_list)))
+            .collect()
+    }
+    pub fn to_attribute_arg_tokens(&self) -> MacroStream {
+        let tokens = self.to_attribute_arg_vec_tokens();
+        quote!(#(#tokens),*)
+    }
 }
 
 impl IntoIterator for GenericsCollection {

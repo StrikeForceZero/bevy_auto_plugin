@@ -1,6 +1,6 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::__private::attribute_args::{
-    GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
+    AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
 use crate::__private::expr_value::ExprValue;
 use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
@@ -41,12 +41,16 @@ impl InsertResourceAttributeArgs {
     }
 }
 
+impl AutoPluginAttributeKind for InsertResourceAttributeArgs {
+    type Attribute = AutoPluginItemAttribute;
+    fn attribute() -> AutoPluginItemAttribute {
+        AutoPluginItemAttribute::InsertResource
+    }
+}
+
 impl ItemAttributeArgs for InsertResourceAttributeArgs {
     fn global_build_prefix() -> &'static str {
         "_global_auto_plugin_insert_resource_"
-    }
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::InsertResource
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_struct_or_enum(item)

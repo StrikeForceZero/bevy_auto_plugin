@@ -1,7 +1,8 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::schedule_config::ScheduleWithScheduleConfigArgs;
 use crate::__private::attribute_args::{
-    GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
+    AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
 use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::__private::type_list::TypeList;
@@ -22,12 +23,16 @@ pub struct AddSystemAttributeArgs {
     pub schedule_config: ScheduleWithScheduleConfigArgs,
 }
 
+impl AutoPluginAttributeKind for AddSystemAttributeArgs {
+    type Attribute = AutoPluginItemAttribute;
+    fn attribute() -> AutoPluginItemAttribute {
+        AutoPluginItemAttribute::AddSystem
+    }
+}
+
 impl ItemAttributeArgs for AddSystemAttributeArgs {
     fn global_build_prefix() -> &'static str {
         "_global_auto_plugin_add_systems_"
-    }
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::AddSystem
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_fn(item)
@@ -55,5 +60,16 @@ impl ToTokensWithConcreteTargetPath for AddSystemAttributeArgs {
         tokens.extend(quote! {
             .add_systems(#schedule, #target #config_tokens)
         })
+    }
+}
+
+impl ArgsBackToTokens for AddSystemAttributeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = vec![];
+        if !self.generics().is_empty() {
+            args.extend(self.generics().to_attribute_arg_vec_tokens());
+        }
+        args.extend(self.schedule_config.to_inner_arg_tokens_vec());
+        tokens.extend(quote! { #(#args),* });
     }
 }

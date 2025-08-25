@@ -1,6 +1,7 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::{
-    GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
+    AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
 use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::__private::type_list::TypeList;
@@ -21,12 +22,16 @@ pub struct InitStateAttributeArgs {
     pub generics: Vec<TypeList>,
 }
 
+impl AutoPluginAttributeKind for InitStateAttributeArgs {
+    type Attribute = AutoPluginItemAttribute;
+    fn attribute() -> AutoPluginItemAttribute {
+        AutoPluginItemAttribute::InitState
+    }
+}
+
 impl ItemAttributeArgs for InitStateAttributeArgs {
     fn global_build_prefix() -> &'static str {
         "_global_auto_plugin_init_state_"
-    }
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::InitState
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_struct_or_enum(item)
@@ -49,8 +54,15 @@ impl ToTokensWithConcreteTargetPath for InitStateAttributeArgs {
         target: &ConcreteTargetPath,
     ) {
         tokens.extend(quote! {
+            // TODO: requires bevy_state::app::AppExtStates;
             .init_state::< #target >()
         })
+    }
+}
+
+impl ArgsBackToTokens for InitStateAttributeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.generics().to_attribute_arg_tokens());
     }
 }
 

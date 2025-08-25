@@ -1,6 +1,6 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::__private::attribute_args::{
-    GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
+    AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
 use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::__private::type_list::TypeList;
@@ -21,12 +21,16 @@ pub struct AddEventAttributeArgs {
     pub generics: Vec<TypeList>,
 }
 
+impl AutoPluginAttributeKind for AddEventAttributeArgs {
+    type Attribute = AutoPluginItemAttribute;
+    fn attribute() -> AutoPluginItemAttribute {
+        AutoPluginItemAttribute::AddEvent
+    }
+}
+
 impl ItemAttributeArgs for AddEventAttributeArgs {
     fn global_build_prefix() -> &'static str {
         "_global_auto_plugin_add_event_"
-    }
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::AddEvent
     }
 
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
