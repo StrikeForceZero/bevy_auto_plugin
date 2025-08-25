@@ -16,7 +16,10 @@ impl ScheduleWithScheduleConfigArgs {
         let mut tokens = vec![];
         let schedule = &self.schedule;
         tokens.push(quote! { schedule = #schedule });
-        tokens.extend(self.config.to_inner_arg_tokens_vec());
+        let config = self.config.to_inner_arg_tokens_vec();
+        if !config.is_empty() {
+            tokens.push(quote! { config( #(#config),* )});
+        }
         tokens
     }
 }
