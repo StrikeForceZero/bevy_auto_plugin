@@ -1,10 +1,7 @@
 use crate::__private::attribute_args::ItemAttributeArgs;
-use crate::__private::attribute_args::attributes::add_observer::AddObserverAttributeArgs;
 use crate::__private::attribute_args::attributes::modes::flat_file::auto_plugin::AutoPluginArgs;
 use crate::__private::attribute_args::attributes::modes::resolve_app_param_name;
-use crate::__private::attribute_args::attributes::prelude::{
-    AddSystemAttributeArgs, InsertResourceAttributeArgs,
-};
+use crate::__private::attribute_args::attributes::prelude::*;
 use crate::__private::context::{
     AutoPluginContextInsert, SupportsAutoPluginContextInsert, ToTokenStringValue,
 };
@@ -303,4 +300,23 @@ where
     handle_attribute_outer(parsed_item, Span::call_site(), args)
         .map(|_| cloned_input)
         .unwrap_or_else(to_compile_error)
+}
+
+pub fn handle_register_type_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_handle_attribute::<RegisterTypeAttributeArgs>(attr, input)
+}
+pub fn handle_add_event_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_handle_attribute::<AddEventAttributeArgs>(attr, input)
+}
+pub fn handle_init_resource_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_handle_attribute::<InitResourceAttributeArgs>(attr, input)
+}
+pub fn handle_auto_name_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_handle_attribute::<AutoNameAttributeArgs>(attr, input)
+}
+pub fn handle_init_state_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_handle_attribute::<InitStateAttributeArgs>(attr, input)
+}
+pub fn handle_register_state_type_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_handle_attribute::<RegisterStateTypeAttributeArgs>(attr, input)
 }

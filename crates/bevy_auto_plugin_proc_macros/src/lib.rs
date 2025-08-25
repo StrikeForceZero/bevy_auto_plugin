@@ -129,7 +129,7 @@ pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Com
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(
-        flat_file::inner::flat_file_handle_attribute::<RegisterTypeAttributeArgs>,
+        flat_file::inner::handle_register_type_attribute,
         attr,
         input,
     )
@@ -139,11 +139,7 @@ pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream)
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(
-        flat_file::inner::flat_file_handle_attribute::<AddEventAttributeArgs>,
-        attr,
-        input,
-    )
+    handle_attribute(flat_file::inner::handle_add_event_attribute, attr, input)
 }
 /// Automatically initializes a resource in the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_init_resource.md")]
@@ -151,7 +147,7 @@ pub fn flat_file_auto_add_event(attr: CompilerStream, input: CompilerStream) -> 
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(
-        flat_file::inner::flat_file_handle_attribute::<InitResourceAttributeArgs>,
+        flat_file::inner::handle_init_resource_attribute,
         attr,
         input,
     )
@@ -161,11 +157,7 @@ pub fn flat_file_auto_init_resource(attr: CompilerStream, input: CompilerStream)
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(
-        flat_file::inner::flat_file_handle_attribute::<AutoNameAttributeArgs>,
-        attr,
-        input,
-    )
+    handle_attribute(flat_file::inner::handle_auto_name_attribute, attr, input)
 }
 
 /// Automatically initializes a State in the Bevy `App`.
@@ -173,11 +165,7 @@ pub fn flat_file_auto_name(attr: CompilerStream, input: CompilerStream) -> Compi
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(
-        flat_file::inner::flat_file_handle_attribute::<InitStateAttributeArgs>,
-        attr,
-        input,
-    )
+    handle_attribute(flat_file::inner::handle_init_state_attribute, attr, input)
 }
 
 /// Automatically registers a State type in the Bevy `App`.
@@ -189,7 +177,7 @@ pub fn flat_file_auto_register_state_type(
     input: CompilerStream,
 ) -> CompilerStream {
     handle_attribute(
-        flat_file::inner::flat_file_handle_attribute::<RegisterStateTypeAttributeArgs>,
+        flat_file::inner::handle_register_state_type_attribute,
         attr,
         input,
     )
