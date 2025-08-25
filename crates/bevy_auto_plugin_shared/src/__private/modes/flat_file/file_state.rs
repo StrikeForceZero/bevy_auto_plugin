@@ -96,7 +96,10 @@ pub fn files_missing_plugin_ts() -> proc_macro2::TokenStream {
             }));
         }
         #[cfg(feature = "flat_file_missing_auto_plugin_is_compile_error")]
-        return syn::Error::new(Span::call_site(), messages.join("\n")).to_compile_error();
+        {
+            use proc_macro2::Span;
+            return syn::Error::new(Span::call_site(), messages.join("\n")).to_compile_error();
+        }
     }
     output
 }
