@@ -1,8 +1,3 @@
-#[cfg(feature = "mode_flat_file")]
-use bevy_auto_plugin_shared::__private::attribute_args::attributes::prelude::{
-    AddEventAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
-    InitStateAttributeArgs, RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
-};
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
 
@@ -123,6 +118,7 @@ use bevy_auto_plugin_shared::__private::modes::flat_file;
 pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::expand_flat_file, attr, input)
 }
+
 /// Automatically registers a type with the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_register_type.md")]
 #[proc_macro_attribute]
@@ -134,6 +130,7 @@ pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream)
         input,
     )
 }
+
 /// Automatically adds an event type to the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_add_event.md")]
 #[proc_macro_attribute]
@@ -141,6 +138,7 @@ pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream)
 pub fn flat_file_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::handle_add_event_attribute, attr, input)
 }
+
 /// Automatically initializes a resource in the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_init_resource.md")]
 #[proc_macro_attribute]
@@ -152,6 +150,7 @@ pub fn flat_file_auto_init_resource(attr: CompilerStream, input: CompilerStream)
         input,
     )
 }
+
 /// Automatically associates a required component `Name` with the default value set to the ident in the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_name.md")]
 #[proc_macro_attribute]
@@ -199,6 +198,7 @@ pub fn flat_file_auto_add_observer(attr: CompilerStream, input: CompilerStream) 
     handle_attribute(flat_file::inner::handle_add_observer_attribute, attr, input)
 }
 
+/// Automatically inserts a resource in the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_insert_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
@@ -218,6 +218,7 @@ pub fn flat_file_auto_insert_resource(
 #[cfg(feature = "mode_global")]
 use bevy_auto_plugin_shared::__private::modes::global;
 
+/// Derives `AutoPlugin` which generates the initialization function that automatically registering types, events, and resources in the `App`.
 #[doc = include_str!("docs/global/derive_auto_plugin.md")]
 #[proc_macro_derive(AutoPlugin, attributes(auto_plugin))]
 #[cfg(feature = "mode_global")]
@@ -225,6 +226,7 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
     global::inner::expand_global_derive_global_auto_plugin(input.into()).into()
 }
 
+/// Attaches to a fn and injects a call to the initialization function that automatically registering types, events, and resources in the `App`.
 #[doc = include_str!("docs/global/auto_plugin.md")]
 #[allow(unused_variables, unused_mut, unreachable_code)]
 #[proc_macro_attribute]
@@ -233,6 +235,7 @@ pub fn global_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
     handle_attribute(global::inner::expand_global_auto_plugin, attr, input)
 }
 
+/// Automatically registers a type with the Bevy `App`.
 #[doc = include_str!("docs/global/auto_register_type.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -240,6 +243,7 @@ pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) ->
     handle_attribute(global::inner::global_auto_register_type_outer, attr, input)
 }
 
+/// Automatically adds an event type to the Bevy `App`.
 #[doc = include_str!("docs/global/auto_add_event.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -247,6 +251,7 @@ pub fn global_auto_add_event(attr: CompilerStream, input: CompilerStream) -> Com
     handle_attribute(global::inner::global_auto_add_event_outer, attr, input)
 }
 
+/// Automatically inserts a resource in the Bevy `App`.
 #[doc = include_str!("docs/global/auto_init_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -254,6 +259,7 @@ pub fn global_auto_init_resource(attr: CompilerStream, input: CompilerStream) ->
     handle_attribute(global::inner::global_auto_init_resource_outer, attr, input)
 }
 
+/// Automatically inserts a resource in the Bevy `App`.
 #[doc = include_str!("docs/global/auto_insert_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -265,6 +271,7 @@ pub fn global_auto_insert_resource(attr: CompilerStream, input: CompilerStream) 
     )
 }
 
+/// Automatically initializes a State in the Bevy `App`.
 #[doc = include_str!("docs/global/auto_init_state.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -272,6 +279,7 @@ pub fn global_auto_init_state(attr: CompilerStream, input: CompilerStream) -> Co
     handle_attribute(global::inner::global_auto_init_state_outer, attr, input)
 }
 
+/// Automatically registers a required component `Name` with a value using the concrete name of the item.
 #[doc = include_str!("docs/global/auto_name.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -279,6 +287,7 @@ pub fn global_auto_name(attr: CompilerStream, input: CompilerStream) -> Compiler
     handle_attribute(global::inner::global_auto_name_outer, attr, input)
 }
 
+/// Automatically registers item as States for bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/auto_register_state_type.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -293,6 +302,7 @@ pub fn global_auto_register_state_type(
     )
 }
 
+/// Automatically adds the fn as a system for bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/auto_add_system.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -300,6 +310,7 @@ pub fn global_auto_add_system(attr: CompilerStream, input: CompilerStream) -> Co
     handle_attribute(global::inner::global_auto_add_system_outer, attr, input)
 }
 
+/// Automatically adds the fn as a global observer to bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/auto_add_observer.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -307,6 +318,7 @@ pub fn global_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> 
     handle_attribute(global::inner::global_auto_add_observer_outer, attr, input)
 }
 
+/// Automatically registers item as Component for bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/shorthand/auto_component.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -314,6 +326,7 @@ pub fn global_auto_component(attr: CompilerStream, input: CompilerStream) -> Com
     handle_attribute(global::inner::global_auto_component, attr, input)
 }
 
+/// Automatically registers item as Resource for bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/shorthand/auto_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -321,6 +334,7 @@ pub fn global_auto_resource(attr: CompilerStream, input: CompilerStream) -> Comp
     handle_attribute(global::inner::global_auto_resource, attr, input)
 }
 
+/// Automatically registers item as Event for bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/shorthand/auto_event.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -328,6 +342,7 @@ pub fn global_auto_event(attr: CompilerStream, input: CompilerStream) -> Compile
     handle_attribute(global::inner::global_auto_event, attr, input)
 }
 
+/// Automatically registers item as States for bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/shorthand/auto_states.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -335,6 +350,7 @@ pub fn global_auto_states(attr: CompilerStream, input: CompilerStream) -> Compil
     handle_attribute(global::inner::global_auto_states, attr, input)
 }
 
+/// Automatically adds the fn as a system for bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/shorthand/auto_system.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -342,6 +358,7 @@ pub fn global_auto_system(attr: CompilerStream, input: CompilerStream) -> Compil
     handle_attribute(global::inner::global_auto_system, attr, input)
 }
 
+/// Automatically adds global observer to bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/shorthand/auto_observer.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
@@ -349,6 +366,7 @@ pub fn global_auto_observer(attr: CompilerStream, input: CompilerStream) -> Comp
     handle_attribute(global::inner::global_auto_observer, attr, input)
 }
 
+/// Automatically binds `plugin = _` to every auto_* attribute below it
 #[doc = include_str!("docs/global/shorthand/auto_bind_plugin.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
