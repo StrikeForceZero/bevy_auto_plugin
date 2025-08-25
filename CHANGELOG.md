@@ -65,7 +65,7 @@
 
 ---
 ## v0.5
-
+- remove deprecated pre-v0.4 module exports
 - deprecate `flat_file` and `module` modes ([see feedback issue if you are using these modes](https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19))
 - add shorthand macros
   - `#[auto_component(..)]` 
