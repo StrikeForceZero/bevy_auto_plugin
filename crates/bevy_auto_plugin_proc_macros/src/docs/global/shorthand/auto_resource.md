@@ -12,7 +12,7 @@ Automatically registers a resource to be added to the app in global mode.
 - `register` - Enables type registration for the `Resource`
   Same as having `#[auto_register_type]`
 - `init` - Initializes the `Resource` with default values
-    Same as having `#[auto_init_resource]`
+  Same as having `#[auto_init_resource]`
 
 # Example
 ```rust
