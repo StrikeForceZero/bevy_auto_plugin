@@ -2,6 +2,8 @@ use crate::__private::attribute_args::ItemAttributeArgs;
 use crate::__private::attribute_args::attributes::modes::flat_file::auto_plugin::AutoPluginArgs;
 use crate::__private::attribute_args::attributes::modes::resolve_app_param_name;
 use crate::__private::attribute_args::attributes::prelude::*;
+use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
+use crate::__private::attribute_args::attributes::shorthand::prelude::*;
 use crate::__private::context::{
     AutoPluginContextInsert, SupportsAutoPluginContextInsert, ToTokenStringValue,
 };
@@ -20,6 +22,7 @@ use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;
+use syn::parse::Parse;
 use syn::{Error, Item, ItemFn, parse2};
 
 pub fn auto_plugin_inner(
@@ -319,4 +322,43 @@ pub fn handle_init_state_attribute(attr: MacroStream, input: MacroStream) -> Mac
 }
 pub fn handle_register_state_type_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
     flat_file_handle_attribute::<RegisterStateTypeAttributeArgs>(attr, input)
+}
+
+fn flat_file_auto_inner<T: ShortHandAttribute + FromMeta + Parse>(
+    attr: MacroStream,
+    input: MacroStream,
+) -> syn::Result<MacroStream> {
+    use crate::__private::attribute_args::attributes::shorthand::Mode;
+    let args = parse2::<T>(attr)?;
+    let args_ts = args.expand_attrs(&Mode::FlatFile);
+    Ok(quote! {
+        #args_ts
+        #input
+    })
+}
+
+fn flat_file_auto_outer<T: ShortHandAttribute + FromMeta + Parse>(
+    attr: MacroStream,
+    input: MacroStream,
+) -> MacroStream {
+    flat_file_auto_inner::<T>(attr, input).unwrap_or_else(|err| err.to_compile_error())
+}
+
+pub fn flat_file_auto_component(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_auto_outer::<ComponentAttributeArgs>(attr, input)
+}
+pub fn flat_file_auto_resource(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_auto_outer::<ResourceAttributeArgs>(attr, input)
+}
+pub fn flat_file_auto_system(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_auto_outer::<SystemAttributeArgs>(attr, input)
+}
+pub fn flat_file_auto_event(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_auto_outer::<EventAttributeArgs>(attr, input)
+}
+pub fn flat_file_auto_observer(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_auto_outer::<ObserverAttributeArgs>(attr, input)
+}
+pub fn flat_file_auto_states(attr: MacroStream, input: MacroStream) -> MacroStream {
+    flat_file_auto_outer::<StatesAttributeArgs>(attr, input)
 }

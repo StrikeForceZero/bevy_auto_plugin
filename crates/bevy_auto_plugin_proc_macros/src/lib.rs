@@ -213,6 +213,54 @@ pub fn flat_file_auto_insert_resource(
     )
 }
 
+/// Automatically registers item as Component for bevy app. (See below for additional options)
+#[doc = include_str!("docs/flat_file/shorthand/auto_component.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_flat_file")]
+pub fn flat_file_auto_component(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(flat_file::inner::flat_file_auto_component, attr, input)
+}
+
+/// Automatically registers item as Resource for bevy app. (See below for additional options)
+#[doc = include_str!("docs/flat_file/shorthand/auto_resource.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_flat_file")]
+pub fn flat_file_auto_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(flat_file::inner::flat_file_auto_resource, attr, input)
+}
+
+/// Automatically registers item as Event for bevy app. (See below for additional options)
+#[doc = include_str!("docs/flat_file/shorthand/auto_event.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_flat_file")]
+pub fn flat_file_auto_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(flat_file::inner::flat_file_auto_event, attr, input)
+}
+
+/// Automatically registers item as States for bevy app. (See below for additional options)
+#[doc = include_str!("docs/flat_file/shorthand/auto_states.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_flat_file")]
+pub fn flat_file_auto_states(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(flat_file::inner::flat_file_auto_states, attr, input)
+}
+
+/// Automatically adds the fn as a system for bevy app. (See below for additional options)
+#[doc = include_str!("docs/flat_file/shorthand/auto_system.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_flat_file")]
+pub fn flat_file_auto_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(flat_file::inner::flat_file_auto_system, attr, input)
+}
+
+/// Automatically adds flat_file observer to bevy app. (See below for additional options)
+#[doc = include_str!("docs/flat_file/shorthand/auto_observer.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_flat_file")]
+pub fn flat_file_auto_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(flat_file::inner::flat_file_auto_observer, attr, input)
+}
+
 /* global */
 
 #[cfg(feature = "mode_global")]
