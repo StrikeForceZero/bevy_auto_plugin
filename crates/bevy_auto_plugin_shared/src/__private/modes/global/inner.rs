@@ -332,7 +332,6 @@ fn global_auto_inner<T: ShortHandAttribute + FromMeta>(
     let args_ts = args.inner.expand_attrs(&Mode::Global {
         plugin: args.plugin,
     });
-    let input = proc_macro2::TokenStream::from(input);
     Ok(quote! {
         #args_ts
         #input
