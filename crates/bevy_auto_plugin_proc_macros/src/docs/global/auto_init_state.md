@@ -4,7 +4,7 @@ Automatically initializes a state in the app in global mode.
 - `plugin = PluginType` - Required. Specifies which plugin should initialize this state.
 
 # Example
-```
+```rust
 use bevy::prelude::*;
 use bevy_auto_plugin::modes::global::prelude::*;
 
