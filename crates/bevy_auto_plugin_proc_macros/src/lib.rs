@@ -310,37 +310,50 @@ pub fn global_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> 
     global_handle_attribute(global::inner::global_auto_add_observer_outer, attr, input)
 }
 
+#[doc = include_str!("docs/global/shorthand/auto_component.md")]
 #[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
 pub fn global_auto_component(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     global_handle_attribute(global::inner::global_auto_component, attr, input)
 }
 
+#[doc = include_str!("docs/global/shorthand/auto_resource.md")]
 #[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
 pub fn global_auto_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     global_handle_attribute(global::inner::global_auto_resource, attr, input)
 }
 
+#[doc = include_str!("docs/global/shorthand/auto_event.md")]
 #[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
 pub fn global_auto_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     global_handle_attribute(global::inner::global_auto_event, attr, input)
 }
 
+#[doc = include_str!("docs/global/shorthand/auto_states.md")]
 #[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
 pub fn global_auto_states(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     global_handle_attribute(global::inner::global_auto_states, attr, input)
 }
 
+#[doc = include_str!("docs/global/shorthand/auto_system.md")]
 #[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
 pub fn global_auto_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     global_handle_attribute(global::inner::global_auto_system, attr, input)
 }
 
+#[doc = include_str!("docs/global/shorthand/auto_observer.md")]
 #[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
 pub fn global_auto_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     global_handle_attribute(global::inner::global_auto_observer, attr, input)
 }
 
 #[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
 pub fn global_auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     global_auto_bind_plugin_outer(attr.into(), input.into()).into()
 }
