@@ -352,6 +352,7 @@ pub fn global_auto_observer(attr: CompilerStream, input: CompilerStream) -> Comp
     global_handle_attribute(global::inner::global_auto_observer, attr, input)
 }
 
+#[doc = include_str!("docs/global/shorthand/auto_bind_plugin.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
