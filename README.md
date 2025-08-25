@@ -9,7 +9,8 @@
 Bevy Auto Plugin provides attribute macros that automatically handle the repetitive setup usually required in Bevy plugins. 
 Instead of manually wiring up components, resources, events, states, and systems - and remembering all their respective derives - you can declare them with concise annotations tied to a plugin. 
 
-This helps keep your code ***focused on game logic rather than framework plumbing.***
+If you’ve ever added several components only to hit runtime errors or discover a missing `TypeRegistry` entry when using tools like `bevy-inspector-egui`, this plugin is for you.
+It helps keep your code ***focused on game logic rather than framework plumbing.***
 
 The following examples demonstrate how common Bevy patterns can be expressed more ergonomically with `#[auto_*]` macros, while still generating the underlying bevy-specific code you would normally write by hand.
 
