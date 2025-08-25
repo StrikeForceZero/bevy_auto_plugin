@@ -19,6 +19,13 @@ use bevy_auto_plugin_shared::__private::modes::module;
 #[doc = include_str!("docs/module/auto_plugin.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(module::inner::expand_module, attr, input)
 }
@@ -27,6 +34,13 @@ pub fn module_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Compil
 #[doc = include_str!("docs/module/auto_register_type.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_register_type(_args: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
@@ -36,6 +50,13 @@ pub fn module_auto_register_type(_args: CompilerStream, input: CompilerStream) -
 #[doc = include_str!("docs/module/auto_add_event.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_add_event(_args: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
@@ -45,6 +66,13 @@ pub fn module_auto_add_event(_args: CompilerStream, input: CompilerStream) -> Co
 #[doc = include_str!("docs/module/auto_init_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_init_resource(_args: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
@@ -54,6 +82,13 @@ pub fn module_auto_init_resource(_args: CompilerStream, input: CompilerStream) -
 #[doc = include_str!("docs/module/auto_insert_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_insert_resource(_args: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
@@ -63,6 +98,13 @@ pub fn module_auto_insert_resource(_args: CompilerStream, input: CompilerStream)
 #[doc = include_str!("docs/module/auto_name.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_name(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
@@ -72,6 +114,13 @@ pub fn module_auto_name(_attr: CompilerStream, input: CompilerStream) -> Compile
 #[doc = include_str!("docs/module/auto_init_state.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_init_state(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
@@ -81,6 +130,13 @@ pub fn module_auto_init_state(_attr: CompilerStream, input: CompilerStream) -> C
 #[doc = include_str!("docs/module/auto_register_state_type.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_register_state_type(
     _attr: CompilerStream,
     input: CompilerStream,
@@ -93,6 +149,13 @@ pub fn module_auto_register_state_type(
 #[doc = include_str!("docs/module/auto_add_system.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
@@ -102,6 +165,13 @@ pub fn module_auto_add_system(_attr: CompilerStream, input: CompilerStream) -> C
 #[doc = include_str!("docs/module/auto_add_observer.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn module_auto_add_observer(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
@@ -115,6 +185,13 @@ use bevy_auto_plugin_shared::__private::modes::flat_file;
 #[doc = include_str!("docs/flat_file/auto_plugin.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::expand_flat_file, attr, input)
 }
@@ -123,6 +200,13 @@ pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> Com
 #[doc = include_str!("docs/flat_file/auto_register_type.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(
         flat_file::inner::handle_register_type_attribute,
@@ -135,6 +219,13 @@ pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream)
 #[doc = include_str!("docs/flat_file/auto_add_event.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::handle_add_event_attribute, attr, input)
 }
@@ -143,6 +234,13 @@ pub fn flat_file_auto_add_event(attr: CompilerStream, input: CompilerStream) -> 
 #[doc = include_str!("docs/flat_file/auto_init_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(
         flat_file::inner::handle_init_resource_attribute,
@@ -155,6 +253,13 @@ pub fn flat_file_auto_init_resource(attr: CompilerStream, input: CompilerStream)
 #[doc = include_str!("docs/flat_file/auto_name.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::handle_auto_name_attribute, attr, input)
 }
@@ -163,6 +268,13 @@ pub fn flat_file_auto_name(attr: CompilerStream, input: CompilerStream) -> Compi
 #[doc = include_str!("docs/flat_file/auto_init_state.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::handle_init_state_attribute, attr, input)
 }
@@ -171,6 +283,13 @@ pub fn flat_file_auto_init_state(attr: CompilerStream, input: CompilerStream) ->
 #[doc = include_str!("docs/flat_file/auto_register_state_type.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_register_state_type(
     attr: CompilerStream,
     input: CompilerStream,
@@ -186,6 +305,13 @@ pub fn flat_file_auto_register_state_type(
 #[doc = include_str!("docs/flat_file/auto_add_system.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::handle_add_system_attribute, attr, input)
 }
@@ -194,6 +320,13 @@ pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) ->
 #[doc = include_str!("docs/flat_file/auto_add_observer.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::handle_add_observer_attribute, attr, input)
 }
@@ -202,6 +335,13 @@ pub fn flat_file_auto_add_observer(attr: CompilerStream, input: CompilerStream) 
 #[doc = include_str!("docs/flat_file/auto_insert_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_insert_resource(
     attr: CompilerStream,
     input: CompilerStream,
@@ -217,6 +357,13 @@ pub fn flat_file_auto_insert_resource(
 #[doc = include_str!("docs/flat_file/shorthand/auto_component.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_component(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::flat_file_auto_component, attr, input)
 }
@@ -225,6 +372,13 @@ pub fn flat_file_auto_component(attr: CompilerStream, input: CompilerStream) -> 
 #[doc = include_str!("docs/flat_file/shorthand/auto_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::flat_file_auto_resource, attr, input)
 }
@@ -233,6 +387,13 @@ pub fn flat_file_auto_resource(attr: CompilerStream, input: CompilerStream) -> C
 #[doc = include_str!("docs/flat_file/shorthand/auto_event.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::flat_file_auto_event, attr, input)
 }
@@ -241,6 +402,13 @@ pub fn flat_file_auto_event(attr: CompilerStream, input: CompilerStream) -> Comp
 #[doc = include_str!("docs/flat_file/shorthand/auto_states.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_states(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::flat_file_auto_states, attr, input)
 }
@@ -249,6 +417,13 @@ pub fn flat_file_auto_states(attr: CompilerStream, input: CompilerStream) -> Com
 #[doc = include_str!("docs/flat_file/shorthand/auto_system.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::flat_file_auto_system, attr, input)
 }
@@ -257,6 +432,13 @@ pub fn flat_file_auto_system(attr: CompilerStream, input: CompilerStream) -> Com
 #[doc = include_str!("docs/flat_file/shorthand/auto_observer.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub fn flat_file_auto_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::flat_file_auto_observer, attr, input)
 }

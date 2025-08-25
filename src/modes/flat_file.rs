@@ -1,3 +1,10 @@
+#[cfg_attr(
+    not(feature = "ignore_flat_file_or_module_deprecation"),
+    deprecated(
+        since = "0.5.0",
+        note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
+    )
+)]
 pub mod prelude {
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::flat_file_auto_add_event as auto_add_event;

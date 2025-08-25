@@ -42,6 +42,8 @@ flat_file_missing_auto_plugin_is_warning = ["bevy_auto_plugin_proc_macros/flat_f
 #   when exe file_stem (without extension) != `rustc` - allows the macros to act like a no-op on failure to resolve `local_file`
 #   required for use in many IDE's until these stubs get fully implemented: https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147
 flat_file_lang_server_noop = ["bevy_auto_plugin_proc_macros/flat_file_lang_server_noop"]
+# see https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19
+ignore_flat_file_or_module_deprecation = ["bevy_auto_plugin_proc_macros/ignore_flat_file_or_module_deprecation"]
 
 [workspace]
 members = ["crates/*"]
