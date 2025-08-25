@@ -70,6 +70,7 @@ darling = "0.21"
 inventory = "0.3"
 linkme = "0.3"
 trybuild = "1.0"
+wasm-bindgen-test = { version = "0.3" }
 
 [dependencies]
 bevy_auto_plugin_proc_macros = { workspace = true }
@@ -87,7 +88,7 @@ bevy_state = { workspace = true }
 trybuild = { workspace = true }
 # used in feature tests
 log = { workspace = true }
-wasm-bindgen-test = { version = "0.3" }
+wasm-bindgen-test = { workspace = true }
 internal_test_util = { workspace = true }
 internal_test_proc_macro = { workspace = true }
 

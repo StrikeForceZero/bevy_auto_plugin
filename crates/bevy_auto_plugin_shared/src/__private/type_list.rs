@@ -74,7 +74,7 @@ mod tests {
         pub types: TypeList,
     }
 
-    #[test]
+    #[internal_test_proc_macro::xtest]
     fn parse_types() {
         let types = quote! { u32, i32, FooBar<u32>, [u8; 4] };
         let meta: Meta = parse_quote!(foo(types(#types)));
