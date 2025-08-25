@@ -1,16 +1,20 @@
 #[cfg(feature = "mode_flat_file")]
-use bevy_auto_plugin_shared::__private::attribute_args::ItemAttributeArgs;
-#[cfg(feature = "mode_flat_file")]
 use bevy_auto_plugin_shared::__private::attribute_args::attributes::prelude::{
     AddEventAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
     InitStateAttributeArgs, RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
-#[cfg(feature = "mode_flat_file")]
-use bevy_auto_plugin_shared::__private::context::{
-    AutoPluginContextInsert, SupportsAutoPluginContextInsert, ToTokenStringValue,
-};
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
+
+/// thin adapter converting between the compiler-level and proc_macro2 streams
+fn handle_attribute<F: Fn(MacroStream, MacroStream) -> MacroStream>(
+    handler: F,
+    attr: CompilerStream,
+    input: CompilerStream,
+) -> CompilerStream {
+    handler(attr.into(), input.into()).into()
+}
+
 /* Module */
 
 #[cfg(feature = "mode_module")]
@@ -21,7 +25,7 @@ use bevy_auto_plugin_shared::__private::modes::module;
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
 pub fn module_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    module::inner::expand_module(attr.into(), input.into()).into()
+    handle_attribute(module::inner::expand_module, attr, input)
 }
 
 /// Automatically registers a type with the Bevy `App`.
@@ -117,46 +121,51 @@ use bevy_auto_plugin_shared::__private::modes::flat_file;
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file::inner::expand_flat_file(attr.into(), input.into()).into()
+    handle_attribute(flat_file::inner::expand_flat_file, attr, input)
 }
-
-/// thin adapter converting between the compiler-level and proc_macro2 streams
-#[cfg(feature = "mode_flat_file")]
-fn flat_file_handle_attribute<A>(attr: CompilerStream, input: CompilerStream) -> CompilerStream
-where
-    A: ItemAttributeArgs + SupportsAutoPluginContextInsert,
-    ToTokenStringValue<A>: AutoPluginContextInsert,
-{
-    flat_file::inner::flat_file_handle_attribute::<A>(attr.into(), input.into()).into()
-}
-
 /// Automatically registers a type with the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_register_type.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute::<RegisterTypeAttributeArgs>(attr, input)
+    handle_attribute(
+        flat_file::inner::flat_file_handle_attribute::<RegisterTypeAttributeArgs>,
+        attr,
+        input,
+    )
 }
 /// Automatically adds an event type to the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_add_event.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute::<AddEventAttributeArgs>(attr, input)
+    handle_attribute(
+        flat_file::inner::flat_file_handle_attribute::<AddEventAttributeArgs>,
+        attr,
+        input,
+    )
 }
 /// Automatically initializes a resource in the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_init_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute::<InitResourceAttributeArgs>(attr, input)
+    handle_attribute(
+        flat_file::inner::flat_file_handle_attribute::<InitResourceAttributeArgs>,
+        attr,
+        input,
+    )
 }
 /// Automatically associates a required component `Name` with the default value set to the ident in the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_name.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute::<AutoNameAttributeArgs>(attr, input)
+    handle_attribute(
+        flat_file::inner::flat_file_handle_attribute::<AutoNameAttributeArgs>,
+        attr,
+        input,
+    )
 }
 
 /// Automatically initializes a State in the Bevy `App`.
@@ -164,7 +173,11 @@ pub fn flat_file_auto_name(attr: CompilerStream, input: CompilerStream) -> Compi
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file_handle_attribute::<InitStateAttributeArgs>(attr, input)
+    handle_attribute(
+        flat_file::inner::flat_file_handle_attribute::<InitStateAttributeArgs>,
+        attr,
+        input,
+    )
 }
 
 /// Automatically registers a State type in the Bevy `App`.
@@ -175,7 +188,11 @@ pub fn flat_file_auto_register_state_type(
     attr: CompilerStream,
     input: CompilerStream,
 ) -> CompilerStream {
-    flat_file_handle_attribute::<RegisterStateTypeAttributeArgs>(attr, input)
+    handle_attribute(
+        flat_file::inner::flat_file_handle_attribute::<RegisterStateTypeAttributeArgs>,
+        attr,
+        input,
+    )
 }
 
 /// Automatically add_system in the Bevy `App`.
@@ -183,7 +200,7 @@ pub fn flat_file_auto_register_state_type(
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file::inner::handle_add_system_attribute(attr.into(), input.into()).into()
+    handle_attribute(flat_file::inner::handle_add_system_attribute, attr, input)
 }
 
 /// Automatically adds an observer to the Bevy `App`.
@@ -191,7 +208,7 @@ pub fn flat_file_auto_add_system(attr: CompilerStream, input: CompilerStream) ->
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 pub fn flat_file_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    flat_file::inner::handle_add_observer_attribute(attr.into(), input.into()).into()
+    handle_attribute(flat_file::inner::handle_add_observer_attribute, attr, input)
 }
 
 #[doc = include_str!("docs/flat_file/auto_insert_resource.md")]
@@ -201,25 +218,17 @@ pub fn flat_file_auto_insert_resource(
     attr: CompilerStream,
     input: CompilerStream,
 ) -> CompilerStream {
-    flat_file::inner::handle_insert_resource_attribute(attr.into(), input.into()).into()
+    handle_attribute(
+        flat_file::inner::handle_insert_resource_attribute,
+        attr,
+        input,
+    )
 }
 
 /* global */
 
 #[cfg(feature = "mode_global")]
 use bevy_auto_plugin_shared::__private::modes::global;
-#[cfg(feature = "mode_global")]
-use bevy_auto_plugin_shared::__private::modes::global::inner::global_auto_bind_plugin_outer;
-
-/// thin adapter converting between the compiler-level and proc_macro2 streams
-#[cfg(feature = "mode_global")]
-fn global_handle_attribute<F: Fn(MacroStream, MacroStream) -> MacroStream>(
-    handler: F,
-    attr: CompilerStream,
-    input: CompilerStream,
-) -> CompilerStream {
-    handler(attr.into(), input.into()).into()
-}
 
 #[doc = include_str!("docs/global/derive_auto_plugin.md")]
 #[proc_macro_derive(AutoPlugin, attributes(auto_plugin))]
@@ -233,35 +242,35 @@ pub fn derive_global_auto_plugin(input: CompilerStream) -> CompilerStream {
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::expand_global_auto_plugin, attr, input)
+    handle_attribute(global::inner::expand_global_auto_plugin, attr, input)
 }
 
 #[doc = include_str!("docs/global/auto_register_type.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_register_type_outer, attr, input)
+    handle_attribute(global::inner::global_auto_register_type_outer, attr, input)
 }
 
 #[doc = include_str!("docs/global/auto_add_event.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_add_event_outer, attr, input)
+    handle_attribute(global::inner::global_auto_add_event_outer, attr, input)
 }
 
 #[doc = include_str!("docs/global/auto_init_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_init_resource_outer, attr, input)
+    handle_attribute(global::inner::global_auto_init_resource_outer, attr, input)
 }
 
 #[doc = include_str!("docs/global/auto_insert_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_insert_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(
+    handle_attribute(
         global::inner::global_auto_insert_resource_outer,
         attr,
         input,
@@ -272,14 +281,14 @@ pub fn global_auto_insert_resource(attr: CompilerStream, input: CompilerStream) 
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_init_state_outer, attr, input)
+    handle_attribute(global::inner::global_auto_init_state_outer, attr, input)
 }
 
 #[doc = include_str!("docs/global/auto_name.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_name_outer, attr, input)
+    handle_attribute(global::inner::global_auto_name_outer, attr, input)
 }
 
 #[doc = include_str!("docs/global/auto_register_state_type.md")]
@@ -289,7 +298,7 @@ pub fn global_auto_register_state_type(
     attr: CompilerStream,
     input: CompilerStream,
 ) -> CompilerStream {
-    global_handle_attribute(
+    handle_attribute(
         global::inner::global_auto_register_state_type_outer,
         attr,
         input,
@@ -300,61 +309,61 @@ pub fn global_auto_register_state_type(
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_add_system_outer, attr, input)
+    handle_attribute(global::inner::global_auto_add_system_outer, attr, input)
 }
 
 #[doc = include_str!("docs/global/auto_add_observer.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_add_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_add_observer_outer, attr, input)
+    handle_attribute(global::inner::global_auto_add_observer_outer, attr, input)
 }
 
 #[doc = include_str!("docs/global/shorthand/auto_component.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_component(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_component, attr, input)
+    handle_attribute(global::inner::global_auto_component, attr, input)
 }
 
 #[doc = include_str!("docs/global/shorthand/auto_resource.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_resource, attr, input)
+    handle_attribute(global::inner::global_auto_resource, attr, input)
 }
 
 #[doc = include_str!("docs/global/shorthand/auto_event.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_event, attr, input)
+    handle_attribute(global::inner::global_auto_event, attr, input)
 }
 
 #[doc = include_str!("docs/global/shorthand/auto_states.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_states(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_states, attr, input)
+    handle_attribute(global::inner::global_auto_states, attr, input)
 }
 
 #[doc = include_str!("docs/global/shorthand/auto_system.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_system, attr, input)
+    handle_attribute(global::inner::global_auto_system, attr, input)
 }
 
 #[doc = include_str!("docs/global/shorthand/auto_observer.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_handle_attribute(global::inner::global_auto_observer, attr, input)
+    handle_attribute(global::inner::global_auto_observer, attr, input)
 }
 
 #[doc = include_str!("docs/global/shorthand/auto_bind_plugin.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
 pub fn global_auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    global_auto_bind_plugin_outer(attr.into(), input.into()).into()
+    handle_attribute(global::inner::global_auto_bind_plugin_outer, attr, input)
 }
