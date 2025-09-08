@@ -10,7 +10,7 @@ Automatically registers a component to be added to the app
   If enabled in tandem with `derive` it also includes `#[derive(Reflect)]` 
 - `register` - Enables type registration for the `Component`
   Same as having `#[auto_register_type]`
-- `name` - Enables adding a required component of `Name` with the `Component`'s concrete name.
+- `auto_name` - Enables adding a required component of `Name` with the `Component`'s concrete name.
   Same as having `#[auto_name]`
 
 # Example
@@ -18,7 +18,7 @@ Automatically registers a component to be added to the app
 use bevy::prelude::*;
 use bevy_auto_plugin::modes::flat_file::prelude::*;
 
-#[auto_component(derive(Debug, Default, PartialEq), reflect,  register)]
+#[auto_component(derive(Debug, Default, PartialEq), reflect,  register, auto_name)]
 struct FooComponent(usize);
 
 #[auto_plugin(app_param=app)]

@@ -11,7 +11,7 @@ Automatically registers a component to be added to the app in global mode.
   If enabled in tandem with `derive` it also includes `#[derive(Reflect)]` 
 - `register` - Enables type registration for the `Component`
   Same as having `#[auto_register_type]`
-- `name` - Enables adding a required component of `Name` with the `Component`'s concrete name.
+- `auto_name` - Enables adding a required component of `Name` with the `Component`'s concrete name.
   Same as having `#[auto_name]`
 
 # Example
@@ -23,7 +23,7 @@ use bevy_auto_plugin::modes::global::prelude::*;
 #[auto_plugin(impl_plugin_trait)]
 struct MyPlugin;
 
-#[auto_component(plugin = MyPlugin, derive(Debug, Default, PartialEq), reflect,  register)]
+#[auto_component(plugin = MyPlugin, derive(Debug, Default, PartialEq), reflect,  register, auto_name)]
 struct FooComponent(usize);
 ```
 
