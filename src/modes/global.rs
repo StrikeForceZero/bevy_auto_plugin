@@ -52,4 +52,7 @@ pub mod prelude {
 
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::global_auto_bind_plugin as auto_bind_plugin;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_run_on_build as auto_run_on_build;
 }

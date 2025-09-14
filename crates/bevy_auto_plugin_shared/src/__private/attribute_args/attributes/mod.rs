@@ -8,6 +8,7 @@ pub mod insert_resource;
 pub mod modes;
 pub mod register_state_type;
 pub mod register_type;
+pub mod run_on_build;
 pub mod shorthand;
 
 pub mod prelude {

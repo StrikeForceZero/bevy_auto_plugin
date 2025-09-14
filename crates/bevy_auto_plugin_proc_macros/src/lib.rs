@@ -604,3 +604,14 @@ pub fn global_auto_observer(attr: CompilerStream, input: CompilerStream) -> Comp
 pub fn global_auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(global::inner::global_auto_bind_plugin_outer, attr, input)
 }
+
+/// Automatically runs function on Plugin::build
+#[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
+pub fn global_auto_run_on_build(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(
+        global::inner::global_run_on_build_attribute_outer,
+        attr,
+        input,
+    )
+}

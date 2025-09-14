@@ -9,6 +9,7 @@ use crate::__private::attribute_args::attributes::modes::global::auto_plugin::Au
 use crate::__private::attribute_args::attributes::modes::resolve_app_param_name;
 use crate::__private::attribute_args::attributes::register_state_type::RegisterStateTypeAttributeArgs;
 use crate::__private::attribute_args::attributes::register_type::RegisterTypeAttributeArgs;
+use crate::__private::attribute_args::attributes::run_on_build::RunOnBuildAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
 use crate::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::event::EventAttributeArgs;
@@ -55,6 +56,35 @@ where
     quote!( #item #output )
 }
 
+/// Maps [`crate::__private::util::resolve_ident_from_item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
+fn resolve_item_ident<T: GlobalAttributeArgs>(item: &Item) -> syn::Result<&Ident> {
+    T::Inner::resolve_item_ident(item).map_err(|err| syn::Error::new(Span::call_site(), err))
+}
+
+fn body<T: GlobalAttributeArgs>(
+    body: impl Fn(MacroStream) -> MacroStream,
+) -> impl Fn(&Ident, T, &Item) -> syn::Result<MacroStream> {
+    move |ident, params, _item| {
+        let unique_ident = params.get_unique_ident(ident);
+        let plugin = params.plugin().clone();
+        let with_target_path = WithTargetPath::from((ident.into(), params));
+        let output = with_target_path
+            .to_tokens_iter()
+            .map(|input| {
+                let register = body(input);
+                let expr: syn::ExprClosure = syn::parse_quote!(|app| { #register });
+                let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
+                Ok(output)
+            })
+            .collect::<syn::Result<MacroStream>>()?;
+        assert!(
+            !output.is_empty(),
+            "No plugin entry points were generated for ident: {ident}"
+        );
+        Ok(output)
+    }
+}
+
 pub fn global_attribute_outer<T>(
     attr: impl Into<MacroStream>,
     input: impl Into<MacroStream>,
@@ -62,35 +92,33 @@ pub fn global_attribute_outer<T>(
 where
     T: GlobalAttributeArgs,
 {
-    /// Maps [`crate::__private::util::resolve_ident_from_item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
-    fn resolve_item_ident<T: GlobalAttributeArgs>(item: &Item) -> syn::Result<&Ident> {
-        T::Inner::resolve_item_ident(item).map_err(|err| syn::Error::new(Span::call_site(), err))
-    }
-
     global_attribute_inner(
         attr,
         input,
         resolve_item_ident::<T>,
         parse2::<T>,
-        |ident, params, _item| {
-            let unique_ident = params.get_unique_ident(ident);
-            let plugin = params.plugin().clone();
-            let with_target_path = WithTargetPath::from((ident.into(), params));
-            let output = with_target_path
-                .to_tokens_iter()
-                .map(|input| {
-                    let register = quote! { app #input ; };
-                    let expr: syn::ExprClosure = syn::parse_quote!(|app| { #register });
-                    let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
-                    Ok(output)
-                })
-                .collect::<syn::Result<MacroStream>>()?;
-            assert!(
-                !output.is_empty(),
-                "No plugin entry points were generated for ident: {ident}"
-            );
-            Ok(output)
-        },
+        body(|input| quote! { app #input ; }),
+    )
+}
+
+pub fn global_run_on_build_attribute_outer(
+    attr: impl Into<MacroStream>,
+    input: impl Into<MacroStream>,
+) -> MacroStream {
+    let attr = attr.into();
+    let input = input.into();
+    global_run_on_build_attribute_inner(attr, input)
+}
+
+pub fn global_run_on_build_attribute_inner(attr: MacroStream, input: MacroStream) -> MacroStream {
+    // TODO: validate params
+
+    global_attribute_inner(
+        attr,
+        input,
+        resolve_item_ident::<GlobalArgs<RunOnBuildAttributeArgs>>,
+        parse2::<GlobalArgs<RunOnBuildAttributeArgs>>,
+        body(|input| quote! { #input(app) ; }),
     )
 }
 

@@ -13,6 +13,7 @@ pub enum AutoPluginItemAttribute {
     RegisterStateType,
     AddSystem,
     AddObserver,
+    RunOnBuild,
 }
 
 impl AutoPluginItemAttribute {
@@ -27,6 +28,7 @@ impl AutoPluginItemAttribute {
             Self::RegisterStateType => "auto_register_state_type",
             Self::AddSystem => "auto_add_system",
             Self::AddObserver => "auto_add_observer",
+            Self::RunOnBuild => "auto_run_on_build",
         }
     }
 }
