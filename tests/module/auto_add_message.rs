@@ -5,8 +5,8 @@ use bevy_ecs::prelude::*;
 #[auto_plugin(init_name=init)]
 mod plugin_module {
     use super::*;
-    #[auto_add_event]
-    #[derive(Event)]
+    #[auto_add_message]
+    #[derive(Message)]
     pub struct Test;
 }
 
@@ -22,9 +22,9 @@ fn app() -> App {
 }
 
 #[internal_test_proc_macro::xtest]
-fn test_auto_add_event() {
+fn test_auto_add_message() {
     let mut app = app();
-    let mut events = app.world_mut().resource_mut::<Events<Test>>();
-    events.send(Test);
-    assert_eq!(events.drain().count(), 1, "did not auto add event");
+    let mut messages = app.world_mut().resource_mut::<Messages<Test>>();
+    messages.send(Test);
+    assert_eq!(messages.drain().count(), 1, "did not auto add event");
 }

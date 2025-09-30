@@ -14,7 +14,7 @@ struct MyPlugin;
 
 #[derive(Message, Debug, Default, PartialEq, Reflect)]
 #[auto_bind_plugin(plugin = MyPlugin)]
-#[auto_add_event]
+#[auto_add_message]
 #[auto_register_type]
 struct FooEvent(usize);
 ```

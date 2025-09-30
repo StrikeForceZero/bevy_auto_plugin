@@ -43,7 +43,7 @@ where
 
 #[derive(Message, Debug, Default, PartialEq, Reflect)]
 #[auto_register_type(plugin = Test::<u8, bool>, generics(u8, bool))]
-#[auto_add_event(plugin = Test::<u8, bool>, generics(u8, bool))]
+#[auto_add_message(plugin = Test::<u8, bool>, generics(u8, bool))]
 struct FooEvent<T1, T2>(T1, T2)
 where
     T1: Default + Send + Sync + 'static,
@@ -199,7 +199,7 @@ fn test_auto_add_system_foo_system() {
 }
 
 #[internal_test_proc_macro::xtest]
-fn test_auto_add_event_foo_event() {
+fn test_auto_add_message_foo_event() {
     let mut app = app();
     assert!(
         app.world_mut()

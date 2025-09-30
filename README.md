@@ -213,7 +213,7 @@ struct FooResource(usize);
 
 #[derive(Message, Debug, Default, Reflect)]
 #[auto_register_type(plugin = MyPlugin)]
-#[auto_add_event(plugin = MyPlugin)]
+#[auto_add_message(plugin = MyPlugin)]
 struct FooEvent(usize);
 
 #[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
@@ -277,12 +277,12 @@ mod plugin_module {
     pub struct FooComponentWithGeneric<T>(T);
 
     #[auto_register_type]
-    #[auto_add_event]
+    #[auto_add_message]
     #[derive(Message, Reflect)]
     pub struct FooEvent;
 
     #[auto_register_type(generics(bool))]
-    #[auto_add_event]
+    #[auto_add_message]
     #[derive(Message, Reflect)]
     pub struct FooEventWithGeneric<T>(T);
 
@@ -359,12 +359,12 @@ struct FooComponent;
 struct FooComponentWithGeneric<T>(T);
 
 #[auto_register_type]
-#[auto_add_event]
+#[auto_add_message]
 #[derive(Message, Reflect)]
 struct FooEvent;
 
 #[auto_register_type(generics(bool))]
-#[auto_add_event]
+#[auto_add_message]
 #[derive(Message, Reflect)]
 struct FooEventWithGeneric<T>(T);
 

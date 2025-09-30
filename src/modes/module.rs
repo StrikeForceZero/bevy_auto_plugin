@@ -7,7 +7,7 @@
 )]
 pub mod prelude {
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::module_auto_add_event as auto_add_event;
+    pub use bevy_auto_plugin_proc_macros::module_auto_add_message as auto_add_message;
 
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::module_auto_add_system as auto_add_system;

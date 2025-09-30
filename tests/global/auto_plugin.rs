@@ -44,7 +44,7 @@ struct FooRes3(usize);
 
 #[derive(Message, Debug, Default, PartialEq, Reflect)]
 #[auto_register_type(plugin = Test)]
-#[auto_add_event(plugin = Test)]
+#[auto_add_message(plugin = Test)]
 struct FooEvent(usize);
 
 #[auto_event(plugin = Test)]
@@ -176,7 +176,7 @@ fn test_auto_add_system_foo_system() {
 }
 
 #[internal_test_proc_macro::xtest]
-fn test_auto_add_event_foo_event() {
+fn test_auto_add_message_foo_event() {
     let mut app = app();
     assert!(app.world_mut().write_message(FooEvent(1)).is_some());
 }
