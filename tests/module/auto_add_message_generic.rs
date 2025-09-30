@@ -25,7 +25,7 @@ fn app() -> App {
 fn test_auto_add_message_generic() {
     let mut app = app();
     let mut messages = app.world_mut().resource_mut::<Messages<Test<bool>>>();
-    messages.send(Test(true));
+    messages.write(Test(true));
     assert_eq!(
         messages.drain().next(),
         Some(Test(true)),

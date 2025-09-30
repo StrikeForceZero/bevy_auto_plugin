@@ -25,6 +25,6 @@ fn app() -> App {
 fn test_auto_add_message() {
     let mut app = app();
     let mut messages = app.world_mut().resource_mut::<Messages<Test>>();
-    messages.send(Test);
+    messages.write(Test);
     assert_eq!(messages.drain().count(), 1, "did not auto add event");
 }

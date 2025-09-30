@@ -108,6 +108,8 @@ jobs:
         run: cargo install wasm-bindgen-cli --locked
 
       - name: Run wasm tests
+        env:
+          RUSTFLAGS: --deny warnings --cfg getrandom_backend="wasm_js"
         run: |
           echo "Test wasm32 with features: ${{ matrix['feature-set'] }},all_modes"
           cargo test --workspace --target wasm32-unknown-unknown --no-default-features --features "${{ matrix['feature-set'] }},all_modes,ignore_flat_file_or_module_deprecation"
