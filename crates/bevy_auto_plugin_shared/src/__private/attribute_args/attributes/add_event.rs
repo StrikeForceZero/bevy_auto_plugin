@@ -54,7 +54,7 @@ impl ToTokensWithConcreteTargetPath for AddEventAttributeArgs {
         target: &ConcreteTargetPath,
     ) {
         tokens.extend(quote! {
-            .add_event::< #target >()
+            .add_message::< #target >()
         })
     }
 }
@@ -74,7 +74,7 @@ mod tests {
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .add_event :: < FooTarget > ()
+                .add_message :: < FooTarget > ()
             }
             .to_string()
         );
@@ -91,7 +91,7 @@ mod tests {
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .add_event :: < FooTarget<u8, bool> > ()
+                .add_message :: < FooTarget<u8, bool> > ()
             }
             .to_string()
         );
@@ -109,14 +109,14 @@ mod tests {
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .add_event :: < FooTarget<u8, bool> > ()
+                .add_message :: < FooTarget<u8, bool> > ()
             }
             .to_string()
         );
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .add_event :: < FooTarget<bool, bool> > ()
+                .add_message :: < FooTarget<bool, bool> > ()
             }
             .to_string()
         );

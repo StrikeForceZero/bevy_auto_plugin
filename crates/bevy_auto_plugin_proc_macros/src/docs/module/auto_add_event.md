@@ -15,12 +15,12 @@ pub mod my_plugin {
     use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_add_event]
-    #[derive(Event, Reflect)]
+    #[derive(Message, Reflect)]
     struct FooEvent;
 
     /* code gen */
     // pub(super) fn init(app: &mut App) {  
-    //     app.add_event::<FooEvent>();
+    //     app.add_message::<FooEvent>();
     // }
 }
 
@@ -40,12 +40,12 @@ pub mod my_plugin {
     use bevy_auto_plugin::modes::module::prelude::*;
 
     #[auto_add_event(generics(bool))]
-    #[derive(Event, Reflect)]
+    #[derive(Message, Reflect)]
     struct FooEventWithGeneric<T>(T);
 
     /* code gen */
     // pub(super) fn init(app: &mut App) {
-    //     app.add_event::<FooEventWithGeneric<bool>>();
+    //     app.add_message::<FooEventWithGeneric<bool>>();
     // }
 }
 

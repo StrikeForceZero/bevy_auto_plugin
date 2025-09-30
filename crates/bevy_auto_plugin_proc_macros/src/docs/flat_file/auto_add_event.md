@@ -12,13 +12,13 @@ use bevy::prelude::*;
 use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_add_event]
-#[derive(Event, Reflect)]
+#[derive(Message, Reflect)]
 struct FooEvent;
 
 #[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
-    // app.add_event::<FooEvent>();
+    // app.add_message::<FooEvent>();
 }
 ```
 
@@ -29,12 +29,12 @@ use bevy::prelude::*;
 use bevy_auto_plugin::modes::flat_file::prelude::*;
 
 #[auto_add_event(generics(bool))]
-#[derive(Event, Reflect)]
+#[derive(Message, Reflect)]
 struct FooEventWithGeneric<T>(T);
 
 #[auto_plugin(app_param=app)]
 fn plugin(app: &mut App) {
     /* generated code */
-    // app.add_event::<FooEventWithGeneric<bool>>();
+    // app.add_message::<FooEventWithGeneric<bool>>();
 }
 ```

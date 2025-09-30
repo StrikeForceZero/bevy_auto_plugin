@@ -14,7 +14,7 @@ use bevy_auto_plugin::modes::global::prelude::*;
 #[auto_plugin(impl_plugin_trait)]
 struct MyPlugin;
 
-#[derive(Event, Debug, Default, PartialEq, Reflect)]
+#[derive(Message, Debug, Default, PartialEq, Reflect)]
 #[auto_register_type(plugin = MyPlugin)]
 #[auto_add_event(plugin = MyPlugin)]
 struct FooEvent(usize);
@@ -29,7 +29,7 @@ use bevy_auto_plugin::modes::global::prelude::*;
 #[auto_plugin(impl_plugin_trait)]
 struct MyPlugin;
 
-#[derive(Event, Debug, Default, PartialEq, Reflect)]
+#[derive(Message, Debug, Default, PartialEq, Reflect)]
 #[auto_register_type(plugin = MyPlugin, generics(usize))]
 #[auto_add_event(plugin = MyPlugin, generics(usize))]
 struct FooEventWithGeneric<T>(T);

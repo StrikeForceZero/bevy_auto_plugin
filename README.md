@@ -211,7 +211,7 @@ struct FooDefaultResource(usize);
 #[auto_insert_resource(plugin = MyPlugin, resource(FooResource(1)))]
 struct FooResource(usize);
 
-#[derive(Event, Debug, Default, Reflect)]
+#[derive(Message, Debug, Default, Reflect)]
 #[auto_register_type(plugin = MyPlugin)]
 #[auto_add_event(plugin = MyPlugin)]
 struct FooEvent(usize);
@@ -278,12 +278,12 @@ mod plugin_module {
 
     #[auto_register_type]
     #[auto_add_event]
-    #[derive(Event, Reflect)]
+    #[derive(Message, Reflect)]
     pub struct FooEvent;
 
     #[auto_register_type(generics(bool))]
     #[auto_add_event]
-    #[derive(Event, Reflect)]
+    #[derive(Message, Reflect)]
     pub struct FooEventWithGeneric<T>(T);
 
     #[auto_register_type]
@@ -317,8 +317,8 @@ mod plugin_module {
         app.register_type::<FooResource>();
         app.register_type::<FooResourceWithGeneric<bool>>();
 
-        app.add_event::<FooEvent>();
-        app.add_event::<FooEventWithGeneric<bool>>();
+        app.add_message::<FooEvent>();
+        app.add_message::<FooEventWithGeneric<bool>>();
 
         app.init_resource::<FooResource>();
         app.init_resource::<FooResourceWithGeneric<bool>>();
@@ -360,12 +360,12 @@ struct FooComponentWithGeneric<T>(T);
 
 #[auto_register_type]
 #[auto_add_event]
-#[derive(Event, Reflect)]
+#[derive(Message, Reflect)]
 struct FooEvent;
 
 #[auto_register_type(generics(bool))]
 #[auto_add_event]
-#[derive(Event, Reflect)]
+#[derive(Message, Reflect)]
 struct FooEventWithGeneric<T>(T);
 
 #[auto_register_type]
@@ -396,8 +396,8 @@ fn plugin(app: &mut App) {
     app.register_type::<FooResource>();
     app.register_type::<FooResourceWithGeneric<bool>>();
     
-    app.add_event::<FooEvent>();
-    app.add_event::<FooEventWithGeneric<bool>>();
+    app.add_message::<FooEvent>();
+    app.add_message::<FooEventWithGeneric<bool>>();
     
     app.init_resource::<FooResource>();
     app.init_resource::<FooResourceWithGeneric<bool>>();

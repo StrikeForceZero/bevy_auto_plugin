@@ -12,7 +12,7 @@ use bevy_auto_plugin::modes::flat_file::prelude::*;
 struct Foo;
 
 #[auto_add_observer]
-fn foo_observer(trigger: Trigger<OnAdd, Foo>, mut commands: Commands) {
+fn foo_observer(add: On<Add, Foo>, mut commands: Commands) {
     // ...
 }
 

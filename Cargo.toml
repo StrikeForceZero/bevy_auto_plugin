@@ -53,15 +53,15 @@ bevy_auto_plugin_shared = { version = "0.5.0", path = "crates/bevy_auto_plugin_s
 bevy_auto_plugin_proc_macros = { version = "0.5.0", path = "crates/bevy_auto_plugin_proc_macros" }
 internal_test_util = { path = "crates/internal_test_util" }
 internal_test_proc_macro = { path = "crates/internal_test_proc_macro" }
-bevy = { version = "0.16", default-features = false, features = ["bevy_state"] }
-bevy_app = { version = "0.16", default-features = false }
-bevy_log = { version = "0.16", default-features = false }
-bevy_state = { version = "0.16" }
-bevy_reflect = { version = "0.16" }
-bevy_reflect_derive = { version = "0.16" }
-bevy_internal = { version = "0.16" }
-bevy_ecs = { version = "0.16" }
-bevy_ecs_macros = { version = "0.16" }
+bevy = { version = "0.17", default-features = false, features = ["bevy_state"] }
+bevy_app = { version = "0.17", default-features = false }
+bevy_log = { version = "0.17", default-features = false }
+bevy_state = { version = "0.17" }
+bevy_reflect = { version = "0.17" }
+bevy_reflect_derive = { version = "0.17" }
+bevy_internal = { version = "0.17" }
+bevy_ecs = { version = "0.17" }
+bevy_ecs_macros = { version = "0.17" }
 proc-macro2 = "1"
 syn = { version = "2", features = ["full"] }
 quote = "1"

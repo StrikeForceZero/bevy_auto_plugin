@@ -20,7 +20,7 @@ mod my_module {
     struct Foo;
     
     #[auto_add_observer]
-    fn foo_observer(trigger: Trigger<OnAdd, Foo>, mut commands: Commands) {
+    fn foo_observer(add: On<Add, Foo>, mut commands: Commands) {
         // ...
     }
 }
