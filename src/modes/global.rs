@@ -6,6 +6,10 @@ pub mod prelude {
     pub use bevy_auto_plugin_proc_macros::global_auto_add_message as auto_add_message;
 
     #[doc(inline)]
+    #[deprecated(since = "0.6", note = "Use `auto_add_message` instead.")]
+    pub use bevy_auto_plugin_proc_macros::global_auto_add_message as auto_add_event;
+
+    #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::global_auto_add_system as auto_add_system;
 
     #[doc(inline)]

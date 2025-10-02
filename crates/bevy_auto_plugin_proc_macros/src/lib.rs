@@ -47,7 +47,7 @@ pub fn module_auto_register_type(_args: CompilerStream, input: CompilerStream) -
     input
 }
 
-/// Automatically adds an event type to the Bevy `App`.
+/// Automatically adds a message type to the Bevy `App`.
 #[doc = include_str!("docs/module/auto_add_message.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
@@ -216,7 +216,7 @@ pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream)
     )
 }
 
-/// Automatically adds an event type to the Bevy `App`.
+/// Automatically adds a message type to the Bevy `App`.
 #[doc = include_str!("docs/flat_file/auto_add_message.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
@@ -474,7 +474,7 @@ pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) ->
     handle_attribute(global::inner::global_auto_register_type_outer, attr, input)
 }
 
-/// Automatically adds an event type to the Bevy `App`.
+/// Automatically adds a message type to the Bevy `App`.
 #[doc = include_str!("docs/global/auto_add_message.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
