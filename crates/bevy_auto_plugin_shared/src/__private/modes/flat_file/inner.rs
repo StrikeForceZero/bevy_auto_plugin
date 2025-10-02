@@ -309,7 +309,7 @@ pub fn handle_register_type_attribute(attr: MacroStream, input: MacroStream) -> 
     flat_file_handle_attribute::<RegisterTypeAttributeArgs>(attr, input)
 }
 pub fn handle_add_event_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
-    flat_file_handle_attribute::<AddEventAttributeArgs>(attr, input)
+    flat_file_handle_attribute::<AddMessageAttributeArgs>(attr, input)
 }
 pub fn handle_init_resource_attribute(attr: MacroStream, input: MacroStream) -> MacroStream {
     flat_file_handle_attribute::<InitResourceAttributeArgs>(attr, input)
