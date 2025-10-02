@@ -5,7 +5,7 @@ pub trait AutoPluginAttribute {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AutoPluginItemAttribute {
     RegisterType,
-    AddEvent,
+    AddMessage,
     InitResource,
     InsertResource,
     InitState,
@@ -19,7 +19,7 @@ impl AutoPluginItemAttribute {
     pub const fn ident_str(&self) -> &'static str {
         match self {
             Self::RegisterType => "auto_register_type",
-            Self::AddEvent => "auto_add_message",
+            Self::AddMessage => "auto_add_message",
             Self::InitResource => "auto_init_resource",
             Self::InsertResource => "auto_insert_resource",
             Self::InitState => "auto_init_state",

@@ -24,7 +24,7 @@ pub struct AddMessageAttributeArgs {
 impl AutoPluginAttributeKind for AddMessageAttributeArgs {
     type Attribute = AutoPluginItemAttribute;
     fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::AddEvent
+        AutoPluginItemAttribute::AddMessage
     }
 }
 
