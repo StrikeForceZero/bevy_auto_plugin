@@ -1,9 +1,9 @@
 use crate::__private::attribute_args::ItemAttributeArgs;
 use crate::__private::attribute_args::attributes::modes::module::auto_plugin::AutoPluginArgs;
 use crate::__private::attribute_args::attributes::prelude::{
-    AddMessageAttributeArgs, AddObserverAttributeArgs, AddSystemAttributeArgs, AutoNameAttributeArgs,
-    InitResourceAttributeArgs, InitStateAttributeArgs, InsertResourceAttributeArgs,
-    RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
+    AddMessageAttributeArgs, AddObserverAttributeArgs, AddSystemAttributeArgs,
+    AutoNameAttributeArgs, InitResourceAttributeArgs, InitStateAttributeArgs,
+    InsertResourceAttributeArgs, RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
 use crate::__private::context::{AutoPluginContext, ToTokenStringValue};
 use crate::__private::util::concrete_path::ConcreteTargetPathWithGenericsCollection;
@@ -48,7 +48,7 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
         }
 
         insert!(register_types, RegisterTypeAttributeArgs);
-        insert!(add_events, AddEventAttributeArgs);
+        insert!(add_events, AddMessageAttributeArgs);
         insert!(init_resources, InitResourceAttributeArgs);
         insert!(insert_resources, InsertResourceAttributeArgs);
         insert!(auto_names, AutoNameAttributeArgs);
