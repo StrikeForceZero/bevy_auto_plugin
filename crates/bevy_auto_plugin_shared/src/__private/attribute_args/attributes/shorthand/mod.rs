@@ -182,7 +182,7 @@ pub mod tokens {
     }
 
     pub fn derive_message_path() -> NonEmptyPath {
-        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Messsage)
+        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Message)
     }
 
     pub fn derive_states_path() -> NonEmptyPath {
