@@ -1,3 +1,5 @@
+### NOTE: has not been updated to bevy 0.17 yet - See: https://github.com/StrikeForceZero/bevy_auto_plugin/issues/23
+
 Automatically registers an event to be added to the app in global mode.
 
 # Parameters
