@@ -85,5 +85,5 @@
 - update to bevy 0.17
 - add `auto_add_message` to register items deriving `Message` on plugin build
 - add `auto_message` shorthand to derive `Message` and add to bevy app
-- update `auto_event` with new params `global` or `entity`
+- update `auto_event` with new params `target(global)` or `target(entity)`
 - deprecated `auto_add_event` (aliased to `auto_add_message`)
