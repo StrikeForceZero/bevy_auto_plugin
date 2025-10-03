@@ -58,8 +58,8 @@ pub mod tokens {
     use crate::__private::attribute_args::AutoPluginAttributeKind;
     use crate::__private::attribute_args::attributes::add_observer::AddObserverAttributeArgs;
     use crate::__private::attribute_args::attributes::prelude::{
-        AddSystemAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
-        InitStateAttributeArgs, RegisterTypeAttributeArgs,
+        AddMessageAttributeArgs, AddSystemAttributeArgs, AutoNameAttributeArgs,
+        InitResourceAttributeArgs, InitStateAttributeArgs, RegisterTypeAttributeArgs,
     };
     use crate::__private::non_empty_path::NonEmptyPath;
     use proc_macro2::Ident;
@@ -291,6 +291,9 @@ pub mod tokens {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
     pub fn auto_add_observer(mode: Mode, args: AddObserverAttributeArgs) -> MacroStream {
+        ArgsWithMode::new(mode, args).to_token_stream()
+    }
+    pub fn auto_add_message(mode: Mode, args: AddMessageAttributeArgs) -> MacroStream {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
 }

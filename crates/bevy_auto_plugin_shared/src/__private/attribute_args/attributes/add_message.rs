@@ -1,4 +1,5 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
+use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::{
     AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs, ToTokensWithConcreteTargetPath,
 };
@@ -56,6 +57,16 @@ impl ToTokensWithConcreteTargetPath for AddMessageAttributeArgs {
         tokens.extend(quote! {
             .add_message::< #target >()
         })
+    }
+}
+
+impl ArgsBackToTokens for AddMessageAttributeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = vec![];
+        if !self.generics().is_empty() {
+            args.extend(self.generics().to_attribute_arg_vec_tokens());
+        }
+        tokens.extend(quote! { #(#args),* });
     }
 }
 

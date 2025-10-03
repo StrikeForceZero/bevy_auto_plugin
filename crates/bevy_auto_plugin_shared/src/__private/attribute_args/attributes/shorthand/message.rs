@@ -1,3 +1,4 @@
+use crate::__private::attribute_args::attributes::add_message::AddMessageAttributeArgs;
 use crate::__private::attribute_args::attributes::prelude::RegisterTypeAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::attributes::shorthand::{
@@ -35,6 +36,14 @@ impl AutoPluginAttributeKind for MessageAttributeArgs {
 }
 
 impl<'a> From<&'a MessageAttributeArgs> for RegisterTypeAttributeArgs {
+    fn from(value: &'a MessageAttributeArgs) -> Self {
+        Self {
+            generics: value.generics.clone(),
+        }
+    }
+}
+
+impl<'a> From<&'a MessageAttributeArgs> for AddMessageAttributeArgs {
     fn from(value: &'a MessageAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),
@@ -90,6 +99,11 @@ impl ShortHandAttribute for MessageAttributeArgs {
                 .attrs
                 .push(tokens::auto_register_type(mode.clone(), self.into()));
         }
+
+        expanded_attrs
+            .attrs
+            .push(tokens::auto_add_message(mode.clone(), self.into()));
+
         expanded_attrs
     }
 }
@@ -161,6 +175,7 @@ mod tests {
                     quote! { #[derive(#derive_reflect_path)] },
                     quote! { #[reflect(#(#reflect_args),*)] },
                     tokens::auto_register_type(mode.clone(), (&args.inner).into()),
+                    tokens::auto_add_message(mode.clone(), (&args.inner).into()),
                 ]
             }
             .to_token_stream()
