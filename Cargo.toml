@@ -65,6 +65,7 @@ bevy_ecs_macros = { version = "0.17" }
 proc-macro2 = "1"
 syn = { version = "2", features = ["full"] }
 quote = "1"
+anyhow = "1"
 thiserror = "2"
 log = "0.4"
 smart-default = { version = "0.7" }

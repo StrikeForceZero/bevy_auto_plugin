@@ -3,6 +3,7 @@ pub mod attribute_args;
 pub mod context;
 mod expr_value;
 mod flag_or_list;
+pub mod flag_or_meta;
 mod generics;
 pub mod item_with_attr_match;
 mod macros;

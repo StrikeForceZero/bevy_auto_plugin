@@ -6,6 +6,7 @@ use syn::{Path, parse_quote};
 
 pub mod component;
 pub mod event;
+mod message;
 pub mod observer;
 pub mod resource;
 pub mod states;
@@ -14,6 +15,7 @@ pub mod system;
 pub mod prelude {
     pub use super::component::ComponentAttributeArgs;
     pub use super::event::EventAttributeArgs;
+    pub use super::message::MessageAttributeArgs;
     pub use super::observer::ObserverAttributeArgs;
     pub use super::resource::ResourceAttributeArgs;
     pub use super::states::StatesAttributeArgs;
@@ -25,6 +27,7 @@ pub enum AutoPluginShortHandAttribute {
     Component,
     Resource,
     Event,
+    Message,
     States,
     System,
     Observer,
@@ -36,6 +39,7 @@ impl AutoPluginShortHandAttribute {
             Self::Component => "auto_component",
             Self::Resource => "auto_resource",
             Self::Event => "auto_event",
+            Self::Message => "auto_message",
             Self::States => "auto_states",
             Self::System => "auto_system",
             Self::Observer => "auto_observer",
@@ -54,8 +58,8 @@ pub mod tokens {
     use crate::__private::attribute_args::AutoPluginAttributeKind;
     use crate::__private::attribute_args::attributes::add_observer::AddObserverAttributeArgs;
     use crate::__private::attribute_args::attributes::prelude::{
-        AddSystemAttributeArgs, AutoNameAttributeArgs, InitResourceAttributeArgs,
-        InitStateAttributeArgs, RegisterTypeAttributeArgs,
+        AddMessageAttributeArgs, AddSystemAttributeArgs, AutoNameAttributeArgs,
+        InitResourceAttributeArgs, InitStateAttributeArgs, RegisterTypeAttributeArgs,
     };
     use crate::__private::non_empty_path::NonEmptyPath;
     use proc_macro2::Ident;
@@ -173,6 +177,14 @@ pub mod tokens {
         parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Event)
     }
 
+    pub fn derive_entity_event_path() -> NonEmptyPath {
+        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::EntityEvent)
+    }
+
+    pub fn derive_message_path() -> NonEmptyPath {
+        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Message)
+    }
+
     pub fn derive_states_path() -> NonEmptyPath {
         // bevy_ecs_macros::States creates scope issues with required traits
         parse_quote!(::bevy_auto_plugin::__private::shared::__private::derive::states::States)
@@ -206,6 +218,28 @@ pub mod tokens {
         derive_from(
             [
                 vec![&derive_event_path()],
+                extra_items.into_iter().collect::<Vec<_>>(),
+            ]
+            .concat(),
+        )
+    }
+    pub fn derive_entity_event<'a>(
+        extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
+    ) -> MacroStream {
+        derive_from(
+            [
+                vec![&derive_entity_event_path()],
+                extra_items.into_iter().collect::<Vec<_>>(),
+            ]
+            .concat(),
+        )
+    }
+    pub fn derive_message<'a>(
+        extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
+    ) -> MacroStream {
+        derive_from(
+            [
+                vec![&derive_message_path()],
                 extra_items.into_iter().collect::<Vec<_>>(),
             ]
             .concat(),
@@ -259,6 +293,9 @@ pub mod tokens {
     pub fn auto_add_observer(mode: Mode, args: AddObserverAttributeArgs) -> MacroStream {
         ArgsWithMode::new(mode, args).to_token_stream()
     }
+    pub fn auto_add_message(mode: Mode, args: AddMessageAttributeArgs) -> MacroStream {
+        ArgsWithMode::new(mode, args).to_token_stream()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -291,7 +328,7 @@ impl Mode {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ExpandAttrs {
     pub attrs: Vec<MacroStream>,
     pub use_items: Vec<MacroStream>,
@@ -315,6 +352,10 @@ impl ExpandAttrs {
                 #(#attrs)*
             },
         )
+    }
+    pub fn with(mut self, other: Self) -> Self {
+        self.append(other);
+        self
     }
     pub fn append(&mut self, other: Self) {
         self.attrs.extend(other.attrs);

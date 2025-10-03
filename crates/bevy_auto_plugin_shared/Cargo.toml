@@ -44,3 +44,4 @@ inventory = { workspace = true }
 internal_test_proc_macro = { workspace = true }
 internal_test_util = { workspace = true }
 wasm-bindgen-test = { workspace = true }
+anyhow = { workspace = true }
