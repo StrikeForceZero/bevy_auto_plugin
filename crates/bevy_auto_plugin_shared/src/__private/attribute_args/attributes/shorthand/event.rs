@@ -93,6 +93,7 @@ pub struct EventAttributeArgs {
     // TODO: we should probably return compiler error when we see both
     //  but the current code paths don't leave room for an obvious spot to include one
     pub global: bool,
+    // TODO: would it be better to just pass these tokens through?
     pub entity: FlagOrMeta<EntityEventOpts>,
 }
 
