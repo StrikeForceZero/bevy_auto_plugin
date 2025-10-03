@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy_auto_plugin::modes::global::prelude::*;
+use bevy_ecs::entity::EntityHashMap;
 use bevy_state::app::StatesPlugin;
-use internal_test_util::{create_minimal_app, type_id_of};
+use internal_test_util::{create_minimal_app, type_id_of, vec_spread};
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{AddAssign, Deref};
@@ -41,13 +42,30 @@ where
     T1: Default + Send + Sync + 'static,
     T2: Default + Send + Sync + 'static;
 
-#[derive(Message, Debug, Default, PartialEq, Reflect)]
-#[auto_register_type(plugin = Test::<u8, bool>, generics(u8, bool))]
-#[auto_add_message(plugin = Test::<u8, bool>, generics(u8, bool))]
-struct FooEvent<T1, T2>(T1, T2)
+#[auto_message(plugin = Test::<u8, bool>, derive, generics(u8, bool))]
+struct FooMessage<T1, T2>(T1, T2)
 where
     T1: Default + Send + Sync + 'static,
     T2: Default + Send + Sync + 'static;
+
+#[auto_event(plugin = Test::<u8, bool>, global, derive, generics(u8, bool))]
+struct FooGlobalEvent<T1, T2>(T1, T2)
+where
+    T1: Default + Send + Sync + 'static,
+    T2: Default + Send + Sync + 'static;
+
+#[auto_event(plugin = Test, entity, derive)]
+struct FooEntityEvent<T1, T2>
+where
+    T1: Default + Send + Sync + 'static,
+    T2: Default + Send + Sync + 'static,
+{
+    #[event_target]
+    entity: Entity,
+    value1: T1,
+    #[allow(dead_code)]
+    value2: T2,
+}
 
 #[derive(States, Debug, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
 #[auto_init_state(plugin = Test::<u8, bool>, generics(u8, bool))]
@@ -203,9 +221,92 @@ fn test_auto_add_message_foo_event() {
     let mut app = app();
     assert!(
         app.world_mut()
-            .write_message(FooEvent(1u8, false))
-            .is_some()
+            .write_message(FooMessage(1u8, false))
+            .is_some(),
+        "did not add message type FooMessage"
     );
+}
+#[should_panic]
+/// TODO: `Event` doesn't support generics
+#[internal_test_proc_macro::xtest]
+fn test_auto_event_foo_global_event() {
+    let mut app = app();
+    #[derive(Resource, Default)]
+    struct Counter(u8);
+
+    app.insert_resource(Counter(0));
+
+    app.add_observer(
+        |on: On<FooGlobalEvent<u8, bool>>, mut counter: ResMut<Counter>| {
+            counter.0 += 1;
+            assert_eq!(counter.0, on.event().0);
+        },
+    );
+
+    app.world_mut().trigger(FooGlobalEvent(1, false));
+    app.world_mut().trigger(FooGlobalEvent(2, false));
+
+    assert_eq!(app.world_mut().resource::<Counter>().0, 2);
+}
+
+#[should_panic]
+/// TODO: `EntityEvent` doesn't support generics
+#[internal_test_proc_macro::xtest]
+fn test_auto_event_foo_entity_event() {
+    let mut app = app();
+    #[derive(Resource, Default)]
+    struct Counter(EntityHashMap<u8>);
+
+    app.insert_resource(Counter::default());
+
+    fn entity_observer(on: On<FooEntityEvent<u8, bool>>, mut counter: ResMut<Counter>) {
+        let entry = counter.0.entry(on.entity).or_default();
+        *entry += 1;
+        assert_eq!(*entry, on.event().value1);
+    }
+
+    let a = app.world_mut().spawn_empty().id();
+    let b = app.world_mut().spawn_empty().id();
+    let c = app.world_mut().spawn_empty().id();
+
+    let entities = [a, b];
+
+    for e in vec_spread![..entities, c] {
+        app.world_mut().entity_mut(e).observe(entity_observer);
+    }
+
+    for e in entities {
+        app.world_mut()
+            .entity_mut(e)
+            .trigger(|entity| FooEntityEvent {
+                entity,
+                value1: 1,
+                value2: false,
+            });
+    }
+
+    for e in entities {
+        app.world_mut()
+            .entity_mut(e)
+            .trigger(|entity| FooEntityEvent {
+                entity,
+                value1: 2,
+                value2: false,
+            });
+    }
+
+    app.world_mut()
+        .entity_mut(c)
+        .trigger(|entity| FooEntityEvent {
+            entity,
+            value1: 1,
+            value2: false,
+        });
+
+    for e in entities {
+        let &v = app.world_mut().resource::<Counter>().0.get(&e).unwrap();
+        assert_eq!(v, 2);
+    }
 }
 
 #[internal_test_proc_macro::xtest]

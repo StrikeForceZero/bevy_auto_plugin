@@ -2,8 +2,9 @@
 
 use bevy::prelude::*;
 use bevy_auto_plugin::modes::global::prelude::*;
+use bevy_ecs::entity::EntityHashMap;
 use bevy_state::app::StatesPlugin;
-use internal_test_util::{create_minimal_app, type_id_of};
+use internal_test_util::{create_minimal_app, type_id_of, vec_spread};
 use std::ops::Deref;
 
 #[derive(AutoPlugin)]
@@ -42,16 +43,18 @@ struct FooRes2(usize);
 #[derive(Default)]
 struct FooRes3(usize);
 
-#[derive(Message, Debug, Default, PartialEq, Reflect)]
-#[auto_register_type(plugin = Test)]
-#[auto_add_message(plugin = Test)]
-struct FooEvent(usize);
+#[auto_message(plugin = Test, derive)]
+struct FooMessage(usize);
 
-#[auto_event(plugin = Test)]
-struct FooEvent2(usize);
+#[auto_event(plugin = Test, global, derive)]
+struct FooGlobalEvent(usize);
 
-#[auto_event(plugin = Test)]
-struct FooEvent3(usize);
+#[auto_event(plugin = Test, entity, derive)]
+struct FooEntityEvent {
+    #[event_target]
+    entity: Entity,
+    value: usize,
+}
 
 #[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
 #[auto_init_state(plugin = Test)]
@@ -176,9 +179,77 @@ fn test_auto_add_system_foo_system() {
 }
 
 #[internal_test_proc_macro::xtest]
-fn test_auto_add_message_foo_event() {
+fn test_auto_add_message_foo_message() {
     let mut app = app();
-    assert!(app.world_mut().write_message(FooEvent(1)).is_some());
+    assert!(
+        app.world_mut().write_message(FooMessage(1)).is_some(),
+        "did not add message type FooMessage"
+    );
+}
+
+#[internal_test_proc_macro::xtest]
+fn test_auto_event_foo_global_event() {
+    let mut app = app();
+    #[derive(Resource, Default)]
+    struct Counter(usize);
+
+    app.insert_resource(Counter(0));
+
+    app.add_observer(|on: On<FooGlobalEvent>, mut counter: ResMut<Counter>| {
+        counter.0 += 1;
+        assert_eq!(counter.0, on.event().0);
+    });
+
+    app.world_mut().trigger(FooGlobalEvent(1));
+    app.world_mut().trigger(FooGlobalEvent(2));
+
+    assert_eq!(app.world_mut().resource::<Counter>().0, 2);
+}
+
+#[internal_test_proc_macro::xtest]
+fn test_auto_event_foo_entity_event() {
+    let mut app = app();
+    #[derive(Resource, Default)]
+    struct Counter(EntityHashMap<usize>);
+
+    app.insert_resource(Counter::default());
+
+    fn entity_observer(on: On<FooEntityEvent>, mut counter: ResMut<Counter>) {
+        let entry = counter.0.entry(on.entity).or_default();
+        *entry += 1;
+        assert_eq!(*entry, on.event().value);
+    }
+
+    let a = app.world_mut().spawn_empty().id();
+    let b = app.world_mut().spawn_empty().id();
+    let c = app.world_mut().spawn_empty().id();
+
+    let entities = [a, b];
+
+    for e in vec_spread![..entities, c] {
+        app.world_mut().entity_mut(e).observe(entity_observer);
+    }
+
+    for e in entities {
+        app.world_mut()
+            .entity_mut(e)
+            .trigger(|entity| FooEntityEvent { entity, value: 1 });
+    }
+
+    for e in entities {
+        app.world_mut()
+            .entity_mut(e)
+            .trigger(|entity| FooEntityEvent { entity, value: 2 });
+    }
+
+    app.world_mut()
+        .entity_mut(c)
+        .trigger(|entity| FooEntityEvent { entity, value: 1 });
+
+    for e in entities {
+        let &v = app.world_mut().resource::<Counter>().0.get(&e).unwrap();
+        assert_eq!(v, 2);
+    }
 }
 
 #[internal_test_proc_macro::xtest]
