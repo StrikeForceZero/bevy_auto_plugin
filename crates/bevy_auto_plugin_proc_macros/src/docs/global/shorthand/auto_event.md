@@ -5,6 +5,7 @@ Automatically registers an event to be added to the app in global mode.
 - `target([global|entity])` - Optional. (defaults to `global`) Specifies this is a global or entity event: `Event` or `EntityEvent`.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the event will be registered with these specific generic parameters.
+  - #### NOTE: `Event` and `EntityEvent` derives are not working with generics
 - `derive` | `derive(Debug, Default, ..)` - Optional. Specifies that the macro should handle deriving `Event` or `EntityEvent` (requires `target(global)` or `target(entity)` params respectively). 
   Passes through any additional derives listed.
 - `reflect` | `reflect(Debug, Default, ..)` - Optional. Specifies that the macro should handle emitting the single `#[reflect(...)]`.
@@ -27,25 +28,4 @@ struct FooGlobalEvent(usize);
 
 #[auto_event(plugin = MyPlugin, target(entity), derive(Debug, PartialEq), reflect,  register)]
 struct FooEntityEvent(#[event_target] Entity);
-```
-
-# Example (with generics)
-```rust
-use bevy::prelude::*;
-use bevy_auto_plugin::modes::global::prelude::*;
-
-#[derive(AutoPlugin)]
-#[auto_plugin(impl_plugin_trait)]
-struct MyPlugin;
-
-
-#[auto_event(plugin = MyPlugin, target(global), generics(usize), derive(Debug, Default, PartialEq), reflect,  register)]
-struct FooGlobalEvent<T>(T);
-
-#[auto_event(plugin = MyPlugin, target(entity), generics(usize), derive(Debug, PartialEq), reflect,  register)]
-struct FooEntityEvent<T> {
-    #[event_target] 
-    entity: Entity,
-    value: T,
-}
 ```
