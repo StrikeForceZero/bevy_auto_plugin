@@ -10,7 +10,7 @@ Automatically registers an event to be added to the app in global mode.
   Passes through any additional reflects listed.
   If enabled in tandem with `derive` it also includes `#[derive(Reflect)]` 
 - `register` - Enables type registration for the `Resource`
-  Same as having `#`[auto_register_type]`
+  Same as having `#[auto_register_type]`
 
 # Example
 ```rust
