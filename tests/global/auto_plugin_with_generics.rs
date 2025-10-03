@@ -355,3 +355,24 @@ fn test_auto_add_observer_foo_observer() {
         "FooComponent should be added"
     );
 }
+
+#[auto_component(plugin = Test::<u8, bool>, generics(u8, bool), derive(Default), auto_name)]
+struct FooAutoNameComponent<T1, T2>(T1, T2)
+where
+    T1: Default + Send + Sync + 'static,
+    T2: Default + Send + Sync + 'static;
+
+#[internal_test_proc_macro::xtest]
+fn test_auto_component_auto_name_regression_test() {
+    let mut app = app();
+    let a = app
+        .world_mut()
+        .spawn(FooAutoNameComponent::<u8, bool>::default())
+        .id();
+    let name = app
+        .world_mut()
+        .query::<&Name>()
+        .get(app.world(), a)
+        .expect("failed to query FooAutoNameComponent with a Name");
+    assert_eq!(name.as_str(), "FooAutoNameComponent<u8, bool>");
+}

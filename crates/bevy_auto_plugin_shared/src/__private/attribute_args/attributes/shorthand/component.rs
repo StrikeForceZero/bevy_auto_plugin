@@ -47,8 +47,10 @@ impl<'a> From<&'a ComponentAttributeArgs> for RegisterTypeAttributeArgs {
 }
 
 impl<'a> From<&'a ComponentAttributeArgs> for AutoNameAttributeArgs {
-    fn from(_: &'a ComponentAttributeArgs) -> Self {
-        Self::default()
+    fn from(value: &'a ComponentAttributeArgs) -> Self {
+        Self {
+            generics: value.generics.clone(),
+        }
     }
 }
 
