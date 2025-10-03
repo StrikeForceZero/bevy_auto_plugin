@@ -30,7 +30,7 @@ impl AutoPluginAttributeKind for AddMessageAttributeArgs {
 
 impl ItemAttributeArgs for AddMessageAttributeArgs {
     fn global_build_prefix() -> &'static str {
-        "_global_auto_plugin_add_event_"
+        "_global_auto_plugin_add_message_"
     }
 
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
