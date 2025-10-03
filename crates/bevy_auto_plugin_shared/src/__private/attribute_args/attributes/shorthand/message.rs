@@ -100,6 +100,7 @@ impl ShortHandAttribute for MessageAttributeArgs {
                 .push(tokens::auto_register_type(mode.clone(), self.into()));
         }
 
+        // TODO: should this be gated behind a flag?
         expanded_attrs
             .attrs
             .push(tokens::auto_add_message(mode.clone(), self.into()));
