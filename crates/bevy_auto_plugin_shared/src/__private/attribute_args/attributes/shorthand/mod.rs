@@ -15,6 +15,7 @@ pub mod system;
 pub mod prelude {
     pub use super::component::ComponentAttributeArgs;
     pub use super::event::EventAttributeArgs;
+    pub use super::message::MessageAttributeArgs;
     pub use super::observer::ObserverAttributeArgs;
     pub use super::resource::ResourceAttributeArgs;
     pub use super::states::StatesAttributeArgs;
