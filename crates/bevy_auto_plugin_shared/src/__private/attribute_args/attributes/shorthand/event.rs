@@ -90,6 +90,8 @@ pub struct EventAttributeArgs {
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
     // exclusive items
+    // TODO: we should probably return compiler error when we see both
+    //  but the current code paths don't leave room for an obvious spot to include one
     pub global: bool,
     pub entity: FlagOrMeta<EntityEventOpts>,
 }
