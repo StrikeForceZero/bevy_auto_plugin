@@ -573,6 +573,14 @@ pub fn global_auto_event(attr: CompilerStream, input: CompilerStream) -> Compile
     handle_attribute(global::inner::global_auto_event, attr, input)
 }
 
+/// Automatically registers item as Message for bevy app. (See below for additional options)
+#[doc = include_str!("docs/global/shorthand/auto_message.md")]
+#[proc_macro_attribute]
+#[cfg(feature = "mode_global")]
+pub fn global_auto_message(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(global::inner::global_auto_message, attr, input)
+}
+
 /// Automatically registers item as States for bevy app. (See below for additional options)
 #[doc = include_str!("docs/global/shorthand/auto_states.md")]
 #[proc_macro_attribute]

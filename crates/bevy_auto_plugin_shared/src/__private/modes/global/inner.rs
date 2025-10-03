@@ -13,6 +13,7 @@ use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
 use crate::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::event::EventAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::observer::ObserverAttributeArgs;
+use crate::__private::attribute_args::attributes::shorthand::prelude::MessageAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::resource::ResourceAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::states::StatesAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::system::SystemAttributeArgs;
@@ -356,6 +357,9 @@ pub fn global_auto_system(attr: MacroStream, input: MacroStream) -> MacroStream 
 }
 pub fn global_auto_event(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_auto_outer::<EventAttributeArgs>(attr, input)
+}
+pub fn global_auto_message(attr: MacroStream, input: MacroStream) -> MacroStream {
+    global_auto_outer::<MessageAttributeArgs>(attr, input)
 }
 pub fn global_auto_observer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_auto_outer::<ObserverAttributeArgs>(attr, input)

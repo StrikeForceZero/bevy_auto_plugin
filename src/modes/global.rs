@@ -50,6 +50,9 @@ pub mod prelude {
     pub use bevy_auto_plugin_proc_macros::global_auto_event as auto_event;
 
     #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::global_auto_message as auto_message;
+
+    #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::global_auto_states as auto_states;
 
     #[doc(inline)]
