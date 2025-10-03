@@ -87,3 +87,4 @@
 - add `auto_message` shorthand to derive `Message` and add to bevy app
 - update `auto_event` with new params `target(global)` or `target(entity)`
 - deprecated `auto_add_event` (aliased to `auto_add_message`)
+- fix `auto_component` not passing generics to `auto_name`
