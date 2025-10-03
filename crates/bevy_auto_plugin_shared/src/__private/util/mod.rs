@@ -11,5 +11,7 @@ pub mod meta;
 pub mod module;
 pub mod path_fmt;
 pub mod resolve_ident_from_item;
+#[cfg(test)]
+pub mod test_params;
 pub mod tokens;
 pub mod ty_classify;
