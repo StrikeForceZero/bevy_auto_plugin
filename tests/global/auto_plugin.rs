@@ -46,10 +46,10 @@ struct FooRes3(usize);
 #[auto_message(plugin = Test, derive)]
 struct FooMessage(usize);
 
-#[auto_event(plugin = Test, global, derive)]
+#[auto_event(plugin = Test, target(global), derive)]
 struct FooGlobalEvent(usize);
 
-#[auto_event(plugin = Test, entity, derive)]
+#[auto_event(plugin = Test, target(entity), derive)]
 struct FooEntityEvent {
     #[event_target]
     entity: Entity,

@@ -48,13 +48,13 @@ where
     T1: Default + Send + Sync + 'static,
     T2: Default + Send + Sync + 'static;
 
-#[auto_event(plugin = Test::<u8, bool>, global, derive, generics(u8, bool))]
+#[auto_event(plugin = Test::<u8, bool>, target(global), derive, generics(u8, bool))]
 struct FooGlobalEvent<T1, T2>(T1, T2)
 where
     T1: Default + Send + Sync + 'static,
     T2: Default + Send + Sync + 'static;
 
-#[auto_event(plugin = Test, entity, derive)]
+#[auto_event(plugin = Test, target(entity), derive)]
 struct FooEntityEvent<T1, T2>
 where
     T1: Default + Send + Sync + 'static,

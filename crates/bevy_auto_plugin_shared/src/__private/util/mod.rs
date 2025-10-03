@@ -1,3 +1,4 @@
+#[cfg(test)]
 pub mod combo;
 pub mod concrete_path;
 pub mod debug;
