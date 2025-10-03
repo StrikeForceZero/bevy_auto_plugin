@@ -41,4 +41,6 @@
 
 ### `auto_add_event` is now `auto_add_message`
 
-### `auto_event` is not updated yet [see issue](https://github.com/StrikeForceZero/bevy_auto_plugin/issues/23)
+### `auto_event` changed
+  - no longer supports buffered events (use `auto_message`)
+  - now requires specifying if it's an `global` or `entity` based `Event` and `EntityEvent` respectively.
