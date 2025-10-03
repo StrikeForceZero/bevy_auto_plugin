@@ -79,3 +79,10 @@
 #### `global_auto_plugin(..)` is now just `auto_plugin(..)`
 
 #### `auto_plugin(app=..)` is now `auto_plugin(app_param=..)` across all modes
+
+---
+### v0.6
+- update to bevy 0.17
+- add `auto_add_message` to register items deriving `Message` on plugin build
+- deprecated `auto_add_event` (aliased to `auto_add_message`)
+- temp deprecated `auto_event` until updated

@@ -36,3 +36,9 @@
 ### `flat_file` and `module` modes are deprecated 
   - [see feedback issue if you are using these modes](https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19) or use `global`
   - enable `ignore_flat_file_or_module_deprecation` to disable deprecation warnings if you commented and provided a use case for keeping the modes
+
+## v0.5 to v0.6
+
+### `auto_add_event` is now `auto_add_message`
+
+### `auto_event` is not updated yet [see issue](https://github.com/StrikeForceZero/bevy_auto_plugin/issues/23)
