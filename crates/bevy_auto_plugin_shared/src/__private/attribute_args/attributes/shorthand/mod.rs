@@ -239,7 +239,7 @@ pub mod tokens {
     ) -> MacroStream {
         derive_from(
             [
-                vec![&derive_event_path()],
+                vec![&derive_message_path()],
                 extra_items.into_iter().collect::<Vec<_>>(),
             ]
             .concat(),
