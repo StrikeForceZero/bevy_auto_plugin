@@ -30,7 +30,7 @@ struct MyPlugin;
 struct FooGlobalEvent(usize);
 
 #[auto_event(plugin = MyPlugin, entity(propagate, auto_propagate), derive(Debug, Default, PartialEq), reflect,  register)]
-struct FooEntityEvent(#[entity_target] Entity);
+struct FooEntityEvent(#[event_target] Entity);
 ```
 
 # Example (with generics)
@@ -48,7 +48,7 @@ struct FooGlobalEvent<T>(T);
 
 #[auto_event(plugin = MyPlugin, entity(propagate, auto_propagate), generics(usize), derive(Debug, Default, PartialEq), reflect,  register)]
 struct FooEntityEvent<T> {
-    #[entity_target] 
+    #[event_target] 
     entity: Entity,
     value: T,
 }
