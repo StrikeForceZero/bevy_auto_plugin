@@ -2,8 +2,8 @@ use bevy_app::prelude::*;
 use bevy_auto_plugin::modes::flat_file::prelude::*;
 use bevy_ecs::prelude::*;
 
-#[auto_add_event(generics(bool))]
-#[derive(Event, Debug, PartialEq)]
+#[auto_add_message(generics(bool))]
+#[derive(Message, Debug, PartialEq)]
 struct Test<T>(T);
 
 #[auto_plugin(app_param=app)]
@@ -16,14 +16,14 @@ fn app() -> App {
 }
 
 #[internal_test_proc_macro::xtest]
-fn test_auto_add_event_generic() {
+fn test_auto_add_message_generic() {
     let mut app = app();
-    let mut events = app.world_mut().resource_mut::<Events<Test<bool>>>();
-    events.send(Test(true));
+    let mut messages = app.world_mut().resource_mut::<Messages<Test<bool>>>();
+    messages.write(Test(true));
     assert_eq!(
-        events.drain().next(),
+        messages.drain().next(),
         Some(Test(true)),
         "did not auto add event"
     );
-    assert_eq!(events.drain().next(), None, "expected only 1 event");
+    assert_eq!(messages.drain().next(), None, "expected only 1 event");
 }

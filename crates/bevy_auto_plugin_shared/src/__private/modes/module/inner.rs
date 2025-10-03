@@ -1,9 +1,9 @@
 use crate::__private::attribute_args::ItemAttributeArgs;
 use crate::__private::attribute_args::attributes::modes::module::auto_plugin::AutoPluginArgs;
 use crate::__private::attribute_args::attributes::prelude::{
-    AddEventAttributeArgs, AddObserverAttributeArgs, AddSystemAttributeArgs, AutoNameAttributeArgs,
-    InitResourceAttributeArgs, InitStateAttributeArgs, InsertResourceAttributeArgs,
-    RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
+    AddMessageAttributeArgs, AddObserverAttributeArgs, AddSystemAttributeArgs,
+    AutoNameAttributeArgs, InitResourceAttributeArgs, InitStateAttributeArgs,
+    InsertResourceAttributeArgs, RegisterStateTypeAttributeArgs, RegisterTypeAttributeArgs,
 };
 use crate::__private::context::{AutoPluginContext, ToTokenStringValue};
 use crate::__private::util::concrete_path::ConcreteTargetPathWithGenericsCollection;
@@ -21,7 +21,7 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
     if let Some((_, items)) = &module.content {
         // Find all items with the provided [`attribute_name`] #[...] attribute
         let register_types = RegisterTypeAttributeArgs::match_items(items)?;
-        let add_events = AddEventAttributeArgs::match_items(items)?;
+        let add_events = AddMessageAttributeArgs::match_items(items)?;
         let init_resources = InitResourceAttributeArgs::match_items(items)?;
         let insert_resources = InsertResourceAttributeArgs::match_items(items)?;
         let auto_names = AutoNameAttributeArgs::match_items(items)?;
@@ -48,7 +48,7 @@ pub fn auto_plugin_inner(mut module: ItemMod, init_name: &Ident) -> syn::Result<
         }
 
         insert!(register_types, RegisterTypeAttributeArgs);
-        insert!(add_events, AddEventAttributeArgs);
+        insert!(add_events, AddMessageAttributeArgs);
         insert!(init_resources, InitResourceAttributeArgs);
         insert!(insert_resources, InsertResourceAttributeArgs);
         insert!(auto_names, AutoNameAttributeArgs);

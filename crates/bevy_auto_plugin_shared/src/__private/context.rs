@@ -57,7 +57,7 @@ impl<T> ToTokens for ToTokenStringValue<T> {
 pub struct AutoPluginContext {
     pub register_types: HashSet<ToTokenStringValue<RegisterTypeAttributeArgs>>,
     pub register_state_types: HashSet<ToTokenStringValue<RegisterStateTypeAttributeArgs>>,
-    pub add_events: HashSet<ToTokenStringValue<AddEventAttributeArgs>>,
+    pub add_events: HashSet<ToTokenStringValue<AddMessageAttributeArgs>>,
     pub init_resources: HashSet<ToTokenStringValue<InitResourceAttributeArgs>>,
     pub insert_resources: HashSet<ToTokenStringValue<InsertResourceAttributeArgs>>,
     pub init_states: HashSet<ToTokenStringValue<InitStateAttributeArgs>>,
@@ -87,7 +87,7 @@ macro_rules! impl_traits {
 
 impl_traits!(register_types, RegisterTypeAttributeArgs);
 impl_traits!(register_state_types, RegisterStateTypeAttributeArgs);
-impl_traits!(add_events, AddEventAttributeArgs);
+impl_traits!(add_events, AddMessageAttributeArgs);
 impl_traits!(init_resources, InitResourceAttributeArgs);
 impl_traits!(insert_resources, InsertResourceAttributeArgs);
 impl_traits!(init_states, InitStateAttributeArgs);

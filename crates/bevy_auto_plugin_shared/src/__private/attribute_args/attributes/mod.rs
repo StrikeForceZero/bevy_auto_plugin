@@ -1,4 +1,4 @@
-pub mod add_event;
+pub mod add_message;
 pub mod add_observer;
 pub mod add_system;
 pub mod auto_name;
@@ -12,7 +12,7 @@ pub mod shorthand;
 
 pub mod prelude {
     pub use super::*;
-    pub use add_event::AddEventAttributeArgs;
+    pub use add_message::AddMessageAttributeArgs;
     pub use add_observer::AddObserverAttributeArgs;
     pub use add_system::AddSystemAttributeArgs;
     pub use auto_name::AutoNameAttributeArgs;

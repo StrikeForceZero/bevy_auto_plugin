@@ -16,19 +16,19 @@ use syn::Item;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct AddEventAttributeArgs {
+pub struct AddMessageAttributeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
 }
 
-impl AutoPluginAttributeKind for AddEventAttributeArgs {
+impl AutoPluginAttributeKind for AddMessageAttributeArgs {
     type Attribute = AutoPluginItemAttribute;
     fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::AddEvent
+        AutoPluginItemAttribute::AddMessage
     }
 }
 
-impl ItemAttributeArgs for AddEventAttributeArgs {
+impl ItemAttributeArgs for AddMessageAttributeArgs {
     fn global_build_prefix() -> &'static str {
         "_global_auto_plugin_add_event_"
     }
@@ -37,24 +37,24 @@ impl ItemAttributeArgs for AddEventAttributeArgs {
         resolve_ident_from_struct_or_enum(item)
     }
     fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<'_, Self>>> {
-        items_with_attribute_match::<StructOrEnumMeta, AddEventAttributeArgs>(items)
+        items_with_attribute_match::<StructOrEnumMeta, AddMessageAttributeArgs>(items)
     }
 }
 
-impl GenericsArgs for AddEventAttributeArgs {
+impl GenericsArgs for AddMessageAttributeArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl ToTokensWithConcreteTargetPath for AddEventAttributeArgs {
+impl ToTokensWithConcreteTargetPath for AddMessageAttributeArgs {
     fn to_tokens_with_concrete_target_path(
         &self,
         tokens: &mut TokenStream,
         target: &ConcreteTargetPath,
     ) {
         tokens.extend(quote! {
-            .add_event::< #target >()
+            .add_message::< #target >()
         })
     }
 }
@@ -67,14 +67,14 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<AddEventAttributeArgs>(quote!())?;
+        let args = parse2::<AddMessageAttributeArgs>(quote!())?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .add_event :: < FooTarget > ()
+                .add_message :: < FooTarget > ()
             }
             .to_string()
         );
@@ -84,14 +84,14 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<AddEventAttributeArgs>(quote!(generics(u8, bool)))?;
+        let args = parse2::<AddMessageAttributeArgs>(quote!(generics(u8, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .add_event :: < FooTarget<u8, bool> > ()
+                .add_message :: < FooTarget<u8, bool> > ()
             }
             .to_string()
         );
@@ -102,21 +102,21 @@ mod tests {
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_multiple() -> syn::Result<()> {
         let args =
-            parse2::<AddEventAttributeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
+            parse2::<AddMessageAttributeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .add_event :: < FooTarget<u8, bool> > ()
+                .add_message :: < FooTarget<u8, bool> > ()
             }
             .to_string()
         );
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .add_event :: < FooTarget<bool, bool> > ()
+                .add_message :: < FooTarget<bool, bool> > ()
             }
             .to_string()
         );

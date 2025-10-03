@@ -1,4 +1,4 @@
-use crate::__private::attribute_args::attributes::add_event::AddEventAttributeArgs;
+use crate::__private::attribute_args::attributes::add_message::AddMessageAttributeArgs;
 use crate::__private::attribute_args::attributes::add_observer::AddObserverAttributeArgs;
 use crate::__private::attribute_args::attributes::add_system::AddSystemAttributeArgs;
 use crate::__private::attribute_args::attributes::auto_name::AutoNameAttributeArgs;
@@ -296,8 +296,8 @@ pub fn expand_global_derive_global_auto_plugin(input: MacroStream) -> MacroStrea
 pub fn global_auto_register_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<RegisterTypeAttributeArgs>>(attr, input)
 }
-pub fn global_auto_add_event_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_attribute_outer::<GlobalArgs<AddEventAttributeArgs>>(attr, input)
+pub fn global_auto_add_message_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+    global_attribute_outer::<GlobalArgs<AddMessageAttributeArgs>>(attr, input)
 }
 pub fn global_auto_init_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<InitResourceAttributeArgs>>(attr, input)

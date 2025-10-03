@@ -17,7 +17,7 @@ struct MyPlugin;
 struct Foo;
 
 #[auto_observer(plugin = MyPlugin)]
-fn foo_observer(trigger: Trigger<OnAdd, Foo>, mut commands: Commands) {
+fn foo_observer(add: On<Add, Foo>, mut commands: Commands) {
     // ...
 }
 ```

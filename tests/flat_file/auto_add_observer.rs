@@ -13,13 +13,13 @@ struct FooComponentState {
 
 #[auto_add_observer]
 fn test_observer(
-    trigger: Trigger<OnAdd, FooComponent>,
+    add: On<Add, FooComponent>,
     added_foo_q: Query<Ref<FooComponent>, Added<FooComponent>>,
     mut foo_component_added: ResMut<FooComponentState>,
 ) {
     assert!(
         added_foo_q
-            .get(trigger.target())
+            .get(add.event().entity)
             .expect("FooComponent not spawned")
             .is_added()
     );

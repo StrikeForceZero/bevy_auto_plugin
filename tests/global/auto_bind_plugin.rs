@@ -51,9 +51,9 @@ struct FooRes2(usize);
 struct FooRes3(usize);
 
 #[auto_bind_plugin(plugin = Test)]
-#[derive(Event, Debug, Default, PartialEq, Reflect)]
+#[derive(Message, Debug, Default, PartialEq, Reflect)]
 #[auto_register_type]
-#[auto_add_event]
+#[auto_add_message]
 struct FooEvent(usize);
 
 #[auto_bind_plugin(plugin = Test)]
@@ -92,13 +92,13 @@ struct FooComponentState {
 #[auto_bind_plugin(plugin = Test)]
 #[auto_add_observer]
 fn foo_observer(
-    trigger: Trigger<OnAdd, FooComponent>,
+    add: On<Add, FooComponent>,
     added_foo_q: Query<Ref<FooComponent>, Added<FooComponent>>,
     mut foo_component_added: ResMut<FooComponentState>,
 ) {
     assert!(
         added_foo_q
-            .get(trigger.target())
+            .get(add.event().entity)
             .expect("FooComponent not spawned")
             .is_added()
     );
@@ -176,9 +176,9 @@ fn test_auto_add_system_foo_system() {
 }
 
 #[internal_test_proc_macro::xtest]
-fn test_auto_add_event_foo_event() {
+fn test_auto_add_message_foo_event() {
     let mut app = app();
-    assert!(app.world_mut().send_event(FooEvent(1)).is_some());
+    assert!(app.world_mut().write_message(FooEvent(1)).is_some());
 }
 
 #[internal_test_proc_macro::xtest]

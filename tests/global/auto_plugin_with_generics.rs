@@ -41,9 +41,9 @@ where
     T1: Default + Send + Sync + 'static,
     T2: Default + Send + Sync + 'static;
 
-#[derive(Event, Debug, Default, PartialEq, Reflect)]
+#[derive(Message, Debug, Default, PartialEq, Reflect)]
 #[auto_register_type(plugin = Test::<u8, bool>, generics(u8, bool))]
-#[auto_add_event(plugin = Test::<u8, bool>, generics(u8, bool))]
+#[auto_add_message(plugin = Test::<u8, bool>, generics(u8, bool))]
 struct FooEvent<T1, T2>(T1, T2)
 where
     T1: Default + Send + Sync + 'static,
@@ -82,7 +82,7 @@ struct FooComponentState {
 #[allow(clippy::type_complexity)]
 #[auto_add_observer(plugin = Test::<u8, bool>, generics(u8, bool))]
 fn foo_observer<T1, T2>(
-    trigger: Trigger<OnAdd, FooComponent<T1, T2>>,
+    add: On<Add, FooComponent<T1, T2>>,
     added_foo_q: Query<Ref<FooComponent<T1, T2>>, Added<FooComponent<T1, T2>>>,
     mut foo_component_added: ResMut<FooComponentState>,
 ) where
@@ -91,7 +91,7 @@ fn foo_observer<T1, T2>(
 {
     assert!(
         added_foo_q
-            .get(trigger.target())
+            .get(add.event().entity)
             .expect("FooComponent not spawned")
             .is_added()
     );
@@ -199,9 +199,13 @@ fn test_auto_add_system_foo_system() {
 }
 
 #[internal_test_proc_macro::xtest]
-fn test_auto_add_event_foo_event() {
+fn test_auto_add_message_foo_event() {
     let mut app = app();
-    assert!(app.world_mut().send_event(FooEvent(1u8, false)).is_some());
+    assert!(
+        app.world_mut()
+            .write_message(FooEvent(1u8, false))
+            .is_some()
+    );
 }
 
 #[internal_test_proc_macro::xtest]

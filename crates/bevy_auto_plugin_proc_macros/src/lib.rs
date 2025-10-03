@@ -47,8 +47,8 @@ pub fn module_auto_register_type(_args: CompilerStream, input: CompilerStream) -
     input
 }
 
-/// Automatically adds an event type to the Bevy `App`.
-#[doc = include_str!("docs/module/auto_add_event.md")]
+/// Automatically adds a message type to the Bevy `App`.
+#[doc = include_str!("docs/module/auto_add_message.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_module")]
 #[cfg_attr(
@@ -58,7 +58,7 @@ pub fn module_auto_register_type(_args: CompilerStream, input: CompilerStream) -
         note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
     )
 )]
-pub fn module_auto_add_event(_args: CompilerStream, input: CompilerStream) -> CompilerStream {
+pub fn module_auto_add_message(_args: CompilerStream, input: CompilerStream) -> CompilerStream {
     // Just return the input unchanged; this acts as a marker.
     input
 }
@@ -216,8 +216,8 @@ pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream)
     )
 }
 
-/// Automatically adds an event type to the Bevy `App`.
-#[doc = include_str!("docs/flat_file/auto_add_event.md")]
+/// Automatically adds a message type to the Bevy `App`.
+#[doc = include_str!("docs/flat_file/auto_add_message.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_flat_file")]
 #[cfg_attr(
@@ -227,7 +227,7 @@ pub fn flat_file_auto_register_type(attr: CompilerStream, input: CompilerStream)
         note = "See https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19"
     )
 )]
-pub fn flat_file_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+pub fn flat_file_auto_add_message(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(flat_file::inner::handle_add_event_attribute, attr, input)
 }
 
@@ -474,12 +474,12 @@ pub fn global_auto_register_type(attr: CompilerStream, input: CompilerStream) ->
     handle_attribute(global::inner::global_auto_register_type_outer, attr, input)
 }
 
-/// Automatically adds an event type to the Bevy `App`.
-#[doc = include_str!("docs/global/auto_add_event.md")]
+/// Automatically adds a message type to the Bevy `App`.
+#[doc = include_str!("docs/global/auto_add_message.md")]
 #[proc_macro_attribute]
 #[cfg(feature = "mode_global")]
-pub fn global_auto_add_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(global::inner::global_auto_add_event_outer, attr, input)
+pub fn global_auto_add_message(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(global::inner::global_auto_add_message_outer, attr, input)
 }
 
 /// Automatically inserts a resource in the Bevy `App`.
