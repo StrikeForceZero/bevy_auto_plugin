@@ -30,7 +30,7 @@ impl GenericsArgs for MessageAttributeArgs {
 impl AutoPluginAttributeKind for MessageAttributeArgs {
     type Attribute = AutoPluginShortHandAttribute;
     fn attribute() -> Self::Attribute {
-        Self::Attribute::Event
+        Self::Attribute::Message
     }
 }
 
