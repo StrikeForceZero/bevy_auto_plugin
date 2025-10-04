@@ -8,7 +8,7 @@ Automatically registers a type with the app's type registry in global mode.
 # Example
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::modes::global::prelude::*;
+use bevy_auto_plugin::prelude::*;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -25,7 +25,7 @@ struct FooComponent;
 # Example (with generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::modes::global::prelude::*;
+use bevy_auto_plugin::prelude::*;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]

@@ -6,7 +6,7 @@ Automatically sets `plugin = _` for all `#[auto_*(..)]` macros below it
 # Example
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::modes::global::prelude::*;
+use bevy_auto_plugin::prelude::*;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]

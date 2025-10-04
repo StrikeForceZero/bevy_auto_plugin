@@ -1,2 +1,1 @@
-#[cfg(feature = "mode_global")]
-mod global;
+mod e2e;

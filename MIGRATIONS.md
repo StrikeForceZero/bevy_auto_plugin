@@ -51,3 +51,8 @@
     [build-dependencies]
     bevy_reflect = { version = "0.17", features = ["documentation"] }
     ```
+
+### `flat_file` and `module` modes were removed
+
+### Updated Imports
+- `use bevy_auto_plugin::modes::global::prelude::*` -> `use bevy_auto_plugin::prelude::*`

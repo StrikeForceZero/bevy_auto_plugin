@@ -9,7 +9,7 @@ Automatically inserts a resource with a specific value into the app in global mo
 # Example
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::modes::global::prelude::*;
+use bevy_auto_plugin::prelude::*;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -25,7 +25,7 @@ struct FooResource(usize);
 # Example (with generics)
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::modes::global::prelude::*;
+use bevy_auto_plugin::prelude::*;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]

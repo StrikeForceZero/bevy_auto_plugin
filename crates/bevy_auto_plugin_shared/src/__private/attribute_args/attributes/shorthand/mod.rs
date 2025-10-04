@@ -305,14 +305,8 @@ impl Mode {
     where
         T: AutoPluginAttribute,
     {
-        let mode = match self {
-            Mode::Global { .. } => "global",
-            Mode::FlatFile => "flat_file",
-            Mode::Module => "module",
-        };
-        let mode_ident = quote::format_ident!("{}", mode);
         let macro_ident = quote::format_ident!("{}", attr.ident_str());
-        parse_quote!(:: bevy_auto_plugin :: modes :: #mode_ident :: prelude :: #macro_ident)
+        parse_quote!(:: bevy_auto_plugin :: prelude :: #macro_ident)
     }
     pub fn as_str(&self) -> &'static str {
         match self {
