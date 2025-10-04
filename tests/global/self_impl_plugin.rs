@@ -1,17 +1,17 @@
 use bevy::prelude::*;
 use bevy_auto_plugin::modes::global::prelude::*;
-use bevy_auto_plugin_proc_macros::{global_auto_init_resource, global_auto_insert_resource};
+use bevy_auto_plugin_proc_macros::{auto_init_resource, auto_insert_resource};
 
 #[derive(AutoPlugin)]
 pub struct MyPlugin;
 
 #[derive(Resource, Default, PartialEq, Debug)]
-#[global_auto_init_resource(plugin = MyPlugin)]
-#[global_auto_insert_resource(plugin = MyPlugin, resource(MyResourceAuto(1)))]
+#[auto_init_resource(plugin = MyPlugin)]
+#[auto_insert_resource(plugin = MyPlugin, resource(MyResourceAuto(1)))]
 pub struct MyResourceAuto(usize);
 
 #[derive(Resource, Default, PartialEq, Debug)]
-#[global_auto_init_resource(plugin = MyPlugin)]
+#[auto_init_resource(plugin = MyPlugin)]
 pub struct MyResourceBuild(usize);
 
 impl Plugin for MyPlugin {

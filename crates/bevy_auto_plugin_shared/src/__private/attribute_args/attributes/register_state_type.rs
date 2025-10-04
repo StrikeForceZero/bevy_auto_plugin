@@ -30,7 +30,7 @@ impl AutoPluginAttributeKind for RegisterStateTypeAttributeArgs {
 
 impl ItemAttributeArgs for RegisterStateTypeAttributeArgs {
     fn global_build_prefix() -> &'static str {
-        "_global_auto_plugin_register_state_type_"
+        "_auto_plugin_register_state_type_"
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_struct_or_enum(item)

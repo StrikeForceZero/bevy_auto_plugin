@@ -29,7 +29,7 @@ impl AutoPluginAttributeKind for AddObserverAttributeArgs {
 
 impl ItemAttributeArgs for AddObserverAttributeArgs {
     fn global_build_prefix() -> &'static str {
-        "_global_auto_plugin_add_observer_"
+        "_auto_plugin_add_observer_"
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_fn(item)

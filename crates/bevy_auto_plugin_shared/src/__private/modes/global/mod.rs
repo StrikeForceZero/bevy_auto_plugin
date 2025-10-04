@@ -17,17 +17,17 @@ pub use linkme;
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "inventory")))]
 #[linkme::distributed_slice]
-pub static GLOBAL_AUTO_PLUGINS: [GlobalAutoPluginRegistryEntryFactory];
+pub static AUTO_PLUGINS: [GlobalAutoPluginRegistryEntryFactory];
 
 #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
 inventory::collect!(GlobalAutoPluginRegistryEntryFactory);
 
-pub static GLOBAL_AUTO_PLUGIN_REGISTRY: LazyLock<GlobalAutoPluginRegistry> = LazyLock::new(|| {
+pub static AUTO_PLUGIN_REGISTRY: LazyLock<GlobalAutoPluginRegistry> = LazyLock::new(|| {
     #[cfg(target_arch = "wasm32")]
     crate::_initialize();
 
     #[cfg(not(any(target_arch = "wasm32", feature = "inventory")))]
-    let iter = GLOBAL_AUTO_PLUGINS.into_iter();
+    let iter = AUTO_PLUGINS.into_iter();
     #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
     let iter = ::inventory::iter::<GlobalAutoPluginRegistryEntryFactory>.into_iter();
 
@@ -69,7 +69,7 @@ pub trait AutoPlugin: bevy_app::Plugin + AutoPluginTypeId {
     }
     fn static_build(app: &mut bevy_app::App) {
         let type_id = <Self as AutoPluginTypeId>::type_id();
-        GLOBAL_AUTO_PLUGIN_REGISTRY
+        AUTO_PLUGIN_REGISTRY
             .get_entries(type_id)
             .iter()
             .for_each(|build_fn| {
@@ -115,7 +115,7 @@ pub fn _plugin_entry_block(static_ident: &Ident, plugin: &Path, expr: &ExprClosu
 #[doc(hidden)]
 macro_rules! _plugin_entry {
         ($static_ident:ident, $entry:expr) => {
-            #[::bevy_auto_plugin::__private::shared::__private::modes::global::linkme::distributed_slice(::bevy_auto_plugin::__private::shared::__private::modes::global::GLOBAL_AUTO_PLUGINS)]
+            #[::bevy_auto_plugin::__private::shared::__private::modes::global::linkme::distributed_slice(::bevy_auto_plugin::__private::shared::__private::modes::global::AUTO_PLUGINS)]
             #[linkme(crate = ::bevy_auto_plugin::__private::shared::__private::modes::global::linkme)]
             #[allow(non_upper_case_globals)]
             static $static_ident:

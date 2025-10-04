@@ -3,60 +3,60 @@ pub mod prelude {
     pub use bevy_auto_plugin_proc_macros::AutoPlugin;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_add_message as auto_add_message;
+    pub use bevy_auto_plugin_proc_macros::auto_add_message;
 
     #[doc(inline)]
     #[deprecated(since = "0.6.0", note = "Use `auto_add_message` instead.")]
-    pub use bevy_auto_plugin_proc_macros::global_auto_add_message as auto_add_event;
+    pub use bevy_auto_plugin_proc_macros::auto_add_message as auto_add_event;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_add_system as auto_add_system;
+    pub use bevy_auto_plugin_proc_macros::auto_add_system;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_init_resource as auto_init_resource;
+    pub use bevy_auto_plugin_proc_macros::auto_init_resource;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_init_state as auto_init_state;
+    pub use bevy_auto_plugin_proc_macros::auto_init_state;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_insert_resource as auto_insert_resource;
+    pub use bevy_auto_plugin_proc_macros::auto_insert_resource;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_name as auto_name;
+    pub use bevy_auto_plugin_proc_macros::auto_name;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_plugin as auto_plugin;
+    pub use bevy_auto_plugin_proc_macros::auto_plugin;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_register_state_type as auto_register_state_type;
+    pub use bevy_auto_plugin_proc_macros::auto_register_state_type;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_register_type as auto_register_type;
+    pub use bevy_auto_plugin_proc_macros::auto_register_type;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_add_observer as auto_add_observer;
+    pub use bevy_auto_plugin_proc_macros::auto_add_observer;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_component as auto_component;
+    pub use bevy_auto_plugin_proc_macros::auto_component;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_resource as auto_resource;
+    pub use bevy_auto_plugin_proc_macros::auto_resource;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_event as auto_event;
+    pub use bevy_auto_plugin_proc_macros::auto_event;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_message as auto_message;
+    pub use bevy_auto_plugin_proc_macros::auto_message;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_states as auto_states;
+    pub use bevy_auto_plugin_proc_macros::auto_states;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_system as auto_system;
+    pub use bevy_auto_plugin_proc_macros::auto_system;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_observer as auto_observer;
+    pub use bevy_auto_plugin_proc_macros::auto_observer;
 
     #[doc(inline)]
-    pub use bevy_auto_plugin_proc_macros::global_auto_bind_plugin as auto_bind_plugin;
+    pub use bevy_auto_plugin_proc_macros::auto_bind_plugin;
 }

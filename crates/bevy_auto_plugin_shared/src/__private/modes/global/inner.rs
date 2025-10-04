@@ -95,7 +95,7 @@ where
     )
 }
 
-pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream {
     use quote::quote;
     use syn::spanned::Spanned;
     let item = parse_macro_input2!(input as ItemFn);
@@ -181,7 +181,7 @@ pub fn expand_global_auto_plugin(attr: MacroStream, input: MacroStream) -> Macro
     }
 }
 
-pub fn expand_global_derive_global_auto_plugin(input: MacroStream) -> MacroStream {
+pub fn expand_global_derive_auto_plugin(input: MacroStream) -> MacroStream {
     use darling::FromDeriveInput;
     use quote::ToTokens;
     use quote::quote;
@@ -294,36 +294,36 @@ pub fn expand_global_derive_global_auto_plugin(input: MacroStream) -> MacroStrea
     output
 }
 
-pub fn global_auto_register_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn auto_register_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<RegisterTypeAttributeArgs>>(attr, input)
 }
-pub fn global_auto_add_message_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn auto_add_message_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<AddMessageAttributeArgs>>(attr, input)
 }
-pub fn global_auto_init_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn auto_init_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<InitResourceAttributeArgs>>(attr, input)
 }
-pub fn global_auto_insert_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn auto_insert_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<InsertResourceAttributeArgs>>(attr, input)
 }
-pub fn global_auto_init_state_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn auto_init_state_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<InitStateAttributeArgs>>(attr, input)
 }
-pub fn global_auto_name_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn auto_name_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<AutoNameAttributeArgs>>(attr, input)
 }
-pub fn global_auto_register_state_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn auto_register_state_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<RegisterStateTypeAttributeArgs>>(attr, input)
 }
-pub fn global_auto_add_system_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn auto_add_system_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<AddSystemAttributeArgs>>(attr, input)
 }
 
-pub fn global_auto_add_observer_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+pub fn auto_add_observer_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     global_attribute_outer::<GlobalArgs<AddObserverAttributeArgs>>(attr, input)
 }
 
-fn global_auto_inner<T: ShortHandAttribute + FromMeta>(
+fn auto_inner<T: ShortHandAttribute + FromMeta>(
     attr: MacroStream,
     input: MacroStream,
 ) -> syn::Result<MacroStream> {
@@ -339,39 +339,36 @@ fn global_auto_inner<T: ShortHandAttribute + FromMeta>(
     })
 }
 
-fn global_auto_outer<T: ShortHandAttribute + FromMeta>(
+fn auto_outer<T: ShortHandAttribute + FromMeta>(
     attr: MacroStream,
     input: MacroStream,
 ) -> MacroStream {
-    global_auto_inner::<T>(attr, input).unwrap_or_else(|err| err.to_compile_error())
+    auto_inner::<T>(attr, input).unwrap_or_else(|err| err.to_compile_error())
 }
 
-pub fn global_auto_component(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_auto_outer::<ComponentAttributeArgs>(attr, input)
+pub fn auto_component(attr: MacroStream, input: MacroStream) -> MacroStream {
+    auto_outer::<ComponentAttributeArgs>(attr, input)
 }
-pub fn global_auto_resource(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_auto_outer::<ResourceAttributeArgs>(attr, input)
+pub fn auto_resource(attr: MacroStream, input: MacroStream) -> MacroStream {
+    auto_outer::<ResourceAttributeArgs>(attr, input)
 }
-pub fn global_auto_system(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_auto_outer::<SystemAttributeArgs>(attr, input)
+pub fn auto_system(attr: MacroStream, input: MacroStream) -> MacroStream {
+    auto_outer::<SystemAttributeArgs>(attr, input)
 }
-pub fn global_auto_event(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_auto_outer::<EventAttributeArgs>(attr, input)
+pub fn auto_event(attr: MacroStream, input: MacroStream) -> MacroStream {
+    auto_outer::<EventAttributeArgs>(attr, input)
 }
-pub fn global_auto_message(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_auto_outer::<MessageAttributeArgs>(attr, input)
+pub fn auto_message(attr: MacroStream, input: MacroStream) -> MacroStream {
+    auto_outer::<MessageAttributeArgs>(attr, input)
 }
-pub fn global_auto_observer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_auto_outer::<ObserverAttributeArgs>(attr, input)
+pub fn auto_observer(attr: MacroStream, input: MacroStream) -> MacroStream {
+    auto_outer::<ObserverAttributeArgs>(attr, input)
 }
-pub fn global_auto_states(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_auto_outer::<StatesAttributeArgs>(attr, input)
+pub fn auto_states(attr: MacroStream, input: MacroStream) -> MacroStream {
+    auto_outer::<StatesAttributeArgs>(attr, input)
 }
 
-pub fn global_auto_bind_plugin_inner(
-    attr: MacroStream,
-    input: MacroStream,
-) -> syn::Result<MacroStream> {
+pub fn auto_bind_plugin_inner(attr: MacroStream, input: MacroStream) -> syn::Result<MacroStream> {
     use crate::__private::attribute_args::GlobalArgs;
     use crate::__private::util::extensions::item::ItemAttrsExt;
     use proc_macro2::Span;
@@ -398,8 +395,8 @@ pub fn global_auto_bind_plugin_inner(
     Ok(quote! { #item })
 }
 
-pub fn global_auto_bind_plugin_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    global_auto_bind_plugin_inner(attr, input).unwrap_or_else(|err| err.to_compile_error())
+pub fn auto_bind_plugin_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
+    auto_bind_plugin_inner(attr, input).unwrap_or_else(|err| err.to_compile_error())
 }
 
 fn inject_plugin_arg_for_attributes(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {
