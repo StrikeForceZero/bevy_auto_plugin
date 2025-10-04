@@ -11,9 +11,6 @@ publish = true
 [lib]
 
 [features]
-mode_flat_file = []
-mode_module = []
-mode_global = []
 inventory = []
 debug_log_plugin_registry = ["log"]
 log_plugin_build = ["log"]
