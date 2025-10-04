@@ -1,4 +1,4 @@
-use crate::__private::attribute_args::attributes::modes::global::auto_plugin::AutoPluginStructOrEnumAttributeArgs;
+use crate::__private::attribute_args::attributes::auto_plugin::AutoPluginStructOrEnumAttributeArgs;
 use crate::__private::attribute_args::derives::{FieldData, VariantData};
 use darling::FromDeriveInput;
 use proc_macro2::Ident;

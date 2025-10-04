@@ -1,8 +1,42 @@
+use crate::__private::attribute_args::GenericsArgs;
+use crate::__private::type_list::TypeList;
 use crate::__private::util::fn_param::require_fn_param_mutable_reference;
+use darling::FromMeta;
+use proc_macro2::Ident;
+use syn::spanned::Spanned;
+use syn::{FnArg, ItemFn, Pat, Path};
 
-pub mod global;
+#[derive(FromMeta, Debug, Default, Clone, PartialEq)]
+#[darling(derive_syn_parse, default)]
+pub struct AutoPluginStructOrEnumAttributeArgs {
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
+    pub impl_plugin_trait: bool,
+    pub impl_generic_auto_plugin_trait: bool,
+    pub impl_generic_plugin_trait: bool,
+}
 
-use syn::{FnArg, Ident, ItemFn, Pat, spanned::Spanned};
+impl GenericsArgs for AutoPluginStructOrEnumAttributeArgs {
+    fn type_lists(&self) -> &[TypeList] {
+        &self.generics
+    }
+}
+
+#[derive(FromMeta, Debug, Default, Clone, PartialEq)]
+#[darling(derive_syn_parse, default)]
+pub struct AutoPluginFnAttributeArgs {
+    #[darling(multiple)]
+    pub generics: Vec<TypeList>,
+    pub plugin: Option<Path>,
+    pub app_param: Option<Ident>,
+}
+
+impl GenericsArgs for AutoPluginFnAttributeArgs {
+    const TURBOFISH: bool = true;
+    fn type_lists(&self) -> &[TypeList] {
+        &self.generics
+    }
+}
 
 pub fn resolve_app_param_name<'a>(
     input: &'a ItemFn,
@@ -85,8 +119,8 @@ pub fn resolve_app_param_name<'a>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use proc_macro2::Span;
+    use crate::__private::attribute_args::attributes::auto_plugin::resolve_app_param_name;
+    use proc_macro2::{Ident, Span};
 
     #[internal_test_proc_macro::xtest]
     #[should_panic = "auto_plugin provided app_param: `bar` but it was not found in the function signature"]

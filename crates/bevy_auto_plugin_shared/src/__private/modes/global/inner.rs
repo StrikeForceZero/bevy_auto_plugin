@@ -2,11 +2,11 @@ use crate::__private::attribute_args::attributes::add_message::AddMessageAttribu
 use crate::__private::attribute_args::attributes::add_observer::AddObserverAttributeArgs;
 use crate::__private::attribute_args::attributes::add_system::AddSystemAttributeArgs;
 use crate::__private::attribute_args::attributes::auto_name::AutoNameAttributeArgs;
+use crate::__private::attribute_args::attributes::auto_plugin::AutoPluginFnAttributeArgs;
+use crate::__private::attribute_args::attributes::auto_plugin::resolve_app_param_name;
 use crate::__private::attribute_args::attributes::init_resource::InitResourceAttributeArgs;
 use crate::__private::attribute_args::attributes::init_state::InitStateAttributeArgs;
 use crate::__private::attribute_args::attributes::insert_resource::InsertResourceAttributeArgs;
-use crate::__private::attribute_args::attributes::modes::global::auto_plugin::AutoPluginFnAttributeArgs;
-use crate::__private::attribute_args::attributes::modes::resolve_app_param_name;
 use crate::__private::attribute_args::attributes::register_state_type::RegisterStateTypeAttributeArgs;
 use crate::__private::attribute_args::attributes::register_type::RegisterTypeAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
