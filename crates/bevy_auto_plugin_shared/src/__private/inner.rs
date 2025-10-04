@@ -17,7 +17,7 @@ use crate::__private::attribute_args::attributes::shorthand::prelude::MessageAtt
 use crate::__private::attribute_args::attributes::shorthand::resource::ResourceAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::states::StatesAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::system::SystemAttributeArgs;
-use crate::__private::attribute_args::derives::auto_plugin::GlobalAutoPluginDeriveArgs;
+use crate::__private::attribute_args::derives::auto_plugin::AutoPluginDeriveArgs;
 use crate::__private::attribute_args::{
     GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs, WithTargetPath,
 };
@@ -188,7 +188,7 @@ pub fn expand_global_derive_auto_plugin(input: MacroStream) -> MacroStream {
     use syn::DeriveInput;
 
     let derive_input = parse_macro_input2!(input as DeriveInput);
-    let params = match GlobalAutoPluginDeriveArgs::from_derive_input(&derive_input) {
+    let params = match AutoPluginDeriveArgs::from_derive_input(&derive_input) {
         Ok(params) => params,
         Err(err) => return err.write_errors(),
     };

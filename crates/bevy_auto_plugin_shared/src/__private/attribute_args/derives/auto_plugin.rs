@@ -6,7 +6,7 @@ use syn::{Attribute, Generics, Visibility};
 
 #[derive(FromDeriveInput, Debug)]
 #[darling(attributes(auto_plugin), forward_attrs, supports(struct_any, enum_any))]
-pub struct GlobalAutoPluginDeriveArgs {
+pub struct AutoPluginDeriveArgs {
     pub ident: Ident,
     pub vis: Visibility,
     pub generics: Generics,
