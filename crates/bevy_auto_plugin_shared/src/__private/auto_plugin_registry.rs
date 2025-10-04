@@ -1,7 +1,5 @@
 // derived from Bevy Butler - MIT/Apache 2.0 https://github.com/TGRCdev/bevy-butler/blob/4eca26421d275134e0adc907e8c851bdcf10823a/bevy-butler/src/__private/plugin.rs
 
-pub mod inner;
-
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::quote;
 use std::any::{TypeId, type_name};
@@ -102,8 +100,8 @@ pub fn _plugin_entry_block(static_ident: &Ident, plugin: &Path, expr: &ExprClosu
     quote! {
         ::bevy_auto_plugin::__private::shared::_plugin_entry!(
             #static_ident,
-            ::bevy_auto_plugin::__private::shared::__private::modes::global::GlobalAutoPluginRegistryEntryFactory::new(
-                || <#plugin as ::bevy_auto_plugin::__private::shared::__private::modes::global::AutoPluginTypeId>::type_id(),
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::GlobalAutoPluginRegistryEntryFactory::new(
+                || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
                 #expr
             )
         );
@@ -115,11 +113,11 @@ pub fn _plugin_entry_block(static_ident: &Ident, plugin: &Path, expr: &ExprClosu
 #[doc(hidden)]
 macro_rules! _plugin_entry {
         ($static_ident:ident, $entry:expr) => {
-            #[::bevy_auto_plugin::__private::shared::__private::modes::global::linkme::distributed_slice(::bevy_auto_plugin::__private::shared::__private::modes::global::AUTO_PLUGINS)]
-            #[linkme(crate = ::bevy_auto_plugin::__private::shared::__private::modes::global::linkme)]
+            #[::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::linkme::distributed_slice(::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AUTO_PLUGINS)]
+            #[linkme(crate = ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::linkme)]
             #[allow(non_upper_case_globals)]
             static $static_ident:
-                ::bevy_auto_plugin::__private::shared::__private::modes::global::GlobalAutoPluginRegistryEntryFactory =
+                ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::GlobalAutoPluginRegistryEntryFactory =
                 $entry;
         };
     }
@@ -129,6 +127,8 @@ macro_rules! _plugin_entry {
 #[doc(hidden)]
 macro_rules! _plugin_entry {
     ($static_ident:ident, $entry:expr) => {
-        ::bevy_auto_plugin::__private::shared::__private::modes::global::inventory::submit!($entry);
+        ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::inventory::submit!(
+            $entry
+        );
     };
 }

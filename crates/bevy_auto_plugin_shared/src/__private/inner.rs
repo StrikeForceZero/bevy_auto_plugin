@@ -21,7 +21,7 @@ use crate::__private::attribute_args::derives::auto_plugin::GlobalAutoPluginDeri
 use crate::__private::attribute_args::{
     GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs, WithTargetPath,
 };
-use crate::__private::modes::global::_plugin_entry_block;
+use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::__private::util::debug::debug_item;
 use crate::__private::util::fn_param::require_fn_param_mutable_reference;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
@@ -140,7 +140,7 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
             .to_compile_error();
         };
         quote! {
-            <Self as ::bevy_auto_plugin::__private::shared::__private::modes::global::AutoPlugin>::build(#self_arg, #app_param_ident);
+            <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::build(#self_arg, #app_param_ident);
         }
     } else {
         if sig.inputs.len() > 1 {
@@ -158,14 +158,14 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
             .to_compile_error();
         };
         impl_plugin.extend(quote! {
-            impl ::bevy_auto_plugin::__private::shared::__private::modes::global::bevy_app::Plugin for #plugin_ident {
-                fn build(&self, app: &mut ::bevy_auto_plugin::__private::shared::__private::modes::global::bevy_app::App) {
+            impl ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::Plugin for #plugin_ident {
+                fn build(&self, app: &mut ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::App) {
                     #fn_ident(app);
                 }
             }
         });
         quote! {
-            <#plugin_ident as ::bevy_auto_plugin::__private::shared::__private::modes::global::AutoPlugin>::static_build(#app_param_ident);
+            <#plugin_ident as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::static_build(#app_param_ident);
         }
     };
 
@@ -199,7 +199,7 @@ pub fn expand_global_derive_auto_plugin(input: MacroStream) -> MacroStream {
     let mut output = MacroStream::new();
 
     output.extend(quote! {
-        impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::modes::global::AutoPluginTypeId
+        impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId
             for #ident #ty_generics #where_clause
         {
             fn type_id() -> std::any::TypeId {
@@ -230,24 +230,24 @@ pub fn expand_global_derive_auto_plugin(input: MacroStream) -> MacroStream {
             auto_plugin_implemented = true;
 
             output.extend(quote! {
-                impl ::bevy_auto_plugin::__private::shared::__private::modes::global::bevy_app::Plugin for #path_with_generics {
-                    fn build(&self, app: &mut ::bevy_auto_plugin::__private::shared::__private::modes::global::bevy_app::App) {
-                        <Self as ::bevy_auto_plugin::__private::shared::__private::modes::global::AutoPlugin>::build(self, app);
+                impl ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::Plugin for #path_with_generics {
+                    fn build(&self, app: &mut ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::App) {
+                        <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::build(self, app);
                     }
                 }
 
-                impl ::bevy_auto_plugin::__private::shared::__private::modes::global::AutoPlugin for #path_with_generics {}
+                impl ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin for #path_with_generics {}
             });
         }
     }
 
     if params.auto_plugin.impl_generic_plugin_trait {
         output.extend(quote! {
-            impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::modes::global::bevy_app::Plugin
+            impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::Plugin
                 for #ident #ty_generics #where_clause
             {
-                fn build(&self, app: &mut ::bevy_auto_plugin::__private::shared::__private::modes::global::bevy_app::App) {
-                    <Self as ::bevy_auto_plugin::__private::shared::__private::modes::global::AutoPlugin>::build(self, app);
+                fn build(&self, app: &mut ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::App) {
+                    <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::build(self, app);
                 }
             }
         });
@@ -256,7 +256,7 @@ pub fn expand_global_derive_auto_plugin(input: MacroStream) -> MacroStream {
     // TODO: maybe default to this behavior
     if params.auto_plugin.impl_generic_auto_plugin_trait {
         output.extend(quote! {
-            impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::modes::global::AutoPlugin
+            impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin
                 for #ident #ty_generics #where_clause
             {}
         });
@@ -282,7 +282,7 @@ pub fn expand_global_derive_auto_plugin(input: MacroStream) -> MacroStream {
             auto_plugin_implemented = true;
 
             output.extend(quote! {
-                impl ::bevy_auto_plugin::__private::shared::__private::modes::global::AutoPlugin for #path_with_generics {}
+                impl ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin for #path_with_generics {}
             });
         }
     }
