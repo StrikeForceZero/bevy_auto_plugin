@@ -18,12 +18,6 @@ mode_global = ["bevy_auto_plugin_shared/mode_global", "bevy_auto_plugin/mode_glo
 inventory = ["bevy_auto_plugin_shared/inventory"]
 debug_log_plugin_registry = ["bevy_auto_plugin_shared/debug_log_plugin_registry"]
 log_plugin_build = ["bevy_auto_plugin_shared/log_plugin_build"]
-flat_file_missing_auto_plugin_check = ["bevy_auto_plugin_shared/flat_file_missing_auto_plugin_check"]
-flat_file_missing_auto_plugin_is_compile_error = ["bevy_auto_plugin_shared/flat_file_missing_auto_plugin_check"]
-flat_file_missing_auto_plugin_is_error = ["bevy_auto_plugin_shared/flat_file_missing_auto_plugin_check", "bevy_auto_plugin_shared/log"]
-flat_file_missing_auto_plugin_is_warning = ["bevy_auto_plugin_shared/flat_file_missing_auto_plugin_check", "bevy_auto_plugin_shared/log"]
-flat_file_lang_server_noop = ["bevy_auto_plugin_shared/flat_file_lang_server_noop"]
-ignore_flat_file_or_module_deprecation = []
 
 [dependencies]
 bevy_auto_plugin_shared = { workspace = true }
