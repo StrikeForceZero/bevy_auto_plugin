@@ -1,5 +1,0 @@
-error: auto_plugin requires a function taking at least one named parameter
- --> tests/flat_file/ui/auto_plugin_default_wrong_first_param.rs:4:1
-  |
-4 | fn plugin(_: bool) {}
-  | ^^

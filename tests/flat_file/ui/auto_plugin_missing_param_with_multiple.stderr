@@ -1,5 +1,0 @@
-error: auto_plugin - the function: plugin param: _app is not mutable
- --> tests/flat_file/ui/auto_plugin_missing_param_with_multiple.rs:4:11
-  |
-4 | fn plugin(_app: &bevy_app::App, _: bool) {}
-  |           ^^^^
