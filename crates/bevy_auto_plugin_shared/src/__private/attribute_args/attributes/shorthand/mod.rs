@@ -2,7 +2,7 @@ use crate::__private::attribute::AutoPluginAttribute;
 use crate::__private::non_empty_path::NonEmptyPath;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
-use syn::{Path, parse_quote};
+use syn::parse_quote;
 
 pub mod component;
 pub mod event;
@@ -65,29 +65,28 @@ pub mod tokens {
     use proc_macro2::Ident;
 
     #[derive(Debug, Clone)]
-    pub struct ArgsWithMode<T: ArgsBackToTokens> {
-        pub mode: Mode,
+    pub struct ArgsWithPlugin<T: ArgsBackToTokens> {
+        pub plugin: NonEmptyPath,
         pub args: T,
     }
 
-    impl<T> ArgsWithMode<T>
+    impl<T> ArgsWithPlugin<T>
     where
         T: ArgsBackToTokens,
     {
-        pub fn new(mode: Mode, args: T) -> Self {
-            Self { mode, args }
+        pub fn new(plugin: NonEmptyPath, args: T) -> Self {
+            Self { plugin, args }
         }
         fn back_to_tokens(&self, tokens: &mut MacroStream) {
-            let macro_path = self.args.full_attribute_path(&self.mode);
+            let macro_path = T::full_attribute_path();
             let inner_args = self.args.back_to_inner_arg_token_stream();
-            let args = if let Mode::Global { plugin } = &self.mode {
+            let args = {
+                let plugin = &self.plugin;
                 let mut plugin_args = quote! { plugin = #plugin };
                 if !inner_args.is_empty() {
                     plugin_args.extend(quote! { , #inner_args });
                 }
                 plugin_args
-            } else {
-                inner_args
             };
             tokens.extend(quote! {
                 #[#macro_path(#args)]
@@ -97,8 +96,9 @@ pub mod tokens {
 
     // TODO: break this out so theres one for attributes and generic one for just args in general
     pub trait ArgsBackToTokens: AutoPluginAttributeKind {
-        fn full_attribute_path(&self, mode: &Mode) -> NonEmptyPath {
-            mode.resolve_macro_path(Self::attribute())
+        fn full_attribute_path() -> NonEmptyPath {
+            let macro_ident = quote::format_ident!("{}", Self::attribute().ident_str());
+            parse_quote!(:: bevy_auto_plugin :: prelude :: #macro_ident)
         }
         fn back_to_inner_arg_tokens(&self, tokens: &mut MacroStream);
         fn back_to_inner_arg_token_stream(&self) -> MacroStream {
@@ -108,7 +108,7 @@ pub mod tokens {
         }
     }
 
-    impl<T> ToTokens for ArgsWithMode<T>
+    impl<T> ToTokens for ArgsWithPlugin<T>
     where
         T: ArgsBackToTokens,
     {
@@ -270,50 +270,32 @@ pub mod tokens {
         let derive_reflect_path = derive_reflect_path();
         quote! { #[derive(#derive_reflect_path)] }
     }
-    pub fn auto_register_type(mode: Mode, args: RegisterTypeAttributeArgs) -> MacroStream {
-        ArgsWithMode::new(mode, args).to_token_stream()
+    pub fn auto_register_type(
+        plugin: NonEmptyPath,
+        args: RegisterTypeAttributeArgs,
+    ) -> MacroStream {
+        ArgsWithPlugin::new(plugin, args).to_token_stream()
     }
-    pub fn auto_name(mode: Mode, args: AutoNameAttributeArgs) -> MacroStream {
-        ArgsWithMode::new(mode, args).to_token_stream()
+    pub fn auto_name(plugin: NonEmptyPath, args: AutoNameAttributeArgs) -> MacroStream {
+        ArgsWithPlugin::new(plugin, args).to_token_stream()
     }
-    pub fn auto_init_resource(mode: Mode, args: InitResourceAttributeArgs) -> MacroStream {
-        ArgsWithMode::new(mode, args).to_token_stream()
+    pub fn auto_init_resource(
+        plugin: NonEmptyPath,
+        args: InitResourceAttributeArgs,
+    ) -> MacroStream {
+        ArgsWithPlugin::new(plugin, args).to_token_stream()
     }
-    pub fn auto_init_states(mode: Mode, args: InitStateAttributeArgs) -> MacroStream {
-        ArgsWithMode::new(mode, args).to_token_stream()
+    pub fn auto_init_states(plugin: NonEmptyPath, args: InitStateAttributeArgs) -> MacroStream {
+        ArgsWithPlugin::new(plugin, args).to_token_stream()
     }
-    pub fn auto_add_systems(mode: Mode, args: AddSystemAttributeArgs) -> MacroStream {
-        ArgsWithMode::new(mode, args).to_token_stream()
+    pub fn auto_add_systems(plugin: NonEmptyPath, args: AddSystemAttributeArgs) -> MacroStream {
+        ArgsWithPlugin::new(plugin, args).to_token_stream()
     }
-    pub fn auto_add_observer(mode: Mode, args: AddObserverAttributeArgs) -> MacroStream {
-        ArgsWithMode::new(mode, args).to_token_stream()
+    pub fn auto_add_observer(plugin: NonEmptyPath, args: AddObserverAttributeArgs) -> MacroStream {
+        ArgsWithPlugin::new(plugin, args).to_token_stream()
     }
-    pub fn auto_add_message(mode: Mode, args: AddMessageAttributeArgs) -> MacroStream {
-        ArgsWithMode::new(mode, args).to_token_stream()
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Mode {
-    Global { plugin: Path },
-    FlatFile,
-    Module,
-}
-
-impl Mode {
-    pub fn resolve_macro_path<T>(&self, attr: T) -> NonEmptyPath
-    where
-        T: AutoPluginAttribute,
-    {
-        let macro_ident = quote::format_ident!("{}", attr.ident_str());
-        parse_quote!(:: bevy_auto_plugin :: prelude :: #macro_ident)
-    }
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Mode::Global { .. } => "global",
-            Mode::FlatFile => "flat_file",
-            Mode::Module => "module",
-        }
+    pub fn auto_add_message(plugin: NonEmptyPath, args: AddMessageAttributeArgs) -> MacroStream {
+        ArgsWithPlugin::new(plugin, args).to_token_stream()
     }
 }
 
@@ -367,6 +349,6 @@ impl ToTokens for ExpandAttrs {
 }
 
 pub trait ShortHandAttribute {
-    fn expand_args(&self, mode: &Mode) -> MacroStream;
-    fn expand_attrs(&self, mode: &Mode) -> ExpandAttrs;
+    fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream;
+    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs;
 }

@@ -1,7 +1,7 @@
 use crate::__private::attribute_args::GlobalArgs;
 use crate::__private::attribute_args::attributes::prelude::RegisterTypeAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::{
-    ExpandAttrs, Mode, ShortHandAttribute, tokens,
+    ExpandAttrs, ShortHandAttribute, tokens,
 };
 use crate::__private::non_empty_path::NonEmptyPath;
 use anyhow::anyhow;
@@ -109,12 +109,6 @@ where
         Self::from_list(&nested)
     }
 
-    fn mode(&self) -> Mode {
-        Mode::Global {
-            plugin: self.args.plugin.clone(),
-        }
-    }
-
     /// calling order matters
     pub(crate) fn with_derive(mut self, extras: Vec<NonEmptyPath>) -> Self {
         self.expected_derives
@@ -141,7 +135,7 @@ where
     pub(crate) fn with_register(mut self) -> Self {
         self.expected_extras.attrs.insert(
             0,
-            tokens::auto_register_type(self.mode(), (&self.args.inner).into()),
+            tokens::auto_register_type(self.args.plugin(), (&self.args.inner).into()),
         );
         self
     }
@@ -161,7 +155,7 @@ where
         let got = self
             .args
             .inner
-            .expand_attrs(&self.mode())
+            .expand_attrs(&self.args.plugin())
             .to_token_stream()
             .to_string();
         let expected = self.build_clone().to_token_stream().to_string();

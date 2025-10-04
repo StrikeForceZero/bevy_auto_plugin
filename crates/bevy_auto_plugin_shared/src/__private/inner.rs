@@ -328,11 +328,8 @@ fn auto_inner<T: ShortHandAttribute + FromMeta>(
     input: MacroStream,
 ) -> syn::Result<MacroStream> {
     use crate::__private::attribute_args::GlobalArgs;
-    use crate::__private::attribute_args::attributes::shorthand::Mode;
     let args = parse2::<GlobalArgs<T>>(attr)?;
-    let args_ts = args.inner.expand_attrs(&Mode::Global {
-        plugin: args.plugin,
-    });
+    let args_ts = args.inner.expand_attrs(&args.plugin());
     Ok(quote! {
         #args_ts
         #input

@@ -1,7 +1,7 @@
 use crate::__private::attribute_args::attributes::prelude::RegisterTypeAttributeArgs;
 use crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
 use crate::__private::attribute_args::attributes::shorthand::{
-    AutoPluginShortHandAttribute, ExpandAttrs, Mode, ShortHandAttribute, tokens,
+    AutoPluginShortHandAttribute, ExpandAttrs, ShortHandAttribute, tokens,
 };
 use crate::__private::attribute_args::{AutoPluginAttributeKind, GenericsArgs};
 use crate::__private::flag_or_list::FlagOrList;
@@ -86,18 +86,16 @@ impl ArgsBackToTokens for EventAttributeArgs {
 }
 
 impl ShortHandAttribute for EventAttributeArgs {
-    fn expand_args(&self, mode: &Mode) -> MacroStream {
+    fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
-        if let Mode::Global { plugin } = &mode {
-            args.push(quote! { plugin = #plugin });
-        };
+        args.push(quote! { plugin = #plugin });
         if !self.generics().is_empty() {
             args.extend(self.generics().to_attribute_arg_vec_tokens());
         }
         quote! { #(#args),* }
     }
 
-    fn expand_attrs(&self, mode: &Mode) -> ExpandAttrs {
+    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
         let mut expanded_attrs = ExpandAttrs::default();
 
         if self.derive.present {
@@ -121,7 +119,7 @@ impl ShortHandAttribute for EventAttributeArgs {
         if self.register {
             expanded_attrs
                 .attrs
-                .push(tokens::auto_register_type(mode.clone(), self.into()));
+                .push(tokens::auto_register_type(plugin.clone(), self.into()));
         }
         expanded_attrs
     }
@@ -130,10 +128,9 @@ impl ShortHandAttribute for EventAttributeArgs {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::__private::attribute_args::attributes::shorthand::Mode;
     use crate::__private::util::combo::combos_one_per_group_or_skip_with;
     use crate::__private::util::test_params::{_inject_derive, Side, TestParams as _TestParams};
-    use crate::assert_vec_args_expand;
+    use crate::{assert_vec_args_expand, plugin};
     use internal_test_util::extract_punctuated_paths;
     use syn::parse_quote;
 
@@ -172,29 +169,17 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_expand_back_into_args() -> syn::Result<()> {
-        for mode in [
-            Mode::Module,
-            Mode::FlatFile,
-            Mode::Global {
-                plugin: parse_quote!(Test),
-            },
-        ] {
-            for args in combos_one_per_group_or_skip_with(
-                &[
-                    vec![quote!(derive), quote!(derive(Debug, Default))],
-                    vec![quote!(reflect), quote!(reflect(Debug, Default))],
-                    vec![quote!(register)],
-                ],
-                // TODO: target(global) is always emitted when no target is provided
-                quote!(target(global)),
-            ) {
-                println!(
-                    "checking mode: {}, args: {}",
-                    mode.as_str(),
-                    quote! { #(#args),*}
-                );
-                assert_vec_args_expand!(mode, EventAttributeArgs, args);
-            }
+        for args in combos_one_per_group_or_skip_with(
+            &[
+                vec![quote!(derive), quote!(derive(Debug, Default))],
+                vec![quote!(reflect), quote!(reflect(Debug, Default))],
+                vec![quote!(register)],
+            ],
+            // TODO: target(global) is always emitted when no target is provided
+            quote!(target(global)),
+        ) {
+            println!("checking args: {}", quote! { #(#args),*});
+            assert_vec_args_expand!(plugin!(parse_quote!(Test)), EventAttributeArgs, args);
         }
         Ok(())
     }
