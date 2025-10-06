@@ -1,6 +1,7 @@
 pub mod attribute;
 pub mod attribute_args;
 pub mod context;
+mod expr_path_or_call;
 mod expr_value;
 mod flag_or_list;
 pub mod flag_or_meta;

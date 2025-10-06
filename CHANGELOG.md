@@ -88,3 +88,6 @@
 - update `auto_event` with new params `target(global)` or `target(entity)`
 - deprecated `auto_add_event` (aliased to `auto_add_message`)
 - fix `auto_component` not passing generics to `auto_name`
+
+### v0.6.1
+- Add support for `auto_system` param `schedule` to accept `ExprCall` in addition to `ExprPath`

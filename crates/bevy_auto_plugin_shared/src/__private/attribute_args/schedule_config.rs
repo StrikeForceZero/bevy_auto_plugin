@@ -1,3 +1,4 @@
+use crate::__private::expr_path_or_call::ExprPathOrCall;
 use darling::FromMeta;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
@@ -6,7 +7,7 @@ use syn::Path;
 #[derive(FromMeta, Clone, Debug, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct ScheduleWithScheduleConfigArgs {
-    pub schedule: Path,
+    pub schedule: ExprPathOrCall,
     #[darling(default)]
     pub config: ScheduleConfigArgs,
 }
