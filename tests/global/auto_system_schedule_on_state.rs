@@ -40,7 +40,7 @@ mod test {
         app
     }
 
-    #[test]
+    #[internal_test_proc_macro::xtest]
     fn test_system() {
         let mut app = app();
         app.add_plugins(TestPlugin);
