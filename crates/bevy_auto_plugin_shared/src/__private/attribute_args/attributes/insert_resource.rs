@@ -21,6 +21,7 @@ use syn::{Expr, Item};
 pub struct InsertResourceAttributeArgs {
     #[darling(default)]
     pub generics: Option<TypeList>,
+    // TODO: replace ExprValue with AnyExprCallClosureMacroPath
     pub resource: ExprValue,
 }
 

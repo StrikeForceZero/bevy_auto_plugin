@@ -1,13 +1,12 @@
-use crate::__private::expr_path_or_call::ExprPathOrCall;
+use crate::__private::any_expr::{AnyExprCallClosureMacroPath, AnyExprCallMacroPath};
 use darling::FromMeta;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
-use syn::Path;
 
 #[derive(FromMeta, Clone, Debug, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct ScheduleWithScheduleConfigArgs {
-    pub schedule: ExprPathOrCall,
+    pub schedule: AnyExprCallMacroPath,
     #[darling(default)]
     pub config: ScheduleConfigArgs,
 }
@@ -28,46 +27,54 @@ impl ScheduleWithScheduleConfigArgs {
 #[derive(FromMeta, Clone, Debug, Default, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
 pub struct ScheduleConfigArgs {
-    pub in_set: Option<Path>,
-    pub before: Option<Path>,
-    pub after: Option<Path>,
-    pub run_if: Option<Path>,
-    pub distributive_run_if: Option<Path>,
-    pub ambiguous_with: Option<Path>,
+    #[darling(multiple)]
+    pub in_set: Vec<AnyExprCallClosureMacroPath>,
+    #[darling(multiple)]
+    pub before: Vec<AnyExprCallClosureMacroPath>,
+    #[darling(multiple)]
+    pub after: Vec<AnyExprCallClosureMacroPath>,
+    #[darling(multiple)]
+    pub run_if: Vec<AnyExprCallClosureMacroPath>,
+    #[darling(multiple)]
+    pub distributive_run_if: Vec<AnyExprCallClosureMacroPath>,
+    #[darling(multiple)]
+    pub ambiguous_with: Vec<AnyExprCallClosureMacroPath>,
     pub ambiguous_with_all: Option<bool>,
-    pub after_ignore_deferred: Option<Path>,
-    pub before_ignore_deferred: Option<Path>,
+    #[darling(multiple)]
+    pub after_ignore_deferred: Vec<AnyExprCallClosureMacroPath>,
+    #[darling(multiple)]
+    pub before_ignore_deferred: Vec<AnyExprCallClosureMacroPath>,
 }
 
 impl ScheduleConfigArgs {
     pub fn to_inner_arg_tokens_vec(&self) -> Vec<MacroStream> {
         let mut tokens = vec![];
-        if let Some(in_set) = &self.in_set {
+        for in_set in &self.in_set {
             tokens.push(quote! {
                 in_set = #in_set
             });
         }
-        if let Some(before) = &self.before {
+        for before in &self.before {
             tokens.push(quote! {
                 before = #before
             });
         }
-        if let Some(after) = &self.after {
+        for after in &self.after {
             tokens.push(quote! {
                 after = #after
             });
         }
-        if let Some(run_if) = &self.run_if {
+        for run_if in &self.run_if {
             tokens.push(quote! {
                 run_if = #run_if
             });
         }
-        if let Some(distributive_run_if) = &self.distributive_run_if {
+        for distributive_run_if in &self.distributive_run_if {
             tokens.push(quote! {
                 distributive_run_if = #distributive_run_if
             });
         }
-        if let Some(ambiguous_with) = &self.ambiguous_with {
+        for ambiguous_with in &self.ambiguous_with {
             tokens.push(quote! {
                 ambiguous_with = #ambiguous_with
             });
@@ -77,12 +84,12 @@ impl ScheduleConfigArgs {
                 .ambiguous_with_all()
             });
         }
-        if let Some(before_ignore_deferred) = &self.before_ignore_deferred {
+        for before_ignore_deferred in &self.before_ignore_deferred {
             tokens.push(quote! {
                 before_ignore_deferred = #before_ignore_deferred
             });
         }
-        if let Some(after_ignore_deferred) = &self.after_ignore_deferred {
+        for after_ignore_deferred in &self.after_ignore_deferred {
             tokens.push(quote! {
                 after_ignore_deferred = #after_ignore_deferred
             });
@@ -93,32 +100,32 @@ impl ScheduleConfigArgs {
 
 impl ToTokens for ScheduleConfigArgs {
     fn to_tokens(&self, tokens: &mut MacroStream) {
-        if let Some(in_set) = &self.in_set {
+        for in_set in &self.in_set {
             tokens.extend(quote! {
                 .in_set(#in_set)
             });
         }
-        if let Some(before) = &self.before {
+        for before in &self.before {
             tokens.extend(quote! {
                 .before(#before)
             });
         }
-        if let Some(after) = &self.after {
+        for after in &self.after {
             tokens.extend(quote! {
                 .after(#after)
             });
         }
-        if let Some(run_if) = &self.run_if {
+        for run_if in &self.run_if {
             tokens.extend(quote! {
                 .run_if(#run_if)
             });
         }
-        if let Some(distributive_run_if) = &self.distributive_run_if {
+        for distributive_run_if in &self.distributive_run_if {
             tokens.extend(quote! {
                 .distributive_run_if(#distributive_run_if)
             });
         }
-        if let Some(ambiguous_with) = &self.ambiguous_with {
+        for ambiguous_with in &self.ambiguous_with {
             tokens.extend(quote! {
                 .ambiguous_with(#ambiguous_with)
             });
@@ -128,12 +135,12 @@ impl ToTokens for ScheduleConfigArgs {
                 .ambiguous_with_all()
             });
         }
-        if let Some(before_ignore_deferred) = &self.before_ignore_deferred {
+        for before_ignore_deferred in &self.before_ignore_deferred {
             tokens.extend(quote! {
                 .before_ignore_deferred(#before_ignore_deferred)
             });
         }
-        if let Some(after_ignore_deferred) = &self.after_ignore_deferred {
+        for after_ignore_deferred in &self.after_ignore_deferred {
             tokens.extend(quote! {
                 .after_ignore_deferred(#after_ignore_deferred)
             });
