@@ -2,7 +2,6 @@ use crate::__private::expr_path_or_call::ExprPathOrCall;
 use darling::FromMeta;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
-use syn::Path;
 
 #[derive(FromMeta, Clone, Debug, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
@@ -29,22 +28,22 @@ impl ScheduleWithScheduleConfigArgs {
 #[darling(derive_syn_parse, default)]
 pub struct ScheduleConfigArgs {
     #[darling(multiple)]
-    pub in_set: Vec<Path>,
+    pub in_set: Vec<ExprPathOrCall>,
     #[darling(multiple)]
-    pub before: Vec<Path>,
+    pub before: Vec<ExprPathOrCall>,
     #[darling(multiple)]
-    pub after: Vec<Path>,
+    pub after: Vec<ExprPathOrCall>,
     #[darling(multiple)]
-    pub run_if: Vec<Path>,
+    pub run_if: Vec<ExprPathOrCall>,
     #[darling(multiple)]
-    pub distributive_run_if: Vec<Path>,
+    pub distributive_run_if: Vec<ExprPathOrCall>,
     #[darling(multiple)]
-    pub ambiguous_with: Vec<Path>,
+    pub ambiguous_with: Vec<ExprPathOrCall>,
     pub ambiguous_with_all: Option<bool>,
     #[darling(multiple)]
-    pub after_ignore_deferred: Vec<Path>,
+    pub after_ignore_deferred: Vec<ExprPathOrCall>,
     #[darling(multiple)]
-    pub before_ignore_deferred: Vec<Path>,
+    pub before_ignore_deferred: Vec<ExprPathOrCall>,
 }
 
 impl ScheduleConfigArgs {
