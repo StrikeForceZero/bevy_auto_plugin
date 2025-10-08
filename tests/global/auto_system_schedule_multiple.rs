@@ -28,6 +28,15 @@ impl Counter {
     }
 }
 
+// define these out of order to force relying on before/after conditions
+#[auto_system(plugin = TestPlugin, schedule = Update, config(after = system_a, after = system_b))]
+fn system_c(mut counter: ResMut<Counter>) {
+    assert_eq!(counter.increment("system_c"), Some("system_b"));
+}
+#[auto_system(plugin = TestPlugin, schedule = Update, config(before = system_c, after = system_a))]
+fn system_b(mut counter: ResMut<Counter>) {
+    assert_eq!(counter.increment("system_b"), Some("system_a"));
+}
 #[auto_system(plugin = TestPlugin, schedule = Update, config(before = system_b, before = system_c))]
 fn system_a(mut counter: ResMut<Counter>) {
     if counter.count == 0 {
@@ -37,14 +46,14 @@ fn system_a(mut counter: ResMut<Counter>) {
     }
 }
 
-#[auto_system(plugin = TestPlugin, schedule = Update, config(before = system_c, after = system_a))]
-fn system_b(mut counter: ResMut<Counter>) {
-    assert_eq!(counter.increment("system_b"), Some("system_a"));
-}
+#[derive(Resource, Debug, Default, PartialEq)]
+#[auto_init_resource(plugin = TestPlugin)]
+struct OtherCounter(usize);
 
-#[auto_system(plugin = TestPlugin, schedule = Update, config(after = system_a, after = system_b))]
-fn system_c(mut counter: ResMut<Counter>) {
-    assert_eq!(counter.increment("system_c"), Some("system_b"));
+// 2nd run if should not overwrite
+#[auto_system(plugin = TestPlugin, schedule = Update, config(run_if = || false, run_if = || true))]
+fn system_never(mut counter: ResMut<OtherCounter>) {
+    counter.0 += 1;
 }
 
 #[cfg(test)]
@@ -64,6 +73,8 @@ mod test {
         let mut app = app();
         app.add_plugins(TestPlugin);
 
+        assert_eq!(app.world().get_resource::<OtherCounter>().unwrap().0, 0);
+
         assert_eq!(
             app.world().get_resource::<Counter>().unwrap().get(),
             (0, None)
@@ -75,5 +86,7 @@ mod test {
             app.world().get_resource::<Counter>().unwrap().get(),
             (3, Some("system_c"))
         );
+
+        assert_eq!(app.world().get_resource::<OtherCounter>().unwrap().0, 0);
     }
 }
