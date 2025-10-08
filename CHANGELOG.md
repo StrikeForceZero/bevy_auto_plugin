@@ -89,5 +89,11 @@
 - deprecated `auto_add_event` (aliased to `auto_add_message`)
 - fix `auto_component` not passing generics to `auto_name`
 
+---
 ### v0.6.1
 - Add support for `auto_system` param `schedule` to accept `ExprCall` in addition to `ExprPath`
+
+---
+### v0.6.2
+- Fix compat issue by allowing more than one `ScheduleConfig` condition
+- Fix compat issue by allow more than `Path` for `ScheduleConfig`
