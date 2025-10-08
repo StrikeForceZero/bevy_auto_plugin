@@ -2,6 +2,7 @@ mod auto_bind_plugin;
 mod auto_plugin;
 mod auto_plugin_with_generics;
 mod auto_system_schedule_multiple;
+mod auto_system_schedule_non_path;
 mod auto_system_schedule_on_state;
 mod bare_fn;
 mod bare_fn_default_app_param;

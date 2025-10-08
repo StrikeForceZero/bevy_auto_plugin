@@ -1,4 +1,4 @@
-use crate::__private::expr_path_or_call::ExprPathOrCall;
+use crate::__private::any_expr::{AnyExprCallClosureMacroPath, AnyExprCallMacroPath};
 use darling::FromMeta;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
@@ -6,7 +6,7 @@ use quote::{ToTokens, quote};
 #[derive(FromMeta, Clone, Debug, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct ScheduleWithScheduleConfigArgs {
-    pub schedule: ExprPathOrCall,
+    pub schedule: AnyExprCallMacroPath,
     #[darling(default)]
     pub config: ScheduleConfigArgs,
 }
@@ -28,22 +28,22 @@ impl ScheduleWithScheduleConfigArgs {
 #[darling(derive_syn_parse, default)]
 pub struct ScheduleConfigArgs {
     #[darling(multiple)]
-    pub in_set: Vec<ExprPathOrCall>,
+    pub in_set: Vec<AnyExprCallClosureMacroPath>,
     #[darling(multiple)]
-    pub before: Vec<ExprPathOrCall>,
+    pub before: Vec<AnyExprCallClosureMacroPath>,
     #[darling(multiple)]
-    pub after: Vec<ExprPathOrCall>,
+    pub after: Vec<AnyExprCallClosureMacroPath>,
     #[darling(multiple)]
-    pub run_if: Vec<ExprPathOrCall>,
+    pub run_if: Vec<AnyExprCallClosureMacroPath>,
     #[darling(multiple)]
-    pub distributive_run_if: Vec<ExprPathOrCall>,
+    pub distributive_run_if: Vec<AnyExprCallClosureMacroPath>,
     #[darling(multiple)]
-    pub ambiguous_with: Vec<ExprPathOrCall>,
+    pub ambiguous_with: Vec<AnyExprCallClosureMacroPath>,
     pub ambiguous_with_all: Option<bool>,
     #[darling(multiple)]
-    pub after_ignore_deferred: Vec<ExprPathOrCall>,
+    pub after_ignore_deferred: Vec<AnyExprCallClosureMacroPath>,
     #[darling(multiple)]
-    pub before_ignore_deferred: Vec<ExprPathOrCall>,
+    pub before_ignore_deferred: Vec<AnyExprCallClosureMacroPath>,
 }
 
 impl ScheduleConfigArgs {
