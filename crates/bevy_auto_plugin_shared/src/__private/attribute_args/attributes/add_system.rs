@@ -32,7 +32,7 @@ impl AutoPluginAttributeKind for AddSystemAttributeArgs {
 
 impl ItemAttributeArgs for AddSystemAttributeArgs {
     fn global_build_prefix() -> &'static str {
-        "_global_auto_plugin_add_systems_"
+        "_auto_plugin_add_systems_"
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_fn(item)

@@ -3,12 +3,12 @@ pub mod derives;
 mod schedule_config;
 
 use crate::__private::attribute::{AutoPluginAttribute, AutoPluginItemAttribute};
-use crate::__private::attribute_args::attributes::shorthand::Mode;
 use crate::__private::attribute_args::attributes::shorthand::tokens::{
-    ArgsBackToTokens, ArgsWithMode,
+    ArgsBackToTokens, ArgsWithPlugin,
 };
 use crate::__private::generics::GenericsCollection;
 use crate::__private::item_with_attr_match::ItemWithAttributeMatch;
+use crate::__private::non_empty_path::NonEmptyPath;
 use crate::__private::type_list::TypeList;
 use crate::__private::util::concrete_path::{
     ConcreteTargetPath, ConcreteTargetPathWithGenericsCollection,
@@ -152,14 +152,15 @@ pub struct GlobalArgs<T> {
     pub inner: T,
 }
 
-impl<T: ArgsBackToTokens> From<GlobalArgs<T>> for ArgsWithMode<T> {
+impl<T> GlobalArgs<T> {
+    pub fn plugin(&self) -> NonEmptyPath {
+        NonEmptyPath::new(self.plugin.clone()).expect("expected plugin to be a valid path")
+    }
+}
+
+impl<T: ArgsBackToTokens> From<GlobalArgs<T>> for ArgsWithPlugin<T> {
     fn from(value: GlobalArgs<T>) -> Self {
-        ArgsWithMode::new(
-            Mode::Global {
-                plugin: value.plugin,
-            },
-            value.inner,
-        )
+        ArgsWithPlugin::new(value.plugin(), value.inner)
     }
 }
 

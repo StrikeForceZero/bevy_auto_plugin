@@ -1,0 +1,41 @@
+use bevy_app::prelude::*;
+use bevy_auto_plugin::prelude::*;
+use bevy_ecs::prelude::*;
+
+#[derive(AutoPlugin)]
+struct TestPlugin;
+
+impl Plugin for TestPlugin {
+    #[auto_plugin]
+    fn build(&self, app: &mut App) {
+        app.init_resource::<Test>();
+    }
+}
+
+#[derive(Resource, Debug, Copy, Clone, Default, PartialEq)]
+struct Test(i32);
+
+#[auto_add_system(plugin = TestPlugin, schedule = Update)]
+fn foo_system(mut test: ResMut<Test>) {
+    test.0 += 1;
+}
+
+fn app() -> App {
+    let mut app = internal_test_util::create_minimal_app();
+    app.add_plugins(TestPlugin);
+    app
+}
+
+fn test_eq(app: &App, b: i32) {
+    assert_eq!(app.world().resource::<Test>(), &Test(b));
+}
+
+#[internal_test_proc_macro::xtest]
+fn test_auto_register_systems() {
+    let mut app = app();
+    test_eq(&app, 0);
+    app.update();
+    test_eq(&app, 1);
+    app.update();
+    test_eq(&app, 2);
+}

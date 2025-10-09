@@ -1,4 +1,4 @@
-use crate::__private::attribute_args::attributes::modes::global::auto_plugin::AutoPluginStructOrEnumAttributeArgs;
+use crate::__private::attribute_args::attributes::auto_plugin::AutoPluginStructOrEnumAttributeArgs;
 use crate::__private::attribute_args::derives::{FieldData, VariantData};
 use darling::FromDeriveInput;
 use proc_macro2::Ident;
@@ -6,7 +6,7 @@ use syn::{Attribute, Generics, Visibility};
 
 #[derive(FromDeriveInput, Debug)]
 #[darling(attributes(auto_plugin), forward_attrs, supports(struct_any, enum_any))]
-pub struct GlobalAutoPluginDeriveArgs {
+pub struct AutoPluginDeriveArgs {
     pub ident: Ident,
     pub vis: Visibility,
     pub generics: Generics,

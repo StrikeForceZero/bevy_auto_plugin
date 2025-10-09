@@ -1,15 +1,16 @@
 mod any_expr;
 pub mod attribute;
 pub mod attribute_args;
+pub mod auto_plugin_registry;
 pub mod context;
 mod expr_path_or_call;
 mod expr_value;
 mod flag_or_list;
 pub mod flag_or_meta;
 mod generics;
+pub mod inner;
 pub mod item_with_attr_match;
 mod macros;
-pub mod modes;
 mod non_empty_path;
 mod type_list;
 pub mod util;
@@ -91,21 +92,19 @@ mod tests {
     use quote::ToTokens;
 
     #[macro_export]
-    macro_rules! parse_attribute_args_with_mode {
+    macro_rules! parse_attribute_args_with_plugin {
         // with meta args
-        ($mode:expr, $args_ident:ident, $tokens:expr $(,)?) => {{
+        ($plugin:expr, $args_ident:ident, $tokens:expr $(,)?) => {{
             use quote::quote;
-            use $crate::__private::attribute_args::attributes::shorthand::Mode;
-            use $crate::__private::attribute_args::attributes::shorthand::tokens::ArgsWithMode;
+            use $crate::__private::attribute_args::attributes::shorthand::tokens::ArgsWithPlugin;
+            use $crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
             use $crate::__private::attribute_args::GlobalArgs;
-            use $crate::__private::util::extensions::from_meta::FromMetaExt;
-            let mode = $mode.clone();
-            let macro_path = mode.resolve_macro_path($args_ident::attribute());
+            let plugin = $plugin.clone();
+            let macro_path = <$args_ident as ArgsBackToTokens>::full_attribute_path();
 
-            let mut args = vec![];
-            if let Mode::Global { plugin } = &mode {
-                args.push(quote!(plugin = #plugin));
-            }
+            let mut args = vec![
+                quote!(plugin = #plugin)
+            ];
 
             if !$tokens.is_empty() {
                 args.push($tokens);
@@ -113,92 +112,76 @@ mod tests {
 
             let input = quote! { #[#macro_path( #(#args),* )] };
             let attr: syn::Attribute = syn::parse_quote! { #input };
-            let args_with_mode = match &mode {
-                Mode::Global { .. } => ArgsWithMode::from(GlobalArgs::<$args_ident>::from_meta(&attr.meta)?),
-                _ => ArgsWithMode::new(mode.clone(), $args_ident::from_meta_ext(&attr.meta)?),
-            };
-            (mode, input, args_with_mode)
-        }};
-
-        // path-only form
-        ($mode:expr, $args_ident:ident $(,)?) => {{
-            use quote::quote;
-            use $crate::__private::attribute_args::attributes::shorthand::Mode;
-            use $crate::__private::attribute_args::attributes::shorthand::tokens::ArgsWithMode;
-            use $crate::__private::attribute_args::GlobalArgs;
-            use $crate::__private::util::extensions::from_meta::FromMetaExt;
-            let mode = $mode.clone();
-            let macro_path = mode.resolve_macro_path($args_ident::attribute());
-            let input = quote! { #[#macro_path] };
-            let attr: syn::Attribute = syn::parse_quote! { #input };
-            let args_with_mode = match &mode {
-                Mode::Global { .. } => panic!("global mode requires meta args"),
-                _ => ArgsWithMode::new(mode.clone(), $args_ident::from_meta_ext(&attr.meta)?),
-            };
-            (mode, input, args_with_mode)
+            let args_with_plugin = ArgsWithPlugin::from(GlobalArgs::<$args_ident>::from_meta(&attr.meta)?);
+            (plugin, input, args_with_plugin)
         }};
     }
 
     #[macro_export]
     macro_rules! parse_meta_args {
-        ($mode:expr, $args_ident:ident, $( $args:meta ),+ $(,)?) => {{
-            $crate::parse_attribute_args_with_mode!($mode, $args_ident, quote! { $( $args ),+ })
+        ($plugin:expr, $args_ident:ident, $( $args:meta ),+ $(,)?) => {{
+            $crate::parse_attribute_args_with_plugin!($plugin, $args_ident, quote! { $( $args ),+ })
         }};
 
-        ($mode:expr, $args_ident:ident $(,)?) => {{
-            $crate::parse_attribute_args_with_mode!($mode, $args_ident)
+        ($plugin:expr, $args_ident:ident $(,)?) => {{
+            $crate::parse_attribute_args_with_plugin!($plugin, $args_ident)
         }};
     }
 
     #[macro_export]
     macro_rules! parse_vec_args {
-        ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {{
+        ($plugin:expr, $args_ident:ident, $args:expr $(,)?) => {{
             let args = $args;
-            $crate::parse_attribute_args_with_mode!($mode, $args_ident, quote! { #(#args),* })
+            $crate::parse_attribute_args_with_plugin!($plugin, $args_ident, quote! { #(#args),* })
         }};
 
-        ($mode:expr, $args_ident:ident $(,)?) => {{ $crate::parse_attribute_args_with_mode!($mode, $args_ident) }};
+        ($plugin:expr, $args_ident:ident $(,)?) => {{ $crate::parse_attribute_args_with_plugin!($plugin, $args_ident) }};
     }
 
     #[macro_export]
     macro_rules! assert_args_expand {
-        ($mode:expr, $args_ident:ident, $( $args:meta ),+ $(,)?) => {
-            $crate::assert_vec_args_expand!($mode, $args_ident, vec![$( $args ),+])
+        ($plugin:expr, $args_ident:ident, $( $args:meta ),+ $(,)?) => {
+            $crate::assert_vec_args_expand!($plugin, $args_ident, vec![$( $args ),+])
         };
 
-        ($mode:expr, $args_ident:ident $(,)?) => {
-            $crate::assert_vec_args_expand!($mode, $args_ident)
+        ($plugin:expr, $args_ident:ident $(,)?) => {
+            $crate::assert_vec_args_expand!($plugin, $args_ident)
         };
     }
 
     #[macro_export]
     macro_rules! assert_vec_args_expand {
-        ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {{
-            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident, $args);
-            $crate::__private::tests::assert_tokens_match(mode, input, args);
+        ($plugin:expr, $args_ident:ident, $args:expr $(,)?) => {{
+            let (plugin, input, args) = $crate::parse_vec_args!($plugin, $args_ident, $args);
+            $crate::__private::tests::assert_tokens_match(plugin, input, args);
         }};
 
-        ($mode:expr, $args_ident:ident $(,)?) => {{
-            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident);
-            $crate::__private::tests::assert_tokens_match(mode, input, args);
+        ($plugin:expr, $args_ident:ident $(,)?) => {{
+            let (plugin, input, args) = $crate::parse_vec_args!($plugin, $args_ident);
+            $crate::__private::tests::assert_tokens_match(plugin, input, args);
         }};
     }
 
     #[macro_export]
     macro_rules! try_assert_args_expand {
-        ($mode:expr, $args_ident:ident, $args:expr $(,)?) => {{
-            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident, $args);
-            $crate::__private::tests::try_assert_tokens_match(mode, input, args)
+        ($plugin:expr, $args_ident:ident, $args:expr $(,)?) => {{
+            let (plugin, input, args) = $crate::parse_vec_args!($plugin, $args_ident, $args);
+            $crate::__private::tests::try_assert_tokens_match(plugin, input, args)
         }};
 
-        ($mode:expr, $args_ident:ident $(,)?) => {{
-            let (mode, input, args) = $crate::parse_vec_args!($mode, $args_ident);
-            $crate::__private::tests::try_assert_tokens_match(mode, input, args)
+        ($plugin:expr, $args_ident:ident $(,)?) => {{
+            let (plugin, input, args) = $crate::parse_vec_args!($plugin, $args_ident);
+            $crate::__private::tests::try_assert_tokens_match(plugin, input, args)
         }};
     }
 
+    #[macro_export]
+    macro_rules! plugin {
+        ($plugin:expr) => {{ $crate::__private::non_empty_path::NonEmptyPath::new_unchecked($plugin) }};
+    }
+
     pub fn assert_tokens_match(
-        mode: impl std::fmt::Debug,
+        plugin: impl std::fmt::Debug,
         input: impl ToString,
         args: impl quote::ToTokens,
     ) {
@@ -209,16 +192,16 @@ mod tests {
             concat!(
                 "failed to expand into expected tokens - args: ",
                 stringify!($args_ident),
-                ", mode: {:?}, args_inner: {}"
+                ", plugin: {:?}, args_inner: {}"
             ),
-            mode,
+            plugin,
             input,
         );
     }
 
     #[allow(dead_code)]
     pub fn try_assert_tokens_match(
-        mode: impl std::fmt::Debug,
+        plugin: impl std::fmt::Debug,
         input: impl ToString,
         args: impl quote::ToTokens,
     ) -> darling::Result<()> {
@@ -228,9 +211,9 @@ mod tests {
                 concat!(
                     "failed to expand into expected tokens - args: ",
                     stringify!($args_ident),
-                    ", mode: {:?}\n\texpected: {}\n\t     got: {}"
+                    ", plugin: {:?}\n\texpected: {}\n\t     got: {}"
                 ),
-                mode,
+                plugin,
                 input,
                 args.to_token_stream(),
             )))

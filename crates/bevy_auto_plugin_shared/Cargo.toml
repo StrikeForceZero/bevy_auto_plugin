@@ -11,17 +11,9 @@ publish = true
 [lib]
 
 [features]
-mode_flat_file = []
-mode_module = []
-mode_global = []
 inventory = []
 debug_log_plugin_registry = ["log"]
 log_plugin_build = ["log"]
-flat_file_missing_auto_plugin_check = []
-flat_file_missing_auto_plugin_is_compile_error = ["flat_file_missing_auto_plugin_check"]
-flat_file_missing_auto_plugin_is_error = ["flat_file_missing_auto_plugin_check", "log"]
-flat_file_missing_auto_plugin_is_warning = ["flat_file_missing_auto_plugin_check", "log"]
-flat_file_lang_server_noop = []
 web = [
     "bevy_app/web"
 ]

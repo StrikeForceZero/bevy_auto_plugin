@@ -1,5 +1,0 @@
-error: auto_plugin requires a method taking at least one parameter in addition to `&self`
- --> tests/flat_file/ui/auto_plugin_only_self.rs:7:5
-  |
-7 |     fn plugin(&self) {}
-  |     ^^
