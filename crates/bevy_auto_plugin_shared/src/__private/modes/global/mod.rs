@@ -10,7 +10,6 @@ use std::sync::LazyLock;
 use syn::{ExprClosure, Path};
 
 pub use bevy_app;
-pub use bevy_log;
 #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
 pub use inventory;
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "inventory")))]
@@ -48,7 +47,8 @@ pub static GLOBAL_AUTO_PLUGIN_REGISTRY: LazyLock<GlobalAutoPluginRegistry> = Laz
     registry.values_mut().for_each(|vec| vec.shrink_to_fit());
     registry.shrink_to_fit();
 
-    bevy_log::debug!("Building GlobalAutoPluginRegistry from {count} entries");
+    #[cfg(feature = "debug_log_plugin_registry")]
+    log::debug!("Building GlobalAutoPluginRegistry from {count} entries");
 
     GlobalAutoPluginRegistry(registry)
 });

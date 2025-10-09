@@ -12,6 +12,7 @@ publish = true
 [features]
 default = [
     "mode_global",
+    "debug_log_plugin_registry",
 ]
 all_modes = [
     "mode_global",
@@ -33,6 +34,7 @@ mode_global = [
 ]
 inventory = ["bevy_auto_plugin_proc_macros/inventory"]
 # optional extras
+debug_log_plugin_registry = ["bevy_auto_plugin_proc_macros/debug_log_plugin_registry", "bevy_auto_plugin_shared/debug_log_plugin_registry"]
 log_plugin_build = ["bevy_auto_plugin_proc_macros/log_plugin_build"]
 # Flat file options
 flat_file_missing_auto_plugin_is_compile_error = ["bevy_auto_plugin_proc_macros/flat_file_missing_auto_plugin_is_compile_error"]
