@@ -22,6 +22,12 @@ flat_file_missing_auto_plugin_is_compile_error = ["flat_file_missing_auto_plugin
 flat_file_missing_auto_plugin_is_error = ["flat_file_missing_auto_plugin_check", "log"]
 flat_file_missing_auto_plugin_is_warning = ["flat_file_missing_auto_plugin_check", "log"]
 flat_file_lang_server_noop = []
+# internal for tests
+_wasm = [
+    "internal_test_util/_wasm",
+    "bevy_app/web",
+    "bevy_reflect/web"
+]
 
 [dependencies]
 bevy_app = { workspace = true }

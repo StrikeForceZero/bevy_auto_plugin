@@ -76,6 +76,7 @@ macro_rules! bevy_crate_path {
                 let alias_ident = as_cargo_alias!(alias);
                 Ok(parse2::<Path>(quote!(::#alias_ident)).unwrap())
             }
+            #[allow(unused_variables)]
             Err(err_a) => {
                 // fall back to bevy’s re-export
                 match crate_name("bevy") {
@@ -84,8 +85,15 @@ macro_rules! bevy_crate_path {
                         let alias_ident = as_cargo_alias!(alias);
                         Ok(parse2::<Path>(quote!(::#alias_ident::$target_crate)).unwrap())
                     }
+                    #[allow(unused_variables)]
                     Err(err_b) => {
-                        Err((err_a, err_b))
+                        #[cfg(feature = "_wasm")] {
+                            // WASM/tests: env not available — use standard path
+                            Ok(parse2::<Path>(quote!(::bevy::$target_crate)).unwrap())
+                        }
+                        #[cfg(not(feature = "_wasm"))] {
+                            Err((err_a, err_b))
+                        }
                     },
                 }
             }
