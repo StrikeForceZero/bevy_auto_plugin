@@ -19,7 +19,7 @@ pub(crate) mod paths {
     use quote::quote;
 
     pub mod ecs {
-        pub fn resolve() -> Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)> {
+        pub fn resolve() -> Result<syn::Path, String> {
             crate::bevy_crate_path!(ecs)
         }
         pub fn ecs_root_path() -> syn::Path {
@@ -30,7 +30,7 @@ pub(crate) mod paths {
     pub mod reflect {
         use super::*;
 
-        pub fn resolve() -> Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)> {
+        pub fn resolve() -> Result<syn::Path, String> {
             crate::bevy_crate_path!(reflect)
         }
 
@@ -66,7 +66,7 @@ pub(crate) mod paths {
     pub mod state {
         use super::*;
 
-        pub fn resolve() -> Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)> {
+        pub fn resolve() -> Result<syn::Path, String> {
             crate::bevy_crate_path!(state)
         }
 
@@ -87,6 +87,7 @@ pub(crate) mod paths {
 
 #[cfg(test)]
 mod tests {
+    use crate::bevy_crate_path;
     use quote::ToTokens;
 
     #[macro_export]
@@ -238,13 +239,8 @@ mod tests {
         }
     }
 
-    fn map_resolve_crate(
-        r: Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)>,
-    ) -> Result<String, String> {
-        match r {
-            Ok(p) => Ok(p.into_token_stream().to_string()),
-            Err((e1, e2)) => Err(format!("{}, {}", e1, e2)),
-        }
+    fn map_resolve_crate(r: Result<syn::Path, String>) -> Result<String, String> {
+        r.map(|p| p.into_token_stream().to_string())
     }
 
     #[test]
@@ -269,5 +265,20 @@ mod tests {
             map_resolve_crate(super::paths::reflect::resolve()),
             Ok(":: bevy_reflect".into())
         );
+    }
+
+    #[test]
+    pub fn test_crate_resolve_non_existent_crate() {
+        let res = bevy_crate_path!(foobar);
+        match res {
+            Ok(_) => panic!("expected error"),
+            Err(e) => {
+                assert!(
+                    e.contains("bevy_foobar: Could not find `bevy_foobar`")
+                        && e.contains("bevy::foobar: Could not find `bevy`"),
+                    "{e:?}"
+                );
+            }
+        }
     }
 }
