@@ -14,8 +14,6 @@ mod non_empty_path;
 mod type_list;
 pub mod util;
 
-pub use bevy_log;
-
 pub(crate) mod paths {
     use proc_macro2::TokenStream;
     use quote::quote;
