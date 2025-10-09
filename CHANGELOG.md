@@ -100,3 +100,6 @@
 ### v0.6.3
 - Fix compat issue by allowing more than one `ScheduleConfig` condition
 - Fix compat issue by allow more than `Path` for `ScheduleConfig`
+
+---
+### v0.7.0
