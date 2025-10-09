@@ -46,8 +46,12 @@ flat_file_missing_auto_plugin_is_warning = ["bevy_auto_plugin_proc_macros/flat_f
 flat_file_lang_server_noop = ["bevy_auto_plugin_proc_macros/flat_file_lang_server_noop"]
 # see https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19
 ignore_flat_file_or_module_deprecation = ["bevy_auto_plugin_proc_macros/ignore_flat_file_or_module_deprecation"]
+wasm = [
+    "bevy_auto_plugin_shared/wasm",
+]
 # internal for tests
 _wasm = [
+    "wasm",
     "bevy_auto_plugin_shared/_wasm",
     "internal_test_util/_wasm",
     "bevy/web",

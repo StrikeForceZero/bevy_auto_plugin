@@ -111,5 +111,5 @@ jobs:
         env:
           RUSTFLAGS: --deny warnings --cfg getrandom_backend="wasm_js"
         run: |
-          echo "Test wasm32 with features: ${{ matrix['feature-set'] }},all_modes"
-          cargo test --workspace --target wasm32-unknown-unknown --no-default-features --features "_wasm,${{ matrix['feature-set'] }},all_modes,ignore_flat_file_or_module_deprecation"
+          echo "Test wasm32 with features: wasm,${{ matrix['feature-set'] }},all_modes"
+          cargo test --workspace --target wasm32-unknown-unknown --no-default-features --features "_wasm,wasm,${{ matrix['feature-set'] }},all_modes,ignore_flat_file_or_module_deprecation"
