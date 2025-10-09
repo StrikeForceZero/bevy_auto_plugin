@@ -118,17 +118,6 @@ mod tests {
     }
 
     #[macro_export]
-    macro_rules! parse_meta_args {
-        ($plugin:expr, $args_ident:ident, $( $args:meta ),+ $(,)?) => {{
-            $crate::parse_attribute_args_with_plugin!($plugin, $args_ident, quote! { $( $args ),+ })
-        }};
-
-        ($plugin:expr, $args_ident:ident $(,)?) => {{
-            $crate::parse_attribute_args_with_plugin!($plugin, $args_ident)
-        }};
-    }
-
-    #[macro_export]
     macro_rules! parse_vec_args {
         ($plugin:expr, $args_ident:ident, $args:expr $(,)?) => {{
             let args = $args;
@@ -136,17 +125,6 @@ mod tests {
         }};
 
         ($plugin:expr, $args_ident:ident $(,)?) => {{ $crate::parse_attribute_args_with_plugin!($plugin, $args_ident) }};
-    }
-
-    #[macro_export]
-    macro_rules! assert_args_expand {
-        ($plugin:expr, $args_ident:ident, $( $args:meta ),+ $(,)?) => {
-            $crate::assert_vec_args_expand!($plugin, $args_ident, vec![$( $args ),+])
-        };
-
-        ($plugin:expr, $args_ident:ident $(,)?) => {
-            $crate::assert_vec_args_expand!($plugin, $args_ident)
-        };
     }
 
     #[macro_export]
@@ -159,19 +137,6 @@ mod tests {
         ($plugin:expr, $args_ident:ident $(,)?) => {{
             let (plugin, input, args) = $crate::parse_vec_args!($plugin, $args_ident);
             $crate::__private::tests::assert_tokens_match(plugin, input, args);
-        }};
-    }
-
-    #[macro_export]
-    macro_rules! try_assert_args_expand {
-        ($plugin:expr, $args_ident:ident, $args:expr $(,)?) => {{
-            let (plugin, input, args) = $crate::parse_vec_args!($plugin, $args_ident, $args);
-            $crate::__private::tests::try_assert_tokens_match(plugin, input, args)
-        }};
-
-        ($plugin:expr, $args_ident:ident $(,)?) => {{
-            let (plugin, input, args) = $crate::parse_vec_args!($plugin, $args_ident);
-            $crate::__private::tests::try_assert_tokens_match(plugin, input, args)
         }};
     }
 
