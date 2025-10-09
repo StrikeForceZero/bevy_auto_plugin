@@ -124,24 +124,15 @@ pub mod tokens {
             .copied()
             .filter_map(|ident| {
                 Some(match ident.to_string().as_str() {
-                    "Component" => quote! {
-                        // Make the helper available for #[reflect(Component)]
-                        // TODO: we could eliminate the need for globs if we pass the ident in
-                        //  then we can do `ReflectComponent as ReflectComponent$ident`
-                        //  #[reflect(Component$ident)]
-                        #[allow(unused_imports)]
-                        use ::bevy_auto_plugin::__private::shared::__private::reflect::component::*;
-                    },
-                    "Resource" => quote! {
-                        // Make the helper available for #[reflect(Resource)]
-                        #[allow(unused_imports)]
-                        use ::bevy_auto_plugin::__private::shared::__private::reflect::resource::*;
-                    },
-                    "Default" => quote! {
-                        // Make the helper available for #[reflect(Default)]
-                        #[allow(unused_imports)]
-                        use ::bevy_auto_plugin::__private::shared::__private::reflect::std_traits::*;
-                    },
+                    // Make the helper available for #[reflect(Component)]
+                    // TODO: we could eliminate the need for globs if we pass the ident in
+                    //  then we can do `ReflectComponent as ReflectComponent$ident`
+                    //  #[reflect(Component$ident)]
+                    "Component" => crate::__private::paths::reflect::reflect_component_use_tokens(),
+                    // Make the helper available for #[reflect(Resource)]
+                    "Resource" => crate::__private::paths::reflect::reflect_resource_use_tokens(),
+                    // Make the helper available for #[reflect(Default)]
+                    "Default" => crate::__private::paths::reflect::reflect_default_use_tokens(),
                     // Debug, Copy, Clone, PartialEq, Eq, Hash appear to be built in?
                     _ => return None,
                 })
@@ -161,33 +152,41 @@ pub mod tokens {
         quote! { #[derive(#(#paths),*)] }
     }
 
+    macro_rules! ecs_import {
+        ($path:path) => {{
+            let root = crate::__private::paths::ecs::ecs_root_path();
+            parse_quote!(#root::$path)
+        }};
+    }
+
     pub fn derive_reflect_path() -> NonEmptyPath {
-        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_reflect_derive::Reflect)
+        let root = crate::__private::paths::reflect::reflect_root_path();
+        parse_quote!(#root::Reflect)
     }
 
     pub fn derive_component_path() -> NonEmptyPath {
-        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Component)
+        ecs_import!(prelude::Component)
     }
 
     pub fn derive_resource_path() -> NonEmptyPath {
-        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Resource)
+        ecs_import!(prelude::Resource)
     }
 
     pub fn derive_event_path() -> NonEmptyPath {
-        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Event)
+        ecs_import!(prelude::Event)
     }
 
     pub fn derive_entity_event_path() -> NonEmptyPath {
-        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::EntityEvent)
+        ecs_import!(prelude::EntityEvent)
     }
 
     pub fn derive_message_path() -> NonEmptyPath {
-        parse_quote!(::bevy_auto_plugin::__private::shared::__private::bevy_ecs_macros::Message)
+        ecs_import!(prelude::Message)
     }
 
     pub fn derive_states_path() -> NonEmptyPath {
-        // bevy_ecs_macros::States creates scope issues with required traits
-        parse_quote!(::bevy_auto_plugin::__private::shared::__private::derive::states::States)
+        let states = crate::__private::paths::state::root_path();
+        parse_quote!(#states::state::States)
     }
 
     pub fn derive_component<'a>(
@@ -249,11 +248,7 @@ pub mod tokens {
         extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
     ) -> ExpandAttrs {
         ExpandAttrs {
-            use_items: vec![quote! {
-                // required for derive(States)
-                #[allow(unused_imports)]
-                use ::bevy_auto_plugin::__private::shared::__private::derive::states::*;
-            }],
+            use_items: vec![crate::__private::paths::state::derive_use_tokens()],
             attrs: vec![derive_from(
                 [
                     vec![

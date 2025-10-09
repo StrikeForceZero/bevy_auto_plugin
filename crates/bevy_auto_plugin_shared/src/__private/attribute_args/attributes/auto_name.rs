@@ -61,8 +61,9 @@ impl ToTokensWithConcreteTargetPath for AutoNameAttributeArgs {
             .replace(" ,", ",");
         // TODO: offer option to only remove all spaces?
         //  .replace(" ", "")
+        let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
         tokens.extend(quote! {
-            .register_required_components_with::<#target, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new(#name))
+            .register_required_components_with::<#target, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new(#name))
         })
     }
 }
@@ -84,11 +85,12 @@ mod tests {
         let args = parse2::<AutoNameAttributeArgs>(quote!())?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
+        let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_required_components_with::<FooTarget, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new("FooTarget"))
+                .register_required_components_with::<FooTarget, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new("FooTarget"))
             }
             .to_string()
         );
@@ -101,11 +103,12 @@ mod tests {
         let args = parse2::<AutoNameAttributeArgs>(quote!(generics(u8, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
+        let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_required_components_with::<FooTarget<u8, bool>, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new("FooTarget<u8, bool>"))
+                .register_required_components_with::<FooTarget<u8, bool>, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new("FooTarget<u8, bool>"))
             }
             .to_string()
         );
@@ -119,18 +122,19 @@ mod tests {
             parse2::<AutoNameAttributeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
+        let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_required_components_with::<FooTarget<u8, bool>, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new("FooTarget<u8, bool>"))
+                .register_required_components_with::<FooTarget<u8, bool>, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new("FooTarget<u8, bool>"))
             }
             .to_string()
         );
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_required_components_with::<FooTarget<bool, bool>, ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name>(|| ::bevy_auto_plugin::__private::shared::__private::bevy_ecs::prelude::Name::new("FooTarget<bool, bool>"))
+                .register_required_components_with::<FooTarget<bool, bool>, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new("FooTarget<bool, bool>"))
             }
             .to_string()
         );
