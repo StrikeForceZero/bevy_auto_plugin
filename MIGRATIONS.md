@@ -46,3 +46,8 @@
   - now requires specifying if it's an `target(global)` or `target(entity)` based `Event` and `EntityEvent` respectively.
 
 ## v0.6 to v0.7
+  - no longer depending on `bevy_reflect` - if applicable, you can remove the hotfix from your `Cargo.toml`:
+    ```toml
+    [build-dependencies]
+    bevy_reflect = { version = "0.17", features = ["documentation"] }
+    ```
