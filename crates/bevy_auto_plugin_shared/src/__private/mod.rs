@@ -83,18 +83,6 @@ pub(crate) mod paths {
             }
         }
     }
-
-    pub mod app {
-        use super::*;
-
-        pub fn resolve() -> Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)> {
-            crate::bevy_crate_path!(app)
-        }
-
-        pub fn root_path() -> syn::Path {
-            resolve().expect("failed to resolve `bevy_app` or `bevy::app` - do you have `bevy_app` in your dependencies?")
-        }
-    }
 }
 
 #[cfg(test)]
@@ -257,14 +245,6 @@ mod tests {
             Ok(p) => Ok(p.into_token_stream().to_string()),
             Err((e1, e2)) => Err(format!("{}, {}", e1, e2)),
         }
-    }
-
-    #[test]
-    pub fn test_crate_resolve_bevy_app() {
-        assert_eq!(
-            map_resolve_crate(super::paths::app::resolve()),
-            Ok(":: bevy_app".into())
-        );
     }
 
     #[test]
