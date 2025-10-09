@@ -84,7 +84,7 @@ impl ShortHandAttribute for SystemAttributeArgs {
 mod tests {
     use super::*;
     use crate::__private::attribute_args::GlobalArgs;
-    use crate::{assert_vec_args_expand, plugin};
+    use crate::test_util::macros::*;
     use darling::ast::NestedMeta;
     use internal_test_util::vec_spread;
     use quote::ToTokens;

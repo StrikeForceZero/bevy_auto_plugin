@@ -117,7 +117,7 @@ mod tests {
     use super::*;
     use crate::__private::attribute_args::GlobalArgs;
     use crate::__private::util::combo::combos_one_per_group_or_skip;
-    use crate::{assert_vec_args_expand, plugin};
+    use crate::test_util::macros::*;
     use darling::ast::NestedMeta;
     use internal_test_util::{extract_punctuated_paths, vec_spread};
     use quote::ToTokens;

@@ -1,6 +1,9 @@
 #[doc(hidden)]
 pub mod __private;
 
+#[cfg(test)]
+mod test_util;
+
 #[cfg(target_arch = "wasm32")]
 unsafe extern "C" {
     fn __wasm_call_ctors();

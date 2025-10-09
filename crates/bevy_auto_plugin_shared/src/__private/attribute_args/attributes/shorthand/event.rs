@@ -130,7 +130,7 @@ mod tests {
     use super::*;
     use crate::__private::util::combo::combos_one_per_group_or_skip_with;
     use crate::__private::util::test_params::{_inject_derive, Side, TestParams as _TestParams};
-    use crate::{assert_vec_args_expand, plugin};
+    use crate::test_util::macros::*;
     use internal_test_util::extract_punctuated_paths;
     use syn::parse_quote;
 
