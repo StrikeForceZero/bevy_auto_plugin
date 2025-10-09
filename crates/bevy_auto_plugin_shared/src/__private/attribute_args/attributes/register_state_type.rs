@@ -52,9 +52,10 @@ impl ToTokensWithConcreteTargetPath for RegisterStateTypeAttributeArgs {
         tokens: &mut TokenStream,
         target: &ConcreteTargetPath,
     ) {
+        let bevy_state = crate::__private::paths::state::root_path();
         tokens.extend(quote! {
-            .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< #target > >()
-            .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< #target > >()
+            .register_type :: < #bevy_state::prelude::State< #target > >()
+            .register_type :: < #bevy_state::prelude::NextState< #target > >()
         })
     }
 }
@@ -70,12 +71,13 @@ mod tests {
         let args = parse2::<RegisterStateTypeAttributeArgs>(quote!())?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
+        let bevy_state = crate::__private::paths::state::root_path();
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< FooTarget > >()
-                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< FooTarget > >()
+                .register_type :: < #bevy_state::prelude::State< FooTarget > >()
+                .register_type :: < #bevy_state::prelude::NextState< FooTarget > >()
             }
             .to_string()
         );
@@ -88,12 +90,13 @@ mod tests {
         let args = parse2::<RegisterStateTypeAttributeArgs>(quote!(generics(u8, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
+        let bevy_state = crate::__private::paths::state::root_path();
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< FooTarget<u8, bool> > >()
-                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< FooTarget<u8, bool> > >()
+                .register_type :: < #bevy_state::prelude::State< FooTarget<u8, bool> > >()
+                .register_type :: < #bevy_state::prelude::NextState< FooTarget<u8, bool> > >()
             }
             .to_string()
         );
@@ -109,20 +112,21 @@ mod tests {
         ))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
+        let bevy_state = crate::__private::paths::state::root_path();
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< FooTarget<u8, bool> > >()
-                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< FooTarget<u8, bool> > >()
+                .register_type :: < #bevy_state::prelude::State< FooTarget<u8, bool> > >()
+                .register_type :: < #bevy_state::prelude::NextState< FooTarget<u8, bool> > >()
             }
             .to_string()
         );
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::State< FooTarget<bool, bool> > >()
-                .register_type :: < ::bevy_auto_plugin::__private::shared::__private::bevy_state::prelude::NextState< FooTarget<bool, bool> > >()
+                .register_type :: < #bevy_state::prelude::State< FooTarget<bool, bool> > >()
+                .register_type :: < #bevy_state::prelude::NextState< FooTarget<bool, bool> > >()
             }
             .to_string()
         );

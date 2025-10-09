@@ -74,6 +74,7 @@ inventory = "0.3"
 linkme = "0.3"
 trybuild = "1.0"
 wasm-bindgen-test = { version = "0.3" }
+proc-macro-crate = { version = "3.4" }
 
 [dependencies]
 bevy_auto_plugin_proc_macros = { workspace = true }

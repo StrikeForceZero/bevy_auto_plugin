@@ -14,31 +14,64 @@ mod non_empty_path;
 mod type_list;
 pub mod util;
 
-pub use bevy_app;
-pub use bevy_ecs;
-pub use bevy_ecs_macros;
 pub use bevy_log;
-pub use bevy_reflect;
-pub use bevy_reflect_derive;
-pub use bevy_state;
 
-// module to allow single item globs
-pub mod reflect {
-    pub mod std_traits {
-        pub use bevy_reflect::std_traits::ReflectDefault;
-    }
-    pub mod component {
-        pub use bevy_ecs::reflect::ReflectComponent;
-    }
-    pub mod resource {
-        pub use bevy_ecs::reflect::ReflectResource;
-    }
-}
+pub(crate) mod paths {
+    use proc_macro2::TokenStream;
+    use quote::quote;
 
-pub mod derive {
-    pub mod states {
-        pub use bevy_state::state::FreelyMutableState;
-        pub use bevy_state::state::States;
+    pub mod ecs {
+        pub fn ecs_root_path() -> syn::Path {
+            crate::bevy_crate_path!(ecs).expect("failed to resolve `bevy_ecs` or `bevy::ecs` - do you have `bevy_ecs` in your dependencies?")
+        }
+    }
+
+    pub mod reflect {
+        use super::*;
+        pub fn reflect_root_path() -> syn::Path {
+            crate::bevy_crate_path!(reflect).expect("failed to resolve `bevy_reflect` or `bevy::reflect` - do you have `bevy_reflect` in your dependencies?")
+        }
+
+        pub fn reflect_default_use_tokens() -> TokenStream {
+            let reflect_root = reflect_root_path();
+            quote! {
+                #[allow(unused_imports)]
+                use #reflect_root::std_traits::ReflectDefault as _;
+            }
+        }
+
+        pub fn reflect_component_use_tokens() -> TokenStream {
+            let ecs_root = ecs::ecs_root_path();
+            quote! {
+                #[allow(unused_imports)]
+                use #ecs_root::reflect::ReflectComponent as _;
+            }
+        }
+
+        pub fn reflect_resource_use_tokens() -> TokenStream {
+            let ecs_root = ecs::ecs_root_path();
+            quote! {
+                #[allow(unused_imports)]
+                use #ecs_root::reflect::ReflectResource as _;
+            }
+        }
+    }
+
+    pub mod state {
+        use super::*;
+
+        pub fn root_path() -> syn::Path {
+            crate::bevy_crate_path!(state).expect("failed to resolve `bevy_state` or `bevy::state` - do you have `bevy_state` in your dependencies?")
+        }
+
+        // breaks parse quote
+        pub fn derive_use_tokens() -> TokenStream {
+            let state_root = root_path();
+            quote! {
+                #[allow(unused_imports)]
+                use #state_root::state::FreelyMutableState as _;
+            }
+        }
     }
 }
 
