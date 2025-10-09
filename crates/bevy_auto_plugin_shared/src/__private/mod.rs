@@ -180,7 +180,7 @@ mod tests {
         ($plugin:expr) => {{ $crate::__private::non_empty_path::NonEmptyPath::new_unchecked($plugin) }};
     }
 
-    pub fn assert_tokens_match(
+    pub(crate) fn assert_tokens_match(
         plugin: impl std::fmt::Debug,
         input: impl ToString,
         args: impl quote::ToTokens,
@@ -200,7 +200,7 @@ mod tests {
     }
 
     #[allow(dead_code)]
-    pub fn try_assert_tokens_match(
+    fn try_assert_tokens_match(
         plugin: impl std::fmt::Debug,
         input: impl ToString,
         args: impl quote::ToTokens,
@@ -227,7 +227,7 @@ mod tests {
     }
 
     #[test]
-    pub fn test_crate_resolve_bevy_ecs() {
+    fn test_crate_resolve_bevy_ecs() {
         assert_eq!(
             map_resolve_crate(super::paths::ecs::resolve()),
             Ok(":: bevy_ecs".into())
@@ -235,7 +235,7 @@ mod tests {
     }
 
     #[test]
-    pub fn test_crate_resolve_bevy_state() {
+    fn test_crate_resolve_bevy_state() {
         assert_eq!(
             map_resolve_crate(super::paths::state::resolve()),
             Ok(":: bevy_state".into())
@@ -243,7 +243,7 @@ mod tests {
     }
 
     #[test]
-    pub fn test_crate_resolve_bevy_reflect() {
+    fn test_crate_resolve_bevy_reflect() {
         assert_eq!(
             map_resolve_crate(super::paths::reflect::resolve()),
             Ok(":: bevy_reflect".into())
@@ -251,7 +251,7 @@ mod tests {
     }
 
     #[test]
-    pub fn test_crate_resolve_non_existent_crate() {
+    fn test_crate_resolve_non_existent_crate() {
         let res = bevy_crate_path!(foobar);
         match res {
             Ok(_) => panic!("expected error"),
