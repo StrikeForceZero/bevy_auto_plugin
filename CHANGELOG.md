@@ -100,3 +100,8 @@
 
 ---
 ### v0.7.0
+- Remove re-exported crates `bevy_ecs`, `bevy_ecs_macros`, `bevy_state`, `bevy_log`, `bevy_reflect`, `bevy_reflect_derive`
+  - Fixes 
+    > no method named `with_docs` found for struct `type_info::OpaqueInfo` in the current scope
+- Adds feature `debug_log_plugin_registry` to gate logging 
+    > Building GlobalAutoPluginRegistry from {count} entries
