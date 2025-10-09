@@ -44,3 +44,5 @@
 ### `auto_event` changed
   - no longer supports buffered events (use `auto_message`)
   - now requires specifying if it's an `target(global)` or `target(entity)` based `Event` and `EntityEvent` respectively.
+
+## v0.6 to v0.7
