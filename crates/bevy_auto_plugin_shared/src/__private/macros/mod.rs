@@ -70,7 +70,8 @@ macro_rules! bevy_crate_path {
         use ::std::{concat, stringify};
         use ::syn::Path;
         use $crate::as_cargo_alias;
-        let res: Result::<Path, (::proc_macro_crate::Error, ::proc_macro_crate::Error)> = match crate_name(concat!("bevy_", stringify!($target_crate))) {
+        #[allow(clippy::result_large_err)]
+        let res: Result::<Path, String> = match crate_name(concat!("bevy_", stringify!($target_crate))) {
             Ok(FoundCrate::Itself) => Ok(parse2::<Path>(quote!(::bevy_$target_crate)).unwrap()),
             Ok(FoundCrate::Name(alias)) => {
                 let alias_ident = as_cargo_alias!(alias);
@@ -92,7 +93,9 @@ macro_rules! bevy_crate_path {
                             Ok(parse2::<Path>(quote!(::bevy::$target_crate)).unwrap())
                         }
                         #[cfg(not(feature = "_wasm"))] {
-                            Err((err_a, err_b))
+                            let label_a = concat!("bevy_", stringify!($target_crate));
+                            let label_b = concat!("bevy::", stringify!($target_crate));
+                            Err(format!("\n{label_a}: {err_a}\n{label_b}: {err_b}"))
                         }
                     },
                 }
@@ -109,9 +112,7 @@ mod tests {
     #[test]
     fn test_bevy_crate_path() {
         assert_eq!(
-            bevy_crate_path!(reflect)
-                .map(|c| c.to_token_stream().to_string())
-                .map_err(|(a, b)| format!("bevy_*:: {a:?}, bevy::*::{b:?}")),
+            bevy_crate_path!(reflect).map(|c| c.to_token_stream().to_string()),
             Ok(":: bevy_reflect".to_string())
         )
     }
