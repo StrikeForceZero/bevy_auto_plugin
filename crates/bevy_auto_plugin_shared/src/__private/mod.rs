@@ -19,15 +19,23 @@ pub(crate) mod paths {
     use quote::quote;
 
     pub mod ecs {
+        pub fn resolve() -> Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)> {
+            crate::bevy_crate_path!(ecs)
+        }
         pub fn ecs_root_path() -> syn::Path {
-            crate::bevy_crate_path!(ecs).expect("failed to resolve `bevy_ecs` or `bevy::ecs` - do you have `bevy_ecs` in your dependencies?")
+            resolve().expect("failed to resolve `bevy_ecs` or `bevy::ecs` - do you have `bevy_ecs` in your dependencies?")
         }
     }
 
     pub mod reflect {
         use super::*;
+
+        pub fn resolve() -> Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)> {
+            crate::bevy_crate_path!(reflect)
+        }
+
         pub fn reflect_root_path() -> syn::Path {
-            crate::bevy_crate_path!(reflect).expect("failed to resolve `bevy_reflect` or `bevy::reflect` - do you have `bevy_reflect` in your dependencies?")
+            resolve().expect("failed to resolve `bevy_reflect` or `bevy::reflect` - do you have `bevy_reflect` in your dependencies?")
         }
 
         pub fn reflect_default_use_tokens() -> TokenStream {
@@ -58,8 +66,12 @@ pub(crate) mod paths {
     pub mod state {
         use super::*;
 
+        pub fn resolve() -> Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)> {
+            crate::bevy_crate_path!(state)
+        }
+
         pub fn root_path() -> syn::Path {
-            crate::bevy_crate_path!(state).expect("failed to resolve `bevy_state` or `bevy::state` - do you have `bevy_state` in your dependencies?")
+            resolve().expect("failed to resolve `bevy_state` or `bevy::state` - do you have `bevy_state` in your dependencies?")
         }
 
         // breaks parse quote
@@ -71,10 +83,24 @@ pub(crate) mod paths {
             }
         }
     }
+
+    pub mod app {
+        use super::*;
+
+        pub fn resolve() -> Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)> {
+            crate::bevy_crate_path!(app)
+        }
+
+        pub fn root_path() -> syn::Path {
+            resolve().expect("failed to resolve `bevy_app` or `bevy::app` - do you have `bevy_app` in your dependencies?")
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use quote::ToTokens;
+
     #[macro_export]
     macro_rules! parse_attribute_args_with_mode {
         // with meta args
@@ -222,5 +248,46 @@ mod tests {
         } else {
             Ok(())
         }
+    }
+
+    fn map_resolve_crate(
+        r: Result<syn::Path, (proc_macro_crate::Error, proc_macro_crate::Error)>,
+    ) -> Result<String, String> {
+        match r {
+            Ok(p) => Ok(p.into_token_stream().to_string()),
+            Err((e1, e2)) => Err(format!("{}, {}", e1, e2)),
+        }
+    }
+
+    #[test]
+    pub fn test_crate_resolve_bevy_app() {
+        assert_eq!(
+            map_resolve_crate(super::paths::app::resolve()),
+            Ok(":: bevy_app".into())
+        );
+    }
+
+    #[test]
+    pub fn test_crate_resolve_bevy_ecs() {
+        assert_eq!(
+            map_resolve_crate(super::paths::ecs::resolve()),
+            Ok(":: bevy_ecs".into())
+        );
+    }
+
+    #[test]
+    pub fn test_crate_resolve_bevy_state() {
+        assert_eq!(
+            map_resolve_crate(super::paths::state::resolve()),
+            Ok(":: bevy_state".into())
+        );
+    }
+
+    #[test]
+    pub fn test_crate_resolve_bevy_reflect() {
+        assert_eq!(
+            map_resolve_crate(super::paths::reflect::resolve()),
+            Ok(":: bevy_reflect".into())
+        );
     }
 }

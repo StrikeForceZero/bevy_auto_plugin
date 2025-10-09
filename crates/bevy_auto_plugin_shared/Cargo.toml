@@ -41,3 +41,7 @@ internal_test_proc_macro = { workspace = true }
 internal_test_util = { workspace = true }
 wasm-bindgen-test = { workspace = true }
 anyhow = { workspace = true }
+# used in crate resolve tests
+bevy_ecs = { workspace = true }
+bevy_reflect = { workspace = true }
+bevy_state = { workspace = true }
