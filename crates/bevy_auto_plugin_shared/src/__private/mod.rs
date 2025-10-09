@@ -88,7 +88,6 @@ pub(crate) mod paths {
 
 #[cfg(test)]
 mod tests {
-    use crate::__private::non_empty_path::NonEmptyPath;
     use crate::bevy_crate_path;
     use quote::ToTokens;
 
@@ -178,7 +177,7 @@ mod tests {
 
     #[macro_export]
     macro_rules! plugin {
-        ($plugin:expr) => {{ NonEmptyPath::new_unchecked($plugin) }};
+        ($plugin:expr) => {{ $crate::__private::non_empty_path::NonEmptyPath::new_unchecked($plugin) }};
     }
 
     pub fn assert_tokens_match(
