@@ -16,7 +16,7 @@ fn handle_attribute<F: Fn(MacroStream, MacroStream) -> MacroStream>(
 #[doc = include_str!("docs/proc_attributes/derive_auto_plugin.md")]
 #[proc_macro_derive(AutoPlugin, attributes(auto_plugin))]
 pub fn derive_auto_plugin(input: CompilerStream) -> CompilerStream {
-    __private::inner::expand_global_derive_auto_plugin(input.into()).into()
+    __private::inner::expand_derive_auto_plugin(input.into()).into()
 }
 
 /// Attaches to a fn and injects a call to the initialization function that automatically registering types, events, and resources in the `App`.
