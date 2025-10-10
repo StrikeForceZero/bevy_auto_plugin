@@ -3,6 +3,20 @@ pub mod auto_plugin_registry;
 pub mod expand;
 mod macros;
 
+macro_rules! bevy_crate_err_message {
+    ($ident:ident) => {
+        concat!(
+            "failed to resolve `bevy_",
+            stringify!($ident),
+            "` or `bevy::",
+            stringify!($ident),
+            "` - do you have `bevy_",
+            stringify!($ident),
+            "` in your dependencies?"
+        )
+    };
+}
+
 pub(crate) mod paths {
     use proc_macro2::TokenStream;
     use quote::quote;
@@ -12,7 +26,7 @@ pub(crate) mod paths {
             crate::bevy_crate_path!(ecs)
         }
         pub fn ecs_root_path() -> syn::Path {
-            resolve().expect("failed to resolve `bevy_ecs` or `bevy::ecs` - do you have `bevy_ecs` in your dependencies?")
+            resolve().expect(bevy_crate_err_message!(ecs))
         }
     }
 
@@ -24,7 +38,7 @@ pub(crate) mod paths {
         }
 
         pub fn reflect_root_path() -> syn::Path {
-            resolve().expect("failed to resolve `bevy_reflect` or `bevy::reflect` - do you have `bevy_reflect` in your dependencies?")
+            resolve().expect(bevy_crate_err_message!(reflect))
         }
 
         pub fn reflect_default_use_tokens() -> TokenStream {
@@ -60,7 +74,7 @@ pub(crate) mod paths {
         }
 
         pub fn root_path() -> syn::Path {
-            resolve().expect("failed to resolve `bevy_state` or `bevy::state` - do you have `bevy_state` in your dependencies?")
+            resolve().expect(bevy_crate_err_message!(state))
         }
 
         // breaks parse quote
