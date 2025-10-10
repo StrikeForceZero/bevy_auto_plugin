@@ -1,5 +1,4 @@
 use bevy_auto_plugin_shared::__private::expand;
-use bevy_auto_plugin_shared::__private::expand::{attr, derive};
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
 
@@ -17,7 +16,7 @@ fn handle_attribute<F: Fn(MacroStream, MacroStream) -> MacroStream>(
 #[doc = include_str!("../docs/proc_attributes/derive_auto_plugin.md")]
 #[proc_macro_derive(AutoPlugin, attributes(auto_plugin))]
 pub fn derive_auto_plugin(input: CompilerStream) -> CompilerStream {
-    derive::auto_plugin::expand_derive_auto_plugin(input.into()).into()
+    expand::derive::auto_plugin::expand_derive_auto_plugin(input.into()).into()
 }
 
 /// Attaches to a fn and injects a call to the initialization function that automatically registering types, events, and resources in the `App`.
@@ -25,7 +24,7 @@ pub fn derive_auto_plugin(input: CompilerStream) -> CompilerStream {
 #[allow(unused_variables, unused_mut, unreachable_code)]
 #[proc_macro_attribute]
 pub fn auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(attr::auto_plugin::expand_auto_plugin, attr, input)
+    handle_attribute(expand::attr::auto_plugin::expand_auto_plugin, attr, input)
 }
 
 /// Automatically registers a type with the Bevy `App`.
@@ -144,5 +143,9 @@ pub fn auto_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStr
 #[doc = include_str!("../docs/proc_attributes/auto_bind_plugin.md")]
 #[proc_macro_attribute]
 pub fn auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(attr::auto_bind_plugin::auto_bind_plugin_outer, attr, input)
+    handle_attribute(
+        expand::attr::auto_bind_plugin::auto_bind_plugin_outer,
+        attr,
+        input,
+    )
 }
