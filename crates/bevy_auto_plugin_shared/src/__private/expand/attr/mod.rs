@@ -33,7 +33,13 @@ where
     let item: Item = ok_or_return_compiler_error!(parse2(input));
 
     let err_msg = format!("Attribute macro is not allowed on {}", item_kind(&item));
-    let ident = ok_or_return_compiler_error!(resolve_ident(&item), err_msg);
+    let ident = ok_or_return_compiler_error!(
+        resolve_ident(&item).map_err(|e| {
+            // make sure the call_site span is used instead so the user knows what attribute caused the error
+            syn::Error::new(Span::call_site(), e)
+        }),
+        err_msg
+    );
 
     let args = ok_or_return_compiler_error!(parse_attr(attr));
 
