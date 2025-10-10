@@ -1,7 +1,6 @@
 pub mod attribute;
 pub mod auto_plugin_registry;
 pub mod inner;
-pub mod item_with_attr_match;
 mod macros;
 
 pub(crate) mod paths {

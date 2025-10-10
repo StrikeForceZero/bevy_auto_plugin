@@ -7,7 +7,6 @@ pub mod extensions;
 pub mod fn_param;
 pub mod generics_traits;
 pub mod meta;
-pub mod module;
 pub mod path_fmt;
 pub mod resolve_ident_from_item;
 #[cfg(test)]

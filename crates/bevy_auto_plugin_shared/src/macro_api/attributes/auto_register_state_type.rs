@@ -1,10 +1,8 @@
 use crate::__private::attribute::AutoPluginItemAttribute;
-use crate::__private::item_with_attr_match::{ItemWithAttributeMatch, items_with_attribute_match};
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::global_args::{AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs};
 use crate::syntax::ast::type_list::TypeList;
 use crate::util::concrete_path::ConcreteTargetPath;
-use crate::util::meta::struct_or_enum_meta::StructOrEnumMeta;
 use crate::util::resolve_ident_from_item::{
     IdentFromItemResult, resolve_ident_from_struct_or_enum,
 };
@@ -33,9 +31,6 @@ impl ItemAttributeArgs for RegisterStateTypeAttributeArgs {
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_struct_or_enum(item)
-    }
-    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<'_, Self>>> {
-        items_with_attribute_match::<StructOrEnumMeta, RegisterStateTypeAttributeArgs>(items)
     }
 }
 

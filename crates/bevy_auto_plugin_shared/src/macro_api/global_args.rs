@@ -1,5 +1,4 @@
 use crate::__private::attribute::{AutoPluginAttribute, AutoPluginItemAttribute};
-use crate::__private::item_with_attr_match::ItemWithAttributeMatch;
 use crate::codegen::tokens::{ArgsBackToTokens, ArgsWithPlugin};
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::syntax::ast::type_list::TypeList;
@@ -94,7 +93,6 @@ pub trait ItemAttributeArgs:
 {
     fn global_build_prefix() -> &'static str;
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;
-    fn match_items(items: &[Item]) -> syn::Result<Vec<ItemWithAttributeMatch<'_, Self>>>;
 }
 
 pub trait GlobalAttributeArgs:
