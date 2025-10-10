@@ -1,8 +1,9 @@
 use crate::__private::attribute::RewriteAttribute;
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::codegen::with_target_path::WithTargetPath;
+use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::{GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs};
+use crate::macro_api::global_args::{GlobalArgs, GlobalAttributeArgs};
 use crate::ok_or_return_compiler_error;
 use crate::syntax::diagnostic::kind::item_kind;
 use darling::FromMeta;

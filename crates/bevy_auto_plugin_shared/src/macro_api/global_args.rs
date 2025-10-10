@@ -1,6 +1,6 @@
 use crate::codegen::tokens::{ArgsBackToTokens, ArgsWithPlugin};
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
-use crate::syntax::analysis::item::IdentFromItemResult;
+use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use crate::syntax::validated::generics::GenericsCollection;
@@ -9,8 +9,8 @@ use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::format_ident;
 use std::hash::Hash;
+use syn::Path;
 use syn::parse::Parse;
-use syn::{Item, Path, parse_quote};
 
 pub trait GenericsArgs {
     // TODO: see impl ToTokens for Generics
@@ -76,23 +76,6 @@ where
     fn plugin(&self) -> &Path {
         &self.plugin
     }
-}
-
-pub trait AttributeIdent {
-    const IDENT: &'static str;
-    fn full_attribute_path() -> NonEmptyPath {
-        let ident = format_ident!("{}", Self::IDENT);
-        parse_quote!( ::bevy_auto_plugin::prelude::#ident )
-    }
-}
-
-pub trait ItemAttributeArgs:
-    AttributeIdent + FromMeta + Parse + ToTokensWithConcreteTargetPath + Hash + Clone
-{
-    fn global_build_prefix() -> Ident {
-        format_ident!("_auto_plugin_{}_", Self::IDENT)
-    }
-    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;
 }
 
 pub trait GlobalAttributeArgs:

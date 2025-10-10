@@ -1,9 +1,9 @@
 use crate::__private::attribute::RewriteAttribute;
 use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
+use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::actions::auto_add_message::AddMessageArgs;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::AttributeIdent;
 use crate::macro_api::global_args::GenericsArgs;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::ast::type_list::TypeList;

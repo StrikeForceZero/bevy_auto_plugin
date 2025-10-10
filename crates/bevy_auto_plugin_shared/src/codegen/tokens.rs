@@ -1,7 +1,7 @@
 use crate::__private::attribute::*;
 use crate::codegen::ExpandAttrs;
+use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::AttributeIdent;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
