@@ -58,7 +58,7 @@ impl FromMeta for ExprPathOrCall {
                 let parser = Punctuated::<Expr, Token![,]>::parse_terminated;
                 let elems = parser
                     .parse2(list.tokens.clone())
-                    .map_err(darling::Error::custom)?;
+                    .map_err(darling::Error::from)?;
                 let mut it = elems.into_iter();
                 let expr = it.next().ok_or_else(|| {
                     darling::Error::too_few_items(1).with_span(&list.tokens.span())
