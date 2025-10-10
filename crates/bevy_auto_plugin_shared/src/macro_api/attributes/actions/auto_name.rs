@@ -1,7 +1,6 @@
-use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
-use crate::macro_api::global_args::{AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs};
+use crate::macro_api::global_args::{AttributeIdent, GenericsArgs, ItemAttributeArgs};
 use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
@@ -17,11 +16,8 @@ pub struct NameArgs {
     pub generics: Vec<TypeList>,
 }
 
-impl AutoPluginAttributeKind for NameArgs {
-    type Attribute = AutoPluginItemAttribute;
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::AutoName
-    }
+impl AttributeIdent for NameArgs {
+    const IDENT: &'static str = "auto_name";
 }
 
 impl ItemAttributeArgs for NameArgs {

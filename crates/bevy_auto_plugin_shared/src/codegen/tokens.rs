@@ -1,7 +1,7 @@
 use crate::__private::attribute::*;
 use crate::codegen::ExpandAttrs;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::AutoPluginAttributeKind;
+use crate::macro_api::global_args::AttributeIdent;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
@@ -38,11 +38,7 @@ where
 }
 
 // TODO: break this out so theres one for attributes and generic one for just args in general
-pub trait ArgsBackToTokens: AutoPluginAttributeKind {
-    fn full_attribute_path() -> NonEmptyPath {
-        let macro_ident = quote::format_ident!("{}", Self::attribute().ident_str());
-        parse_quote!(:: bevy_auto_plugin :: prelude :: #macro_ident)
-    }
+pub trait ArgsBackToTokens: AttributeIdent {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream);
     fn back_to_inner_arg_token_stream(&self) -> TokenStream {
         let mut tokens = TokenStream::new();

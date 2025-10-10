@@ -1,9 +1,9 @@
-use crate::__private::attribute::{AutoPluginShortHandAttribute, RewriteAttribute};
+use crate::__private::attribute::RewriteAttribute;
 use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::actions::auto_add_message::AddMessageArgs;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::AutoPluginAttributeKind;
+use crate::macro_api::global_args::AttributeIdent;
 use crate::macro_api::global_args::GenericsArgs;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::ast::type_list::TypeList;
@@ -28,11 +28,8 @@ impl GenericsArgs for MessageArgs {
     }
 }
 
-impl AutoPluginAttributeKind for MessageArgs {
-    type Attribute = AutoPluginShortHandAttribute;
-    fn attribute() -> Self::Attribute {
-        Self::Attribute::Message
-    }
+impl AttributeIdent for MessageArgs {
+    const IDENT: &'static str = "auto_message";
 }
 
 impl<'a> From<&'a MessageArgs> for RegisterTypeArgs {

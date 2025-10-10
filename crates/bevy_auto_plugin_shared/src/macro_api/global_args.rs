@@ -1,4 +1,3 @@
-use crate::__private::attribute::{AutoPluginAttribute, AutoPluginItemAttribute};
 use crate::codegen::tokens::{ArgsBackToTokens, ArgsWithPlugin};
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::syntax::analysis::item::IdentFromItemResult;
@@ -8,9 +7,10 @@ use crate::syntax::validated::generics::GenericsCollection;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream};
+use quote::format_ident;
 use std::hash::Hash;
 use syn::parse::Parse;
-use syn::{Item, Path};
+use syn::{Item, Path, parse_quote};
 
 pub trait GenericsArgs {
     // TODO: see impl ToTokens for Generics
@@ -78,18 +78,16 @@ where
     }
 }
 
-pub trait AutoPluginAttributeKind {
-    type Attribute: AutoPluginAttribute;
-    fn attribute() -> Self::Attribute;
+pub trait AttributeIdent {
+    const IDENT: &'static str;
+    fn full_attribute_path() -> NonEmptyPath {
+        let ident = format_ident!("{}", Self::IDENT);
+        parse_quote!( ::bevy_auto_plugin::prelude::#ident )
+    }
 }
 
 pub trait ItemAttributeArgs:
-    AutoPluginAttributeKind<Attribute = AutoPluginItemAttribute>
-    + FromMeta
-    + Parse
-    + ToTokensWithConcreteTargetPath
-    + Hash
-    + Clone
+    AttributeIdent + FromMeta + Parse + ToTokensWithConcreteTargetPath + Hash + Clone
 {
     fn global_build_prefix() -> &'static str;
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;

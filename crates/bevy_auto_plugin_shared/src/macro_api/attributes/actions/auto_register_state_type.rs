@@ -1,6 +1,5 @@
-use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
-use crate::macro_api::global_args::{AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs};
+use crate::macro_api::global_args::{AttributeIdent, GenericsArgs, ItemAttributeArgs};
 use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
@@ -16,11 +15,8 @@ pub struct RegisterStateTypeArgs {
     pub generics: Vec<TypeList>,
 }
 
-impl AutoPluginAttributeKind for RegisterStateTypeArgs {
-    type Attribute = AutoPluginItemAttribute;
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::RegisterStateType
-    }
+impl AttributeIdent for RegisterStateTypeArgs {
+    const IDENT: &'static str = "auto_register_state_type";
 }
 
 impl ItemAttributeArgs for RegisterStateTypeArgs {

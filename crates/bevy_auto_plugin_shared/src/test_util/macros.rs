@@ -3,10 +3,9 @@ macro_rules! parse_attribute_args_with_plugin {
     ($plugin:expr, $args_ident:ident, $tokens:expr $(,)?) => {{
         use quote::quote;
         use $crate::codegen::tokens::ArgsWithPlugin;
-        use $crate::codegen::tokens::ArgsBackToTokens;
-        use $crate::macro_api::global_args::GlobalArgs;
+        use $crate::macro_api::global_args::{AttributeIdent, GlobalArgs};
         let plugin = $plugin.clone();
-        let macro_path = <$args_ident as ArgsBackToTokens>::full_attribute_path();
+        let macro_path = <$args_ident as AttributeIdent>::full_attribute_path();
 
         let mut args = vec![
             quote!(plugin = #plugin)

@@ -1,8 +1,8 @@
-use crate::__private::attribute::{AutoPluginShortHandAttribute, RewriteAttribute};
+use crate::__private::attribute::RewriteAttribute;
 use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::AutoPluginAttributeKind;
+use crate::macro_api::global_args::AttributeIdent;
 use crate::macro_api::global_args::GenericsArgs;
 use crate::macro_api::schedule_config::ScheduleWithScheduleConfigArgs;
 use crate::syntax::ast::type_list::TypeList;
@@ -26,11 +26,8 @@ impl GenericsArgs for SystemArgs {
     }
 }
 
-impl AutoPluginAttributeKind for SystemArgs {
-    type Attribute = AutoPluginShortHandAttribute;
-    fn attribute() -> Self::Attribute {
-        Self::Attribute::System
-    }
+impl AttributeIdent for SystemArgs {
+    const IDENT: &'static str = "auto_system";
 }
 
 impl<'a> From<&'a SystemArgs> for RegisterTypeArgs {

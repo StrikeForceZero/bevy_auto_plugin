@@ -1,7 +1,6 @@
-use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
-use crate::macro_api::global_args::{AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs};
+use crate::macro_api::global_args::{AttributeIdent, GenericsArgs, ItemAttributeArgs};
 use crate::macro_api::schedule_config::ScheduleWithScheduleConfigArgs;
 use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_fn};
 use crate::syntax::ast::type_list::TypeList;
@@ -20,11 +19,8 @@ pub struct AddSystemArgs {
     pub schedule_config: ScheduleWithScheduleConfigArgs,
 }
 
-impl AutoPluginAttributeKind for AddSystemArgs {
-    type Attribute = AutoPluginItemAttribute;
-    fn attribute() -> AutoPluginItemAttribute {
-        AutoPluginItemAttribute::AddSystem
-    }
+impl AttributeIdent for AddSystemArgs {
+    const IDENT: &'static str = "auto_add_system";
 }
 
 impl ItemAttributeArgs for AddSystemArgs {
