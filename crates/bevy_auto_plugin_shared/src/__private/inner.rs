@@ -5,7 +5,7 @@ use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::derives::auto_plugin::AutoPluginDeriveArgs;
 use crate::macro_api::global_args::{GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs};
 use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
-use crate::syntax::diagnostic::debug::debug_item;
+use crate::syntax::diagnostic::kind::item_kind;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
@@ -28,7 +28,7 @@ where
 
     let item: Item = ok_or_return_compiler_error!(parse2(input));
 
-    let err_msg = format!("Attribute macro is not allowed on {}", debug_item(&item));
+    let err_msg = format!("Attribute macro is not allowed on {}", item_kind(&item));
     let ident = ok_or_return_compiler_error!(resolve_ident(&item), err_msg);
 
     let args = ok_or_return_compiler_error!(parse_attr(attr));

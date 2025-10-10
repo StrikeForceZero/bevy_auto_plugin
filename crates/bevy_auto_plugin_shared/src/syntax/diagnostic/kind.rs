@@ -1,6 +1,7 @@
 use syn::{Item, Pat, Type};
 
-pub fn debug_pat(pat: &Pat) -> &'static str {
+#[allow(dead_code)]
+pub fn pat_kind(pat: &Pat) -> &'static str {
     match pat {
         Pat::Ident(_) => "Pat::Ident",
         Pat::Wild(_) => "Pat::Wild",
@@ -23,7 +24,8 @@ pub fn debug_pat(pat: &Pat) -> &'static str {
     }
 }
 
-pub fn debug_ty(ty: &Type) -> &'static str {
+#[allow(dead_code)]
+pub fn ty_kind(ty: &Type) -> &'static str {
     match ty {
         Type::Array(_) => "Array",
         Type::BareFn(_) => "BareFn",
@@ -44,7 +46,8 @@ pub fn debug_ty(ty: &Type) -> &'static str {
     }
 }
 
-pub fn debug_item(item: &Item) -> &'static str {
+#[allow(dead_code)]
+pub fn item_kind(item: &Item) -> &'static str {
     match item {
         Item::Const(_) => "Const",
         Item::Enum(_) => "Enum",
