@@ -349,7 +349,7 @@ pub fn auto_states(attr: MacroStream, input: MacroStream) -> MacroStream {
 
 pub fn auto_bind_plugin_inner(attr: MacroStream, input: MacroStream) -> syn::Result<MacroStream> {
     use crate::macro_api::global_args::GlobalArgs;
-    use crate::util::extensions::item::ItemAttrsExt;
+    use crate::syntax::extensions::item::ItemAttrsExt;
     use proc_macro2::Span;
     use quote::quote;
     use syn::Item;
