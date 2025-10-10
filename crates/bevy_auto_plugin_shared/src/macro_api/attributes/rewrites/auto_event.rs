@@ -3,7 +3,7 @@ use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::GenericsArgs;
+use crate::macro_api::with_plugin::GenericsArgs;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;

@@ -1,4 +1,4 @@
-use crate::macro_api::global_args::GenericsArgs;
+use crate::macro_api::with_plugin::GenericsArgs;
 use crate::syntax::validated::concrete_path::{
     ConcreteTargetPath, ConcreteTargetPathWithGenericsCollection,
 };

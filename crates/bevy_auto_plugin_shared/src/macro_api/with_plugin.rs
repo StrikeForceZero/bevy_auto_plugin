@@ -23,25 +23,25 @@ pub trait GenericsArgs {
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
-pub struct GlobalArgs<T> {
+pub struct WithPlugin<T> {
     pub plugin: Path,
     #[darling(flatten)]
     pub inner: T,
 }
 
-impl<T> GlobalArgs<T> {
+impl<T> WithPlugin<T> {
     pub fn plugin(&self) -> NonEmptyPath {
         NonEmptyPath::new(self.plugin.clone()).expect("expected plugin to be a valid path")
     }
 }
 
-impl<T: ArgsBackToTokens> From<GlobalArgs<T>> for ArgsWithPlugin<T> {
-    fn from(value: GlobalArgs<T>) -> Self {
+impl<T: ArgsBackToTokens> From<WithPlugin<T>> for ArgsWithPlugin<T> {
+    fn from(value: WithPlugin<T>) -> Self {
         ArgsWithPlugin::new(value.plugin(), value.inner)
     }
 }
 
-impl<T> GenericsArgs for GlobalArgs<T>
+impl<T> GenericsArgs for WithPlugin<T>
 where
     T: GenericsArgs,
 {
@@ -51,7 +51,7 @@ where
     }
 }
 
-impl<T> ToTokensWithConcreteTargetPath for GlobalArgs<T>
+impl<T> ToTokensWithConcreteTargetPath for WithPlugin<T>
 where
     T: ItemAttributeArgs,
 {
@@ -65,7 +65,7 @@ where
     }
 }
 
-impl<T> GlobalAttributeArgs for GlobalArgs<T>
+impl<T> GlobalAttributeArgs for WithPlugin<T>
 where
     T: ItemAttributeArgs,
 {

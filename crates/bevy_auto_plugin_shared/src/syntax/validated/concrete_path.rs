@@ -1,5 +1,5 @@
 use crate::codegen::with_target_path::WithTargetPath;
-use crate::macro_api::global_args::GenericsArgs;
+use crate::macro_api::with_plugin::GenericsArgs;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::traits::generics::CountGenerics;
 use crate::syntax::validated::generics::{Generics, GenericsCollection};

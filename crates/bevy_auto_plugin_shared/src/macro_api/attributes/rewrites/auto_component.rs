@@ -3,7 +3,7 @@ use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::GenericsArgs;
+use crate::macro_api::with_plugin::GenericsArgs;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
@@ -112,7 +112,7 @@ impl RewriteAttribute for ComponentArgs {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::macro_api::global_args::GlobalArgs;
+    use crate::macro_api::with_plugin::WithPlugin;
     use crate::test_util::combo::combos_one_per_group_or_skip;
     use crate::test_util::macros::*;
     use darling::ast::NestedMeta;
@@ -147,7 +147,7 @@ mod tests {
             register,
             auto_name,
         )};
-        let args = GlobalArgs::<ComponentArgs>::from_nested_meta(&args)?;
+        let args = WithPlugin::<ComponentArgs>::from_nested_meta(&args)?;
         let derive_args = vec_spread![tokens::derive_component_path(), ..extras.clone(),];
         let derive_reflect_path = tokens::derive_reflect_path();
         let reflect_args = vec_spread![parse_quote!(Component), ..extras,];

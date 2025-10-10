@@ -3,7 +3,7 @@ use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::codegen::with_target_path::WithTargetPath;
 use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::{GlobalArgs, GlobalAttributeArgs};
+use crate::macro_api::with_plugin::{GlobalAttributeArgs, WithPlugin};
 use crate::ok_or_return_compiler_error;
 use crate::syntax::diagnostic::kind::item_kind;
 use darling::FromMeta;
@@ -83,8 +83,8 @@ fn auto_inner<T: RewriteAttribute + FromMeta>(
     attr: MacroStream,
     input: MacroStream,
 ) -> syn::Result<MacroStream> {
-    use crate::macro_api::global_args::GlobalArgs;
-    let args = parse2::<GlobalArgs<T>>(attr)?;
+    use crate::macro_api::with_plugin::WithPlugin;
+    let args = parse2::<WithPlugin<T>>(attr)?;
     let args_ts = args.inner.expand_attrs(&args.plugin());
     Ok(quote! {
         #args_ts
@@ -167,7 +167,7 @@ macro_rules! gen_auto_attribute_outers {
         $(
             #[inline]
             pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-                proc_attribute_outer::<GlobalArgs<$args>>(attr, input)
+                proc_attribute_outer::<WithPlugin<$args>>(attr, input)
             }
         )+
     };

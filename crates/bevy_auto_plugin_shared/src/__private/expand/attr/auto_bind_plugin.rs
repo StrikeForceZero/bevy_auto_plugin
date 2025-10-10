@@ -2,14 +2,14 @@ use proc_macro2::TokenStream as MacroStream;
 
 pub fn auto_bind_plugin_inner(attr: MacroStream, input: MacroStream) -> syn::Result<MacroStream> {
     use crate::__private::expand::attr;
-    use crate::macro_api::global_args::GlobalArgs;
+    use crate::macro_api::with_plugin::WithPlugin;
     use crate::syntax::extensions::item::ItemAttrsExt;
     use proc_macro2::Span;
     use quote::quote;
     use syn::{Item, parse2};
 
     let mut item = parse2::<Item>(input)?;
-    let args = parse2::<GlobalArgs<()>>(attr)?;
+    let args = parse2::<WithPlugin<()>>(attr)?;
     let plugin = args.plugin;
 
     let Ok(mut attrs) = item.take_attrs() else {

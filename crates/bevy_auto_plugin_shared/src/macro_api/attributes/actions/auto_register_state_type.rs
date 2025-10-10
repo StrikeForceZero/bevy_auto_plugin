@@ -1,6 +1,6 @@
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
-use crate::macro_api::global_args::GenericsArgs;
+use crate::macro_api::with_plugin::GenericsArgs;
 use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;

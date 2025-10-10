@@ -3,7 +3,7 @@ use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::global_args::GenericsArgs;
+use crate::macro_api::with_plugin::GenericsArgs;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use darling::FromMeta;
@@ -71,7 +71,7 @@ impl RewriteAttribute for ObserverArgs {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::macro_api::global_args::GlobalArgs;
+    use crate::macro_api::with_plugin::WithPlugin;
     use crate::test_util::macros::*;
     use darling::ast::NestedMeta;
     use internal_test_util::vec_spread;
@@ -91,7 +91,7 @@ mod tests {
         let args: NestedMeta = parse_quote! {_(
             plugin = Test,
         )};
-        let args = GlobalArgs::<ObserverArgs>::from_nested_meta(&args)?;
+        let args = WithPlugin::<ObserverArgs>::from_nested_meta(&args)?;
         println!(
             "{}",
             args.inner.expand_attrs(&args.plugin()).to_token_stream()
