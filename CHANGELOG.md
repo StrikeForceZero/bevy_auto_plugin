@@ -103,6 +103,7 @@
 
 ---
 ### v0.7.0
+- Expanded `auto_insert_resource` `resource` to accept more potentially valid expressions
 - Remove re-exported crates `bevy_ecs`, `bevy_ecs_macros`, `bevy_state`, `bevy_log`, `bevy_reflect`, `bevy_reflect_derive`
   - Fixes 
     > no method named `with_docs` found for struct `type_info::OpaqueInfo` in the current scope
