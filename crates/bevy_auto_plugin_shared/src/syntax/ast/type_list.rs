@@ -48,7 +48,7 @@ impl FromMeta for TypeList {
         let list = meta.require_list()?;
         // Parse its tokens as `T, T, ...` where each `T` is a syn::Type
         let parser = Punctuated::<Type, Token![,]>::parse_terminated;
-        let elems = parser.parse2(list.tokens.clone()).map_err(Error::custom)?;
+        let elems = parser.parse2(list.tokens.clone()).map_err(Error::from)?;
         Ok(TypeList(elems.into_iter().collect()))
     }
 }

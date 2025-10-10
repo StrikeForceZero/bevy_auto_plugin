@@ -1,30 +1,36 @@
 #[macro_export]
 #[doc(hidden)]
-macro_rules! ok_or_return_compiler_error {
+macro_rules! ok_or_return_compiler_error_with_span_and_message {
     // Case: Only expression
-    ($expr:expr) => {
-        ok_or_return_compiler_error!(@internal ::proc_macro2::Span::call_site(), "failed to parse", $expr)
-    };
+    ($expr:expr) => {{
+        let expr = $expr;
+        let span = $crate::syntax::diagnostic::span::get_or_create_span_from_result(&expr);
+        $crate::ok_or_return_compiler_error_with_span_and_message!(@internal span, "failed to parse", expr)
+    }};
 
     // Case: Expression, message ident
-    ($expr:expr, $message:ident) => {
-        ok_or_return_compiler_error!(@internal ::proc_macro2::Span::call_site(), $message, $expr)
-    };
+    ($expr:expr, $message:ident) => {{
+        let expr = $expr;
+        let span = $crate::syntax::diagnostic::span::get_or_create_span_from_result(&expr);
+        $crate::ok_or_return_compiler_error_with_span_and_message!(@internal span, $message, expr)
+    }};
 
     // Case: Span, Expression
-    ($span:expr, $expr:expr) => {
-        ok_or_return_compiler_error!(@internal $span, "failed to parse", $expr)
-    };
+    ($span:expr, $expr:expr) => {{
+        $crate::ok_or_return_compiler_error_with_span_and_message!(@internal $span, "failed to parse", $expr)
+    }};
 
     // Case: Expression, message
-    ($expr:expr, $message:literal) => {
-        ok_or_return_compiler_error!(@internal ::proc_macro2::Span::call_site(), $message, $expr)
-    };
+    ($expr:expr, $message:literal) => {{
+        let expr = $expr;
+        let span = $crate::syntax::diagnostic::span::get_or_create_span_from_result(&expr);
+        $crate::ok_or_return_compiler_error_with_span_and_message!(@internal span, $message, expr)
+    }};
 
     // Case: Span, message, Expression
-    ($span:expr, $message:literal, $expr:expr) => {
-        ok_or_return_compiler_error!(@internal $span, $message, $expr)
-    };
+    ($span:expr, $message:literal, $expr:expr) => {{
+        $crate::ok_or_return_compiler_error_with_span_and_message!(@internal $span, $message, $expr)
+    }};
 
     // Internal handler (common logic)
     (@internal $span:expr, $message:expr, $expr:expr) => {{
@@ -33,9 +39,35 @@ macro_rules! ok_or_return_compiler_error {
         match $expr {
             Ok(v) => v,
             Err(e) => {
-                return syn::Error::new(span, format!("{}: {}", message, e))
+                return syn::Error::new(span, format!("{message}: {e}"))
                     .to_compile_error()
                     .into();
+            }
+        }
+    }};
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! ok_or_return_compiler_error {
+    // Case: expression, message
+    ($expr:expr, $message:expr) => {{
+        let message = $message;
+        match $expr {
+            Ok(v) => v,
+            Err(e) => {
+                return syn::Error::new(e.span(), format!("{message}: {e}"))
+                    .to_compile_error()
+                    .into();
+            }
+        }
+    }};
+    // Case: Only expression
+    ($expr:expr) => {{
+        match $expr {
+            Ok(v) => v,
+            Err(e) => {
+                return e.to_compile_error().into();
             }
         }
     }};

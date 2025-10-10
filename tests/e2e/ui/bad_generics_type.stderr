@@ -1,0 +1,5 @@
+error: expected one of: `for`, parentheses, `fn`, `unsafe`, `extern`, identifier, `::`, `<`, `dyn`, square brackets, `*`, `&`, `!`, `impl`, `_`, lifetime
+ --> tests/e2e/ui/bad_generics_type.rs:7:52
+  |
+7 | #[auto_register_type(plugin = TestPlugin, generics(1, 1))]
+  |                                                    ^
