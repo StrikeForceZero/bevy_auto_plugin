@@ -1,6 +1,7 @@
 use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_ecs::prelude::*;
+use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin)]
 struct TestPlugin;
@@ -27,7 +28,7 @@ fn app() -> App {
     app
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_plugin_param() {
     let app = app();
     assert_eq!(app.world().get_resource::<Test>(), Some(&Test(1)));

@@ -67,6 +67,7 @@ impl syn::parse::Parse for TypeList {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use internal_test_proc_macro::xtest;
     use syn::{Meta, Type, parse_quote};
 
     #[derive(Debug, FromMeta)]
@@ -74,7 +75,7 @@ mod tests {
         pub types: TypeList,
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn parse_types() {
         let types = quote! { u32, i32, FooBar<u32>, [u8; 4] };
         let meta: Meta = parse_quote!(foo(types(#types)));

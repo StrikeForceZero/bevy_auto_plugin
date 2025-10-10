@@ -80,6 +80,7 @@ impl CountGenerics for Generics {
 mod tests {
     use super::*;
     use darling::FromMeta;
+    use internal_test_proc_macro::xtest;
     use quote::quote;
     use syn::Type;
     use syn::TypePath;
@@ -90,7 +91,7 @@ mod tests {
         Ok(TypeList(vec![ty_u32, ty_bool]))
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_generics() -> syn::Result<()> {
         assert_eq!(
             Generics(TypeList::empty()).to_token_stream().to_string(),
@@ -107,7 +108,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_generics_collection() -> syn::Result<()> {
         let generics = GenericsCollection(vec![types()?]);
         let mut iter = generics.into_iter();

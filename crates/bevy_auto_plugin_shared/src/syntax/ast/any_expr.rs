@@ -187,6 +187,7 @@ macro_rules! any_expr_enum {
 #[cfg(test)]
 mod tests {
     use darling::FromMeta;
+    use internal_test_proc_macro::xtest;
     use proc_macro2::TokenStream;
     use quote::quote;
     use syn::{parse_quote, parse2};
@@ -212,7 +213,7 @@ mod tests {
     mod strict {
         use super::*;
 
-        #[internal_test_proc_macro::xtest]
+        #[xtest]
         fn test_parse2_any_expr_single() {
             any_expr_enum!(strict AnyExprTest: Closure);
             // closure - valid
@@ -229,7 +230,7 @@ mod tests {
             );
         }
 
-        #[internal_test_proc_macro::xtest]
+        #[xtest]
         fn test_from_meta_any_single() {
             any_expr_enum!(strict AnyExprTest: Closure);
             // closure - valid
@@ -246,7 +247,7 @@ mod tests {
             );
         }
 
-        #[internal_test_proc_macro::xtest]
+        #[xtest]
         fn test_parse2_any_multiple() {
             any_expr_enum!(strict AnyExprTest: Closure, Path);
             // closure - valid
@@ -269,7 +270,7 @@ mod tests {
             );
         }
 
-        #[internal_test_proc_macro::xtest]
+        #[xtest]
         fn test_from_meta_any_multiple() {
             any_expr_enum!(strict AnyExprTest: Closure, Path);
             // closure - valid
@@ -296,7 +297,7 @@ mod tests {
     mod permissive {
         use super::*;
 
-        #[internal_test_proc_macro::xtest]
+        #[xtest]
         fn test_parse2_any_expr_single() {
             any_expr_enum!(AnyExprTest: Closure);
             // closure - valid
@@ -313,7 +314,7 @@ mod tests {
             );
         }
 
-        #[internal_test_proc_macro::xtest]
+        #[xtest]
         fn test_from_meta_any_single() {
             any_expr_enum!(AnyExprTest: Closure);
             // closure - valid
@@ -330,7 +331,7 @@ mod tests {
             );
         }
 
-        #[internal_test_proc_macro::xtest]
+        #[xtest]
         fn test_parse2_any_multiple() {
             any_expr_enum!(AnyExprTest: Closure, Path);
             // closure - valid
@@ -353,7 +354,7 @@ mod tests {
             );
         }
 
-        #[internal_test_proc_macro::xtest]
+        #[xtest]
         fn test_from_meta_any_multiple() {
             any_expr_enum!(AnyExprTest: Closure, Path);
             // closure - valid
@@ -377,7 +378,7 @@ mod tests {
         }
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_debug() {
         // Closure
         {

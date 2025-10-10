@@ -59,9 +59,10 @@ impl ArgsBackToTokens for AddMessageArgs {
 mod tests {
     use super::*;
     use crate::codegen::with_target_path::WithTargetPath;
+    use internal_test_proc_macro::xtest;
     use syn::{Path, parse_quote, parse2};
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_to_tokens_no_generics() -> syn::Result<()> {
         let args = parse2::<AddMessageArgs>(quote!())?;
         let path: Path = parse_quote!(FooTarget);
@@ -78,7 +79,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
         let args = parse2::<AddMessageArgs>(quote!(generics(u8, bool)))?;
         let path: Path = parse_quote!(FooTarget);
@@ -95,7 +96,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_to_tokens_multiple() -> syn::Result<()> {
         let args = parse2::<AddMessageArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
         let path: Path = parse_quote!(FooTarget);

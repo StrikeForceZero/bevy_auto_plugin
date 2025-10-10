@@ -99,6 +99,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use internal_test_proc_macro::xtest;
 
     #[derive(FromMeta, Default, Debug, Copy, Clone, PartialEq)]
     #[darling(derive_syn_parse, default)]
@@ -120,7 +121,7 @@ mod tests {
         }
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_flag_or_list_to_outer_tokens_not_present() {
         assert_eq!(
             FlagOrMeta::<Ident>::default()
@@ -130,7 +131,7 @@ mod tests {
         )
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_flag_or_list_to_outer_tokens_empty() {
         assert_eq!(
             FlagOrMeta::<Ident> {
@@ -143,7 +144,7 @@ mod tests {
         )
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_flag_or_list_to_outer_tokens_single_item() {
         assert_eq!(
             FlagOrMeta::<Test> {
@@ -159,7 +160,7 @@ mod tests {
         )
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_flag_or_list_to_outer_tokens_multiple_item() {
         assert_eq!(
             FlagOrMeta::<Test> {
@@ -175,7 +176,7 @@ mod tests {
         )
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_flag_or_list_parsing() {
         let input = quote! { (a = 1u32, b = 2u32) };
         let item = syn::parse2::<FlagOrMeta<Test>>(input).map_err(|e| e.to_string());

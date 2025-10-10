@@ -117,6 +117,7 @@ impl syn::parse::Parse for ExprPathOrCall {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use internal_test_proc_macro::xtest;
     use syn::{Meta, parse_quote};
 
     #[derive(Debug)]
@@ -128,7 +129,7 @@ mod tests {
         pub item: ExprPathOrCall,
     }
 
-    #[test]
+    #[xtest]
     fn from_call() {
         let expr = parse_quote! { Foo(1) };
         let meta: Meta = parse_quote!(foo(item(#expr)));
@@ -144,7 +145,7 @@ mod tests {
         );
     }
 
-    #[test]
+    #[xtest]
     fn from_path() {
         let expr = parse_quote! { ::bar::Foo };
         let meta: Meta = parse_quote!(foo(item(#expr)));
@@ -160,7 +161,7 @@ mod tests {
         );
     }
 
-    #[test]
+    #[xtest]
     fn from_call_eq() {
         let expr: Expr = syn::parse_quote! { OnEnter(SomeState::Foo) };
         let meta: Meta = syn::parse_quote!(attr(item = #expr));
@@ -172,7 +173,7 @@ mod tests {
         assert!(matches!(attr.item, ExprPathOrCall::Call(_)));
     }
 
-    #[test]
+    #[xtest]
     fn from_path_eq() {
         let expr: Expr = syn::parse_quote! { ::some::path::Update };
         let meta: Meta = syn::parse_quote!(attr(item = #expr));

@@ -124,8 +124,9 @@ pub fn generics_from_path(path: &Path) -> syn::Result<TypeList> {
 mod tests {
     use super::*;
     use crate::syntax::validated::generics::Generics;
+    use internal_test_proc_macro::xtest;
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_generics_from_path() -> Result<(), syn::Error> {
         let item = parse2::<Path>(quote! {
             foo::bar::<u32, i32>
@@ -136,7 +137,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_concrete_target_path_to_tokens() -> syn::Result<()> {
         assert_eq!(
             ConcreteTargetPath {
@@ -161,7 +162,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_concrete_target_path_to_tokens_turbofish() -> syn::Result<()> {
         assert_eq!(
             ConcreteTargetPath {

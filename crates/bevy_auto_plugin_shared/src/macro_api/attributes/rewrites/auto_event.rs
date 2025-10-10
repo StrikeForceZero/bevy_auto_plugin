@@ -128,6 +128,7 @@ mod tests {
     use crate::test_util::combo::combos_one_per_group_or_skip_with;
     use crate::test_util::macros::*;
     use crate::test_util::test_params::{_inject_derive, Side, TestParams as _TestParams};
+    use internal_test_proc_macro::xtest;
     use internal_test_util::extract_punctuated_paths;
     use syn::parse_quote;
 
@@ -164,7 +165,7 @@ mod tests {
         }
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_back_into_args() -> syn::Result<()> {
         for args in combos_one_per_group_or_skip_with(
             &[
@@ -189,7 +190,7 @@ mod tests {
             .expect("failed to extract punctuated paths")
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_default() -> anyhow::Result<()> {
         TestParams::from_args(quote! {
             plugin = Test,
@@ -198,7 +199,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_no_global_or_entity_flags() -> anyhow::Result<()> {
         let extras = extras();
         TestParams::from_args(quote! {
@@ -215,7 +216,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_global_event() -> anyhow::Result<()> {
         let extras = extras();
         TestParams::from_args(quote! {
@@ -233,7 +234,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_global_event_no_derive() -> anyhow::Result<()> {
         let extras = extras();
         TestParams::from_args(quote! {
@@ -249,7 +250,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_entity_event() -> anyhow::Result<()> {
         let extras = extras();
         TestParams::from_args(quote! {
@@ -267,7 +268,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_entity_event_no_derive() -> anyhow::Result<()> {
         let extras = extras();
         TestParams::from_args(quote! {
@@ -283,7 +284,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_entity_event_propagate() -> anyhow::Result<()> {
         let extras = extras();
         TestParams::from_args(quote! {
@@ -301,7 +302,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_entity_event_propagate_custom() -> anyhow::Result<()> {
         let extras = extras();
         TestParams::from_args(quote! {
@@ -319,7 +320,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_entity_event_propagate_custom_and_auto_propagate() -> anyhow::Result<()> {
         let extras = extras();
         TestParams::from_args(quote! {
@@ -337,7 +338,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_entity_event_auto_propagate() -> anyhow::Result<()> {
         let extras = extras();
         TestParams::from_args(quote! {

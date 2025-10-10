@@ -90,11 +90,12 @@ impl ToTokens for NonEmptyPath {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use internal_test_proc_macro::xtest;
     use quote::quote;
     use syn::punctuated::Punctuated;
     use syn::{PathSegment, Token, parse_quote};
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_parse() {
         let input_tokens = quote!(::this);
         let input: NonEmptyPath = parse_quote!(#input_tokens);
@@ -109,7 +110,7 @@ mod tests {
         assert_eq!(input, NonEmptyPath(parse_quote!(#input_tokens)));
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_to_tokens() {
         let input_tokens = quote!(::this);
         let input: NonEmptyPath = parse_quote!(#input_tokens);
@@ -131,7 +132,7 @@ mod tests {
         );
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_empty_path_is_err() {
         assert!(
             NonEmptyPath::new(Path {

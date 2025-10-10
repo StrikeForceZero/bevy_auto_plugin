@@ -77,6 +77,7 @@ pub(crate) mod paths {
 #[cfg(test)]
 mod tests {
     use crate::bevy_crate_path;
+    use internal_test_proc_macro::xtest;
     use quote::ToTokens;
 
     #[allow(dead_code)]
@@ -106,7 +107,7 @@ mod tests {
         r.map(|p| p.into_token_stream().to_string())
     }
 
-    #[test]
+    #[xtest]
     fn test_crate_resolve_bevy_ecs() {
         assert_eq!(
             map_resolve_crate(super::paths::ecs::resolve()),
@@ -114,7 +115,7 @@ mod tests {
         );
     }
 
-    #[test]
+    #[xtest]
     fn test_crate_resolve_bevy_state() {
         assert_eq!(
             map_resolve_crate(super::paths::state::resolve()),
@@ -122,7 +123,7 @@ mod tests {
         );
     }
 
-    #[test]
+    #[xtest]
     fn test_crate_resolve_bevy_reflect() {
         assert_eq!(
             map_resolve_crate(super::paths::reflect::resolve()),
@@ -130,7 +131,7 @@ mod tests {
         );
     }
 
-    #[test]
+    #[xtest]
     fn test_crate_resolve_non_existent_crate() {
         let res = bevy_crate_path!(foobar);
         match res {

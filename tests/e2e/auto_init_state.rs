@@ -2,6 +2,7 @@ use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_state::app::StatesPlugin;
 use bevy_state::prelude::*;
+use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -31,7 +32,7 @@ fn app() -> App {
     app
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_init_state() {
     let app = app();
     assert!(

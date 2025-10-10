@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_auto_plugin::prelude::*;
+use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin)]
 struct TestPlugin;
@@ -68,7 +69,7 @@ mod test {
         app
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_system() {
         let mut app = app();
         app.add_plugins(TestPlugin);

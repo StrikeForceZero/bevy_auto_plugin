@@ -70,6 +70,7 @@ impl syn::parse::Parse for ExprValue {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use internal_test_proc_macro::xtest;
     use quote::quote;
     use syn::{Meta, parse_quote};
 
@@ -82,7 +83,7 @@ mod tests {
         pub item: ExprValue,
     }
 
-    #[test]
+    #[xtest]
     fn parse_types() {
         let expr = parse_quote! { Foo(1) };
         let meta: Meta = parse_quote!(foo(item(#expr)));

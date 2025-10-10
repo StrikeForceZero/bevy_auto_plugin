@@ -69,9 +69,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use internal_test_proc_macro::xtest;
     use syn::parse_quote;
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_flag_or_list_to_outer_tokens_not_present() {
         assert_eq!(
             FlagOrList::<Ident>::default()
@@ -81,7 +82,7 @@ mod tests {
         )
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_flag_or_list_to_outer_tokens_empty() {
         assert_eq!(
             FlagOrList::<Ident> {
@@ -94,7 +95,7 @@ mod tests {
         )
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_flag_or_list_to_outer_tokens_single_item() {
         assert_eq!(
             FlagOrList::<Ident> {
@@ -107,7 +108,7 @@ mod tests {
         )
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_flag_or_list_to_outer_tokens_multiple_item() {
         assert_eq!(
             FlagOrList::<Ident> {

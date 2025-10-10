@@ -111,11 +111,12 @@ mod tests {
     use crate::test_util::combo::combos_one_per_group_or_skip;
     use crate::test_util::macros::*;
     use darling::ast::NestedMeta;
+    use internal_test_proc_macro::xtest;
     use internal_test_util::{extract_punctuated_paths, vec_spread};
     use quote::ToTokens;
     use syn::parse_quote;
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_back_into_args() -> syn::Result<()> {
         for args in combos_one_per_group_or_skip(&[
             vec![quote!(derive), quote!(derive(Debug, Default))],
@@ -129,7 +130,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_global() -> syn::Result<()> {
         let extras = extract_punctuated_paths(parse_quote!(A, B))
             .into_iter()

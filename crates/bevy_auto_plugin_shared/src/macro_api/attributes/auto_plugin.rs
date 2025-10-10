@@ -120,9 +120,10 @@ pub fn resolve_app_param_name<'a>(
 #[cfg(test)]
 mod tests {
     use crate::macro_api::attributes::auto_plugin::resolve_app_param_name;
+    use internal_test_proc_macro::xtest;
     use proc_macro2::{Ident, Span};
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     #[should_panic = "auto_plugin provided app_param: `bar` but it was not found in the function signature"]
     fn test_resolve_app_param_name_wrong_specified() {
         let item = syn::parse_quote! {
@@ -133,7 +134,7 @@ mod tests {
         assert_eq!(ident, "foo");
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_resolve_app_param_name_specified() {
         let item = syn::parse_quote! {
             fn foo(&mut self, foo1: &mut App, foo2: &mut App, foo3: &mut App) {}
@@ -143,7 +144,7 @@ mod tests {
         assert_eq!(ident, "foo2");
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_resolve_app_param_name_default() {
         let item = syn::parse_quote! {
             fn foo(&mut self, foo: &mut App) {}
@@ -152,7 +153,7 @@ mod tests {
         assert_eq!(ident, "foo");
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     #[should_panic = "auto_plugin requires a function taking at least one named parameter"]
     fn test_resolve_app_param_name_default_no_params() {
         let item = syn::parse_quote! {
@@ -164,7 +165,7 @@ mod tests {
         }
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     #[should_panic = "auto_plugin requires a method taking at least one parameter in addition to `&self`"]
     fn test_resolve_app_param_name_default_missing_param() {
         let item = syn::parse_quote! {
@@ -176,7 +177,7 @@ mod tests {
         }
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     #[should_panic = "auto_plugin - the function: foo param: foo is not mutable"]
     fn test_resolve_app_param_name_default_wrong_type() {
         let item = syn::parse_quote! {

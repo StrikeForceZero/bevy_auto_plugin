@@ -2,6 +2,7 @@ use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_ecs::name::Name;
 use bevy_ecs::prelude::*;
+use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -17,7 +18,7 @@ fn app() -> App {
     app
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_name() {
     let mut app = app();
     let entity = app.world_mut().spawn(Test(true)).id();

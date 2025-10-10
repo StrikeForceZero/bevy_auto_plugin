@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_auto_plugin_proc_macros::{auto_init_resource, auto_insert_resource};
+use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin)]
 pub struct MyPlugin;
@@ -19,7 +20,7 @@ fn build(non_default_app_param_name: &mut App) {
     non_default_app_param_name.insert_resource(MyResourceBuild(1));
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test() {
     let mut app = App::new();
     app.add_plugins(MyPlugin);

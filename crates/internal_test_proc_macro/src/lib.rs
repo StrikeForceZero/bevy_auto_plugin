@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Attribute, ItemFn, parse_macro_input};
 
-/// #[xtest] => #[wasm_bindgen_test] on wasm32, else #[test]
+/// #[xtest] => #[wasm_bindgen_test] on wasm32, else #[xtest]
 #[proc_macro_attribute]
 pub fn xtest(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let func = parse_macro_input!(item as ItemFn);
@@ -10,7 +10,7 @@ pub fn xtest(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let sig = &func.sig;
     let block = &func.block;
 
-    // Keep all attrs except any existing #[test] / #[wasm_bindgen_test]
+    // Keep all attrs except any existing #[xtest] / #[wasm_bindgen_test]
     let attrs: Vec<Attribute> = func
         .attrs
         .into_iter()

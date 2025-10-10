@@ -1,6 +1,7 @@
 use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_ecs::prelude::*;
+use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin)]
 struct TestPlugin;
@@ -30,7 +31,7 @@ fn test_eq(app: &App, b: i32) {
     assert_eq!(app.world().resource::<Test>(), &Test(b));
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_register_systems() {
     let mut app = app();
     test_eq(&app, 0);

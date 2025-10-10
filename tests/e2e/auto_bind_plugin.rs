@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_state::app::StatesPlugin;
+use internal_test_proc_macro::xtest;
 use internal_test_util::{create_minimal_app, type_id_of};
 use std::ops::Deref;
 
@@ -112,7 +113,7 @@ fn app() -> App {
     app
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_register_type_foo_component() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
@@ -123,7 +124,7 @@ fn test_auto_register_type_foo_component() {
     );
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_name_foo_component() {
     let mut app = app();
     app.world_mut().spawn(FooComponent);
@@ -139,7 +140,7 @@ fn test_auto_name_foo_component() {
     );
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_init_resource_foo_default_res() {
     let app = app();
     assert_eq!(
@@ -149,7 +150,7 @@ fn test_auto_init_resource_foo_default_res() {
     );
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_insert_resource_foo_res() {
     let app = app();
     assert_eq!(
@@ -159,7 +160,7 @@ fn test_auto_insert_resource_foo_res() {
     );
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_add_system_foo_system() {
     let mut app = app();
     assert_eq!(
@@ -175,13 +176,13 @@ fn test_auto_add_system_foo_system() {
     );
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_add_message_foo_event() {
     let mut app = app();
     assert!(app.world_mut().write_message(FooEvent(1)).is_some());
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_register_state_type_foo_state() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
@@ -196,7 +197,7 @@ fn test_auto_register_state_type_foo_state() {
     );
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_init_state_type_foo_state() {
     let app = app();
     assert_eq!(
@@ -208,7 +209,7 @@ fn test_auto_init_state_type_foo_state() {
     );
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_add_observer_foo_observer() {
     let mut app = app();
     assert!(

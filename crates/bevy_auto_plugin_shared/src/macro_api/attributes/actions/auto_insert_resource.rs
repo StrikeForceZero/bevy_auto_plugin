@@ -51,9 +51,10 @@ impl ToTokensWithConcreteTargetPath for InsertResourceArgs {
 mod tests {
     use super::*;
     use crate::codegen::with_target_path::WithTargetPath;
+    use internal_test_proc_macro::xtest;
     use syn::{Path, parse_quote, parse2};
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_to_tokens_no_generics() -> syn::Result<()> {
         let args = parse2::<InsertResourceArgs>(quote!(resource(FooTarget)))?;
         let path: Path = parse_quote!(FooTarget);
@@ -70,7 +71,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
         let args =
             parse2::<InsertResourceArgs>(quote!(generics(u8, bool), resource(FooTarget(1, true))))?;
@@ -88,7 +89,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     #[should_panic(expected = "Duplicate field `generics`")]
     fn test_to_tokens_multiple() {
         parse2::<InsertResourceArgs>(quote!(

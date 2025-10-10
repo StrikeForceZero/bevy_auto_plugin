@@ -4,6 +4,7 @@ use bevy_ecs::prelude::*;
 use bevy_reflect::prelude::*;
 use bevy_state::app::StatesPlugin;
 use bevy_state::prelude::*;
+use internal_test_proc_macro::xtest;
 use internal_test_util::type_id_of;
 
 #[derive(AutoPlugin)]
@@ -42,7 +43,7 @@ fn app() -> App {
     app
 }
 
-#[internal_test_proc_macro::xtest]
+#[xtest]
 fn test_auto_register_state_type() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();

@@ -17,6 +17,7 @@ impl<T: FromMeta> FromMetaExt for T {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use internal_test_proc_macro::xtest;
     use syn::{Attribute, parse_quote};
 
     #[derive(FromMeta, Debug, Default, PartialEq)]
@@ -30,7 +31,7 @@ mod tests {
     #[darling(default)]
     struct TestSingle(Option<String>);
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     #[should_panic(expected = "Unexpected meta-item format `word`")]
     fn test_from_meta_word_panic() {
         let attr: Attribute = parse_quote!(#[foo]);
@@ -40,7 +41,7 @@ mod tests {
         }
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_from_meta_ext_word() {
         let attr: Attribute = parse_quote!(#[foo]);
         assert_eq!(
@@ -49,7 +50,7 @@ mod tests {
         );
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_from_meta_ext_list() {
         let attr: Attribute = parse_quote!(#[foo(a = "bar")]);
         assert_eq!(
@@ -69,7 +70,7 @@ mod tests {
         );
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     // Meta::Path on tuple struct unsupported
     #[should_panic(expected = "Unexpected meta-item format `word`")]
     fn test_from_meta_ext_name_value_empty() {
@@ -80,7 +81,7 @@ mod tests {
         }
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_from_meta_ext_name_value() {
         let attr: Attribute = parse_quote!(#[foo = "bar"]);
         assert_eq!(

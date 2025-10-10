@@ -107,9 +107,10 @@ macro_rules! bevy_crate_path {
 
 #[cfg(test)]
 mod tests {
+    use internal_test_proc_macro::xtest;
     use quote::ToTokens;
 
-    #[test]
+    #[xtest]
     fn test_bevy_crate_path() {
         assert_eq!(
             bevy_crate_path!(reflect).map(|c| c.to_token_stream().to_string()),

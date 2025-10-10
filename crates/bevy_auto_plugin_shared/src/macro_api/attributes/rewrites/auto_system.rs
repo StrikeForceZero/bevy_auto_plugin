@@ -81,11 +81,12 @@ mod tests {
     use crate::macro_api::with_plugin::WithPlugin;
     use crate::test_util::macros::*;
     use darling::ast::NestedMeta;
+    use internal_test_proc_macro::xtest;
     use internal_test_util::vec_spread;
     use quote::ToTokens;
     use syn::parse_quote;
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_back_into_args() -> syn::Result<()> {
         let args = vec![quote! { schedule = Update }];
         println!("checking args: {}", quote! { #(#args),*});
@@ -93,7 +94,7 @@ mod tests {
         Ok(())
     }
 
-    #[internal_test_proc_macro::xtest]
+    #[xtest]
     fn test_expand_attrs_global() -> syn::Result<()> {
         let args: NestedMeta = parse_quote! {_(
             plugin = Test,
