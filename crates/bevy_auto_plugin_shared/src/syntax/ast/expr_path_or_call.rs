@@ -2,6 +2,7 @@ use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::parse::Parser;
+use syn::spanned::Spanned;
 use syn::{Expr, Token, punctuated::Punctuated};
 
 #[derive(Debug, Clone, PartialEq, Hash)]
@@ -46,10 +47,7 @@ impl FromMeta for ExprPathOrCall {
             match expr {
                 Expr::Path(p) => Ok(ExprPathOrCall::Path(p)),
                 Expr::Call(c) => Ok(ExprPathOrCall::Call(c)),
-                other => Err(darling::Error::custom(format!(
-                    "unsupported expression: expected path or call, got `{}`",
-                    other.to_token_stream()
-                ))),
+                other => Err(darling::Error::unexpected_expr_type(&other)),
             }
         }
 
@@ -62,11 +60,11 @@ impl FromMeta for ExprPathOrCall {
                     .parse2(list.tokens.clone())
                     .map_err(darling::Error::custom)?;
                 let mut it = elems.into_iter();
-                let expr = it
-                    .next()
-                    .ok_or_else(|| darling::Error::custom("expected one expression"))?;
-                if it.next().is_some() {
-                    return Err(darling::Error::custom("expected exactly one expression"));
+                let expr = it.next().ok_or_else(|| {
+                    darling::Error::too_few_items(1).with_span(&list.tokens.span())
+                })?;
+                if let Some(elem) = it.next() {
+                    return Err(darling::Error::too_many_items(1).with_span(&elem.span()));
                 }
                 one_expr_to_variant(expr)
             }
@@ -80,7 +78,8 @@ impl FromMeta for ExprPathOrCall {
             // Bare flag like `item` is not accepted.
             syn::Meta::Path(_) => Err(darling::Error::custom(
                 "expected `item = <expr>` or `item(<expr>)`",
-            )),
+            )
+            .with_span(&meta.span())),
         }
     }
 }
@@ -90,25 +89,20 @@ impl syn::parse::Parse for ExprPathOrCall {
         let elems = Punctuated::<Expr, Token![,]>::parse_terminated(input)?;
         let mut elems = elems.into_iter();
         let Some(elem) = elems.next() else {
-            return Err(syn::Error::new(
-                input.span(),
-                "expected exactly one path or call",
-            ));
+            return Err(darling::Error::too_few_items(1)
+                .with_span(&input.span())
+                .into());
         };
-        if elems.next().is_some() {
-            return Err(syn::Error::new(
-                input.span(),
-                "expected exactly one path or call",
-            ));
-        };
+        if let Some(elem) = elems.next() {
+            return Err(darling::Error::too_many_items(1)
+                .with_span(&elem.span())
+                .into());
+        }
         Ok(match elem {
             Expr::Call(call) => ExprPathOrCall::Call(call),
             Expr::Path(path) => ExprPathOrCall::Path(path),
-            _ => {
-                return Err(syn::Error::new(
-                    input.span(),
-                    "unsupported expression - expected path or call",
-                ));
+            other => {
+                return Err(darling::Error::unexpected_expr_type(&other).into());
             }
         })
     }
