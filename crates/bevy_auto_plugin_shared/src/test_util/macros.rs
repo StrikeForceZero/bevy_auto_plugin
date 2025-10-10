@@ -2,9 +2,9 @@ macro_rules! parse_attribute_args_with_plugin {
     // with meta args
     ($plugin:expr, $args_ident:ident, $tokens:expr $(,)?) => {{
         use quote::quote;
-        use $crate::__private::attribute_args::attributes::shorthand::tokens::ArgsWithPlugin;
-        use $crate::__private::attribute_args::attributes::shorthand::tokens::ArgsBackToTokens;
-        use $crate::__private::attribute_args::GlobalArgs;
+        use $crate::codegen::tokens::ArgsWithPlugin;
+        use $crate::codegen::tokens::ArgsBackToTokens;
+        use $crate::macro_api::global_args::GlobalArgs;
         let plugin = $plugin.clone();
         let macro_path = <$args_ident as ArgsBackToTokens>::full_attribute_path();
 
@@ -50,7 +50,7 @@ macro_rules! assert_vec_args_expand {
 }
 
 macro_rules! plugin {
-    ($plugin:expr) => {{ $crate::__private::non_empty_path::NonEmptyPath::new_unchecked($plugin) }};
+    ($plugin:expr) => {{ $crate::syntax::validated::non_empty_path::NonEmptyPath::new_unchecked($plugin) }};
 }
 
 #[rustfmt::skip]

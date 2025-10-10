@@ -1,6 +1,7 @@
-use crate::__private::attribute_args::attributes::prelude::*;
-use crate::__private::attribute_args::{ItemAttributeArgs, ToTokensWithConcreteTargetPath};
-use crate::__private::util::concrete_path::ConcreteTargetPath;
+use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
+use crate::macro_api::attributes::prelude::*;
+use crate::macro_api::global_args::ItemAttributeArgs;
+use crate::util::concrete_path::ConcreteTargetPath;
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
 use std::collections::HashSet;

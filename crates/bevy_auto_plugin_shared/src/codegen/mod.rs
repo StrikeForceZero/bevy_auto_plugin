@@ -1,0 +1,54 @@
+pub mod tokens;
+pub mod with_target_path;
+
+use proc_macro2::TokenStream as MacroStream;
+use quote::{ToTokens, quote};
+
+#[derive(Debug, Default, Clone)]
+pub struct ExpandAttrs {
+    pub attrs: Vec<MacroStream>,
+    pub use_items: Vec<MacroStream>,
+}
+
+impl PartialEq for ExpandAttrs {
+    fn eq(&self, other: &Self) -> bool {
+        quote!(#self).to_token_stream().to_string() == quote!(#other).to_token_stream().to_string()
+    }
+}
+
+impl ExpandAttrs {
+    pub fn to_use_attr_ts_tuple(&self) -> (MacroStream, MacroStream) {
+        let use_items = &self.use_items;
+        let attrs = &self.attrs;
+        (
+            quote! {
+                #(#use_items)*
+            },
+            quote! {
+                #(#attrs)*
+            },
+        )
+    }
+    pub fn with(mut self, other: Self) -> Self {
+        self.append(other);
+        self
+    }
+    pub fn append(&mut self, other: Self) {
+        self.attrs.extend(other.attrs);
+        self.use_items.extend(other.use_items);
+    }
+}
+
+impl ToTokens for ExpandAttrs {
+    fn to_tokens(&self, tokens: &mut MacroStream) {
+        let use_items = &self.use_items;
+        tokens.extend(quote! {
+            #(#use_items)*
+
+        });
+        let attrs = &self.attrs;
+        tokens.extend(quote! {
+            #(#attrs)*
+        });
+    }
+}

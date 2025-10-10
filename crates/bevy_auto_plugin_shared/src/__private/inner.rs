@@ -1,29 +1,11 @@
-use crate::__private::attribute_args::attributes::add_message::AddMessageAttributeArgs;
-use crate::__private::attribute_args::attributes::add_observer::AddObserverAttributeArgs;
-use crate::__private::attribute_args::attributes::add_system::AddSystemAttributeArgs;
-use crate::__private::attribute_args::attributes::auto_name::AutoNameAttributeArgs;
-use crate::__private::attribute_args::attributes::auto_plugin::AutoPluginFnAttributeArgs;
-use crate::__private::attribute_args::attributes::auto_plugin::resolve_app_param_name;
-use crate::__private::attribute_args::attributes::init_resource::InitResourceAttributeArgs;
-use crate::__private::attribute_args::attributes::init_state::InitStateAttributeArgs;
-use crate::__private::attribute_args::attributes::insert_resource::InsertResourceAttributeArgs;
-use crate::__private::attribute_args::attributes::register_state_type::RegisterStateTypeAttributeArgs;
-use crate::__private::attribute_args::attributes::register_type::RegisterTypeAttributeArgs;
-use crate::__private::attribute_args::attributes::shorthand::ShortHandAttribute;
-use crate::__private::attribute_args::attributes::shorthand::component::ComponentAttributeArgs;
-use crate::__private::attribute_args::attributes::shorthand::event::EventAttributeArgs;
-use crate::__private::attribute_args::attributes::shorthand::observer::ObserverAttributeArgs;
-use crate::__private::attribute_args::attributes::shorthand::prelude::MessageAttributeArgs;
-use crate::__private::attribute_args::attributes::shorthand::resource::ResourceAttributeArgs;
-use crate::__private::attribute_args::attributes::shorthand::states::StatesAttributeArgs;
-use crate::__private::attribute_args::attributes::shorthand::system::SystemAttributeArgs;
-use crate::__private::attribute_args::derives::auto_plugin::AutoPluginDeriveArgs;
-use crate::__private::attribute_args::{
-    GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs, WithTargetPath,
-};
+use crate::__private::attribute::ShortHandAttribute;
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
-use crate::__private::util::debug::debug_item;
-use crate::__private::util::fn_param::require_fn_param_mutable_reference;
+use crate::codegen::with_target_path::WithTargetPath;
+use crate::macro_api::attributes::prelude::*;
+use crate::macro_api::derives::auto_plugin::AutoPluginDeriveArgs;
+use crate::macro_api::global_args::{GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs};
+use crate::util::debug::debug_item;
+use crate::util::fn_param::require_fn_param_mutable_reference;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
@@ -63,7 +45,7 @@ pub fn global_attribute_outer<T>(
 where
     T: GlobalAttributeArgs,
 {
-    /// Maps [`crate::__private::util::resolve_ident_from_item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
+    /// Maps [`crate::util::resolve_ident_from_item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
     fn resolve_item_ident<T: GlobalAttributeArgs>(item: &Item) -> syn::Result<&Ident> {
         T::Inner::resolve_item_ident(item).map_err(|err| syn::Error::new(Span::call_site(), err))
     }
@@ -327,7 +309,7 @@ fn auto_inner<T: ShortHandAttribute + FromMeta>(
     attr: MacroStream,
     input: MacroStream,
 ) -> syn::Result<MacroStream> {
-    use crate::__private::attribute_args::GlobalArgs;
+    use crate::macro_api::global_args::GlobalArgs;
     let args = parse2::<GlobalArgs<T>>(attr)?;
     let args_ts = args.inner.expand_attrs(&args.plugin());
     Ok(quote! {
@@ -366,8 +348,8 @@ pub fn auto_states(attr: MacroStream, input: MacroStream) -> MacroStream {
 }
 
 pub fn auto_bind_plugin_inner(attr: MacroStream, input: MacroStream) -> syn::Result<MacroStream> {
-    use crate::__private::attribute_args::GlobalArgs;
-    use crate::__private::util::extensions::item::ItemAttrsExt;
+    use crate::macro_api::global_args::GlobalArgs;
+    use crate::util::extensions::item::ItemAttrsExt;
     use proc_macro2::Span;
     use quote::quote;
     use syn::Item;

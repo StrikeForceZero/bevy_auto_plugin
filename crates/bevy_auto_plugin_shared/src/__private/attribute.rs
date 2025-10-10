@@ -1,3 +1,7 @@
+use crate::codegen::ExpandAttrs;
+use crate::syntax::validated::non_empty_path::NonEmptyPath;
+use proc_macro2::TokenStream as MacroStream;
+
 pub trait AutoPluginAttribute {
     fn ident_str(&self) -> &'static str;
 }
@@ -35,4 +39,40 @@ impl AutoPluginAttribute for AutoPluginItemAttribute {
     fn ident_str(&self) -> &'static str {
         Self::ident_str(self)
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AutoPluginShortHandAttribute {
+    Component,
+    Resource,
+    Event,
+    Message,
+    States,
+    System,
+    Observer,
+}
+
+impl AutoPluginShortHandAttribute {
+    pub const fn ident_str(&self) -> &'static str {
+        match self {
+            Self::Component => "auto_component",
+            Self::Resource => "auto_resource",
+            Self::Event => "auto_event",
+            Self::Message => "auto_message",
+            Self::States => "auto_states",
+            Self::System => "auto_system",
+            Self::Observer => "auto_observer",
+        }
+    }
+}
+
+impl AutoPluginAttribute for AutoPluginShortHandAttribute {
+    fn ident_str(&self) -> &'static str {
+        Self::ident_str(self)
+    }
+}
+
+pub trait ShortHandAttribute {
+    fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream;
+    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs;
 }

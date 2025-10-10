@@ -1,8 +1,8 @@
-use crate::__private::attribute_args::ItemAttributeArgs;
-use crate::__private::util::concrete_path::ConcreteTargetPathWithGenericsCollection;
-use crate::__private::util::extensions::from_meta::FromMetaExt;
-use crate::__private::util::meta::IdentGenericsAttrsMeta;
-use crate::__private::util::path_fmt::PathWithoutGenerics;
+use crate::macro_api::global_args::ItemAttributeArgs;
+use crate::util::concrete_path::ConcreteTargetPathWithGenericsCollection;
+use crate::util::extensions::from_meta::FromMetaExt;
+use crate::util::meta::IdentGenericsAttrsMeta;
+use crate::util::path_fmt::PathWithoutGenerics;
 use syn::{Attribute, Item};
 
 #[derive(Debug, Clone)]

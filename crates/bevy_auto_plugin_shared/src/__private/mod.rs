@@ -1,19 +1,9 @@
-mod any_expr;
 pub mod attribute;
-pub mod attribute_args;
 pub mod auto_plugin_registry;
 pub mod context;
-mod expr_path_or_call;
-mod expr_value;
-mod flag_or_list;
-pub mod flag_or_meta;
-mod generics;
 pub mod inner;
 pub mod item_with_attr_match;
 mod macros;
-mod non_empty_path;
-mod type_list;
-pub mod util;
 
 pub(crate) mod paths {
     use proc_macro2::TokenStream;
