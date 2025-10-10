@@ -1,11 +1,11 @@
 use crate::__private::attribute::{AutoPluginAttribute, AutoPluginItemAttribute};
 use crate::codegen::tokens::{ArgsBackToTokens, ArgsWithPlugin};
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
+use crate::syntax::analysis::item::IdentFromItemResult;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use crate::syntax::validated::generics::GenericsCollection;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
-use crate::util::resolve_ident_from_item::IdentFromItemResult;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use std::hash::Hash;

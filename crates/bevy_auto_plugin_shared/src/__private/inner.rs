@@ -4,8 +4,8 @@ use crate::codegen::with_target_path::WithTargetPath;
 use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::derives::auto_plugin::AutoPluginDeriveArgs;
 use crate::macro_api::global_args::{GlobalArgs, GlobalAttributeArgs, ItemAttributeArgs};
+use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
 use crate::util::debug::debug_item;
-use crate::util::fn_param::require_fn_param_mutable_reference;
 use crate::{ok_or_return_compiler_error, parse_macro_input2};
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
@@ -45,7 +45,7 @@ pub fn global_attribute_outer<T>(
 where
     T: GlobalAttributeArgs,
 {
-    /// Maps [`crate::util::resolve_ident_from_item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
+    /// Maps [`crate::syntax::analysis::item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
     fn resolve_item_ident<T: GlobalAttributeArgs>(item: &Item) -> syn::Result<&Ident> {
         T::Inner::resolve_item_ident(item).map_err(|err| syn::Error::new(Span::call_site(), err))
     }

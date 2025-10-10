@@ -2,7 +2,9 @@ use crate::macro_api::global_args::GenericsArgs;
 use crate::syntax::validated::concrete_path::{
     ConcreteTargetPath, ConcreteTargetPathWithGenericsCollection,
 };
-use crate::util::path_fmt::{PathWithoutGenerics, TryFromPathWithoutGenericsError};
+use crate::syntax::validated::path_without_generics::{
+    PathWithoutGenerics, TryFromPathWithoutGenericsError,
+};
 use proc_macro2::TokenStream;
 use syn::Path;
 

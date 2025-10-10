@@ -1,6 +1,6 @@
 use crate::macro_api::global_args::GenericsArgs;
+use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
 use crate::syntax::ast::type_list::TypeList;
-use crate::util::fn_param::require_fn_param_mutable_reference;
 use darling::FromMeta;
 use proc_macro2::Ident;
 use syn::spanned::Spanned;

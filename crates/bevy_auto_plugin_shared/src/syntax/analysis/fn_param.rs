@@ -11,7 +11,7 @@ pub fn is_fn_param_mutable_reference(
     param_ident: &Ident,
     messages: FnParamMutabilityCheckErrMessages,
 ) -> syn::Result<()> {
-    use crate::util::ty_classify;
+    use crate::syntax::analysis::ty_classify;
     use syn::spanned::Spanned;
     use syn::{Error, FnArg, Pat};
     for arg in &item.sig.inputs {
