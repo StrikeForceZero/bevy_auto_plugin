@@ -1,5 +1,7 @@
 use crate::macro_api::global_args::GenericsArgs;
-use crate::util::concrete_path::{ConcreteTargetPath, ConcreteTargetPathWithGenericsCollection};
+use crate::syntax::validated::concrete_path::{
+    ConcreteTargetPath, ConcreteTargetPathWithGenericsCollection,
+};
 use crate::util::path_fmt::{PathWithoutGenerics, TryFromPathWithoutGenericsError};
 use proc_macro2::TokenStream;
 use syn::Path;

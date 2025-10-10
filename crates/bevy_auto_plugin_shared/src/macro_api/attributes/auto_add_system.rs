@@ -4,7 +4,7 @@ use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::global_args::{AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs};
 use crate::macro_api::schedule_config::ScheduleWithScheduleConfigArgs;
 use crate::syntax::ast::type_list::TypeList;
-use crate::util::concrete_path::ConcreteTargetPath;
+use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use crate::util::resolve_ident_from_item::{IdentFromItemResult, resolve_ident_from_fn};
 use darling::FromMeta;
 use proc_macro2::TokenStream;

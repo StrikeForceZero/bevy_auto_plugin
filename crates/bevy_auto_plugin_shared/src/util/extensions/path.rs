@@ -1,5 +1,5 @@
 use crate::syntax::ast::type_list::TypeList;
-use crate::util::concrete_path;
+use crate::syntax::validated::concrete_path;
 use syn::Path;
 
 pub trait PathExt {
