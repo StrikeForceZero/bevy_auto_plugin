@@ -116,8 +116,8 @@ impl ShortHandAttribute for ComponentAttributeArgs {
 mod tests {
     use super::*;
     use crate::macro_api::global_args::GlobalArgs;
+    use crate::test_util::combo::combos_one_per_group_or_skip;
     use crate::test_util::macros::*;
-    use crate::util::combo::combos_one_per_group_or_skip;
     use darling::ast::NestedMeta;
     use internal_test_util::{extract_punctuated_paths, vec_spread};
     use quote::ToTokens;

@@ -1,3 +1,5 @@
+#[cfg(test)]
+pub mod combo;
 pub(crate) mod macros;
 
 pub(crate) fn assert_tokens_match(

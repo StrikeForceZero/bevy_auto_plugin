@@ -128,8 +128,8 @@ impl ShortHandAttribute for EventAttributeArgs {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_util::combo::combos_one_per_group_or_skip_with;
     use crate::test_util::macros::*;
-    use crate::util::combo::combos_one_per_group_or_skip_with;
     use crate::util::test_params::{_inject_derive, Side, TestParams as _TestParams};
     use internal_test_util::extract_punctuated_paths;
     use syn::parse_quote;
