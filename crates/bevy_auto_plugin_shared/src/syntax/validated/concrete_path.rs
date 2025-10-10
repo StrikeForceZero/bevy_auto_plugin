@@ -1,17 +1,14 @@
 use crate::codegen::with_target_path::WithTargetPath;
 use crate::macro_api::global_args::GenericsArgs;
-use crate::macro_api::global_args::ItemAttributeArgs;
 use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::parse::from_meta::FromMetaExt;
 use crate::syntax::traits::generics::CountGenerics;
 use crate::syntax::validated::generics::{Generics, GenericsCollection};
 use crate::syntax::validated::path_without_generics::{
     PathWithoutGenerics, TryFromPathWithoutGenericsError,
 };
-use darling::FromMeta;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
-use syn::{Attribute, Item, Path, PathArguments, parse2};
+use syn::{Path, PathArguments, parse2};
 
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct ConcreteTargetPath {
