@@ -1,6 +1,7 @@
 use darling::FromMeta;
 use syn::Meta;
 
+#[allow(dead_code)]
 pub trait FromMetaExt: FromMeta {
     fn from_meta_ext(meta: &Meta) -> darling::Result<Self>;
 }
