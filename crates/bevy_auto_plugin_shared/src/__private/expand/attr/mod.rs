@@ -5,9 +5,7 @@ use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::with_plugin::{PluginBound, WithPlugin};
 use crate::syntax::diagnostic::kind::item_kind;
-use crate::util::macros::{
-    ok_or_return_compiler_error, ok_or_return_compiler_error_with_span_and_message,
-};
+use crate::util::macros::ok_or_return_compiler_error;
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::quote;

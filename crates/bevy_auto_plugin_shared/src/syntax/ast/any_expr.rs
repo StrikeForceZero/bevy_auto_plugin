@@ -1,5 +1,3 @@
-use syn::spanned::Spanned;
-
 crate::any_expr_enum!(pub AnyExprCallClosureMacroPath: Call, Closure, Macro, Path);
 crate::any_expr_enum!(pub AnyExprCallMacroPath: Call, Macro, Path);
 

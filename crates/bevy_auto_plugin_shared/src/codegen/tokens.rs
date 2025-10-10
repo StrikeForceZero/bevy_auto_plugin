@@ -1,4 +1,3 @@
-use crate::__private::attribute::*;
 use crate::codegen::ExpandAttrs;
 use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::prelude::*;
