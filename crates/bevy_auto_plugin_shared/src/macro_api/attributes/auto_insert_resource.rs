@@ -2,39 +2,20 @@ use crate::__private::attribute::AutoPluginItemAttribute;
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::global_args::{AutoPluginAttributeKind, GenericsArgs, ItemAttributeArgs};
 use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
-use crate::syntax::ast::expr_value::ExprValue;
+use crate::syntax::ast::any_expr::AnyExprCallClosureMacroPath;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::spanned::Spanned;
-use syn::{Expr, Item};
+use syn::Item;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct InsertResourceAttributeArgs {
     #[darling(default)]
     pub generics: Option<TypeList>,
-    // TODO: replace ExprValue with AnyExprCallClosureMacroPath
-    pub resource: ExprValue,
-}
-
-impl InsertResourceAttributeArgs {
-    pub fn validate_resource(&self) -> syn::Result<()> {
-        if !matches!(
-            self.resource.0,
-            Expr::Call(_) // Foo(_)  or Foo::Bar(_)
-            | Expr::Path(_) // Foo or Foo::Bar
-            | Expr::Struct(_) // Foo { .. } or Foo::Bar { .. }
-        ) {
-            return Err(syn::Error::new(
-                self.resource.span(),
-                "Expected a struct or enum value",
-            ));
-        }
-        Ok(())
-    }
+    pub resource: AnyExprCallClosureMacroPath,
 }
 
 impl AutoPluginAttributeKind for InsertResourceAttributeArgs {
