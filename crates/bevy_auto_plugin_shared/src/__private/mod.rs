@@ -80,29 +80,6 @@ mod tests {
     use internal_test_proc_macro::xtest;
     use quote::ToTokens;
 
-    #[allow(dead_code)]
-    fn try_assert_tokens_match(
-        plugin: impl std::fmt::Debug,
-        input: impl ToString,
-        args: impl quote::ToTokens,
-    ) -> darling::Result<()> {
-        let input = input.to_string();
-        if args.to_token_stream().to_string() != input {
-            Err(darling::Error::custom(format!(
-                concat!(
-                    "failed to expand into expected tokens - args: ",
-                    stringify!($args_ident),
-                    ", plugin: {:?}\n\texpected: {}\n\t     got: {}"
-                ),
-                plugin,
-                input,
-                args.to_token_stream(),
-            )))
-        } else {
-            Ok(())
-        }
-    }
-
     fn map_resolve_crate(r: Result<syn::Path, String>) -> Result<String, String> {
         r.map(|p| p.into_token_stream().to_string())
     }
