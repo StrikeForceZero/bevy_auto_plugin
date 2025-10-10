@@ -1,6 +1,8 @@
 #[cfg(test)]
 pub mod combo;
 pub(crate) mod macros;
+#[cfg(test)]
+pub mod test_params;
 
 pub(crate) fn assert_tokens_match(
     plugin: impl std::fmt::Debug,
