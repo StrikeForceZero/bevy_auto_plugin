@@ -1,7 +1,6 @@
 pub mod attribute;
 pub mod auto_plugin_registry;
 pub mod expand;
-mod macros;
 
 macro_rules! bevy_crate_err_message {
     ($ident:ident) => {
