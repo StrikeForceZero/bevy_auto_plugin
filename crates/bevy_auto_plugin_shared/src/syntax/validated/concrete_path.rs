@@ -8,7 +8,6 @@ use crate::syntax::validated::path_without_generics::{
 };
 use crate::util::extensions::from_meta::FromMetaExt;
 use crate::util::generics_traits::CountGenerics;
-use crate::util::meta::IdentGenericsAttrsMeta;
 use darling::FromMeta;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
@@ -94,43 +93,6 @@ impl<T: GenericsArgs> From<WithTargetPath<T>> for ConcreteTargetPathWithGenerics
         let (target, args) = value.into();
         Self::from((target, args))
     }
-}
-
-pub fn resolve_paths_from_item_or_args<'a, T, A>(
-    item: &'a Item,
-    args: &A,
-) -> syn::Result<ConcreteTargetPathWithGenericsCollection>
-where
-    T: IdentGenericsAttrsMeta<'a>,
-    A: ItemAttributeArgs + FromMeta + GenericsArgs,
-{
-    let item_meta = T::try_from(item)?;
-    validate_generic_counts(item_meta.generics(), args)?;
-    Ok(ConcreteTargetPathWithGenericsCollection::from_args(
-        item_meta.ident().into(),
-        args,
-    ))
-}
-
-/// Build the concrete paths for an item from an attribute with generics
-pub fn resolve_paths_from_attribute_and_item<'a, A, TIRM, R, M>(
-    item_meta: TIRM,
-    attr: &Attribute,
-) -> syn::Result<ConcreteTargetPathWithGenericsCollection>
-where
-    A: ItemAttributeArgs + FromMeta + GenericsArgs,
-    TIRM: TryInto<R, Error = syn::Error>,
-    R: AsRef<M>,
-    M: IdentGenericsAttrsMeta<'a>,
-{
-    let args = A::from_meta_ext(&attr.meta).map_err(syn::Error::from)?;
-    let item_meta = item_meta.try_into()?;
-    let item_meta = item_meta.as_ref();
-    validate_generic_counts(item_meta.generics(), &args)?;
-    Ok(ConcreteTargetPathWithGenericsCollection::from_args(
-        item_meta.ident().into(),
-        &args,
-    ))
 }
 
 pub fn validate_generic_counts<T>(generics: &syn::Generics, cg: &T) -> syn::Result<()>

@@ -1,4 +1,3 @@
-use crate::util::meta::IdentGenericsAttrsMeta;
 use proc_macro2::Ident;
 use syn::{Attribute, Error, Generics, Item};
 
@@ -29,17 +28,5 @@ impl<'a> TryFrom<&'a Item> for FnMeta<'a> {
             }
             _ => return Err(Error::new(item.span(), "expected fn")),
         })
-    }
-}
-
-impl<'a> IdentGenericsAttrsMeta<'a> for FnMeta<'a> {
-    fn ident(&self) -> &'a Ident {
-        self.ident
-    }
-    fn generics(&self) -> &'a Generics {
-        self.generics
-    }
-    fn attributes(&self) -> &'a [Attribute] {
-        self.attributes
     }
 }
