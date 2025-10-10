@@ -21,10 +21,6 @@ impl AttributeIdent for AddMessageArgs {
 }
 
 impl ItemAttributeArgs for AddMessageArgs {
-    fn global_build_prefix() -> &'static str {
-        "_auto_plugin_add_message_"
-    }
-
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_struct_or_enum(item)
     }

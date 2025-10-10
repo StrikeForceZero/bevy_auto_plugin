@@ -89,7 +89,9 @@ pub trait AttributeIdent {
 pub trait ItemAttributeArgs:
     AttributeIdent + FromMeta + Parse + ToTokensWithConcreteTargetPath + Hash + Clone
 {
-    fn global_build_prefix() -> &'static str;
+    fn global_build_prefix() -> Ident {
+        format_ident!("_auto_plugin_{}_", Self::IDENT)
+    }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;
 }
 
@@ -108,13 +110,12 @@ pub trait GlobalAttributeArgs:
         format!("{:x}", hasher.finish())
     }
 
-    fn _get_unique_ident_string(&self, prefix: &'static str, ident: &Ident) -> String {
+    fn _get_unique_ident(&self, prefix: Ident, ident: &Ident) -> Ident {
         let hash = self._concat_ident_hash(ident);
-        format!("{prefix}_{hash}")
+        format_ident!("{prefix}_{hash}")
     }
 
     fn get_unique_ident(&self, ident: &Ident) -> Ident {
-        let ident_string = self._get_unique_ident_string(Self::Inner::global_build_prefix(), ident);
-        Ident::new(&ident_string, ident.span())
+        self._get_unique_ident(Self::Inner::global_build_prefix(), ident)
     }
 }

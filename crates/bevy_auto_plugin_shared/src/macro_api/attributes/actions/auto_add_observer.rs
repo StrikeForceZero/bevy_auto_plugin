@@ -21,9 +21,6 @@ impl AttributeIdent for AddObserverArgs {
 }
 
 impl ItemAttributeArgs for AddObserverArgs {
-    fn global_build_prefix() -> &'static str {
-        "_auto_plugin_add_observer_"
-    }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_fn(item)
     }

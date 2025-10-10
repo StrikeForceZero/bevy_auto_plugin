@@ -21,9 +21,6 @@ impl AttributeIdent for NameArgs {
 }
 
 impl ItemAttributeArgs for NameArgs {
-    fn global_build_prefix() -> &'static str {
-        "_auto_plugin_auto_name__"
-    }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_struct_or_enum(item)
     }

@@ -21,9 +21,6 @@ impl AttributeIdent for InitStateArgs {
 }
 
 impl ItemAttributeArgs for InitStateArgs {
-    fn global_build_prefix() -> &'static str {
-        "_auto_plugin_init_state_"
-    }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
         resolve_ident_from_struct_or_enum(item)
     }
