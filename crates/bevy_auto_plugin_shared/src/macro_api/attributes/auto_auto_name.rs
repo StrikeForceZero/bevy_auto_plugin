@@ -12,19 +12,19 @@ use syn::Item;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct AutoNameAttributeArgs {
+pub struct NameArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
 }
 
-impl AutoPluginAttributeKind for AutoNameAttributeArgs {
+impl AutoPluginAttributeKind for NameArgs {
     type Attribute = AutoPluginItemAttribute;
     fn attribute() -> AutoPluginItemAttribute {
         AutoPluginItemAttribute::AutoName
     }
 }
 
-impl ItemAttributeArgs for AutoNameAttributeArgs {
+impl ItemAttributeArgs for NameArgs {
     fn global_build_prefix() -> &'static str {
         "_auto_plugin_auto_name__"
     }
@@ -33,13 +33,13 @@ impl ItemAttributeArgs for AutoNameAttributeArgs {
     }
 }
 
-impl GenericsArgs for AutoNameAttributeArgs {
+impl GenericsArgs for NameArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl ToTokensWithConcreteTargetPath for AutoNameAttributeArgs {
+impl ToTokensWithConcreteTargetPath for NameArgs {
     fn to_tokens_with_concrete_target_path(
         &self,
         tokens: &mut TokenStream,
@@ -60,7 +60,7 @@ impl ToTokensWithConcreteTargetPath for AutoNameAttributeArgs {
     }
 }
 
-impl ArgsBackToTokens for AutoNameAttributeArgs {
+impl ArgsBackToTokens for NameArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         tokens.extend(self.generics().to_attribute_arg_tokens());
     }
@@ -74,7 +74,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<AutoNameAttributeArgs>(quote!())?;
+        let args = parse2::<NameArgs>(quote!())?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
@@ -92,7 +92,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<AutoNameAttributeArgs>(quote!(generics(u8, bool)))?;
+        let args = parse2::<NameArgs>(quote!(generics(u8, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
@@ -110,8 +110,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_multiple() -> syn::Result<()> {
-        let args =
-            parse2::<AutoNameAttributeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
+        let args = parse2::<NameArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();

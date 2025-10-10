@@ -11,19 +11,19 @@ use syn::Item;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct RegisterStateTypeAttributeArgs {
+pub struct RegisterStateTypeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
 }
 
-impl AutoPluginAttributeKind for RegisterStateTypeAttributeArgs {
+impl AutoPluginAttributeKind for RegisterStateTypeArgs {
     type Attribute = AutoPluginItemAttribute;
     fn attribute() -> AutoPluginItemAttribute {
         AutoPluginItemAttribute::RegisterStateType
     }
 }
 
-impl ItemAttributeArgs for RegisterStateTypeAttributeArgs {
+impl ItemAttributeArgs for RegisterStateTypeArgs {
     fn global_build_prefix() -> &'static str {
         "_auto_plugin_register_state_type_"
     }
@@ -32,13 +32,13 @@ impl ItemAttributeArgs for RegisterStateTypeAttributeArgs {
     }
 }
 
-impl GenericsArgs for RegisterStateTypeAttributeArgs {
+impl GenericsArgs for RegisterStateTypeArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl ToTokensWithConcreteTargetPath for RegisterStateTypeAttributeArgs {
+impl ToTokensWithConcreteTargetPath for RegisterStateTypeArgs {
     fn to_tokens_with_concrete_target_path(
         &self,
         tokens: &mut TokenStream,
@@ -60,7 +60,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<RegisterStateTypeAttributeArgs>(quote!())?;
+        let args = parse2::<RegisterStateTypeArgs>(quote!())?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let bevy_state = crate::__private::paths::state::root_path();
@@ -79,7 +79,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<RegisterStateTypeAttributeArgs>(quote!(generics(u8, bool)))?;
+        let args = parse2::<RegisterStateTypeArgs>(quote!(generics(u8, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let bevy_state = crate::__private::paths::state::root_path();
@@ -98,10 +98,8 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_multiple() -> syn::Result<()> {
-        let args = parse2::<RegisterStateTypeAttributeArgs>(quote!(
-            generics(u8, bool),
-            generics(bool, bool)
-        ))?;
+        let args =
+            parse2::<RegisterStateTypeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let bevy_state = crate::__private::paths::state::root_path();

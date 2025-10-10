@@ -72,7 +72,7 @@ pub(crate) struct TestParams<T: FromMeta> {
 
 impl<T: FromMeta + Clone + ShortHandAttribute> TestParams<T>
 where
-    for<'a> RegisterTypeAttributeArgs: From<&'a T>,
+    for<'a> RegisterTypeArgs: From<&'a T>,
 {
     pub(crate) fn new(args: GlobalArgs<T>) -> Self {
         Self {

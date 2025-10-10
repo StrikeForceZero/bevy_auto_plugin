@@ -13,21 +13,21 @@ use syn::Item;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
-pub struct AddSystemAttributeArgs {
+pub struct AddSystemArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     #[darling(flatten)]
     pub schedule_config: ScheduleWithScheduleConfigArgs,
 }
 
-impl AutoPluginAttributeKind for AddSystemAttributeArgs {
+impl AutoPluginAttributeKind for AddSystemArgs {
     type Attribute = AutoPluginItemAttribute;
     fn attribute() -> AutoPluginItemAttribute {
         AutoPluginItemAttribute::AddSystem
     }
 }
 
-impl ItemAttributeArgs for AddSystemAttributeArgs {
+impl ItemAttributeArgs for AddSystemArgs {
     fn global_build_prefix() -> &'static str {
         "_auto_plugin_add_systems_"
     }
@@ -36,14 +36,14 @@ impl ItemAttributeArgs for AddSystemAttributeArgs {
     }
 }
 
-impl GenericsArgs for AddSystemAttributeArgs {
+impl GenericsArgs for AddSystemArgs {
     const TURBOFISH: bool = true;
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl ToTokensWithConcreteTargetPath for AddSystemAttributeArgs {
+impl ToTokensWithConcreteTargetPath for AddSystemArgs {
     fn to_tokens_with_concrete_target_path(
         &self,
         tokens: &mut TokenStream,
@@ -57,7 +57,7 @@ impl ToTokensWithConcreteTargetPath for AddSystemAttributeArgs {
     }
 }
 
-impl ArgsBackToTokens for AddSystemAttributeArgs {
+impl ArgsBackToTokens for AddSystemArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         let mut args = vec![];
         if !self.generics().is_empty() {

@@ -36,7 +36,7 @@ impl AutoPluginAttributeKind for ResourceAttributeArgs {
     }
 }
 
-impl<'a> From<&'a ResourceAttributeArgs> for RegisterTypeAttributeArgs {
+impl<'a> From<&'a ResourceAttributeArgs> for RegisterTypeArgs {
     fn from(value: &'a ResourceAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),
@@ -44,7 +44,7 @@ impl<'a> From<&'a ResourceAttributeArgs> for RegisterTypeAttributeArgs {
     }
 }
 
-impl<'a> From<&'a ResourceAttributeArgs> for InitResourceAttributeArgs {
+impl<'a> From<&'a ResourceAttributeArgs> for InitResourceArgs {
     fn from(_: &'a ResourceAttributeArgs) -> Self {
         Self::default()
     }

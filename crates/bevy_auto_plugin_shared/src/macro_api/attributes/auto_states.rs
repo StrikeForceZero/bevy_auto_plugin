@@ -35,7 +35,7 @@ impl AutoPluginAttributeKind for StatesAttributeArgs {
     }
 }
 
-impl<'a> From<&'a StatesAttributeArgs> for RegisterTypeAttributeArgs {
+impl<'a> From<&'a StatesAttributeArgs> for RegisterTypeArgs {
     fn from(value: &'a StatesAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),
@@ -43,7 +43,7 @@ impl<'a> From<&'a StatesAttributeArgs> for RegisterTypeAttributeArgs {
     }
 }
 
-impl<'a> From<&'a StatesAttributeArgs> for InitStateAttributeArgs {
+impl<'a> From<&'a StatesAttributeArgs> for InitStateArgs {
     fn from(value: &'a StatesAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),

@@ -16,5 +16,5 @@ pub struct AutoPluginDeriveArgs {
     #[allow(dead_code)]
     pub attrs: Vec<Attribute>,
     #[darling(flatten)]
-    pub auto_plugin: AutoPluginStructOrEnumAttributeArgs,
+    pub auto_plugin: AutoPluginStructOrEnumArgs,
 }

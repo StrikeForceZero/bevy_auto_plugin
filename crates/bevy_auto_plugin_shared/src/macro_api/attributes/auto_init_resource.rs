@@ -12,19 +12,19 @@ use syn::Item;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct InitResourceAttributeArgs {
+pub struct InitResourceArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
 }
 
-impl AutoPluginAttributeKind for InitResourceAttributeArgs {
+impl AutoPluginAttributeKind for InitResourceArgs {
     type Attribute = AutoPluginItemAttribute;
     fn attribute() -> AutoPluginItemAttribute {
         AutoPluginItemAttribute::InitResource
     }
 }
 
-impl ItemAttributeArgs for InitResourceAttributeArgs {
+impl ItemAttributeArgs for InitResourceArgs {
     fn global_build_prefix() -> &'static str {
         "_auto_plugin_init_resource_"
     }
@@ -33,13 +33,13 @@ impl ItemAttributeArgs for InitResourceAttributeArgs {
     }
 }
 
-impl GenericsArgs for InitResourceAttributeArgs {
+impl GenericsArgs for InitResourceArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl ToTokensWithConcreteTargetPath for InitResourceAttributeArgs {
+impl ToTokensWithConcreteTargetPath for InitResourceArgs {
     fn to_tokens_with_concrete_target_path(
         &self,
         tokens: &mut TokenStream,
@@ -51,7 +51,7 @@ impl ToTokensWithConcreteTargetPath for InitResourceAttributeArgs {
     }
 }
 
-impl ArgsBackToTokens for InitResourceAttributeArgs {
+impl ArgsBackToTokens for InitResourceArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         tokens.extend(self.generics().to_attribute_arg_tokens());
     }
@@ -65,7 +65,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<InitResourceAttributeArgs>(quote!())?;
+        let args = parse2::<InitResourceArgs>(quote!())?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -82,7 +82,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<InitResourceAttributeArgs>(quote!(generics(u8, bool)))?;
+        let args = parse2::<InitResourceArgs>(quote!(generics(u8, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -99,8 +99,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_multiple() -> syn::Result<()> {
-        let args =
-            parse2::<InitResourceAttributeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
+        let args = parse2::<InitResourceArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();

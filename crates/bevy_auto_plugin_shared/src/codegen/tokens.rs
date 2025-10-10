@@ -205,24 +205,24 @@ pub fn derive_reflect() -> TokenStream {
     let derive_reflect_path = derive_reflect_path();
     quote! { #[derive(#derive_reflect_path)] }
 }
-pub fn auto_register_type(plugin: NonEmptyPath, args: RegisterTypeAttributeArgs) -> TokenStream {
+pub fn auto_register_type(plugin: NonEmptyPath, args: RegisterTypeArgs) -> TokenStream {
     ArgsWithPlugin::new(plugin, args).to_token_stream()
 }
-pub fn auto_name(plugin: NonEmptyPath, args: AutoNameAttributeArgs) -> TokenStream {
+pub fn auto_name(plugin: NonEmptyPath, args: NameArgs) -> TokenStream {
     ArgsWithPlugin::new(plugin, args).to_token_stream()
 }
-pub fn auto_init_resource(plugin: NonEmptyPath, args: InitResourceAttributeArgs) -> TokenStream {
+pub fn auto_init_resource(plugin: NonEmptyPath, args: InitResourceArgs) -> TokenStream {
     ArgsWithPlugin::new(plugin, args).to_token_stream()
 }
-pub fn auto_init_states(plugin: NonEmptyPath, args: InitStateAttributeArgs) -> TokenStream {
+pub fn auto_init_states(plugin: NonEmptyPath, args: InitStateArgs) -> TokenStream {
     ArgsWithPlugin::new(plugin, args).to_token_stream()
 }
-pub fn auto_add_systems(plugin: NonEmptyPath, args: AddSystemAttributeArgs) -> TokenStream {
+pub fn auto_add_systems(plugin: NonEmptyPath, args: AddSystemArgs) -> TokenStream {
     ArgsWithPlugin::new(plugin, args).to_token_stream()
 }
-pub fn auto_add_observer(plugin: NonEmptyPath, args: AddObserverAttributeArgs) -> TokenStream {
+pub fn auto_add_observer(plugin: NonEmptyPath, args: AddObserverArgs) -> TokenStream {
     ArgsWithPlugin::new(plugin, args).to_token_stream()
 }
-pub fn auto_add_message(plugin: NonEmptyPath, args: AddMessageAttributeArgs) -> TokenStream {
+pub fn auto_add_message(plugin: NonEmptyPath, args: AddMessageArgs) -> TokenStream {
     ArgsWithPlugin::new(plugin, args).to_token_stream()
 }

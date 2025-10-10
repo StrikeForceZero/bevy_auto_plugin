@@ -12,20 +12,20 @@ use syn::Item;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
-pub struct InsertResourceAttributeArgs {
+pub struct InsertResourceArgs {
     #[darling(default)]
     pub generics: Option<TypeList>,
     pub resource: AnyExprCallClosureMacroPath,
 }
 
-impl AutoPluginAttributeKind for InsertResourceAttributeArgs {
+impl AutoPluginAttributeKind for InsertResourceArgs {
     type Attribute = AutoPluginItemAttribute;
     fn attribute() -> AutoPluginItemAttribute {
         AutoPluginItemAttribute::InsertResource
     }
 }
 
-impl ItemAttributeArgs for InsertResourceAttributeArgs {
+impl ItemAttributeArgs for InsertResourceArgs {
     fn global_build_prefix() -> &'static str {
         "_auto_plugin_insert_resource_"
     }
@@ -34,13 +34,13 @@ impl ItemAttributeArgs for InsertResourceAttributeArgs {
     }
 }
 
-impl GenericsArgs for InsertResourceAttributeArgs {
+impl GenericsArgs for InsertResourceArgs {
     fn type_lists(&self) -> &[TypeList] {
         self.generics.as_slice()
     }
 }
 
-impl ToTokensWithConcreteTargetPath for InsertResourceAttributeArgs {
+impl ToTokensWithConcreteTargetPath for InsertResourceArgs {
     fn to_tokens_with_concrete_target_path(
         &self,
         tokens: &mut TokenStream,
@@ -61,7 +61,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<InsertResourceAttributeArgs>(quote!(resource(FooTarget)))?;
+        let args = parse2::<InsertResourceArgs>(quote!(resource(FooTarget)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -78,10 +78,8 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<InsertResourceAttributeArgs>(quote!(
-            generics(u8, bool),
-            resource(FooTarget(1, true))
-        ))?;
+        let args =
+            parse2::<InsertResourceArgs>(quote!(generics(u8, bool), resource(FooTarget(1, true))))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -99,7 +97,7 @@ mod tests {
     #[internal_test_proc_macro::xtest]
     #[should_panic(expected = "Duplicate field `generics`")]
     fn test_to_tokens_multiple() {
-        parse2::<InsertResourceAttributeArgs>(quote!(
+        parse2::<InsertResourceArgs>(quote!(
             generics(u8, bool),
             generics(bool, bool),
             resource(FooTarget(1, true))

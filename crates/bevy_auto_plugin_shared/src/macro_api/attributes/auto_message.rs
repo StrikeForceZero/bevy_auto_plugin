@@ -1,7 +1,7 @@
 use crate::__private::attribute::{AutoPluginShortHandAttribute, ShortHandAttribute};
 use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
-use crate::macro_api::attributes::auto_add_message::AddMessageAttributeArgs;
+use crate::macro_api::attributes::auto_add_message::AddMessageArgs;
 use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::global_args::AutoPluginAttributeKind;
 use crate::macro_api::global_args::GenericsArgs;
@@ -35,7 +35,7 @@ impl AutoPluginAttributeKind for MessageAttributeArgs {
     }
 }
 
-impl<'a> From<&'a MessageAttributeArgs> for RegisterTypeAttributeArgs {
+impl<'a> From<&'a MessageAttributeArgs> for RegisterTypeArgs {
     fn from(value: &'a MessageAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),
@@ -43,7 +43,7 @@ impl<'a> From<&'a MessageAttributeArgs> for RegisterTypeAttributeArgs {
     }
 }
 
-impl<'a> From<&'a MessageAttributeArgs> for AddMessageAttributeArgs {
+impl<'a> From<&'a MessageAttributeArgs> for AddMessageArgs {
     fn from(value: &'a MessageAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),

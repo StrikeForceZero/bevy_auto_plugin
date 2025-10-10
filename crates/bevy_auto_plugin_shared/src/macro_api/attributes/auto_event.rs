@@ -36,7 +36,7 @@ impl ToTokens for EventTarget {
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct EventAttributeArgs {
+pub struct EventArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub derive: FlagOrList<NonEmptyPath>,
@@ -45,28 +45,28 @@ pub struct EventAttributeArgs {
     pub target: EventTarget,
 }
 
-impl GenericsArgs for EventAttributeArgs {
+impl GenericsArgs for EventArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl AutoPluginAttributeKind for EventAttributeArgs {
+impl AutoPluginAttributeKind for EventArgs {
     type Attribute = AutoPluginShortHandAttribute;
     fn attribute() -> Self::Attribute {
         Self::Attribute::Event
     }
 }
 
-impl<'a> From<&'a EventAttributeArgs> for RegisterTypeAttributeArgs {
-    fn from(value: &'a EventAttributeArgs) -> Self {
+impl<'a> From<&'a EventArgs> for RegisterTypeArgs {
+    fn from(value: &'a EventArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl ArgsBackToTokens for EventAttributeArgs {
+impl ArgsBackToTokens for EventArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         let mut items = vec![];
         let target = self.target;
@@ -85,7 +85,7 @@ impl ArgsBackToTokens for EventAttributeArgs {
     }
 }
 
-impl ShortHandAttribute for EventAttributeArgs {
+impl ShortHandAttribute for EventArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
         args.push(quote! { plugin = #plugin });
@@ -134,7 +134,7 @@ mod tests {
     use internal_test_util::extract_punctuated_paths;
     use syn::parse_quote;
 
-    type TestParams = _TestParams<EventAttributeArgs>;
+    type TestParams = _TestParams<EventArgs>;
 
     pub trait TestParamsExt {
         fn with_global(self, derive: bool) -> Self;
@@ -179,7 +179,7 @@ mod tests {
             quote!(target(global)),
         ) {
             println!("checking args: {}", quote! { #(#args),*});
-            assert_vec_args_expand!(plugin!(parse_quote!(Test)), EventAttributeArgs, args);
+            assert_vec_args_expand!(plugin!(parse_quote!(Test)), EventArgs, args);
         }
         Ok(())
     }

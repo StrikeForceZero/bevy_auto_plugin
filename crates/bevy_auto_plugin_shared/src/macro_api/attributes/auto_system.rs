@@ -33,7 +33,7 @@ impl AutoPluginAttributeKind for SystemAttributeArgs {
     }
 }
 
-impl<'a> From<&'a SystemAttributeArgs> for RegisterTypeAttributeArgs {
+impl<'a> From<&'a SystemAttributeArgs> for RegisterTypeArgs {
     fn from(value: &'a SystemAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),
@@ -41,9 +41,9 @@ impl<'a> From<&'a SystemAttributeArgs> for RegisterTypeAttributeArgs {
     }
 }
 
-impl<'a> From<&'a SystemAttributeArgs> for AddSystemAttributeArgs {
+impl<'a> From<&'a SystemAttributeArgs> for AddSystemArgs {
     fn from(value: &'a SystemAttributeArgs) -> Self {
-        AddSystemAttributeArgs {
+        AddSystemArgs {
             generics: value.generics.clone(),
             schedule_config: value.schedule_config.clone(),
         }

@@ -12,19 +12,19 @@ use syn::Item;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct RegisterTypeAttributeArgs {
+pub struct RegisterTypeArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
 }
 
-impl AutoPluginAttributeKind for RegisterTypeAttributeArgs {
+impl AutoPluginAttributeKind for RegisterTypeArgs {
     type Attribute = AutoPluginItemAttribute;
     fn attribute() -> AutoPluginItemAttribute {
         AutoPluginItemAttribute::RegisterType
     }
 }
 
-impl ItemAttributeArgs for RegisterTypeAttributeArgs {
+impl ItemAttributeArgs for RegisterTypeArgs {
     fn global_build_prefix() -> &'static str {
         "_auto_plugin_register_type_"
     }
@@ -33,13 +33,13 @@ impl ItemAttributeArgs for RegisterTypeAttributeArgs {
     }
 }
 
-impl GenericsArgs for RegisterTypeAttributeArgs {
+impl GenericsArgs for RegisterTypeArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl ToTokensWithConcreteTargetPath for RegisterTypeAttributeArgs {
+impl ToTokensWithConcreteTargetPath for RegisterTypeArgs {
     fn to_tokens_with_concrete_target_path(
         &self,
         tokens: &mut TokenStream,
@@ -51,7 +51,7 @@ impl ToTokensWithConcreteTargetPath for RegisterTypeAttributeArgs {
     }
 }
 
-impl ArgsBackToTokens for RegisterTypeAttributeArgs {
+impl ArgsBackToTokens for RegisterTypeArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         tokens.extend(self.generics().to_attribute_arg_tokens());
     }
@@ -65,7 +65,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<RegisterTypeAttributeArgs>(quote!())?;
+        let args = parse2::<RegisterTypeArgs>(quote!())?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -82,7 +82,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<RegisterTypeAttributeArgs>(quote!(generics(u8, bool)))?;
+        let args = parse2::<RegisterTypeArgs>(quote!(generics(u8, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -99,8 +99,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_multiple() -> syn::Result<()> {
-        let args =
-            parse2::<RegisterTypeAttributeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
+        let args = parse2::<RegisterTypeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();

@@ -12,19 +12,19 @@ use syn::Item;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct AddMessageAttributeArgs {
+pub struct AddMessageArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
 }
 
-impl AutoPluginAttributeKind for AddMessageAttributeArgs {
+impl AutoPluginAttributeKind for AddMessageArgs {
     type Attribute = AutoPluginItemAttribute;
     fn attribute() -> AutoPluginItemAttribute {
         AutoPluginItemAttribute::AddMessage
     }
 }
 
-impl ItemAttributeArgs for AddMessageAttributeArgs {
+impl ItemAttributeArgs for AddMessageArgs {
     fn global_build_prefix() -> &'static str {
         "_auto_plugin_add_message_"
     }
@@ -34,13 +34,13 @@ impl ItemAttributeArgs for AddMessageAttributeArgs {
     }
 }
 
-impl GenericsArgs for AddMessageAttributeArgs {
+impl GenericsArgs for AddMessageArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl ToTokensWithConcreteTargetPath for AddMessageAttributeArgs {
+impl ToTokensWithConcreteTargetPath for AddMessageArgs {
     fn to_tokens_with_concrete_target_path(
         &self,
         tokens: &mut TokenStream,
@@ -52,7 +52,7 @@ impl ToTokensWithConcreteTargetPath for AddMessageAttributeArgs {
     }
 }
 
-impl ArgsBackToTokens for AddMessageAttributeArgs {
+impl ArgsBackToTokens for AddMessageArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         let mut args = vec![];
         if !self.generics().is_empty() {
@@ -70,7 +70,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<AddMessageAttributeArgs>(quote!())?;
+        let args = parse2::<AddMessageArgs>(quote!())?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -87,7 +87,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<AddMessageAttributeArgs>(quote!(generics(u8, bool)))?;
+        let args = parse2::<AddMessageArgs>(quote!(generics(u8, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -104,8 +104,7 @@ mod tests {
 
     #[internal_test_proc_macro::xtest]
     fn test_to_tokens_multiple() -> syn::Result<()> {
-        let args =
-            parse2::<AddMessageAttributeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
+        let args = parse2::<AddMessageArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();

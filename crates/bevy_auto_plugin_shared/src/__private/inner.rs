@@ -81,7 +81,7 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
     use quote::quote;
     use syn::spanned::Spanned;
     let item = parse_macro_input2!(input as ItemFn);
-    let params = match parse2::<AutoPluginFnAttributeArgs>(attr) {
+    let params = match parse2::<AutoPluginFnArgs>(attr) {
         Ok(params) => params,
         Err(err) => return err.into_compile_error(),
     };
@@ -277,32 +277,32 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
 }
 
 pub fn auto_register_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<RegisterTypeAttributeArgs>>(attr, input)
+    proc_attribute_outer::<GlobalArgs<RegisterTypeArgs>>(attr, input)
 }
 pub fn auto_add_message_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<AddMessageAttributeArgs>>(attr, input)
+    proc_attribute_outer::<GlobalArgs<AddMessageArgs>>(attr, input)
 }
 pub fn auto_init_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<InitResourceAttributeArgs>>(attr, input)
+    proc_attribute_outer::<GlobalArgs<InitResourceArgs>>(attr, input)
 }
 pub fn auto_insert_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<InsertResourceAttributeArgs>>(attr, input)
+    proc_attribute_outer::<GlobalArgs<InsertResourceArgs>>(attr, input)
 }
 pub fn auto_init_state_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<InitStateAttributeArgs>>(attr, input)
+    proc_attribute_outer::<GlobalArgs<InitStateArgs>>(attr, input)
 }
 pub fn auto_name_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<AutoNameAttributeArgs>>(attr, input)
+    proc_attribute_outer::<GlobalArgs<NameArgs>>(attr, input)
 }
 pub fn auto_register_state_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<RegisterStateTypeAttributeArgs>>(attr, input)
+    proc_attribute_outer::<GlobalArgs<RegisterStateTypeArgs>>(attr, input)
 }
 pub fn auto_add_system_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<AddSystemAttributeArgs>>(attr, input)
+    proc_attribute_outer::<GlobalArgs<AddSystemArgs>>(attr, input)
 }
 
 pub fn auto_add_observer_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<AddObserverAttributeArgs>>(attr, input)
+    proc_attribute_outer::<GlobalArgs<AddObserverArgs>>(attr, input)
 }
 
 fn auto_inner<T: ShortHandAttribute + FromMeta>(
@@ -335,7 +335,7 @@ pub fn auto_system(attr: MacroStream, input: MacroStream) -> MacroStream {
     auto_outer::<SystemAttributeArgs>(attr, input)
 }
 pub fn auto_event(attr: MacroStream, input: MacroStream) -> MacroStream {
-    auto_outer::<EventAttributeArgs>(attr, input)
+    auto_outer::<EventArgs>(attr, input)
 }
 pub fn auto_message(attr: MacroStream, input: MacroStream) -> MacroStream {
     auto_outer::<MessageAttributeArgs>(attr, input)

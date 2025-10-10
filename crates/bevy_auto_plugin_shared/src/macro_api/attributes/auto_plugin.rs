@@ -8,7 +8,7 @@ use syn::{FnArg, ItemFn, Pat, Path};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq)]
 #[darling(derive_syn_parse, default)]
-pub struct AutoPluginStructOrEnumAttributeArgs {
+pub struct AutoPluginStructOrEnumArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub impl_plugin_trait: bool,
@@ -16,7 +16,7 @@ pub struct AutoPluginStructOrEnumAttributeArgs {
     pub impl_generic_plugin_trait: bool,
 }
 
-impl GenericsArgs for AutoPluginStructOrEnumAttributeArgs {
+impl GenericsArgs for AutoPluginStructOrEnumArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
@@ -24,14 +24,14 @@ impl GenericsArgs for AutoPluginStructOrEnumAttributeArgs {
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq)]
 #[darling(derive_syn_parse, default)]
-pub struct AutoPluginFnAttributeArgs {
+pub struct AutoPluginFnArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub plugin: Option<Path>,
     pub app_param: Option<Ident>,
 }
 
-impl GenericsArgs for AutoPluginFnAttributeArgs {
+impl GenericsArgs for AutoPluginFnArgs {
     const TURBOFISH: bool = true;
     fn type_lists(&self) -> &[TypeList] {
         &self.generics

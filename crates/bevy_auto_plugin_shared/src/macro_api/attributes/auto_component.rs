@@ -36,7 +36,7 @@ impl AutoPluginAttributeKind for ComponentAttributeArgs {
     }
 }
 
-impl<'a> From<&'a ComponentAttributeArgs> for RegisterTypeAttributeArgs {
+impl<'a> From<&'a ComponentAttributeArgs> for RegisterTypeArgs {
     fn from(value: &'a ComponentAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),
@@ -44,7 +44,7 @@ impl<'a> From<&'a ComponentAttributeArgs> for RegisterTypeAttributeArgs {
     }
 }
 
-impl<'a> From<&'a ComponentAttributeArgs> for AutoNameAttributeArgs {
+impl<'a> From<&'a ComponentAttributeArgs> for NameArgs {
     fn from(value: &'a ComponentAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),

@@ -30,7 +30,7 @@ impl AutoPluginAttributeKind for ObserverAttributeArgs {
     }
 }
 
-impl<'a> From<&'a ObserverAttributeArgs> for RegisterTypeAttributeArgs {
+impl<'a> From<&'a ObserverAttributeArgs> for RegisterTypeArgs {
     fn from(value: &'a ObserverAttributeArgs) -> Self {
         Self {
             generics: value.generics.clone(),
@@ -38,9 +38,9 @@ impl<'a> From<&'a ObserverAttributeArgs> for RegisterTypeAttributeArgs {
     }
 }
 
-impl<'a> From<&'a ObserverAttributeArgs> for AddObserverAttributeArgs {
+impl<'a> From<&'a ObserverAttributeArgs> for AddObserverArgs {
     fn from(value: &'a ObserverAttributeArgs) -> Self {
-        AddObserverAttributeArgs {
+        AddObserverArgs {
             generics: value.generics.clone(),
         }
     }
@@ -48,7 +48,7 @@ impl<'a> From<&'a ObserverAttributeArgs> for AddObserverAttributeArgs {
 
 impl ArgsBackToTokens for ObserverAttributeArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        AddObserverAttributeArgs::from(self).back_to_inner_arg_tokens(tokens);
+        AddObserverArgs::from(self).back_to_inner_arg_tokens(tokens);
     }
 }
 
