@@ -197,30 +197,23 @@ pub fn auto_add_observer_outer(attr: MacroStream, input: MacroStream) -> MacroSt
     proc_attribute_outer::<GlobalArgs<AddObserverArgs>>(attr, input)
 }
 
-pub fn auto_component(attr: MacroStream, input: MacroStream) -> MacroStream {
-    auto_outer::<ComponentAttributeArgs>(attr, input)
+macro_rules! gen_auto_outers {
+    ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
+        $(
+            #[inline]
+            pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
+                auto_outer::<$args>(attr, input)
+            }
+        )+
+    };
 }
 
-pub fn auto_resource(attr: MacroStream, input: MacroStream) -> MacroStream {
-    auto_outer::<ResourceAttributeArgs>(attr, input)
-}
-
-pub fn auto_system(attr: MacroStream, input: MacroStream) -> MacroStream {
-    auto_outer::<SystemAttributeArgs>(attr, input)
-}
-
-pub fn auto_event(attr: MacroStream, input: MacroStream) -> MacroStream {
-    auto_outer::<EventArgs>(attr, input)
-}
-
-pub fn auto_message(attr: MacroStream, input: MacroStream) -> MacroStream {
-    auto_outer::<MessageAttributeArgs>(attr, input)
-}
-
-pub fn auto_observer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    auto_outer::<ObserverAttributeArgs>(attr, input)
-}
-
-pub fn auto_states(attr: MacroStream, input: MacroStream) -> MacroStream {
-    auto_outer::<StatesAttributeArgs>(attr, input)
+gen_auto_outers! {
+    auto_component => ComponentAttributeArgs,
+    auto_resource  => ResourceAttributeArgs,
+    auto_system    => SystemAttributeArgs,
+    auto_event     => EventArgs,
+    auto_message   => MessageAttributeArgs,
+    auto_observer  => ObserverAttributeArgs,
+    auto_states    => StatesAttributeArgs,
 }
