@@ -72,7 +72,7 @@ impl AutoPluginAttribute for AutoPluginShortHandAttribute {
     }
 }
 
-pub trait ShortHandAttribute {
+pub trait RewriteAttribute {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream;
     fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs;
 }

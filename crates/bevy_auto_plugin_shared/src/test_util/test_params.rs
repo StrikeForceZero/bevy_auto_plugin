@@ -1,4 +1,4 @@
-use crate::__private::attribute::ShortHandAttribute;
+use crate::__private::attribute::RewriteAttribute;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::global_args::GlobalArgs;
@@ -70,7 +70,7 @@ pub(crate) struct TestParams<T: FromMeta> {
     pub expected_extras: ExpandAttrs,
 }
 
-impl<T: FromMeta + Clone + ShortHandAttribute> TestParams<T>
+impl<T: FromMeta + Clone + RewriteAttribute> TestParams<T>
 where
     for<'a> RegisterTypeArgs: From<&'a T>,
 {

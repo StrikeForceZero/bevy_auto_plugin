@@ -1,4 +1,4 @@
-use crate::__private::attribute::{AutoPluginShortHandAttribute, ShortHandAttribute};
+use crate::__private::attribute::{AutoPluginShortHandAttribute, RewriteAttribute};
 use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::prelude::*;
@@ -71,7 +71,7 @@ impl ArgsBackToTokens for StatesArgs {
     }
 }
 
-impl ShortHandAttribute for StatesArgs {
+impl RewriteAttribute for StatesArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
         args.push(quote! { plugin = #plugin });

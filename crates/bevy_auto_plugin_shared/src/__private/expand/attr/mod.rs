@@ -1,4 +1,4 @@
-use crate::__private::attribute::ShortHandAttribute;
+use crate::__private::attribute::RewriteAttribute;
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::codegen::with_target_path::WithTargetPath;
 use crate::macro_api::attributes::prelude::*;
@@ -78,7 +78,7 @@ where
     )
 }
 
-fn auto_inner<T: ShortHandAttribute + FromMeta>(
+fn auto_inner<T: RewriteAttribute + FromMeta>(
     attr: MacroStream,
     input: MacroStream,
 ) -> syn::Result<MacroStream> {
@@ -91,7 +91,7 @@ fn auto_inner<T: ShortHandAttribute + FromMeta>(
     })
 }
 
-pub fn auto_outer<T: ShortHandAttribute + FromMeta>(
+pub fn auto_outer<T: RewriteAttribute + FromMeta>(
     attr: MacroStream,
     input: MacroStream,
 ) -> MacroStream {
