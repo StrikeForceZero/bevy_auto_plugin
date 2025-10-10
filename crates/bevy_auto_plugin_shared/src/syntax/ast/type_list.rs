@@ -1,6 +1,5 @@
-use crate::syntax::traits::generics::{CountGenerics, HasGenericsCollection};
 use darling::{Error, FromMeta};
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::parse::Parser;
 use syn::{Meta, Token, Type, punctuated::Punctuated};
@@ -99,24 +98,5 @@ mod tests {
         let type_list = &attr.types;
         let tokens = quote! { #type_list };
         assert_eq!(tokens.to_string(), types.to_string());
-    }
-}
-
-impl CountGenerics for TypeList {
-    fn get_span(&self) -> Span {
-        use syn::spanned::Spanned;
-        self.span()
-    }
-
-    fn count_generics(&self) -> syn::Result<usize> {
-        Ok(self.len())
-    }
-}
-
-impl HasGenericsCollection for TypeList {
-    type CollectionItem = Self;
-    type Collection = Vec<Self>;
-    fn generics(&self) -> syn::Result<Self::Collection> {
-        Ok(vec![self.clone()])
     }
 }

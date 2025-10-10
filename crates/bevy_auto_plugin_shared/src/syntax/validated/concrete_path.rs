@@ -1,7 +1,6 @@
 use crate::codegen::with_target_path::WithTargetPath;
 use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::traits::generics::CountGenerics;
 use crate::syntax::validated::generics::{Generics, GenericsCollection};
 use crate::syntax::validated::path_without_generics::{
     PathWithoutGenerics, TryFromPathWithoutGenericsError,
@@ -90,23 +89,6 @@ impl<T: GenericsArgs> From<WithTargetPath<T>> for ConcreteTargetPathWithGenerics
         let (target, args) = value.into();
         Self::from((target, args))
     }
-}
-
-pub fn validate_generic_counts<T>(generics: &syn::Generics, cg: &T) -> syn::Result<()>
-where
-    T: CountGenerics,
-{
-    let expected_generics_count = generics.type_params().count();
-    if expected_generics_count > 0 {
-        let count = cg.count_generics()?;
-        if count != expected_generics_count {
-            return Err(syn::Error::new(
-                cg.get_span(),
-                format!("expected {expected_generics_count} generic parameters, found {count}"),
-            ));
-        }
-    }
-    Ok(())
 }
 
 pub fn generics_from_path(path: &Path) -> syn::Result<TypeList> {

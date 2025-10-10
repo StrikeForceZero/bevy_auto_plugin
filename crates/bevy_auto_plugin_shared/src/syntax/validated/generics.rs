@@ -1,6 +1,5 @@
 use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::traits::generics::CountGenerics;
-use proc_macro2::{Span, TokenStream as MacroStream};
+use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
 
 #[derive(Debug, Clone, PartialEq, Hash)]
@@ -63,16 +62,6 @@ impl ToTokens for Generics {
         }
         let types = &self.0;
         tokens.extend(quote!(< #types >));
-    }
-}
-
-impl CountGenerics for Generics {
-    fn get_span(&self) -> Span {
-        self.0.get_span()
-    }
-
-    fn count_generics(&self) -> syn::Result<usize> {
-        Ok(self.0.len())
     }
 }
 
