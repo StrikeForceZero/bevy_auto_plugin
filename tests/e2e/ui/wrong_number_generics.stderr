@@ -1,0 +1,17 @@
+error[E0107]: struct takes 2 generic arguments but 1 generic argument was supplied
+ --> tests/e2e/ui/wrong_number_generics.rs:8:8
+  |
+7 | #[auto_register_type(plugin = TestPlugin, generics(bool))]
+  |                                                    ---- supplied 1 generic argument
+8 | struct Foo<T1, T2>(T1, T2);
+  |        ^^^ expected 2 generic arguments
+  |
+note: struct defined here, with 2 generic parameters: `T1`, `T2`
+ --> tests/e2e/ui/wrong_number_generics.rs:8:8
+  |
+8 | struct Foo<T1, T2>(T1, T2);
+  |        ^^^ --  --
+help: add missing generic argument
+  |
+7 | #[auto_register_type(plugin = TestPlugin, generics(bool, _))]
+  |                                                        +++
