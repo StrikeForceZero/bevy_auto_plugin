@@ -13,7 +13,7 @@ use quote::quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct StatesAttributeArgs {
+pub struct StatesArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub derive: FlagOrList<NonEmptyPath>,
@@ -22,36 +22,36 @@ pub struct StatesAttributeArgs {
     pub init: bool,
 }
 
-impl GenericsArgs for StatesAttributeArgs {
+impl GenericsArgs for StatesArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl AutoPluginAttributeKind for StatesAttributeArgs {
+impl AutoPluginAttributeKind for StatesArgs {
     type Attribute = AutoPluginShortHandAttribute;
     fn attribute() -> Self::Attribute {
         Self::Attribute::States
     }
 }
 
-impl<'a> From<&'a StatesAttributeArgs> for RegisterTypeArgs {
-    fn from(value: &'a StatesAttributeArgs) -> Self {
+impl<'a> From<&'a StatesArgs> for RegisterTypeArgs {
+    fn from(value: &'a StatesArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl<'a> From<&'a StatesAttributeArgs> for InitStateArgs {
-    fn from(value: &'a StatesAttributeArgs) -> Self {
+impl<'a> From<&'a StatesArgs> for InitStateArgs {
+    fn from(value: &'a StatesArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl ArgsBackToTokens for StatesAttributeArgs {
+impl ArgsBackToTokens for StatesArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         let mut items = vec![];
         items.extend(self.generics().to_attribute_arg_vec_tokens());
@@ -71,7 +71,7 @@ impl ArgsBackToTokens for StatesAttributeArgs {
     }
 }
 
-impl ShortHandAttribute for StatesAttributeArgs {
+impl ShortHandAttribute for StatesArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
         args.push(quote! { plugin = #plugin });
@@ -127,7 +127,7 @@ mod tests {
             vec![quote!(init)],
         ]) {
             println!("checking args: {}", quote! { #(#args),*});
-            assert_vec_args_expand!(plugin!(parse_quote!(Test)), StatesAttributeArgs, args);
+            assert_vec_args_expand!(plugin!(parse_quote!(Test)), StatesArgs, args);
         }
         Ok(())
     }
@@ -145,7 +145,7 @@ mod tests {
             register,
             init,
         )};
-        let args = GlobalArgs::<StatesAttributeArgs>::from_nested_meta(&args)?;
+        let args = GlobalArgs::<StatesArgs>::from_nested_meta(&args)?;
         let derive_attr = tokens::derive_states(&extras);
         let derive_reflect_path = tokens::derive_reflect_path();
         let reflect_args = vec_spread![..extras,];

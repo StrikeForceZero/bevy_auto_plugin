@@ -12,47 +12,47 @@ use quote::quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct ObserverAttributeArgs {
+pub struct ObserverArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
 }
 
-impl GenericsArgs for ObserverAttributeArgs {
+impl GenericsArgs for ObserverArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl AutoPluginAttributeKind for ObserverAttributeArgs {
+impl AutoPluginAttributeKind for ObserverArgs {
     type Attribute = AutoPluginShortHandAttribute;
     fn attribute() -> Self::Attribute {
         Self::Attribute::Observer
     }
 }
 
-impl<'a> From<&'a ObserverAttributeArgs> for RegisterTypeArgs {
-    fn from(value: &'a ObserverAttributeArgs) -> Self {
+impl<'a> From<&'a ObserverArgs> for RegisterTypeArgs {
+    fn from(value: &'a ObserverArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl<'a> From<&'a ObserverAttributeArgs> for AddObserverArgs {
-    fn from(value: &'a ObserverAttributeArgs) -> Self {
+impl<'a> From<&'a ObserverArgs> for AddObserverArgs {
+    fn from(value: &'a ObserverArgs) -> Self {
         AddObserverArgs {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl ArgsBackToTokens for ObserverAttributeArgs {
+impl ArgsBackToTokens for ObserverArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         AddObserverArgs::from(self).back_to_inner_arg_tokens(tokens);
     }
 }
 
-impl ShortHandAttribute for ObserverAttributeArgs {
+impl ShortHandAttribute for ObserverArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
         args.push(quote! { plugin = #plugin });
@@ -85,7 +85,7 @@ mod tests {
     fn test_expand_back_into_args() -> syn::Result<()> {
         let args = vec![quote! {}];
         println!("checking args: {}", quote! { #(#args),*});
-        assert_vec_args_expand!(plugin!(parse_quote!(Test)), ObserverAttributeArgs, args);
+        assert_vec_args_expand!(plugin!(parse_quote!(Test)), ObserverArgs, args);
         Ok(())
     }
 
@@ -94,7 +94,7 @@ mod tests {
         let args: NestedMeta = parse_quote! {_(
             plugin = Test,
         )};
-        let args = GlobalArgs::<ObserverAttributeArgs>::from_nested_meta(&args)?;
+        let args = GlobalArgs::<ObserverArgs>::from_nested_meta(&args)?;
         println!(
             "{}",
             args.inner.expand_attrs(&args.plugin()).to_token_stream()

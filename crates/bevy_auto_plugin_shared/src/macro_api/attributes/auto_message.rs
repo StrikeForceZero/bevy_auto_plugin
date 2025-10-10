@@ -14,7 +14,7 @@ use quote::quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct MessageAttributeArgs {
+pub struct MessageArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub derive: FlagOrList<NonEmptyPath>,
@@ -22,36 +22,36 @@ pub struct MessageAttributeArgs {
     pub register: bool,
 }
 
-impl GenericsArgs for MessageAttributeArgs {
+impl GenericsArgs for MessageArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl AutoPluginAttributeKind for MessageAttributeArgs {
+impl AutoPluginAttributeKind for MessageArgs {
     type Attribute = AutoPluginShortHandAttribute;
     fn attribute() -> Self::Attribute {
         Self::Attribute::Message
     }
 }
 
-impl<'a> From<&'a MessageAttributeArgs> for RegisterTypeArgs {
-    fn from(value: &'a MessageAttributeArgs) -> Self {
+impl<'a> From<&'a MessageArgs> for RegisterTypeArgs {
+    fn from(value: &'a MessageArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl<'a> From<&'a MessageAttributeArgs> for AddMessageArgs {
-    fn from(value: &'a MessageAttributeArgs) -> Self {
+impl<'a> From<&'a MessageArgs> for AddMessageArgs {
+    fn from(value: &'a MessageArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl ArgsBackToTokens for MessageAttributeArgs {
+impl ArgsBackToTokens for MessageArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         let mut items = vec![];
         items.extend(self.generics().to_attribute_arg_vec_tokens());
@@ -68,7 +68,7 @@ impl ArgsBackToTokens for MessageAttributeArgs {
     }
 }
 
-impl ShortHandAttribute for MessageAttributeArgs {
+impl ShortHandAttribute for MessageArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
         args.push(quote! { plugin = #plugin });
@@ -126,7 +126,7 @@ mod tests {
             vec![quote!(register)],
         ]) {
             println!("checking args: {}", quote! { #(#args),*});
-            assert_vec_args_expand!(plugin!(parse_quote!(Test)), MessageAttributeArgs, args);
+            assert_vec_args_expand!(plugin!(parse_quote!(Test)), MessageArgs, args);
         }
         Ok(())
     }
@@ -143,7 +143,7 @@ mod tests {
             reflect(#(#extras),*),
             register,
         )};
-        let args = GlobalArgs::<MessageAttributeArgs>::from_nested_meta(&args)?;
+        let args = GlobalArgs::<MessageArgs>::from_nested_meta(&args)?;
         let derive_args = vec_spread![tokens::derive_message_path(), ..extras.clone(),];
         let derive_reflect_path = tokens::derive_reflect_path();
         let reflect_args = vec_spread![..extras,];

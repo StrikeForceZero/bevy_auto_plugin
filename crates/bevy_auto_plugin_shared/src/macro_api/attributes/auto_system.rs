@@ -13,36 +13,36 @@ use quote::quote;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
-pub struct SystemAttributeArgs {
+pub struct SystemArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     #[darling(flatten)]
     pub schedule_config: ScheduleWithScheduleConfigArgs,
 }
 
-impl GenericsArgs for SystemAttributeArgs {
+impl GenericsArgs for SystemArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl AutoPluginAttributeKind for SystemAttributeArgs {
+impl AutoPluginAttributeKind for SystemArgs {
     type Attribute = AutoPluginShortHandAttribute;
     fn attribute() -> Self::Attribute {
         Self::Attribute::System
     }
 }
 
-impl<'a> From<&'a SystemAttributeArgs> for RegisterTypeArgs {
-    fn from(value: &'a SystemAttributeArgs) -> Self {
+impl<'a> From<&'a SystemArgs> for RegisterTypeArgs {
+    fn from(value: &'a SystemArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl<'a> From<&'a SystemAttributeArgs> for AddSystemArgs {
-    fn from(value: &'a SystemAttributeArgs) -> Self {
+impl<'a> From<&'a SystemArgs> for AddSystemArgs {
+    fn from(value: &'a SystemArgs) -> Self {
         AddSystemArgs {
             generics: value.generics.clone(),
             schedule_config: value.schedule_config.clone(),
@@ -50,7 +50,7 @@ impl<'a> From<&'a SystemAttributeArgs> for AddSystemArgs {
     }
 }
 
-impl ArgsBackToTokens for SystemAttributeArgs {
+impl ArgsBackToTokens for SystemArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         let mut items = vec![];
         items.extend(self.generics().to_attribute_arg_vec_tokens());
@@ -59,7 +59,7 @@ impl ArgsBackToTokens for SystemAttributeArgs {
     }
 }
 
-impl ShortHandAttribute for SystemAttributeArgs {
+impl ShortHandAttribute for SystemArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
         args.push(quote! { plugin = #plugin });
@@ -92,7 +92,7 @@ mod tests {
     fn test_expand_back_into_args() -> syn::Result<()> {
         let args = vec![quote! { schedule = Update }];
         println!("checking args: {}", quote! { #(#args),*});
-        assert_vec_args_expand!(plugin!(parse_quote!(Test)), SystemAttributeArgs, args);
+        assert_vec_args_expand!(plugin!(parse_quote!(Test)), SystemArgs, args);
         Ok(())
     }
 
@@ -102,7 +102,7 @@ mod tests {
             plugin = Test,
             schedule = Update,
         )};
-        let args = GlobalArgs::<SystemAttributeArgs>::from_nested_meta(&args)?;
+        let args = GlobalArgs::<SystemArgs>::from_nested_meta(&args)?;
         println!(
             "{}",
             args.inner.expand_attrs(&args.plugin()).to_token_stream()

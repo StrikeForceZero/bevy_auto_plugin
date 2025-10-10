@@ -14,7 +14,7 @@ use syn::parse_quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct ResourceAttributeArgs {
+pub struct ResourceArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub derive: FlagOrList<NonEmptyPath>,
@@ -23,34 +23,34 @@ pub struct ResourceAttributeArgs {
     pub init: bool,
 }
 
-impl GenericsArgs for ResourceAttributeArgs {
+impl GenericsArgs for ResourceArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl AutoPluginAttributeKind for ResourceAttributeArgs {
+impl AutoPluginAttributeKind for ResourceArgs {
     type Attribute = AutoPluginShortHandAttribute;
     fn attribute() -> Self::Attribute {
         Self::Attribute::Resource
     }
 }
 
-impl<'a> From<&'a ResourceAttributeArgs> for RegisterTypeArgs {
-    fn from(value: &'a ResourceAttributeArgs) -> Self {
+impl<'a> From<&'a ResourceArgs> for RegisterTypeArgs {
+    fn from(value: &'a ResourceArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl<'a> From<&'a ResourceAttributeArgs> for InitResourceArgs {
-    fn from(_: &'a ResourceAttributeArgs) -> Self {
+impl<'a> From<&'a ResourceArgs> for InitResourceArgs {
+    fn from(_: &'a ResourceArgs) -> Self {
         Self::default()
     }
 }
 
-impl ArgsBackToTokens for ResourceAttributeArgs {
+impl ArgsBackToTokens for ResourceArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         let mut items = vec![];
         items.extend(self.generics().to_attribute_arg_vec_tokens());
@@ -70,7 +70,7 @@ impl ArgsBackToTokens for ResourceAttributeArgs {
     }
 }
 
-impl ShortHandAttribute for ResourceAttributeArgs {
+impl ShortHandAttribute for ResourceArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
         args.push(quote! { plugin = #plugin });
@@ -130,7 +130,7 @@ mod tests {
             vec![quote!(init)],
         ]) {
             println!("checking args: {}", quote! { #(#args),*});
-            assert_vec_args_expand!(plugin!(parse_quote!(Test)), ResourceAttributeArgs, args);
+            assert_vec_args_expand!(plugin!(parse_quote!(Test)), ResourceArgs, args);
         }
         Ok(())
     }
@@ -148,7 +148,7 @@ mod tests {
             register,
             init,
         )};
-        let args = GlobalArgs::<ResourceAttributeArgs>::from_nested_meta(&args)?;
+        let args = GlobalArgs::<ResourceArgs>::from_nested_meta(&args)?;
         let derive_args = vec_spread![tokens::derive_resource_path(), ..extras.clone(),];
         let derive_reflect_path = tokens::derive_reflect_path();
         let reflect_args = vec_spread![parse_quote!(Resource), ..extras,];

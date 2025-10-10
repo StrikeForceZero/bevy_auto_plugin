@@ -14,7 +14,7 @@ use syn::parse_quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct ComponentAttributeArgs {
+pub struct ComponentArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub derive: FlagOrList<NonEmptyPath>,
@@ -23,36 +23,36 @@ pub struct ComponentAttributeArgs {
     pub auto_name: bool,
 }
 
-impl GenericsArgs for ComponentAttributeArgs {
+impl GenericsArgs for ComponentArgs {
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl AutoPluginAttributeKind for ComponentAttributeArgs {
+impl AutoPluginAttributeKind for ComponentArgs {
     type Attribute = AutoPluginShortHandAttribute;
     fn attribute() -> Self::Attribute {
         Self::Attribute::Component
     }
 }
 
-impl<'a> From<&'a ComponentAttributeArgs> for RegisterTypeArgs {
-    fn from(value: &'a ComponentAttributeArgs) -> Self {
+impl<'a> From<&'a ComponentArgs> for RegisterTypeArgs {
+    fn from(value: &'a ComponentArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl<'a> From<&'a ComponentAttributeArgs> for NameArgs {
-    fn from(value: &'a ComponentAttributeArgs) -> Self {
+impl<'a> From<&'a ComponentArgs> for NameArgs {
+    fn from(value: &'a ComponentArgs) -> Self {
         Self {
             generics: value.generics.clone(),
         }
     }
 }
 
-impl ArgsBackToTokens for ComponentAttributeArgs {
+impl ArgsBackToTokens for ComponentArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         let mut items = vec![];
         items.extend(self.generics().to_attribute_arg_vec_tokens());
@@ -72,7 +72,7 @@ impl ArgsBackToTokens for ComponentAttributeArgs {
     }
 }
 
-impl ShortHandAttribute for ComponentAttributeArgs {
+impl ShortHandAttribute for ComponentArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
         args.push(quote! { plugin = #plugin });
@@ -132,7 +132,7 @@ mod tests {
             vec![quote!(auto_name)],
         ]) {
             println!("checking args: {}", quote! { #(#args),*});
-            assert_vec_args_expand!(plugin!(parse_quote!(Test)), ComponentAttributeArgs, args);
+            assert_vec_args_expand!(plugin!(parse_quote!(Test)), ComponentArgs, args);
         }
         Ok(())
     }
@@ -150,7 +150,7 @@ mod tests {
             register,
             auto_name,
         )};
-        let args = GlobalArgs::<ComponentAttributeArgs>::from_nested_meta(&args)?;
+        let args = GlobalArgs::<ComponentArgs>::from_nested_meta(&args)?;
         let derive_args = vec_spread![tokens::derive_component_path(), ..extras.clone(),];
         let derive_reflect_path = tokens::derive_reflect_path();
         let reflect_args = vec_spread![parse_quote!(Component), ..extras,];

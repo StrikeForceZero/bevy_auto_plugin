@@ -209,11 +209,11 @@ macro_rules! gen_auto_outers {
 }
 
 gen_auto_outers! {
-    auto_component => ComponentAttributeArgs,
-    auto_resource  => ResourceAttributeArgs,
-    auto_system    => SystemAttributeArgs,
+    auto_component => ComponentArgs,
+    auto_resource  => ResourceArgs,
+    auto_system    => SystemArgs,
     auto_event     => EventArgs,
-    auto_message   => MessageAttributeArgs,
-    auto_observer  => ObserverAttributeArgs,
-    auto_states    => StatesAttributeArgs,
+    auto_message   => MessageArgs,
+    auto_observer  => ObserverArgs,
+    auto_states    => StatesArgs,
 }
