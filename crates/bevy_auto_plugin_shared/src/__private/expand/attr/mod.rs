@@ -49,7 +49,7 @@ where
 {
     /// Maps [`crate::syntax::analysis::item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
     fn resolve_item_ident<T: PluginBound>(item: &Item) -> syn::Result<&Ident> {
-        T::Inner::resolve_item_ident(item).map_err(|err| syn::Error::new(Span::call_site(), err))
+        T::Inner::resolve_item_ident(item).map_err(syn::Error::from)
     }
 
     proc_attribute_inner(
