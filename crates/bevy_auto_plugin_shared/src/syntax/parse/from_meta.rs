@@ -7,6 +7,7 @@ pub trait FromMetaExt: FromMeta {
 }
 
 impl<T: FromMeta> FromMetaExt for T {
+    /// allows us to call from_meta on items that are just a path (no args)
     fn from_meta_ext(meta: &Meta) -> darling::Result<Self> {
         match meta {
             Meta::Path(_) => T::from_list(&[]),
