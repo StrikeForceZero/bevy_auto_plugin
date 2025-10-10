@@ -1,3 +1,5 @@
+use syn::spanned::Spanned;
+
 crate::any_expr_enum!(pub AnyExprCallClosureMacroPath: Call, Closure, Macro, Path);
 crate::any_expr_enum!(pub AnyExprCallMacroPath: Call, Macro, Path);
 
@@ -39,13 +41,14 @@ macro_rules! any_expr_enum {
 
         impl $name {
             fn __from_expr(mut e: ::syn::Expr) -> ::std::result::Result<Self, ::darling::Error> {
+                use ::syn::spanned::Spanned;
                 if let ::syn::Expr::Paren(p) = e { e = *p.expr; }
                 match e {
                     $( ::syn::Expr::$v(node) => Ok(Self::$v(node)), )+
                     other => Err(::darling::Error::custom(::std::format!(
                         "unsupported expression: expected one of [{}], got `{}`",
                         ::core::stringify!($($v),+), ::quote::quote!(#other)
-                    ))),
+                    )).with_span(&other.span())),
                 }
             }
             fn __debug_tuple_string(&self) -> (&'static str, String) {
@@ -139,36 +142,38 @@ macro_rules! any_expr_enum {
         }
 
         impl ::darling::FromMeta for $name {
-            fn from_meta(m: &::syn::Meta) -> ::std::result::Result<Self, ::darling::Error> {
+            fn from_meta(meta: &::syn::Meta) -> ::std::result::Result<Self, ::darling::Error> {
+                use ::syn::spanned::Spanned;
                 use ::syn::parse::Parser;
-                match m {
+                match meta {
                     ::syn::Meta::List(list) => {
-                        let parser = syn::punctuated::Punctuated::<::syn::Expr, ::syn::Token![,]>::parse_terminated;
-                        let elems = parser.parse2(list.tokens.clone()).map_err(::darling::Error::custom)?;
+                        let parser = ::syn::punctuated::Punctuated::<::syn::Expr, ::syn::Token![,]>::parse_terminated;
+                        let elems = parser.parse2(list.tokens.clone()).map_err(::darling::Error::from)?;
                         let mut it = elems.into_iter();
-                        let expr = it.next().ok_or_else(|| darling::Error::custom("expected one expression"))?;
-                        if it.next().is_some() {
-                            return Err(darling::Error::custom("expected exactly one expression"));
+                        let expr = it.next().ok_or_else(|| ::darling::Error::too_few_items(1).with_span(&list.tokens.span()))?;
+                        if let Some(elem) = it.next() {
+                            return Err(::darling::Error::too_many_items(1).with_span(&elem.span()));
                         }
                         Self::__from_expr(expr)
                     }
                     ::syn::Meta::NameValue(nv) => Self::__from_expr(nv.value.clone()),
-                    ::syn::Meta::Path(_) => Err(::darling::Error::custom("expected `attr = <expr>` or `attr(<expr>)`")),
+                    ::syn::Meta::Path(_) => Err(::darling::Error::unsupported_format("expected `attr = <expr>` or `attr(<expr>)`").with_span(&meta.span())),
                 }
             }
         }
 
         impl ::syn::parse::Parse for $name {
             fn parse(input: ::syn::parse::ParseStream) -> ::syn::Result<Self> {
+                use ::syn::spanned::Spanned;
                 let elems = ::syn::punctuated::Punctuated::<::syn::Expr, ::syn::Token![,]>::parse_terminated(input)?;
                 let mut it = elems.into_iter();
                 let Some(expr) = it.next() else {
-                    return Err(::syn::Error::new(input.span(), "expected exactly one expression"));
+                    return Err(::darling::Error::too_few_items(1).with_span(&input.span()).into());
                 };
-                if it.next().is_some() {
-                    return Err(::syn::Error::new(input.span(), "expected exactly one expression"));
+                if let Some(elem) = it.next() {
+                    return Err(::darling::Error::too_many_items(1).with_span(&elem.span()).into());
                 }
-                $name::__from_expr(expr).map_err(|e| syn::Error::new(input.span(), e.to_string()))
+                $name::__from_expr(expr).map_err(|e| ::syn::Error::new(input.span(), e.to_string()))
             }
         }
 
