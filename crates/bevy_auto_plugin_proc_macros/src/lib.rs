@@ -95,56 +95,56 @@ pub fn auto_add_observer(attr: CompilerStream, input: CompilerStream) -> Compile
 }
 
 /// Automatically registers item as Component for bevy app. (See below for additional options)
-#[doc = include_str!("docs/proc_attributes/shorthand/auto_component.md")]
+#[doc = include_str!("docs/proc_attributes/auto_component.md")]
 #[proc_macro_attribute]
 pub fn auto_component(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(__private::inner::auto_component, attr, input)
 }
 
 /// Automatically registers item as Resource for bevy app. (See below for additional options)
-#[doc = include_str!("docs/proc_attributes/shorthand/auto_resource.md")]
+#[doc = include_str!("docs/proc_attributes/auto_resource.md")]
 #[proc_macro_attribute]
 pub fn auto_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(__private::inner::auto_resource, attr, input)
 }
 
 /// Automatically registers item as Event for bevy app. (See below for additional options)
-#[doc = include_str!("docs/proc_attributes/shorthand/auto_event.md")]
+#[doc = include_str!("docs/proc_attributes/auto_event.md")]
 #[proc_macro_attribute]
 pub fn auto_event(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(__private::inner::auto_event, attr, input)
 }
 
 /// Automatically registers item as Message for bevy app. (See below for additional options)
-#[doc = include_str!("docs/proc_attributes/shorthand/auto_message.md")]
+#[doc = include_str!("docs/proc_attributes/auto_message.md")]
 #[proc_macro_attribute]
 pub fn auto_message(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(__private::inner::auto_message, attr, input)
 }
 
 /// Automatically registers item as States for bevy app. (See below for additional options)
-#[doc = include_str!("docs/proc_attributes/shorthand/auto_states.md")]
+#[doc = include_str!("docs/proc_attributes/auto_states.md")]
 #[proc_macro_attribute]
 pub fn auto_states(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(__private::inner::auto_states, attr, input)
 }
 
 /// Automatically adds the fn as a system for bevy app. (See below for additional options)
-#[doc = include_str!("docs/proc_attributes/shorthand/auto_system.md")]
+#[doc = include_str!("docs/proc_attributes/auto_system.md")]
 #[proc_macro_attribute]
 pub fn auto_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(__private::inner::auto_system, attr, input)
 }
 
 /// Automatically adds proc_attributes observer to bevy app. (See below for additional options)
-#[doc = include_str!("docs/proc_attributes/shorthand/auto_observer.md")]
+#[doc = include_str!("docs/proc_attributes/auto_observer.md")]
 #[proc_macro_attribute]
 pub fn auto_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(__private::inner::auto_observer, attr, input)
 }
 
 /// Automatically binds `plugin = _` to every auto_* attribute below it
-#[doc = include_str!("docs/proc_attributes/shorthand/auto_bind_plugin.md")]
+#[doc = include_str!("docs/proc_attributes/auto_bind_plugin.md")]
 #[proc_macro_attribute]
 pub fn auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(__private::inner::auto_bind_plugin_outer, attr, input)
