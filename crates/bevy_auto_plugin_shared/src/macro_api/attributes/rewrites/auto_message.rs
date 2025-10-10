@@ -1,7 +1,7 @@
 use crate::__private::attribute::{AutoPluginShortHandAttribute, ShortHandAttribute};
 use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
-use crate::macro_api::attributes::auto_add_message::AddMessageArgs;
+use crate::macro_api::attributes::actions::auto_add_message::AddMessageArgs;
 use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::global_args::AutoPluginAttributeKind;
 use crate::macro_api::global_args::GenericsArgs;

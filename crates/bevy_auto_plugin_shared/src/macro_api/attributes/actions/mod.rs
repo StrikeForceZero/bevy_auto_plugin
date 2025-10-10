@@ -1,0 +1,9 @@
+pub mod auto_add_message;
+pub mod auto_add_observer;
+pub mod auto_add_system;
+pub mod auto_init_resource;
+pub mod auto_init_state;
+pub mod auto_insert_resource;
+pub mod auto_name;
+pub mod auto_register_state_type;
+pub mod auto_register_type;
