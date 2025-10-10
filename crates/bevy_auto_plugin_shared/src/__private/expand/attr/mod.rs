@@ -161,40 +161,15 @@ fn list_has_key(ml: &syn::MetaList, key: &str) -> bool {
     }
 }
 
-pub fn auto_register_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<RegisterTypeArgs>>(attr, input)
-}
-
-pub fn auto_add_message_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<AddMessageArgs>>(attr, input)
-}
-
-pub fn auto_init_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<InitResourceArgs>>(attr, input)
-}
-
-pub fn auto_insert_resource_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<InsertResourceArgs>>(attr, input)
-}
-
-pub fn auto_init_state_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<InitStateArgs>>(attr, input)
-}
-
-pub fn auto_name_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<NameArgs>>(attr, input)
-}
-
-pub fn auto_register_state_type_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<RegisterStateTypeArgs>>(attr, input)
-}
-
-pub fn auto_add_system_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<AddSystemArgs>>(attr, input)
-}
-
-pub fn auto_add_observer_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    proc_attribute_outer::<GlobalArgs<AddObserverArgs>>(attr, input)
+macro_rules! gen_auto_attribute_outers {
+    ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
+        $(
+            #[inline]
+            pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
+                proc_attribute_outer::<GlobalArgs<$args>>(attr, input)
+            }
+        )+
+    };
 }
 
 macro_rules! gen_auto_outers {
@@ -206,6 +181,18 @@ macro_rules! gen_auto_outers {
             }
         )+
     };
+}
+
+gen_auto_attribute_outers! {
+    auto_register_type_outer        => RegisterTypeArgs,
+    auto_add_message_outer          => AddMessageArgs,
+    auto_init_resource_outer        => InitResourceArgs,
+    auto_insert_resource_outer      => InsertResourceArgs,
+    auto_init_state_outer           => InitStateArgs,
+    auto_name_outer                 => NameArgs,
+    auto_register_state_type_outer  => RegisterStateTypeArgs,
+    auto_add_system_outer           => AddSystemArgs,
+    auto_add_observer_outer         => AddObserverArgs,
 }
 
 gen_auto_outers! {
