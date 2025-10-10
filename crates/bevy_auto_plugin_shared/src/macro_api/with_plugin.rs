@@ -21,6 +21,29 @@ pub trait GenericsArgs {
     }
 }
 
+pub trait PluginBound: FromMeta + Parse + ToTokensWithConcreteTargetPath + Hash + Clone {
+    type Inner: ItemAttributeArgs;
+    fn inner(&self) -> &Self::Inner;
+    fn plugin(&self) -> &Path;
+
+    fn _concat_ident_hash(&self, ident: &Ident) -> String {
+        use std::hash::{Hash, Hasher};
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        ident.hash(&mut hasher);
+        self.hash(&mut hasher);
+        format!("{:x}", hasher.finish())
+    }
+
+    fn _get_unique_ident(&self, prefix: Ident, ident: &Ident) -> Ident {
+        let hash = self._concat_ident_hash(ident);
+        format_ident!("{prefix}_{hash}")
+    }
+
+    fn get_unique_ident(&self, ident: &Ident) -> Ident {
+        self._get_unique_ident(Self::Inner::global_build_prefix(), ident)
+    }
+}
+
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct WithPlugin<T> {
@@ -65,7 +88,7 @@ where
     }
 }
 
-impl<T> GlobalAttributeArgs for WithPlugin<T>
+impl<T> PluginBound for WithPlugin<T>
 where
     T: ItemAttributeArgs,
 {
@@ -75,30 +98,5 @@ where
     }
     fn plugin(&self) -> &Path {
         &self.plugin
-    }
-}
-
-pub trait GlobalAttributeArgs:
-    FromMeta + Parse + ToTokensWithConcreteTargetPath + Hash + Clone
-{
-    type Inner: ItemAttributeArgs;
-    fn inner(&self) -> &Self::Inner;
-    fn plugin(&self) -> &Path;
-
-    fn _concat_ident_hash(&self, ident: &Ident) -> String {
-        use std::hash::{Hash, Hasher};
-        let mut hasher = std::collections::hash_map::DefaultHasher::new();
-        ident.hash(&mut hasher);
-        self.hash(&mut hasher);
-        format!("{:x}", hasher.finish())
-    }
-
-    fn _get_unique_ident(&self, prefix: Ident, ident: &Ident) -> Ident {
-        let hash = self._concat_ident_hash(ident);
-        format_ident!("{prefix}_{hash}")
-    }
-
-    fn get_unique_ident(&self, ident: &Ident) -> Ident {
-        self._get_unique_ident(Self::Inner::global_build_prefix(), ident)
     }
 }

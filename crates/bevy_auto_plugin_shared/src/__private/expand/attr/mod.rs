@@ -3,7 +3,7 @@ use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::codegen::with_target_path::WithTargetPath;
 use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::with_plugin::{GlobalAttributeArgs, WithPlugin};
+use crate::macro_api::with_plugin::{PluginBound, WithPlugin};
 use crate::ok_or_return_compiler_error;
 use crate::syntax::diagnostic::kind::item_kind;
 use darling::FromMeta;
@@ -22,7 +22,7 @@ fn proc_attribute_inner<A, F>(
     body: F,
 ) -> MacroStream
 where
-    A: GlobalAttributeArgs,
+    A: PluginBound,
     F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
 {
     let attr = attr.into();
@@ -45,10 +45,10 @@ pub fn proc_attribute_outer<T>(
     input: impl Into<MacroStream>,
 ) -> MacroStream
 where
-    T: GlobalAttributeArgs,
+    T: PluginBound,
 {
     /// Maps [`crate::syntax::analysis::item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
-    fn resolve_item_ident<T: GlobalAttributeArgs>(item: &Item) -> syn::Result<&Ident> {
+    fn resolve_item_ident<T: PluginBound>(item: &Item) -> syn::Result<&Ident> {
         T::Inner::resolve_item_ident(item).map_err(|err| syn::Error::new(Span::call_site(), err))
     }
 
