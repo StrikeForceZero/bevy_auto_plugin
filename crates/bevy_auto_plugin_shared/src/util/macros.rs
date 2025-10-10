@@ -1,50 +1,3 @@
-macro_rules! ok_or_return_compiler_error_with_span_and_message {
-    // Case: Only expression
-    ($expr:expr) => {{
-        let expr = $expr;
-        let span = $crate::syntax::diagnostic::span::get_or_create_span_from_result(&expr);
-        $crate::util::macros::ok_or_return_compiler_error_with_span_and_message!(@internal span, "failed to parse", expr)
-    }};
-
-    // Case: Expression, message ident
-    ($expr:expr, $message:ident) => {{
-        let expr = $expr;
-        let span = $crate::syntax::diagnostic::span::get_or_create_span_from_result(&expr);
-        $crate::util::macros::ok_or_return_compiler_error_with_span_and_message!(@internal span, $message, expr)
-    }};
-
-    // Case: Span, Expression
-    ($span:expr, $expr:expr) => {{
-        $crate::util::macros::ok_or_return_compiler_error_with_span_and_message!(@internal $span, "failed to parse", $expr)
-    }};
-
-    // Case: Expression, message
-    ($expr:expr, $message:literal) => {{
-        let expr = $expr;
-        let span = $crate::syntax::diagnostic::span::get_or_create_span_from_result(&expr);
-        $crate::util::macros::ok_or_return_compiler_error_with_span_and_message!(@internal span, $message, expr)
-    }};
-
-    // Case: Span, message, Expression
-    ($span:expr, $message:literal, $expr:expr) => {{
-        $crate::util::macros::ok_or_return_compiler_error_with_span_and_message!(@internal $span, $message, $expr)
-    }};
-
-    // Internal handler (common logic)
-    (@internal $span:expr, $message:expr, $expr:expr) => {{
-        let span = $span;
-        let message = $message;
-        match $expr {
-            Ok(v) => v,
-            Err(e) => {
-                return syn::Error::new(span, format!("{message}: {e}"))
-                    .to_compile_error()
-                    .into();
-            }
-        }
-    }};
-}
-
 macro_rules! ok_or_return_compiler_error {
     // Case: expression, message
     ($expr:expr, $message:expr) => {{
@@ -129,7 +82,6 @@ macro_rules! bevy_crate_path {
 
 #[rustfmt::skip]
 pub(crate) use {
-    ok_or_return_compiler_error_with_span_and_message,
     ok_or_return_compiler_error,
     parse_macro_input2,
     as_cargo_alias,
