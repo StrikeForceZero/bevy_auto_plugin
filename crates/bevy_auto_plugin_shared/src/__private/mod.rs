@@ -1,7 +1,6 @@
 pub mod attribute;
 pub mod auto_plugin_registry;
 pub mod expand;
-pub mod inner;
 mod macros;
 
 pub(crate) mod paths {
