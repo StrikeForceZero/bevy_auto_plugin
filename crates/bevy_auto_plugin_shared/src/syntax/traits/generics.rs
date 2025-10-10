@@ -1,4 +1,4 @@
-use crate::macro_api::with_plugin::GenericsArgs;
+use crate::macro_api::attributes::prelude::GenericsArgs;
 use proc_macro2::Span;
 use quote::ToTokens;
 

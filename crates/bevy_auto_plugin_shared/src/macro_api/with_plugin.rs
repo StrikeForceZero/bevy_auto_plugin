@@ -1,9 +1,9 @@
 use crate::codegen::tokens::{ArgsBackToTokens, ArgsWithPlugin};
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::attributes::ItemAttributeArgs;
+use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
-use crate::syntax::validated::generics::GenericsCollection;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream};
@@ -11,15 +11,6 @@ use quote::format_ident;
 use std::hash::Hash;
 use syn::Path;
 use syn::parse::Parse;
-
-pub trait GenericsArgs {
-    // TODO: see impl ToTokens for Generics
-    const TURBOFISH: bool = false;
-    fn type_lists(&self) -> &[TypeList];
-    fn generics(&self) -> GenericsCollection {
-        GenericsCollection(self.type_lists().to_vec())
-    }
-}
 
 pub trait PluginBound: FromMeta + Parse + ToTokensWithConcreteTargetPath + Hash + Clone {
     type Inner: ItemAttributeArgs;

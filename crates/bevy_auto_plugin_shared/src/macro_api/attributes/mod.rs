@@ -11,6 +11,7 @@ use syn::{Item, parse_quote};
 mod actions;
 mod auto_plugin;
 mod rewrites;
+mod traits;
 
 pub mod prelude {
     pub use super::auto_plugin::{
@@ -32,6 +33,7 @@ pub mod prelude {
     pub use crate::macro_api::attributes::rewrites::auto_resource::ResourceArgs;
     pub use crate::macro_api::attributes::rewrites::auto_states::StatesArgs;
     pub use crate::macro_api::attributes::rewrites::auto_system::SystemArgs;
+    pub use crate::macro_api::attributes::traits::prelude::*;
 }
 
 pub trait AttributeIdent {

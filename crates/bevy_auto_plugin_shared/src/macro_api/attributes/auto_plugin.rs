@@ -1,4 +1,4 @@
-use crate::macro_api::with_plugin::GenericsArgs;
+use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
 use crate::syntax::ast::type_list::TypeList;
 use darling::FromMeta;
