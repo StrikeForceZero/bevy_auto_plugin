@@ -2,6 +2,7 @@ use darling::{Error, FromMeta};
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::parse::Parser;
+use syn::spanned::Spanned;
 use syn::{Meta, Token, Type, punctuated::Punctuated};
 
 #[derive(Debug, Clone, Default, PartialEq, Hash)]
@@ -43,12 +44,21 @@ impl From<TypeList> for TokenStream {
     }
 }
 
+fn failed_err(e: syn::Error, span: &proc_macro2::Span) -> Error {
+    Error::multiple(vec![
+        Error::custom("failed to parse TypeList").with_span(span),
+        Error::from(e),
+    ])
+}
+
 impl FromMeta for TypeList {
     fn from_meta(meta: &Meta) -> Result<Self, Error> {
         let list = meta.require_list()?;
         // Parse its tokens as `T, T, ...` where each `T` is a syn::Type
         let parser = Punctuated::<Type, Token![,]>::parse_terminated;
-        let elems = parser.parse2(list.tokens.clone()).map_err(Error::from)?;
+        let elems = parser
+            .parse2(list.tokens.clone())
+            .map_err(|e| failed_err(e, &list.tokens.to_token_stream().span()))?;
         Ok(TypeList(elems.into_iter().collect()))
     }
 }
@@ -56,7 +66,8 @@ impl FromMeta for TypeList {
 impl syn::parse::Parse for TypeList {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         use syn::{Token, Type, punctuated::Punctuated};
-        let elems = Punctuated::<Type, Token![,]>::parse_terminated(input)?
+        let elems = Punctuated::<Type, Token![,]>::parse_terminated(input)
+            .map_err(|e| failed_err(e, &input.span()))?
             .into_iter()
             .collect();
         Ok(TypeList(elems))
