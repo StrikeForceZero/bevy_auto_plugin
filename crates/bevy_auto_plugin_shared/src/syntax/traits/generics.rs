@@ -1,8 +1,6 @@
 use crate::macro_api::global_args::GenericsArgs;
-use crate::syntax::ast::type_list::TypeList;
 use proc_macro2::Span;
 use quote::ToTokens;
-use syn::Path;
 
 pub trait HasGenericsCollection {
     type CollectionItem: ToTokens;
@@ -10,30 +8,9 @@ pub trait HasGenericsCollection {
     fn generics(&self) -> syn::Result<Self::Collection>;
 }
 
-impl HasGenericsCollection for Path {
-    type CollectionItem = TypeList;
-    type Collection = Vec<TypeList>;
-
-    fn generics(&self) -> syn::Result<Self::Collection> {
-        Ok(vec![crate::util::extensions::path::PathExt::generics(
-            self,
-        )?])
-    }
-}
-
 pub trait CountGenerics {
     fn get_span(&self) -> Span;
     fn count_generics(&self) -> syn::Result<usize>;
-}
-
-impl CountGenerics for Path {
-    fn get_span(&self) -> Span {
-        syn::spanned::Spanned::span(&self)
-    }
-
-    fn count_generics(&self) -> syn::Result<usize> {
-        crate::util::extensions::path::PathExt::generic_count(self)
-    }
 }
 
 impl<T> CountGenerics for T

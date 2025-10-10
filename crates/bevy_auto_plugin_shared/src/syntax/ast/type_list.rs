@@ -1,4 +1,4 @@
-use crate::util::generics_traits::{CountGenerics, HasGenericsCollection};
+use crate::syntax::traits::generics::{CountGenerics, HasGenericsCollection};
 use darling::{Error, FromMeta};
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};

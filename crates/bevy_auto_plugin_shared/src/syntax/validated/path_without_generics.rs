@@ -1,4 +1,4 @@
-use crate::util::extensions::path::PathExt;
+use crate::syntax::extensions::path::PathExt;
 use proc_macro2::{Ident, TokenStream};
 use quote::ToTokens;
 use syn::parse::Parse;

@@ -2,12 +2,12 @@ use crate::codegen::with_target_path::WithTargetPath;
 use crate::macro_api::global_args::GenericsArgs;
 use crate::macro_api::global_args::ItemAttributeArgs;
 use crate::syntax::ast::type_list::TypeList;
+use crate::syntax::traits::generics::CountGenerics;
 use crate::syntax::validated::generics::{Generics, GenericsCollection};
 use crate::syntax::validated::path_without_generics::{
     PathWithoutGenerics, TryFromPathWithoutGenericsError,
 };
 use crate::util::extensions::from_meta::FromMetaExt;
-use crate::util::generics_traits::CountGenerics;
 use darling::FromMeta;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
