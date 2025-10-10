@@ -2,6 +2,7 @@ use darling::{Error, FromMeta};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::parse::Parser;
+use syn::spanned::Spanned;
 use syn::{Expr, Meta, Token, punctuated::Punctuated};
 
 #[derive(Debug, Clone, PartialEq, Hash)]
@@ -30,18 +31,27 @@ impl From<ExprValue> for TokenStream {
     }
 }
 
+fn failed_err(e: syn::Error, span: &proc_macro2::Span) -> Error {
+    Error::multiple(vec![
+        Error::custom("failed to parse ExprValue").with_span(span),
+        Error::from(e),
+    ])
+}
+
 impl FromMeta for ExprValue {
     fn from_meta(meta: &Meta) -> Result<Self, Error> {
         let list = meta.require_list()?;
         // Parse its tokens as `T, T, ...` where each `T` is a syn::Type
         let parser = Punctuated::<Expr, Token![,]>::parse_terminated;
-        let elems = parser.parse2(list.tokens.clone()).map_err(Error::custom)?;
+        let elems = parser
+            .parse2(list.tokens.clone())
+            .map_err(|e| failed_err(e, &list.tokens.span()))?;
         let mut elems = elems.into_iter();
         let Some(elem) = elems.next() else {
-            return Err(Error::custom("expected exactly one closure"));
+            return Err(Error::too_few_items(1).with_span(&meta.span()));
         };
-        if elems.next().is_some() {
-            return Err(Error::custom("expected exactly one closure"));
+        if let Some(elem) = elems.next() {
+            return Err(Error::too_many_items(1).with_span(&elem.span()));
         };
         Ok(ExprValue(elem))
     }
@@ -52,16 +62,10 @@ impl syn::parse::Parse for ExprValue {
         let elems = Punctuated::<Expr, Token![,]>::parse_terminated(input)?;
         let mut elems = elems.into_iter();
         let Some(elem) = elems.next() else {
-            return Err(syn::Error::new(
-                input.span(),
-                "expected exactly one closure",
-            ));
+            return Err(Error::too_few_items(1).with_span(&input.span()).into());
         };
         if elems.next().is_some() {
-            return Err(syn::Error::new(
-                input.span(),
-                "expected exactly one closure",
-            ));
+            return Err(Error::too_many_items(1).with_span(&input.span()).into());
         };
         Ok(ExprValue(elem))
     }
