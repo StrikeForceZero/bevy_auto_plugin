@@ -18,12 +18,15 @@ macro_rules! bevy_crate_err_message {
 }
 
 pub(crate) mod paths {
+    use crate::util::macros::*;
     use proc_macro2::TokenStream;
     use quote::quote;
 
     pub mod ecs {
+        use super::*;
+
         pub fn resolve() -> Result<syn::Path, String> {
-            crate::bevy_crate_path!(ecs)
+            bevy_crate_path!(ecs)
         }
         pub fn ecs_root_path() -> syn::Path {
             resolve().expect(bevy_crate_err_message!(ecs))
@@ -34,7 +37,7 @@ pub(crate) mod paths {
         use super::*;
 
         pub fn resolve() -> Result<syn::Path, String> {
-            crate::bevy_crate_path!(reflect)
+            bevy_crate_path!(reflect)
         }
 
         pub fn reflect_root_path() -> syn::Path {
@@ -70,7 +73,7 @@ pub(crate) mod paths {
         use super::*;
 
         pub fn resolve() -> Result<syn::Path, String> {
-            crate::bevy_crate_path!(state)
+            bevy_crate_path!(state)
         }
 
         pub fn root_path() -> syn::Path {
@@ -90,7 +93,7 @@ pub(crate) mod paths {
 
 #[cfg(test)]
 mod tests {
-    use crate::bevy_crate_path;
+    use crate::util::macros::*;
     use internal_test_proc_macro::xtest;
     use quote::ToTokens;
 

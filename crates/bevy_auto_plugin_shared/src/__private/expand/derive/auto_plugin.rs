@@ -1,4 +1,4 @@
-use crate::parse_macro_input2;
+use crate::util::macros::parse_macro_input2;
 use proc_macro2::TokenStream as MacroStream;
 
 pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
