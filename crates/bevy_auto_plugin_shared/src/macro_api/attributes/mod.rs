@@ -1,13 +1,13 @@
 mod auto_add_message;
 mod auto_add_observer;
 mod auto_add_system;
-mod auto_auto_name;
 mod auto_component;
 mod auto_event;
 mod auto_init_resource;
 mod auto_init_state;
 mod auto_insert_resource;
 mod auto_message;
+mod auto_name;
 mod auto_observer;
 mod auto_plugin;
 mod auto_register_state_type;
@@ -21,13 +21,13 @@ pub mod prelude {
         super::auto_add_message::AddMessageArgs,
         super::auto_add_observer::AddObserverArgs,
         super::auto_add_system::AddSystemArgs,
-        super::auto_auto_name::NameArgs,
         super::auto_component::ComponentAttributeArgs,
         super::auto_event::EventArgs,
         super::auto_init_resource::InitResourceArgs,
         super::auto_init_state::InitStateArgs,
         super::auto_insert_resource::InsertResourceArgs,
         super::auto_message::MessageAttributeArgs,
+        super::auto_name::NameArgs,
         super::auto_observer::ObserverAttributeArgs,
         super::auto_plugin::{
             AutoPluginFnArgs, AutoPluginStructOrEnumArgs, resolve_app_param_name,
