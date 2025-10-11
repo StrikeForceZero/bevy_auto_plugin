@@ -169,7 +169,7 @@ See [tests](tests/global) for other examples
 ### Expanded
 
 If you were looking to cherry-pick certain functionality like `auto_name` or `auto_register_type` for example you could use them individually:
-Only requirement when using global mode is you need tp make sure you are binding to a plugin that derives `AutoPlugin`
+Only requirement when using global mode is you need to make sure you are binding to a plugin that derives `AutoPlugin`
 
 #### Global Mode
 
