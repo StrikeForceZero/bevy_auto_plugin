@@ -1,9 +1,13 @@
 #[doc(hidden)]
 pub mod __private {
+    pub use bevy_auto_plugin_proc_macros::_end_inherit_or_merge;
+    pub use bevy_auto_plugin_proc_macros::_inherit_or_merge;
     pub use bevy_auto_plugin_shared as shared;
 }
 
 pub mod prelude {
+    pub use bevy_auto_plugin_proc_macros::inheritable;
+
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::AutoPlugin;
 

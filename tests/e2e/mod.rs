@@ -28,6 +28,7 @@ mod auto_system_schedule_non_path;
 mod auto_system_schedule_on_state;
 mod bare_fn;
 mod bare_fn_default_app_param;
+mod inheritable;
 mod self_impl_plugin;
 mod self_impl_plugin_default_app_param;
 mod self_impl_plugin_with_generics;

@@ -79,6 +79,7 @@ log = { workspace = true }
 wasm-bindgen-test = { workspace = true }
 internal_test_util = { workspace = true }
 internal_test_proc_macro = { workspace = true }
+quote = "1"
 
 [build-dependencies]
 rustc_version = "0.4"

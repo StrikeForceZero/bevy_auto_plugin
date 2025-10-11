@@ -156,3 +156,256 @@ pub fn auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> Compiler
         input,
     )
 }
+
+// TODO: use the one in shared
+
+#[derive(Debug)]
+enum TakeAndPutAttrsError {
+    ItemDoesNotHaveAttrs,
+}
+
+trait ItemAttrsExt {
+    fn attrs_mut(&mut self) -> Result<&mut Vec<syn::Attribute>, TakeAndPutAttrsError>;
+    fn take_attrs(&mut self) -> Result<Vec<syn::Attribute>, TakeAndPutAttrsError>;
+    fn put_attrs(
+        &mut self,
+        attrs: Vec<syn::Attribute>,
+    ) -> Result<Vec<syn::Attribute>, TakeAndPutAttrsError>;
+}
+
+impl ItemAttrsExt for syn::Item {
+    fn attrs_mut(&mut self) -> Result<&mut Vec<syn::Attribute>, TakeAndPutAttrsError> {
+        Ok(match self {
+            syn::Item::Const(i) => &mut i.attrs,
+            syn::Item::Enum(i) => &mut i.attrs,
+            syn::Item::ExternCrate(i) => &mut i.attrs,
+            syn::Item::Fn(i) => &mut i.attrs,
+            syn::Item::ForeignMod(i) => &mut i.attrs,
+            syn::Item::Impl(i) => &mut i.attrs,
+            syn::Item::Macro(i) => &mut i.attrs,
+            syn::Item::Mod(i) => &mut i.attrs,
+            syn::Item::Static(i) => &mut i.attrs,
+            syn::Item::Struct(i) => &mut i.attrs,
+            syn::Item::Trait(i) => &mut i.attrs,
+            syn::Item::TraitAlias(i) => &mut i.attrs,
+            syn::Item::Type(i) => &mut i.attrs,
+            syn::Item::Union(i) => &mut i.attrs,
+            syn::Item::Use(i) => &mut i.attrs,
+            syn::Item::Verbatim(_) => return Err(TakeAndPutAttrsError::ItemDoesNotHaveAttrs),
+            _ => return Err(TakeAndPutAttrsError::ItemDoesNotHaveAttrs),
+        })
+    }
+    fn take_attrs(&mut self) -> Result<Vec<syn::Attribute>, TakeAndPutAttrsError> {
+        Ok(std::mem::take(self.attrs_mut()?))
+    }
+    fn put_attrs(
+        &mut self,
+        attrs: Vec<syn::Attribute>,
+    ) -> Result<Vec<syn::Attribute>, TakeAndPutAttrsError> {
+        Ok(std::mem::replace(self.attrs_mut()?, attrs))
+    }
+}
+
+#[proc_macro_attribute]
+pub fn inheritable(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    use quote::{ToTokens, format_ident, quote};
+    use syn::*;
+    #[derive(darling::FromMeta, Default)]
+    #[darling(default, derive_syn_parse)]
+    struct Inheritable {
+        suffix: Option<Ident>,
+        merge: darling::util::Flag,
+        blacklist: darling::util::Flag,
+        filter: darling::util::PathList,
+    }
+
+    impl ToTokens for Inheritable {
+        fn to_tokens(&self, tokens: &mut MacroStream) {
+            let mut items = vec![];
+            // if let Some(suffix) = &self.suffix {
+            //     items.push(quote! { suffix = #suffix });
+            // }
+            if self.blacklist.is_present() {
+                items.push(quote! { blacklist });
+            }
+            if !self.filter.is_empty() {
+                for filter_path in self.filter.iter() {
+                    items.push(quote! { filter(#filter_path) })
+                }
+            }
+            tokens.extend(quote! { #(#items),* });
+        }
+    }
+
+    let inheritable_meta = parse_macro_input!(attr as Inheritable);
+
+    let cloned_input = input.clone();
+    let input: MacroStream = input.into();
+    let mut item = parse_macro_input!(cloned_input as Item);
+
+    let macro_rules_ident = {
+        let suffix = {
+            if let Some(suffix) = &inheritable_meta.suffix {
+                suffix
+            } else {
+                match &item {
+                    Item::Fn(item) => &item.sig.ident,
+                    Item::Enum(e) => &e.ident,
+                    Item::Struct(s) => &s.ident,
+                    _ => panic!("`inheritable` can only be used on functions, structs, and enums."),
+                }
+            }
+        };
+        format_ident!("inherit_{}", suffix)
+    };
+
+    let item_attrs = item.take_attrs().unwrap();
+    item.put_attrs(item_attrs.clone()).unwrap();
+
+    let mut item_attrs = item_attrs;
+
+    if inheritable_meta.blacklist.is_present() {
+        item_attrs.retain(|attr| !inheritable_meta.filter.contains(attr.path()));
+    } else if !inheritable_meta.filter.is_empty() {
+        item_attrs.retain(|attr| inheritable_meta.filter.contains(attr.path()));
+    }
+
+    let target_idents = item_attrs
+        .iter()
+        .map(|attr| attr.path())
+        .collect::<Vec<_>>();
+
+    let mut inherit_or_merge_args = vec![];
+    if inheritable_meta.merge.is_present() {
+        inherit_or_merge_args.push(quote! { merge });
+    }
+
+    if !target_idents.is_empty() {
+        inherit_or_merge_args.push(quote! { target(#(#target_idents),*) });
+    }
+
+    let test_macro_rules_ident = format_ident!("test_{}", macro_rules_ident);
+
+    let macro_rules_tokens = quote! {
+        #[macro_export]
+        #[allow(non_snake_case)]
+        macro_rules! #macro_rules_ident {
+            ($($tokens:tt)*) => {
+                #[::bevy_auto_plugin::__private::_inherit_or_merge(#(#inherit_or_merge_args),*)]
+                #(#item_attrs)*
+                #[::bevy_auto_plugin::__private::_end_inherit_or_merge]
+                $($tokens)*
+            }
+        }
+        #[cfg(test)]
+        macro_rules! #test_macro_rules_ident {
+            ($($tokens:tt)*) => { ::quote::quote! {
+                #[::bevy_auto_plugin::__private::_inherit_or_merge(#(#inherit_or_merge_args),*)]
+                #(#item_attrs)*
+                #[::bevy_auto_plugin::__private::_end_inherit_or_merge]
+                $($tokens)*
+            } }
+        }
+    };
+
+    CompilerStream::from(quote! {
+        #input
+
+        #macro_rules_tokens
+    })
+}
+
+#[proc_macro_attribute]
+pub fn _inherit_or_merge(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    use quote::quote;
+    use syn::*;
+
+    #[derive(darling::FromMeta, Default)]
+    #[darling(default, derive_syn_parse)]
+    struct InheritOrMerge {
+        merge: darling::util::Flag,
+        target: darling::util::PathList,
+    }
+
+    let inherit_or_merge_meta = parse_macro_input!(attr as InheritOrMerge);
+    let mut item = parse_macro_input!(input as Item);
+
+    let item_attrs = item.take_attrs().unwrap();
+
+    enum AttrTarget {
+        Target(Attribute),
+        Skip(Attribute),
+    }
+
+    let mut source_attrs: Vec<Attribute> = vec![];
+    let mut target_attrs: Vec<AttrTarget> = vec![];
+
+    let mut is_filling_targets = false;
+
+    for attr in item_attrs {
+        let Some(last) = attr.path().segments.last() else {
+            unreachable!();
+        };
+        if last.ident == "_inherit_or_merge" && source_attrs.is_empty() {
+            continue;
+        }
+        if last.ident == "_end_inherit_or_merge" {
+            is_filling_targets = true;
+            continue;
+        }
+        if is_filling_targets {
+            if !inherit_or_merge_meta
+                .target
+                .contains(&Path::from(last.ident.clone()))
+            {
+                target_attrs.push(AttrTarget::Skip(attr))
+            } else {
+                target_attrs.push(AttrTarget::Target(attr))
+            }
+        } else {
+            source_attrs.push(attr);
+        }
+    }
+
+    let mut final_attrs: Vec<Attribute> = vec![];
+
+    for source_attr in source_attrs {
+        if inherit_or_merge_meta.merge.is_present() {
+            for target_attr in target_attrs.iter_mut() {
+                match target_attr {
+                    AttrTarget::Target(inner) => {
+                        if inner.path().segments.last().unwrap().ident
+                            == source_attr.path().segments.last().unwrap().ident
+                        {
+                            *inner = source_attr.clone();
+                            todo!("not implemented");
+                        } else {
+                            continue;
+                        }
+                    }
+                    AttrTarget::Skip(_) => continue,
+                }
+            }
+        } else {
+            final_attrs.push(source_attr);
+        }
+    }
+
+    for target_attr in target_attrs {
+        final_attrs.push(match target_attr {
+            AttrTarget::Target(inner) => inner,
+            AttrTarget::Skip(inner) => inner,
+        });
+    }
+
+    CompilerStream::from(quote! {
+        #(#final_attrs)*
+        #item
+    })
+}
+
+#[proc_macro_attribute]
+pub fn _end_inherit_or_merge(_attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    // passthrough
+    input
+}
