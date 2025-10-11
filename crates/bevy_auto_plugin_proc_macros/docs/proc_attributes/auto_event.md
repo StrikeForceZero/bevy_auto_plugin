@@ -1,4 +1,4 @@
-Automatically registers an event to be added to the app in global mode.
+Automatically registers an event to be added to the app.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should register this event.

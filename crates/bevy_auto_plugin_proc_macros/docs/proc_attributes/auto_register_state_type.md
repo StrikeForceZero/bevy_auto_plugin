@@ -1,4 +1,4 @@
-Automatically registers `State<T>` and `NextState<T>` types with the app in global mode.
+Automatically registers `State<T>` and `NextState<T>` types with the app.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should register these state types.

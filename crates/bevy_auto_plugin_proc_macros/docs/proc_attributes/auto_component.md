@@ -1,4 +1,4 @@
-Automatically registers a component to be added to the app in global mode.
+Automatically registers a component to be added to the app.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should register this component.

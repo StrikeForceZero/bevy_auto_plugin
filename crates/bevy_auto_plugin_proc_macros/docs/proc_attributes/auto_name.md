@@ -1,4 +1,4 @@
-Automatically adds a Name component to entities with this component in global mode.
+Automatically adds a Name component to entities with this component.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should register this name.

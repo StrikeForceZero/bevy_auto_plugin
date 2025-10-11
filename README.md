@@ -164,17 +164,14 @@ fn plugin(app: &mut App) {
 
 There is `auto_plugin` arguments if your plugin has generics.
 
-See [tests](tests/global) for other examples
+See [tests](tests/e2e) for other examples
 
 ### Expanded
 
 If you were looking to cherry-pick certain functionality like `auto_name` or `auto_register_type` for example you could use them individually:
-Only requirement when using global mode is you need to make sure you are binding to a plugin that derives `AutoPlugin`
+Only requirement is you need to make sure you are binding to a plugin that derives `AutoPlugin`
 
-#### Global Mode
-
-Features required:
-- `default` or `mode_global` or `all_modes`
+#### Usage Examples
 
 ```rust
 use bevy::prelude::*;

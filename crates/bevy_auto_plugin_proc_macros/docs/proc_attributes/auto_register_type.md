@@ -1,4 +1,4 @@
-Automatically registers a type with the app's type registry in global mode.
+Automatically registers a type with the app's type registry.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should register this type.

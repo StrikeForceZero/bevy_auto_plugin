@@ -1,4 +1,4 @@
-Automatically registers a resource to be initialized in the app in global mode.
+Automatically registers a resource to be initialized in the app.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should initialize this resource.

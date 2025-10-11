@@ -1,4 +1,4 @@
-Automatically inserts a resource with a specific value into the app in global mode.
+Automatically inserts a resource with a specific value into the app.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should insert this resource.
