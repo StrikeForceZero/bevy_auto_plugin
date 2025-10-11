@@ -85,7 +85,7 @@ where
     )
 }
 
-fn auto_inner<T: RewriteAttribute + FromMeta>(
+fn proc_attribute_rewrite_inner<T: RewriteAttribute + FromMeta>(
     attr: MacroStream,
     input: MacroStream,
 ) -> syn::Result<MacroStream> {
@@ -98,11 +98,11 @@ fn auto_inner<T: RewriteAttribute + FromMeta>(
     })
 }
 
-pub fn auto_outer<T: RewriteAttribute + FromMeta>(
+pub fn proc_attribute_rewrite_outer<T: RewriteAttribute + FromMeta>(
     attr: MacroStream,
     input: MacroStream,
 ) -> MacroStream {
-    auto_inner::<T>(attr, input).unwrap_or_else(|err| err.to_compile_error())
+    proc_attribute_rewrite_inner::<T>(attr, input).unwrap_or_else(|err| err.to_compile_error())
 }
 
 pub fn inject_plugin_arg_for_attributes(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {
@@ -184,7 +184,7 @@ macro_rules! gen_auto_outers {
         $(
             #[inline]
             pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-                auto_outer::<$args>(attr, input)
+                proc_attribute_rewrite_outer::<$args>(attr, input)
             }
         )+
     };
