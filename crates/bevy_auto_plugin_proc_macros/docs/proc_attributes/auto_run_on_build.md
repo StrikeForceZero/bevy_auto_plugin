@@ -1,5 +1,7 @@
 Automatically runs the `fn(&mut App) -> ()` when the `Plugin::build` is called.
 
+## NOTE: WASM doesn't guarantee execution order, so accessing items during build can fail
+
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should run this fn on build.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.

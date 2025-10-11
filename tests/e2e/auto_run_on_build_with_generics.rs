@@ -24,17 +24,23 @@ impl Thing for Bar {
     const AMOUNT: usize = 2;
 }
 
-#[auto_resource(plugin = Test, derive(Debug, Default, PartialEq), init)]
+#[auto_resource(plugin = Test, derive(Debug, Default, Copy, Clone, PartialEq), init)]
 struct FooResource(usize);
 
 #[auto_run_on_build(plugin = Test, generics(Foo), generics(Bar))]
-fn run_this<T: Thing>(app: &mut App) {
-    let stuff = T::AMOUNT;
-    app.world_mut().resource_mut::<FooResource>().0 += stuff;
+fn run_this<T: Thing + 'static>(app: &mut App) {
+    let value = app
+        .world_mut()
+        .get_resource::<FooResource>()
+        .copied()
+        .unwrap_or_default()
+        .0;
+    app.world_mut()
+        .insert_resource(FooResource(value + T::AMOUNT));
 }
 
-fn foo(mut res: ResMut<FooResource>) {
-    res.0 += 1;
+fn foo<T: Thing>(mut res: ResMut<FooResource>) {
+    res.0 += T::AMOUNT;
 }
 
 fn app() -> App {
