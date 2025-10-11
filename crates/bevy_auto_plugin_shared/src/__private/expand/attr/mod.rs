@@ -55,7 +55,8 @@ where
     let attr = attr.into();
     let input = input.into();
 
-    let item: Item = ok_or_return_compiler_error!(parse2(input));
+    // need to clone input so we can pass through input untouched for optimal IDE support
+    let item: Item = ok_or_return_compiler_error!(parse2(input.clone()));
 
     let err_msg = format!("Attribute macro is not allowed on {}", item_kind(&item));
     let ident = ok_or_return_compiler_error!(
@@ -70,7 +71,10 @@ where
 
     let output = ok_or_return_compiler_error!(body(ident, args, &item));
 
-    quote!( #item #output )
+    quote! {
+        #input
+        #output
+    }
 }
 
 /// Maps [`crate::syntax::analysis::item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
