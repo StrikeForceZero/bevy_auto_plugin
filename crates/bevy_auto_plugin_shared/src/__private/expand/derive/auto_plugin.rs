@@ -19,16 +19,6 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
 
     let mut output = MacroStream::new();
 
-    output.extend(quote! {
-        impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId
-            for #ident #ty_generics #where_clause
-        {
-            fn type_id() -> std::any::TypeId {
-                ::std::any::TypeId::of::<Self>()
-            }
-        }
-    });
-
     let mut auto_plugin_implemented = false;
 
     if params.auto_plugin.impl_plugin_trait {

@@ -55,6 +55,13 @@ pub trait AutoPluginTypeId {
     fn type_id() -> TypeId;
 }
 
+impl<T: 'static> AutoPluginTypeId for T {
+    #[inline]
+    fn type_id() -> TypeId {
+        TypeId::of::<T>()
+    }
+}
+
 pub trait AutoPlugin: bevy_app::Plugin + AutoPluginTypeId {
     fn name(&self) -> &'static str {
         Self::static_name()
