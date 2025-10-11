@@ -111,4 +111,4 @@
   - Fixes 
     > no method named `with_docs` found for struct `type_info::OpaqueInfo` in the current scope
 - Adds feature `debug_log_plugin_registry` to gate logging 
-    > Building GlobalAutoPluginRegistry from {count} entries
+    > Building AutoPluginRegistry from {count} entries
