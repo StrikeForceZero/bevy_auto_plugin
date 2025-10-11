@@ -112,3 +112,9 @@
     > no method named `with_docs` found for struct `type_info::OpaqueInfo` in the current scope
 - Adds feature `debug_log_plugin_registry` to gate logging 
     > Building AutoPluginRegistry from {count} entries
+- Change exports from `use bevy_auto_plugin::modes::global::prelude::*` -> `use bevy_auto_plugin::prelude::*`
+
+---
+### v0.7.1
+- Restore and deprecate old imports `use bevy_auto_plugin::modes::global::prelude::*` -> `use bevy_auto_plugin::prelude::*`
+ 
