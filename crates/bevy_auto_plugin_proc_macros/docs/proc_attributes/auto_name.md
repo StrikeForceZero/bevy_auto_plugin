@@ -5,6 +5,7 @@ Automatically adds a Name component to entities with this component in global mo
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the Name component will be added to entities with this component
   using the specified generic parameters.
+- `name = ...` - Optional. Specified custom name literal to use.
 
 # Example
 ```rust

@@ -11,8 +11,8 @@ Automatically registers a component to be added to the app in global mode.
   If enabled in tandem with `derive` it also includes `#[derive(Reflect)]` 
 - `register` - Enables type registration for the `Component`
   Same as having `#[auto_register_type]`
-- `auto_name` - Enables adding a required component of `Name` with the `Component`'s concrete name.
-  Same as having `#[auto_name]`
+- `auto_name | auto_name = ...` - Enables adding a required component of `Name` with the `Component`'s concrete name or custom name literal if specified.
+  Same as having `#[auto_name]` or `#[auto_name = ...]`
 
 # Example
 ```rust

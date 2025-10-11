@@ -12,6 +12,10 @@ struct TestPlugin;
 #[auto_name(plugin = TestPlugin)]
 pub struct Test;
 
+#[derive(Component)]
+#[auto_name(plugin = TestPlugin, name = "barfoo")]
+pub struct TestCustom;
+
 fn app() -> App {
     let mut app = internal_test_util::create_minimal_app();
     app.add_plugins(TestPlugin);
@@ -26,5 +30,16 @@ fn test_auto_name() {
     assert_eq!(
         app.world().entity(entity).get::<Name>(),
         Some(&Name::new("Test"))
+    );
+}
+
+#[xtest]
+fn test_auto_name_with_custom_name() {
+    let mut app = app();
+    let entity = app.world_mut().spawn(TestCustom).id();
+    app.update();
+    assert_eq!(
+        app.world().entity(entity).get::<Name>(),
+        Some(&Name::new("barfoo"))
     );
 }

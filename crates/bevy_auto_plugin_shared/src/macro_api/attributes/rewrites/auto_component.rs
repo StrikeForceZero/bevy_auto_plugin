@@ -5,6 +5,7 @@ use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::macro_api::attributes::prelude::*;
 use crate::syntax::ast::flag_or_list::FlagOrList;
+use crate::syntax::ast::flag_or_lit::FlagOrLit;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use darling::FromMeta;
@@ -20,7 +21,7 @@ pub struct ComponentArgs {
     pub derive: FlagOrList<NonEmptyPath>,
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
-    pub auto_name: bool,
+    pub auto_name: FlagOrLit,
 }
 
 impl GenericsArgs for ComponentArgs {
@@ -45,6 +46,7 @@ impl<'a> From<&'a ComponentArgs> for NameArgs {
     fn from(value: &'a ComponentArgs) -> Self {
         Self {
             generics: value.generics.clone(),
+            name: value.auto_name.lit.clone(),
         }
     }
 }
@@ -62,8 +64,8 @@ impl ArgsBackToTokens for ComponentArgs {
         if self.register {
             items.push(quote!(register));
         }
-        if self.auto_name {
-            items.push(quote!(auto_name));
+        if self.auto_name.present {
+            items.push(self.auto_name.to_outer_tokens("auto_name"));
         }
         tokens.extend(quote! { #(#items),* });
     }
@@ -100,7 +102,7 @@ impl RewriteAttribute for ComponentArgs {
                 .attrs
                 .push(tokens::auto_register_type(plugin.clone(), self.into()));
         }
-        if self.auto_name {
+        if self.auto_name.present {
             expanded_attrs
                 .attrs
                 .push(tokens::auto_name(plugin.clone(), self.into()));
@@ -127,7 +129,7 @@ mod tests {
             vec![quote!(derive), quote!(derive(Debug, Default))],
             vec![quote!(reflect), quote!(reflect(Debug, Default))],
             vec![quote!(register)],
-            vec![quote!(auto_name)],
+            vec![quote!(auto_name), quote!(auto_name = "foobar")],
         ]) {
             println!("checking args: {}", quote! { #(#args),*});
             assert_vec_args_expand!(plugin!(parse_quote!(Test)), ComponentArgs, args);
@@ -147,6 +149,46 @@ mod tests {
             reflect(#(#extras),*),
             register,
             auto_name,
+        )};
+        let args = WithPlugin::<ComponentArgs>::from_nested_meta(&args)?;
+        let derive_args = vec_spread![tokens::derive_component_path(), ..extras.clone(),];
+        let derive_reflect_path = tokens::derive_reflect_path();
+        let reflect_args = vec_spread![parse_quote!(Component), ..extras,];
+        let reflect_attr = tokens::reflect(reflect_args.iter().map(NonEmptyPath::last_ident));
+        assert_eq!(
+            args.inner
+                .expand_attrs(&args.plugin())
+                .to_token_stream()
+                .to_string(),
+            ExpandAttrs {
+                use_items: reflect_attr.use_items,
+                attrs: vec![
+                    quote! { #[derive(#(#derive_args),*)] },
+                    // TODO: merge these derives
+                    quote! { #[derive(#derive_reflect_path)] },
+                    quote! { #[reflect(#(#reflect_args),*)] },
+                    tokens::auto_register_type(args.plugin(), (&args.inner).into()),
+                    tokens::auto_name(args.plugin(), (&args.inner).into()),
+                ]
+            }
+            .to_token_stream()
+            .to_string()
+        );
+        Ok(())
+    }
+
+    #[xtest]
+    fn test_expand_attrs_global_with_custom_name() -> syn::Result<()> {
+        let extras = extract_punctuated_paths(parse_quote!(Debug, Default))
+            .into_iter()
+            .map(NonEmptyPath::try_from)
+            .collect::<syn::Result<Vec<_>>>()?;
+        let args: NestedMeta = parse_quote! {_(
+            plugin = Test,
+            derive(#(#extras),*),
+            reflect(#(#extras),*),
+            register,
+            auto_name = "foobar",
         )};
         let args = WithPlugin::<ComponentArgs>::from_nested_meta(&args)?;
         let derive_args = vec_spread![tokens::derive_component_path(), ..extras.clone(),];
