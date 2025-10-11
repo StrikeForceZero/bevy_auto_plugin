@@ -96,9 +96,13 @@ mod tests {
 
     #[xtest]
     fn test_bevy_crate_path() {
+        #[cfg(target_arch = "wasm32")]
+        let expected_path = Ok(":: bevy :: reflect".to_string());
+        #[cfg(not(target_arch = "wasm32"))]
+        let expected_path = Ok(":: bevy_reflect".to_string());
         assert_eq!(
             bevy_crate_path!(reflect).map(|c| c.to_token_stream().to_string()),
-            Ok(":: bevy_reflect".to_string())
+            expected_path
         )
     }
 }

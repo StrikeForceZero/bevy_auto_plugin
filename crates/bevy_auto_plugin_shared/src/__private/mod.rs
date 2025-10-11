@@ -100,11 +100,23 @@ mod tests {
         r.map(|p| p.into_token_stream().to_string())
     }
 
+    macro_rules! ok_bevy_crate_path_string {
+        ($ident:ident) => {{
+            // fallback
+            #[cfg(target_arch = "wasm32")]
+            let path = concat!(":: bevy :: ", stringify!($ident));
+            // local
+            #[cfg(not(target_arch = "wasm32"))]
+            let path = concat!(":: bevy_", stringify!($ident));
+            Ok(path.into())
+        }};
+    }
+
     #[xtest]
     fn test_crate_resolve_bevy_ecs() {
         assert_eq!(
             map_resolve_crate(super::paths::ecs::resolve()),
-            Ok(":: bevy_ecs".into())
+            ok_bevy_crate_path_string!(ecs)
         );
     }
 
@@ -112,7 +124,7 @@ mod tests {
     fn test_crate_resolve_bevy_state() {
         assert_eq!(
             map_resolve_crate(super::paths::state::resolve()),
-            Ok(":: bevy_state".into())
+            ok_bevy_crate_path_string!(state)
         );
     }
 
@@ -120,11 +132,11 @@ mod tests {
     fn test_crate_resolve_bevy_reflect() {
         assert_eq!(
             map_resolve_crate(super::paths::reflect::resolve()),
-            Ok(":: bevy_reflect".into())
+            ok_bevy_crate_path_string!(reflect)
         );
     }
 
-    #[xtest]
+    #[test]
     fn test_crate_resolve_non_existent_crate() {
         let res = bevy_crate_path!(foobar);
         match res {
