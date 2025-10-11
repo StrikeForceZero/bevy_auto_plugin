@@ -15,24 +15,24 @@ pub use linkme;
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "inventory")))]
 #[linkme::distributed_slice]
-pub static AUTO_PLUGINS: [GlobalAutoPluginRegistryEntryFactory];
+pub static AUTO_PLUGINS: [AutoPluginRegistryEntryFactory];
 
 #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
-inventory::collect!(GlobalAutoPluginRegistryEntryFactory);
+inventory::collect!(AutoPluginRegistryEntryFactory);
 
-pub static AUTO_PLUGIN_REGISTRY: LazyLock<GlobalAutoPluginRegistry> = LazyLock::new(|| {
+pub static AUTO_PLUGIN_REGISTRY: LazyLock<AutoPluginRegistry> = LazyLock::new(|| {
     #[cfg(target_arch = "wasm32")]
     crate::_initialize();
 
     #[cfg(not(any(target_arch = "wasm32", feature = "inventory")))]
     let iter = AUTO_PLUGINS.into_iter();
     #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
-    let iter = ::inventory::iter::<GlobalAutoPluginRegistryEntryFactory>.into_iter();
+    let iter = ::inventory::iter::<AutoPluginRegistryEntryFactory>.into_iter();
 
     let mut count = 0;
     let mut registry: HashMap<TypeId, Vec<BevyAppBuildFn>> = HashMap::new();
     iter.for_each(
-        |GlobalAutoPluginRegistryEntryFactory(type_factory, sys_factory)| {
+        |AutoPluginRegistryEntryFactory(type_factory, sys_factory)| {
             registry
                 .entry(type_factory())
                 .or_default()
@@ -46,9 +46,9 @@ pub static AUTO_PLUGIN_REGISTRY: LazyLock<GlobalAutoPluginRegistry> = LazyLock::
     registry.shrink_to_fit();
 
     #[cfg(feature = "debug_log_plugin_registry")]
-    log::debug!("Building GlobalAutoPluginRegistry from {count} entries");
+    log::debug!("Building AutoPluginRegistry from {count} entries");
 
-    GlobalAutoPluginRegistry(registry)
+    AutoPluginRegistry(registry)
 });
 
 pub trait AutoPluginTypeId {
@@ -78,16 +78,16 @@ pub trait AutoPlugin: bevy_app::Plugin + AutoPluginTypeId {
 
 pub type TypeIdFn = fn() -> TypeId;
 pub type BevyAppBuildFn = fn(&mut bevy_app::App);
-pub struct GlobalAutoPluginRegistryEntryFactory(TypeIdFn, BevyAppBuildFn);
+pub struct AutoPluginRegistryEntryFactory(TypeIdFn, BevyAppBuildFn);
 
-impl GlobalAutoPluginRegistryEntryFactory {
+impl AutoPluginRegistryEntryFactory {
     pub const fn new(type_factory: fn() -> TypeId, sys_factory: fn(&mut bevy_app::App)) -> Self {
         Self(type_factory, sys_factory)
     }
 }
-pub struct GlobalAutoPluginRegistry(HashMap<TypeId, Vec<BevyAppBuildFn>>);
+pub struct AutoPluginRegistry(HashMap<TypeId, Vec<BevyAppBuildFn>>);
 
-impl GlobalAutoPluginRegistry {
+impl AutoPluginRegistry {
     pub(crate) fn get_entries(&'static self, marker: TypeId) -> &'static [BevyAppBuildFn] {
         self.0
             .get(&marker)
@@ -100,7 +100,7 @@ pub fn _plugin_entry_block(static_ident: &Ident, plugin: &Path, expr: &ExprClosu
     quote! {
         ::bevy_auto_plugin::__private::shared::_plugin_entry!(
             #static_ident,
-            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::GlobalAutoPluginRegistryEntryFactory::new(
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactory::new(
                 || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
                 #expr
             )
@@ -117,7 +117,7 @@ macro_rules! _plugin_entry {
             #[linkme(crate = ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::linkme)]
             #[allow(non_upper_case_globals)]
             static $static_ident:
-                ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::GlobalAutoPluginRegistryEntryFactory =
+                ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactory =
                 $entry;
         };
     }
