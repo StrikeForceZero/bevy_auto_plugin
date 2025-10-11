@@ -29,17 +29,20 @@ pub static AUTO_PLUGIN_REGISTRY: LazyLock<AutoPluginRegistry> = LazyLock::new(||
     #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
     let iter = ::inventory::iter::<AutoPluginRegistryEntryFactory>.into_iter();
 
+    #[allow(unused_variables)]
     let mut count = 0;
     let mut registry: HashMap<TypeId, Vec<BevyAppBuildFn>> = HashMap::new();
-    iter.for_each(
-        |AutoPluginRegistryEntryFactory(type_factory, sys_factory)| {
-            registry
-                .entry(type_factory())
-                .or_default()
-                .push(*sys_factory);
-            count += 1;
-        },
-    );
+
+    for (ix, AutoPluginRegistryEntryFactory(type_factory, sys_factory)) in iter.enumerate() {
+        registry
+            .entry(type_factory())
+            .or_default()
+            .push(*sys_factory);
+        #[allow(unused_assignments)]
+        {
+            count = ix + 1;
+        }
+    }
 
     // Trim down
     registry.values_mut().for_each(|vec| vec.shrink_to_fit());
