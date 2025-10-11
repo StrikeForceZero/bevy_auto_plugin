@@ -63,11 +63,11 @@ macro_rules! bevy_crate_path {
                     }
                     #[allow(unused_variables)]
                     Err(err_b) => {
-                        #[cfg(feature = "_web")] {
+                        #[cfg(target_arch = "wasm32")] {
                             // WASM/tests: env not available — use standard path
                             Ok(parse2::<Path>(quote!(::bevy::$target_crate)).unwrap())
                         }
-                        #[cfg(not(feature = "_web"))] {
+                        #[cfg(not(target_arch = "wasm32"))] {
                             let label_a = concat!("bevy_", stringify!($target_crate));
                             let label_b = concat!("bevy::", stringify!($target_crate));
                             Err(format!("\n{label_a}: {err_a}\n{label_b}: {err_b}"))
