@@ -140,6 +140,13 @@ pub fn auto_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStr
 }
 
 /// Automatically binds `plugin = _` to every auto_* attribute below it
+#[doc = include_str!("../docs/proc_attributes/auto_run_on_build.md")]
+#[proc_macro_attribute]
+pub fn auto_run_on_build(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_run_on_build, attr, input)
+}
+
+/// Automatically binds `plugin = _` to every auto_* attribute below it
 #[doc = include_str!("../docs/proc_attributes/auto_bind_plugin.md")]
 #[proc_macro_attribute]
 pub fn auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {

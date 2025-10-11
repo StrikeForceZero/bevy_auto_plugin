@@ -63,5 +63,8 @@ pub mod prelude {
     pub use bevy_auto_plugin_proc_macros::auto_observer;
 
     #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::auto_run_on_build;
+
+    #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::auto_bind_plugin;
 }

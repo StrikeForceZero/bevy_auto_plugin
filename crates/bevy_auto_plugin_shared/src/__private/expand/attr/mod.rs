@@ -8,11 +8,38 @@ use crate::syntax::diagnostic::kind::item_kind;
 use crate::util::macros::ok_or_return_compiler_error;
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{Item, parse2};
 
 pub mod auto_bind_plugin;
 pub mod auto_plugin;
+
+fn body<T: PluginBound>(
+    body: impl Fn(MacroStream) -> MacroStream,
+) -> impl Fn(&Ident, T, &Item) -> syn::Result<MacroStream> {
+    move |ident, params, _item| {
+        let unique_ident = params.get_unique_ident(ident);
+        let plugin = params.plugin().clone();
+        let with_target_path = WithTargetPath::from((ident.into(), params));
+        let output = with_target_path
+            .to_tokens_iter()
+            .enumerate()
+            .map(|(ix, input)| {
+                let body = body(input);
+                let expr: syn::ExprClosure = syn::parse_quote!(|app| { #body });
+                // required for generics
+                let unique_ident = format_ident!("{unique_ident}_{ix}");
+                let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
+                Ok(output)
+            })
+            .collect::<syn::Result<MacroStream>>()?;
+        assert!(
+            !output.is_empty(),
+            "No plugin entry points were generated for ident: {ident}"
+        );
+        Ok(output)
+    }
+}
 
 fn proc_attribute_inner<A, F>(
     attr: impl Into<MacroStream>,
@@ -46,6 +73,11 @@ where
     quote!( #item #output )
 }
 
+/// Maps [`crate::syntax::analysis::item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
+fn resolve_item_ident<T: PluginBound>(item: &Item) -> syn::Result<&Ident> {
+    T::Inner::resolve_item_ident(item).map_err(syn::Error::from)
+}
+
 pub fn proc_attribute_outer<T>(
     attr: impl Into<MacroStream>,
     input: impl Into<MacroStream>,
@@ -53,35 +85,28 @@ pub fn proc_attribute_outer<T>(
 where
     T: PluginBound,
 {
-    /// Maps [`crate::syntax::analysis::item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
-    fn resolve_item_ident<T: PluginBound>(item: &Item) -> syn::Result<&Ident> {
-        T::Inner::resolve_item_ident(item).map_err(syn::Error::from)
-    }
-
     proc_attribute_inner(
         attr,
         input,
         resolve_item_ident::<T>,
         parse2::<T>,
-        |ident, params, _item| {
-            let unique_ident = params.get_unique_ident(ident);
-            let plugin = params.plugin().clone();
-            let with_target_path = WithTargetPath::from((ident.into(), params));
-            let output = with_target_path
-                .to_tokens_iter()
-                .map(|input| {
-                    let register = quote! { app #input ; };
-                    let expr: syn::ExprClosure = syn::parse_quote!(|app| { #register });
-                    let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
-                    Ok(output)
-                })
-                .collect::<syn::Result<MacroStream>>()?;
-            assert!(
-                !output.is_empty(),
-                "No plugin entry points were generated for ident: {ident}"
-            );
-            Ok(output)
-        },
+        body(|input| quote! { app #input ; }),
+    )
+}
+
+pub fn proc_attribute_outer_call_fn<T>(
+    attr: impl Into<MacroStream>,
+    input: impl Into<MacroStream>,
+) -> MacroStream
+where
+    T: PluginBound,
+{
+    proc_attribute_inner(
+        attr,
+        input,
+        resolve_item_ident::<T>,
+        parse2::<T>,
+        body(|input| quote! { #input(app) ; }),
     )
 }
 
@@ -168,6 +193,17 @@ fn list_has_key(ml: &syn::MetaList, key: &str) -> bool {
     }
 }
 
+macro_rules! gen_auto_attribute_outer_call_fns {
+    ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
+        $(
+            #[inline]
+            pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
+                proc_attribute_outer_call_fn::<WithPlugin<$args>>(attr, input)
+            }
+        )+
+    };
+}
+
 macro_rules! gen_auto_attribute_outers {
     ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
         $(
@@ -188,6 +224,10 @@ macro_rules! gen_auto_outers {
             }
         )+
     };
+}
+
+gen_auto_attribute_outer_call_fns! {
+    auto_run_on_build         => RunOnBuildArgs,
 }
 
 gen_auto_attribute_outers! {

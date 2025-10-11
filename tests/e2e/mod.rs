@@ -21,6 +21,8 @@ mod auto_plugin_with_generics;
 mod auto_register_state_type;
 mod auto_register_type;
 mod auto_register_type_generic;
+mod auto_run_on_build;
+mod auto_run_on_build_with_generics;
 mod auto_system_schedule_multiple;
 mod auto_system_schedule_non_path;
 mod auto_system_schedule_on_state;

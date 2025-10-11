@@ -7,3 +7,4 @@ pub mod auto_insert_resource;
 pub mod auto_name;
 pub mod auto_register_state_type;
 pub mod auto_register_type;
+pub mod auto_run_on_build;

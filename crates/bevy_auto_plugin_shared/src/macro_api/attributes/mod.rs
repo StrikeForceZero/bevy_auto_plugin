@@ -26,6 +26,7 @@ pub mod prelude {
     pub use crate::macro_api::attributes::actions::auto_name::NameArgs;
     pub use crate::macro_api::attributes::actions::auto_register_state_type::RegisterStateTypeArgs;
     pub use crate::macro_api::attributes::actions::auto_register_type::RegisterTypeArgs;
+    pub use crate::macro_api::attributes::actions::auto_run_on_build::RunOnBuildArgs;
     pub use crate::macro_api::attributes::rewrites::auto_component::ComponentArgs;
     pub use crate::macro_api::attributes::rewrites::auto_event::EventArgs;
     pub use crate::macro_api::attributes::rewrites::auto_message::MessageArgs;
