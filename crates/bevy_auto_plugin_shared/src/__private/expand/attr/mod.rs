@@ -191,15 +191,15 @@ macro_rules! gen_auto_outers {
 }
 
 gen_auto_attribute_outers! {
-    auto_register_type_outer        => RegisterTypeArgs,
-    auto_add_message_outer          => AddMessageArgs,
-    auto_init_resource_outer        => InitResourceArgs,
-    auto_insert_resource_outer      => InsertResourceArgs,
-    auto_init_state_outer           => InitStateArgs,
-    auto_name_outer                 => NameArgs,
-    auto_register_state_type_outer  => RegisterStateTypeArgs,
-    auto_add_system_outer           => AddSystemArgs,
-    auto_add_observer_outer         => AddObserverArgs,
+    auto_register_type        => RegisterTypeArgs,
+    auto_add_message          => AddMessageArgs,
+    auto_init_resource        => InitResourceArgs,
+    auto_insert_resource      => InsertResourceArgs,
+    auto_init_state           => InitStateArgs,
+    auto_name                 => NameArgs,
+    auto_register_state_type  => RegisterStateTypeArgs,
+    auto_add_system           => AddSystemArgs,
+    auto_add_observer         => AddObserverArgs,
 }
 
 gen_auto_outers! {

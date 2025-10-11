@@ -31,63 +31,63 @@ pub fn auto_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStrea
 #[doc = include_str!("../docs/proc_attributes/auto_register_type.md")]
 #[proc_macro_attribute]
 pub fn auto_register_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_register_type_outer, attr, input)
+    handle_attribute(expand::attr::auto_register_type, attr, input)
 }
 
 /// Automatically adds a message type to the Bevy `App`.
 #[doc = include_str!("../docs/proc_attributes/auto_add_message.md")]
 #[proc_macro_attribute]
 pub fn auto_add_message(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_add_message_outer, attr, input)
+    handle_attribute(expand::attr::auto_add_message, attr, input)
 }
 
 /// Automatically inserts a resource in the Bevy `App`.
 #[doc = include_str!("../docs/proc_attributes/auto_init_resource.md")]
 #[proc_macro_attribute]
 pub fn auto_init_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_init_resource_outer, attr, input)
+    handle_attribute(expand::attr::auto_init_resource, attr, input)
 }
 
 /// Automatically inserts a resource in the Bevy `App`.
 #[doc = include_str!("../docs/proc_attributes/auto_insert_resource.md")]
 #[proc_macro_attribute]
 pub fn auto_insert_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_insert_resource_outer, attr, input)
+    handle_attribute(expand::attr::auto_insert_resource, attr, input)
 }
 
 /// Automatically initializes a State in the Bevy `App`.
 #[doc = include_str!("../docs/proc_attributes/auto_init_state.md")]
 #[proc_macro_attribute]
 pub fn auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_init_state_outer, attr, input)
+    handle_attribute(expand::attr::auto_init_state, attr, input)
 }
 
 /// Automatically registers a required component `Name` with a value using the concrete name of the item.
 #[doc = include_str!("../docs/proc_attributes/auto_name.md")]
 #[proc_macro_attribute]
 pub fn auto_name(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_name_outer, attr, input)
+    handle_attribute(expand::attr::auto_name, attr, input)
 }
 
 /// Automatically registers item as States for bevy app. (See below for additional options)
 #[doc = include_str!("../docs/proc_attributes/auto_register_state_type.md")]
 #[proc_macro_attribute]
 pub fn auto_register_state_type(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_register_state_type_outer, attr, input)
+    handle_attribute(expand::attr::auto_register_state_type, attr, input)
 }
 
 /// Automatically adds the fn as a system for bevy app. (See below for additional options)
 #[doc = include_str!("../docs/proc_attributes/auto_add_system.md")]
 #[proc_macro_attribute]
 pub fn auto_add_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_add_system_outer, attr, input)
+    handle_attribute(expand::attr::auto_add_system, attr, input)
 }
 
 /// Automatically adds the fn as a proc_attributes observer to bevy app. (See below for additional options)
 #[doc = include_str!("../docs/proc_attributes/auto_add_observer.md")]
 #[proc_macro_attribute]
 pub fn auto_add_observer(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_add_observer_outer, attr, input)
+    handle_attribute(expand::attr::auto_add_observer, attr, input)
 }
 
 /// Automatically registers item as Component for bevy app. (See below for additional options)
