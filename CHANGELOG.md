@@ -105,6 +105,7 @@
 ### v0.7.0
 - Add `name` param to `auto_name` attribute
 - Add the ability to set a custom name with `auto_name` param in `auto_component`
+- Add `auto_run_on_build` to run functions and pass `&mut bevy_app::App as the only param`
 - Expanded `auto_insert_resource` `resource` to accept more potentially valid expressions
 - Remove re-exported crates `bevy_ecs`, `bevy_ecs_macros`, `bevy_state`, `bevy_log`, `bevy_reflect`, `bevy_reflect_derive`
   - Fixes 
