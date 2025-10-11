@@ -145,3 +145,25 @@ macro_rules! _plugin_entry {
         );
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[cfg(all(test, not(feature = "inventory"), not(target_arch = "wasm32")))]
+    mod native_tests {
+        use super::*;
+        #[test]
+        fn builds_registry() {
+            let _ = &*AUTO_PLUGIN_REGISTRY;
+        }
+    }
+
+    #[cfg(all(test, any(feature = "inventory", target_arch = "wasm32")))]
+    mod inv_tests {
+        use super::*;
+        #[test]
+        fn builds_registry() {
+            let _ = &*AUTO_PLUGIN_REGISTRY;
+        }
+    }
+}
