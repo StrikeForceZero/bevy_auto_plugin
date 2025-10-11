@@ -1,6 +1,6 @@
 [package]
 name = "bevy_auto_plugin_shared"
-version = "0.6.3"
+version = "0.7.0"
 authors = ["Brett Striker <strikeforcezero@gmail.com>"]
 repository = "https://github.com/StrikeForceZero/bevy_auto_plugin/crates/bevy_auto_plugin_shared"
 license = "MIT OR Apache-2.0"
@@ -11,25 +11,21 @@ publish = true
 [lib]
 
 [features]
-mode_flat_file = []
-mode_module = []
-mode_global = []
 inventory = []
+debug_log_plugin_registry = ["log"]
 log_plugin_build = ["log"]
-flat_file_missing_auto_plugin_check = []
-flat_file_missing_auto_plugin_is_compile_error = ["flat_file_missing_auto_plugin_check"]
-flat_file_missing_auto_plugin_is_error = ["flat_file_missing_auto_plugin_check", "log"]
-flat_file_missing_auto_plugin_is_warning = ["flat_file_missing_auto_plugin_check", "log"]
-flat_file_lang_server_noop = []
+web = [
+    "bevy_app/web"
+]
+# internal for tests
+_web = [
+    "web",
+    "internal_test_util/_web",
+    "bevy_reflect/web"
+]
 
 [dependencies]
 bevy_app = { workspace = true }
-bevy_reflect = { workspace = true }
-bevy_reflect_derive = { workspace = true }
-bevy_ecs = { workspace = true }
-bevy_ecs_macros = { workspace = true }
-bevy_state = { workspace = true }
-bevy_log = { workspace = true }
 proc-macro2 = { workspace = true }
 syn = { workspace = true }
 quote = { workspace = true }
@@ -39,9 +35,14 @@ darling = { workspace = true }
 smart-default = { workspace = true }
 linkme = { workspace = true }
 inventory = { workspace = true }
+proc-macro-crate = { workspace = true }
 
 [dev-dependencies]
 internal_test_proc_macro = { workspace = true }
 internal_test_util = { workspace = true }
 wasm-bindgen-test = { workspace = true }
 anyhow = { workspace = true }
+# used in crate resolve tests
+bevy_ecs = { workspace = true }
+bevy_reflect = { workspace = true }
+bevy_state = { workspace = true }

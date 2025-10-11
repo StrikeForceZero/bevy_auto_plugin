@@ -6,6 +6,13 @@ publish = false
 
 [lib]
 
+[features]
+# internal for tests
+_web = [
+    "bevy_app/web",
+    "bevy_internal/web"
+]
+
 [dependencies]
 bevy_app = { workspace = true }
 bevy_internal = { workspace = true }

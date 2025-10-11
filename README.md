@@ -164,21 +164,18 @@ fn plugin(app: &mut App) {
 
 There is `auto_plugin` arguments if your plugin has generics.
 
-See [tests](tests/global) for other examples
+See [tests](tests/e2e) for other examples
 
 ### Expanded
 
 If you were looking to cherry-pick certain functionality like `auto_name` or `auto_register_type` for example you could use them individually:
-Only requirement when using global mode is you need tp make sure you are binding to a plugin that derives `AutoPlugin`
+Only requirement is you need to make sure you are binding to a plugin that derives `AutoPlugin`
 
-#### Global Mode
-
-Features required:
-- `default` or `mode_global` or `all_modes`
+#### Usage Examples
 
 ```rust
 use bevy::prelude::*;
-use bevy_auto_plugin::modes::global::prelude::*;
+use bevy_auto_plugin::prelude::*;
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -244,192 +241,6 @@ Which automatically implements the Plugin trait for `MyPlugin` and registers all
 - WASM should work, CI uses the `wasm-bindgen-test-runner` but maybe there's a specific wasm target/environment where it fails?
 
 ---
-
-below are some other modes that are deprecated [awaiting feedback from users](https://github.com/StrikeForceZero/bevy_auto_plugin/issues/19): 
-
-<details>
-
-<summary>Module Mode (Deprecated)</summary>
-
-### Module Mode
-
-Features required:
-- `mode_module` or `all_modes`
-
-```rust
-use bevy::prelude::*;
-use bevy_auto_plugin::modes::module::prelude::*;
-
-#[auto_plugin(init_name=init)]
-mod plugin_module {
-    use super::*;
-    
-    #[auto_register_type]
-    #[derive(Component, Reflect)]
-    #[reflect(Component)]
-    #[auto_name]
-    pub struct FooComponent;
-
-    #[auto_register_type(generics(bool))]
-    #[auto_register_type(generics(u32))]
-    #[derive(Component, Reflect)]
-    #[reflect(Component)]
-    pub struct FooComponentWithGeneric<T>(T);
-
-    #[auto_register_type]
-    #[auto_add_message]
-    #[derive(Message, Reflect)]
-    pub struct FooEvent;
-
-    #[auto_register_type(generics(bool))]
-    #[auto_add_message]
-    #[derive(Message, Reflect)]
-    pub struct FooEventWithGeneric<T>(T);
-
-    #[auto_register_type]
-    #[auto_init_resource]
-    #[derive(Resource, Default, Reflect)]
-    #[reflect(Resource)]
-    pub struct FooResource;
-
-    #[auto_register_type(generics(bool))]
-    #[auto_init_resource]
-    #[derive(Resource, Default, Reflect)]
-    #[reflect(Resource)]
-    pub struct FooResourceWithGeneric<T>(T);
-}
-
-fn plugin(app: &mut App) {
-    plugin_module::init(app);
-}
-```
-
-Which generates this code
-```rust
-mod plugin_module {
-    // ...
-    fn init(app: &mut App) {
-        app.register_type::<FooComponent>();
-        app.register_type::<FooComponentWithGeneric<bool>>();
-        app.register_type::<FooComponentWithGeneric<u32>>();
-        app.register_type::<FooEvent>();
-        app.register_type::<FooEventWithGeneric<bool>>();
-        app.register_type::<FooResource>();
-        app.register_type::<FooResourceWithGeneric<bool>>();
-
-        app.add_message::<FooEvent>();
-        app.add_message::<FooEventWithGeneric<bool>>();
-
-        app.init_resource::<FooResource>();
-        app.init_resource::<FooResourceWithGeneric<bool>>();
-
-        app.register_required_components_with::<FooComponent, Name>(|| Name::new("FooComponent"));
-    }
-}
-```
-
-#### Known Limitations
-- Causes issues for ide's like RustRover
-</details>
-
-<details>
-
-<summary>Flat File Mode (Deprecated)</summary>
-
-### Flat File Mode
-
-Features required: 
-- `mode_flat_file` or `all_modes`,
-- Optional but recommended`flat_file_lang_server_noop`
-
-```rust
-use bevy::prelude::*;
-use bevy_auto_plugin::modes::flat_file::prelude::*;
-
-#[auto_register_type]
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-#[auto_name]
-struct FooComponent;
-
-#[auto_register_type(generics(bool))]
-#[auto_register_type(generics(u32))]
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-struct FooComponentWithGeneric<T>(T);
-
-#[auto_register_type]
-#[auto_add_message]
-#[derive(Message, Reflect)]
-struct FooEvent;
-
-#[auto_register_type(generics(bool))]
-#[auto_add_message]
-#[derive(Message, Reflect)]
-struct FooEventWithGeneric<T>(T);
-
-#[auto_register_type]
-#[auto_init_resource]
-#[derive(Resource, Default, Reflect)]
-#[reflect(Resource)]
-struct FooResource;
-
-#[auto_register_type(generics(bool))]
-#[auto_init_resource]
-#[derive(Resource, Default, Reflect)]
-#[reflect(Resource)]
-struct FooResourceWithGeneric<T>(T);
-
-#[auto_plugin(app_param=app)]
-fn plugin(app: &mut App) {}
-```
-
-Which generates this code in your fn accepting `&mut App`
-```rust
-#[auto_plugin(app_param=app)]
-fn plugin(app: &mut App) {
-    app.register_type::<FooComponent>();
-    app.register_type::<FooComponentWithGeneric<bool>>();
-    app.register_type::<FooComponentWithGeneric<u32>>();
-    app.register_type::<FooEvent>();
-    app.register_type::<FooEventWithGeneric<bool>>();
-    app.register_type::<FooResource>();
-    app.register_type::<FooResourceWithGeneric<bool>>();
-    
-    app.add_message::<FooEvent>();
-    app.add_message::<FooEventWithGeneric<bool>>();
-    
-    app.init_resource::<FooResource>();
-    app.init_resource::<FooResourceWithGeneric<bool>>();
-
-    app.register_required_components_with::<FooComponent, Name>(|| Name::new("FooComponent"));
-    // ...
-}
-```
-
-#### Known Limitations
-- Won't provide outputs in IDE's due to [Language Server Stubbed](https://github.com/rust-lang/rust/blob/4e973370053a5fe87ee96d43c506623e9bd1eb9d/src/tools/rust-analyzer/crates/proc-macro-srv/src/server_impl/rust_analyzer_span.rs#L144-L147)
-  - use `lang_server_noop` feature (enabled by default) to allow `flat_file` macros to no-ops when they fail to resolve `Span::local_file`
-  - attempts to naively detect when running under `rustc` context to otherwise bubble up the errors to the compiler
-- All items need to be in the same module. This won't work:
-```rust
-use bevy::prelude::*;
-use bevy_auto_plugin::modes::flat_file::prelude::*;
-
-mod foo {
-    use super::*;
-    #[auto_register_type]
-    #[derive(Component, Reflect)]
-    #[reflect(Component)]
-    struct FooComponent;
-}
-
-#[auto_plugin(app_param=app)]
-fn plugin(app: &mut App) {
-    // ...
-}
-```
-</details>
 
 ## [Changelog](CHANGELOG.md)
 ## [Migrations](MIGRATIONS.md)

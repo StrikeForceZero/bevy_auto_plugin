@@ -1,7 +1,0 @@
-error: Attribute macro is not allowed on Fn: Expected Struct or Enum
- --> tests/global/ui/auto_register_type_wrong_item.rs:7:1
-  |
-7 | #[auto_register_type(plugin = TestPlugin)]
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  |
-  = note: this error originates in the attribute macro `auto_register_type` (in Nightly builds, run with -Z macro-backtrace for more info)

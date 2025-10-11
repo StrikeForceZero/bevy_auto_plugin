@@ -70,7 +70,8 @@ macro_rules! vec_spread {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[internal_test_proc_macro::xtest]
+    use internal_test_proc_macro::xtest;
+    #[xtest]
     fn test_vec_spread() {
         assert_eq!(vec_spread![1], vec![1]);
         assert_eq!(vec_spread![1, 2, 3], vec![1, 2, 3]);

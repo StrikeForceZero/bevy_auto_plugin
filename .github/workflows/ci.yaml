@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        feature-set: [ default, flat_file_missing_auto_plugin_is_compile_error, inventory ]
+        feature-set: [ default, inventory ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -30,8 +30,8 @@ jobs:
 
       - name: Run tests
         run: |
-          echo "Testing with features: ${{ matrix.feature-set }},all_modes"
-          cargo test --workspace --no-default-features --features "${{ matrix.feature-set }},all_modes,ignore_flat_file_or_module_deprecation"
+          echo "Testing with features: ${{ matrix.feature-set }}"
+          cargo test --workspace --no-default-features --features "${{ matrix.feature-set }}"
 
   doc-test:
     runs-on: ubuntu-latest
@@ -80,17 +80,17 @@ jobs:
       - name: Run clippy
         run: cargo +stable clippy --all-targets --all-features -- -D warnings
 
-  # ---------- WebAssembly target ----------
-  wasm-test:
+  # ---------- Browser WebAssembly target ----------
+  web-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        feature-set: [ default, flat_file_missing_auto_plugin_is_compile_error, inventory ]
+        feature-set: [ default, inventory ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Rust with wasm target
+      - name: Setup Rust with wasm32 target
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
@@ -107,9 +107,9 @@ jobs:
       - name: Install wasm-bindgen CLI (provides the test runner)
         run: cargo install wasm-bindgen-cli --locked
 
-      - name: Run wasm tests
+      - name: Run web (browser wasm) tests
         env:
           RUSTFLAGS: --deny warnings --cfg getrandom_backend="wasm_js"
         run: |
-          echo "Test wasm32 with features: ${{ matrix['feature-set'] }},all_modes"
-          cargo test --workspace --target wasm32-unknown-unknown --no-default-features --features "${{ matrix['feature-set'] }},all_modes,ignore_flat_file_or_module_deprecation"
+          echo "Test wasm32 (browser) with features: web,${{ matrix['feature-set'] }}"
+          cargo test --workspace --target wasm32-unknown-unknown --no-default-features --features "_web,web,${{ matrix['feature-set'] }}"
