@@ -1,4 +1,4 @@
-use crate::util::macros::parse_macro_input2;
+use crate::util::macros::{ok_or_emit, parse_macro_input2};
 use proc_macro2::TokenStream as MacroStream;
 
 pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
@@ -33,10 +33,7 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
                 .collect()
         };
         for full_name in full_names {
-            let path_with_generics = match syn::parse_str::<syn::Path>(&full_name) {
-                Ok(p) => p,
-                Err(err) => return err.into_compile_error(),
-            };
+            let path_with_generics = ok_or_emit!(syn::parse_str::<syn::Path>(&full_name));
 
             auto_plugin_implemented = true;
 

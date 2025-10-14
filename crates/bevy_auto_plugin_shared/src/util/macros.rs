@@ -1,22 +1,52 @@
-macro_rules! ok_or_return_compiler_error {
-    // Case: expression, message
-    ($expr:expr, $message:expr) => {{
+macro_rules! compile_error_with {
+    ($err:expr, $user_tokens:expr $(,)?) => {{
+        let ce = $err.to_compile_error();
+        let tokens = $user_tokens;
+        ::quote::quote!( #ce #tokens )
+    }};
+}
+
+macro_rules! ok_or_emit {
+    // Case: expression, tokens, message
+    ($expr:expr, $message:expr $(,)?) => {{
         let message = $message;
         match $expr {
             Ok(v) => v,
             Err(e) => {
-                return syn::Error::new(e.span(), format!("{message}: {e}"))
-                    .to_compile_error()
-                    .into();
+                return ::syn::Error::new(e.span(), format!("{message}: {e}")).to_compile_error();
             }
         }
     }};
-    // Case: Only expression
+    // Case: Only expression + tokens
     ($expr:expr) => {{
         match $expr {
             Ok(v) => v,
+            Err(e) => return e.to_compile_error(),
+        }
+    }};
+}
+
+macro_rules! ok_or_emit_with {
+    // Case: Only expression + tokens
+    ($expr:expr, $user_tokens:expr $(,)?) => {{
+        match $expr {
+            Ok(v) => v,
             Err(e) => {
-                return e.to_compile_error().into();
+                let ce = e.to_compile_error();
+                let tokens = $user_tokens;
+                return ::quote::quote!( #ce #tokens )
+            }
+        }
+    }};
+    // Case: expression, tokens, message
+    ($expr:expr, $user_tokens:expr, $message:expr $(,)?) => {{
+        let message = $message;
+        match $expr {
+            Ok(v) => v,
+            Err(e) => {
+                let ce = ::syn::Error::new(e.span(), format!("{message}: {e}")).to_compile_error();
+                let tokens = $user_tokens;
+                return ::quote::quote!( #ce #tokens )
             }
         }
     }};
@@ -27,6 +57,15 @@ macro_rules! parse_macro_input2 {
         match syn::parse2::<$ty>($ts) {
             Ok(v) => v,
             Err(e) => return e.to_compile_error(),
+        }
+    }};
+}
+
+macro_rules! parse_macro_input2_or_emit_with {
+    ($ts:ident as $ty:ty, $user_tokens:expr $(,)?) => {{
+        match ::syn::parse2::<$ty>($ts) {
+            Ok(v) => v,
+            Err(e) => return $crate::util::macros::compile_error_with!(e, $user_tokens),
         }
     }};
 }
@@ -82,8 +121,11 @@ macro_rules! bevy_crate_path {
 
 #[rustfmt::skip]
 pub(crate) use {
-    ok_or_return_compiler_error,
+    compile_error_with,
+    ok_or_emit,
+    ok_or_emit_with,
     parse_macro_input2,
+    parse_macro_input2_or_emit_with,
     as_cargo_alias,
     bevy_crate_path,
 };
@@ -92,7 +134,8 @@ pub(crate) use {
 mod tests {
     use super::*;
     use internal_test_proc_macro::xtest;
-    use quote::ToTokens;
+    use proc_macro2::{Span, TokenStream};
+    use quote::{ToTokens, quote};
 
     #[xtest]
     fn test_bevy_crate_path() {
@@ -104,5 +147,64 @@ mod tests {
             bevy_crate_path!(reflect).map(|c| c.to_token_stream().to_string()),
             expected_path
         )
+    }
+
+    #[test]
+    fn test_ok_or_emit_ok() {
+        fn process(ts: syn::Result<TokenStream>) -> TokenStream {
+            ok_or_emit!(ts)
+        }
+        assert_eq!(
+            process(Ok(quote! { foo_bar })).to_string(),
+            quote! { foo_bar }.to_string()
+        );
+    }
+
+    #[test]
+    fn test_ok_or_emit_err() {
+        fn process(ts: syn::Result<TokenStream>) -> TokenStream {
+            ok_or_emit!(ts)
+        }
+        assert_eq!(
+            process(Err(syn::Error::new(Span::call_site(), "error"))).to_string(),
+            quote! { :: core :: compile_error ! { "error" } }.to_string()
+        );
+    }
+
+    #[xtest]
+    fn test_ok_or_emit_with_ok() {
+        let input = quote! {
+            let a = 1;
+            let b = 2;
+            let c = 3;
+        };
+
+        let expected = quote! {
+            let foo = 4
+        };
+        fn process(ts: TokenStream, expected: &TokenStream) -> TokenStream {
+            ok_or_emit_with!(syn::Result::Ok(quote! { # expected }), ts)
+        }
+
+        assert_eq!(process(input, &expected).to_string(), expected.to_string());
+    }
+
+    #[xtest]
+    fn test_ok_or_emit_with_err() {
+        let input = quote! {
+            let a = 1;
+            let b = 2;
+            let c = 3;
+        };
+        fn process(ts: TokenStream) -> TokenStream {
+            ok_or_emit_with!(Err(syn::Error::new(Span::call_site(), "error")), ts)
+        }
+
+        let expected = quote! {
+            :: core :: compile_error ! { "error" }
+            #input
+        };
+
+        assert_eq!(process(input).to_string(), expected.to_string());
     }
 }
