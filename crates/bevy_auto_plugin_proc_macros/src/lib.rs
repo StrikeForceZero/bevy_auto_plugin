@@ -1,6 +1,7 @@
 use bevy_auto_plugin_shared::__private::expand;
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
+use quote::quote;
 
 #[allow(dead_code)]
 /// thin adapter converting between the compiler-level and proc_macro2 streams
@@ -10,6 +11,16 @@ fn handle_attribute<F: Fn(MacroStream, MacroStream) -> MacroStream>(
     input: CompilerStream,
 ) -> CompilerStream {
     handler(attr.into(), input.into()).into()
+}
+
+#[allow(dead_code)]
+/// thin adapter converting between the compiler-level and proc_macro2 streams
+fn handle_attribute_passthrough(
+    attr: CompilerStream,
+    input: CompilerStream,
+    message: &'static str,
+) -> CompilerStream {
+    expand::attr::passthrough_attr_unhandled(attr.into(), input.into(), message).into()
 }
 
 /// Derives `AutoPlugin` which generates the initialization function that automatically registering types, events, and resources in the `App`.
@@ -40,6 +51,27 @@ pub fn auto_register_type(attr: CompilerStream, input: CompilerStream) -> Compil
 pub fn auto_add_message(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(expand::attr::auto_add_message, attr, input)
 }
+
+/// Automatically configures a `SystemSet`.
+#[doc = include_str!("../docs/proc_attributes/auto_configure_system_set.md")]
+#[proc_macro_attribute]
+pub fn auto_configure_system_set(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_configure_system_sets, attr, input)
+}
+
+/// used on enums variants inconjuction with `auto_configure_system_set` to configure a `SystemSet`
+// #[doc = include_str!("../docs/proc_attributes/auto_configure_system_set_config.md")]
+// #[proc_macro_attribute]
+// pub fn auto_configure_system_set_config(
+//     attr: CompilerStream,
+//     input: CompilerStream,
+// ) -> CompilerStream {
+//     handle_attribute_passthrough(
+//         attr,
+//         input,
+//         "`auto_configure_system_set_config` used without parent `auto_configure_system_set`",
+//     )
+// }
 
 /// Automatically inserts a resource in the Bevy `App`.
 #[doc = include_str!("../docs/proc_attributes/auto_init_resource.md")]

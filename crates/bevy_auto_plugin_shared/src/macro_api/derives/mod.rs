@@ -7,13 +7,13 @@ pub mod auto_plugin;
 #[allow(dead_code)]
 #[derive(Debug, FromField)]
 pub struct FieldData {
-    ident: Option<Ident>,
-    ty: Type,
+    pub ident: Option<Ident>,
+    pub ty: Type,
 }
 
 #[allow(dead_code)]
 #[derive(Debug, FromVariant)]
 pub struct VariantData {
-    ident: Ident,
-    fields: darling::ast::Fields<FieldData>,
+    pub ident: Ident,
+    pub fields: darling::ast::Fields<FieldData>,
 }

@@ -73,6 +73,12 @@ pub mod prelude {
 
     #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::auto_bind_plugin;
+
+    #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::auto_configure_system_set;
+
+    // #[doc(inline)]
+    // pub use bevy_auto_plugin_proc_macros::auto_configure_system_set_config;
 }
 
 #[deprecated(since = "0.7.0", note = "bevy_auto_plugin::prelude::* instead")]
