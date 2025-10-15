@@ -30,6 +30,7 @@ impl ItemAttributeArgs for AddPluginArgs {
 }
 
 impl GenericsArgs for AddPluginArgs {
+    const TURBOFISH: bool = true;
     fn type_lists(&self) -> &[TypeList] {
         self.generics.as_slice()
     }
@@ -87,6 +88,23 @@ mod tests {
             token_iter.next().expect("token_iter").to_string(),
             quote! {
                 .add_plugins(FooTarget)
+            }
+            .to_string()
+        );
+        assert!(token_iter.next().is_none());
+        Ok(())
+    }
+
+    #[xtest]
+    fn test_to_tokens_no_plugin() -> syn::Result<()> {
+        let args = parse2::<AddPluginArgs>(quote!(generics(u8, bool)))?;
+        let path: Path = parse_quote!(FooTarget);
+        let args_with_target = WithTargetPath::try_from((path, args))?;
+        let mut token_iter = args_with_target.to_tokens_iter();
+        assert_eq!(
+            token_iter.next().expect("token_iter").to_string(),
+            quote! {
+                .add_plugins(FooTarget :: < u8 , bool > :: default ())
             }
             .to_string()
         );
