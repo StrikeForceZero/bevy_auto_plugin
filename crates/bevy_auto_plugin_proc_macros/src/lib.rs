@@ -90,6 +90,13 @@ pub fn auto_add_observer(attr: CompilerStream, input: CompilerStream) -> Compile
     handle_attribute(expand::attr::auto_add_observer, attr, input)
 }
 
+/// Automatically adds the plugin as a sub-plugin to bevy app. (See below for additional options)
+#[doc = include_str!("../docs/proc_attributes/auto_add_system.md")]
+#[proc_macro_attribute]
+pub fn auto_add_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_add_plugin, attr, input)
+}
+
 /// Automatically registers item as Component for bevy app. (See below for additional options)
 #[doc = include_str!("../docs/proc_attributes/auto_component.md")]
 #[proc_macro_attribute]

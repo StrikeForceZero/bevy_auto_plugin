@@ -1,6 +1,8 @@
 mod auto_add_message;
 mod auto_add_message_generic;
 mod auto_add_observer;
+mod auto_add_plugin;
+mod auto_add_plugin_with_value;
 mod auto_add_systems;
 mod auto_add_systems_complex_with_generics;
 mod auto_add_systems_with_generics;
