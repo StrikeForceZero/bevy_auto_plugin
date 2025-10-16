@@ -60,10 +60,11 @@ pub fn inject_send_sync_static(generics: &mut syn::Generics) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use internal_test_proc_macro::xtest;
     use quote::{ToTokens, quote};
     use syn::parse_quote;
 
-    #[test]
+    #[xtest]
     fn inject_send_sync_static_works() {
         let mut generics = parse_quote! {
             <T>
@@ -78,7 +79,7 @@ mod tests {
         );
     }
 
-    #[test]
+    #[xtest]
     fn inject_missing_works() {
         let mut generics = parse_quote! {
             <T: Send>
@@ -117,7 +118,7 @@ mod tests {
         );
     }
 
-    #[test]
+    #[xtest]
     fn inject_replay_works() {
         let mut generics = parse_quote! {
             <T>
