@@ -7,7 +7,7 @@ use internal_test_proc_macro::xtest;
 #[auto_plugin(impl_plugin_trait)]
 struct TestPlugin;
 
-#[derive(AutoPlugin, Default)]
+#[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
 #[auto_add_plugin(plugin = TestPlugin)]
 struct TestSubPlugin;

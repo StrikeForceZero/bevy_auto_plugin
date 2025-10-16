@@ -2,7 +2,7 @@ use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
 use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
-use crate::syntax::ast::any_expr::AnyExprCallClosureMacroPath;
+use crate::syntax::ast::flag_or_expr::FlagOrExpr;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::FromMeta;
@@ -16,7 +16,7 @@ pub struct AddPluginArgs {
     #[darling(default)]
     pub generics: Option<TypeList>,
     #[darling(default)]
-    pub value: Option<AnyExprCallClosureMacroPath>,
+    pub init: FlagOrExpr,
 }
 
 impl AttributeIdent for AddPluginArgs {
@@ -42,13 +42,17 @@ impl ToTokensWithConcreteTargetPath for AddPluginArgs {
         tokens: &mut TokenStream,
         target: &ConcreteTargetPath,
     ) {
-        if let Some(value) = &self.value {
+        if let Some(expr) = &self.init.expr {
             tokens.extend(quote! {
-                .add_plugins(#value)
+                .add_plugins({ let plugin: #target = #expr; plugin })
+            })
+        } else if self.init.present {
+            tokens.extend(quote! {
+                .add_plugins(#target::default())
             })
         } else {
             tokens.extend(quote! {
-                .add_plugins(#target ::default())
+                .add_plugins(#target)
             })
         }
     }
@@ -62,25 +66,8 @@ mod tests {
     use syn::{Path, parse_quote, parse2};
 
     #[xtest]
-    fn test_to_tokens_no_generics_no_plugin() -> syn::Result<()> {
+    fn test_to_tokens_no_generics_no_init() -> syn::Result<()> {
         let args = parse2::<AddPluginArgs>(quote!())?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .add_plugins(FooTarget :: default ())
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<AddPluginArgs>(quote!(value(FooTarget)))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -96,8 +83,59 @@ mod tests {
     }
 
     #[xtest]
-    fn test_to_tokens_no_plugin() -> syn::Result<()> {
+    fn test_to_tokens_no_generics_init_present() -> syn::Result<()> {
+        let args = parse2::<AddPluginArgs>(quote!(init))?;
+        let path: Path = parse_quote!(FooTarget);
+        let args_with_target = WithTargetPath::try_from((path, args))?;
+        let mut token_iter = args_with_target.to_tokens_iter();
+        assert_eq!(
+            token_iter.next().expect("token_iter").to_string(),
+            quote! {
+                .add_plugins(FooTarget :: default ())
+            }
+            .to_string()
+        );
+        assert!(token_iter.next().is_none());
+        Ok(())
+    }
+
+    #[xtest]
+    fn test_to_tokens_no_generics_init() -> syn::Result<()> {
+        let args = parse2::<AddPluginArgs>(quote!(init(FooTarget(1, true))))?;
+        let path: Path = parse_quote!(FooTarget);
+        let args_with_target = WithTargetPath::try_from((path, args))?;
+        let mut token_iter = args_with_target.to_tokens_iter();
+        assert_eq!(
+            token_iter.next().expect("token_iter").to_string(),
+            quote! {
+                .add_plugins({ let plugin: FooTarget = FooTarget(1, true); plugin })
+            }
+            .to_string()
+        );
+        assert!(token_iter.next().is_none());
+        Ok(())
+    }
+
+    #[xtest]
+    fn test_to_tokens_no_init() -> syn::Result<()> {
         let args = parse2::<AddPluginArgs>(quote!(generics(u8, bool)))?;
+        let path: Path = parse_quote!(FooTarget);
+        let args_with_target = WithTargetPath::try_from((path, args))?;
+        let mut token_iter = args_with_target.to_tokens_iter();
+        assert_eq!(
+            token_iter.next().expect("token_iter").to_string(),
+            quote! {
+                .add_plugins(FooTarget :: < u8 , bool >)
+            }
+            .to_string()
+        );
+        assert!(token_iter.next().is_none());
+        Ok(())
+    }
+
+    #[xtest]
+    fn test_to_tokens_init_present() -> syn::Result<()> {
+        let args = parse2::<AddPluginArgs>(quote!(generics(u8, bool), init))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
@@ -114,14 +152,14 @@ mod tests {
 
     #[xtest]
     fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<AddPluginArgs>(quote!(generics(u8, bool), value(FooTarget(1, true))))?;
+        let args = parse2::<AddPluginArgs>(quote!(generics(u8, bool), init(FooTarget(1, true))))?;
         let path: Path = parse_quote!(FooTarget);
         let args_with_target = WithTargetPath::try_from((path, args))?;
         let mut token_iter = args_with_target.to_tokens_iter();
         assert_eq!(
             token_iter.next().expect("token_iter").to_string(),
             quote! {
-                .add_plugins(FooTarget(1, true))
+                .add_plugins({ let plugin: FooTarget :: < u8 , bool > = FooTarget(1, true); plugin })
             }
             .to_string()
         );

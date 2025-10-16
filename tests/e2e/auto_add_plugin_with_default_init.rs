@@ -8,12 +8,19 @@ use internal_test_proc_macro::xtest;
 struct TestPlugin;
 
 #[derive(AutoPlugin)]
-#[auto_add_plugin(plugin = TestPlugin, value = TestSubPlugin(1))]
+#[auto_add_plugin(plugin = TestPlugin, init)]
 struct TestSubPlugin(usize);
 
 impl Plugin for TestSubPlugin {
+    #[auto_plugin]
     fn build(&self, app: &mut App) {
         app.insert_resource(Test(self.0));
+    }
+}
+
+impl Default for TestSubPlugin {
+    fn default() -> Self {
+        Self(1)
     }
 }
 
@@ -27,7 +34,7 @@ fn app() -> App {
 }
 
 #[xtest]
-fn test_auto_add_plugin() {
+fn test_auto_add_plugin_with_default_init() {
     let app = app();
     assert_eq!(
         app.world().get_resource::<Test>(),
