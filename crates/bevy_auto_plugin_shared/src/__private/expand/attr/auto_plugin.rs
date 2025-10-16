@@ -1,4 +1,4 @@
-use crate::util::macros::parse_macro_input2;
+use crate::util::macros::{compile_error_with, ok_or_emit_with, parse_macro_input2_or_emit_with};
 use proc_macro2::TokenStream as MacroStream;
 use syn::ItemFn;
 
@@ -9,11 +9,9 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
     use quote::quote;
     use syn::spanned::Spanned;
     use syn::{FnArg, parse2};
-    let item = parse_macro_input2!(input as ItemFn);
-    let params = match parse2::<AutoPluginFnArgs>(attr) {
-        Ok(params) => params,
-        Err(err) => return err.into_compile_error(),
-    };
+    let og_input = input.clone();
+    let item = parse_macro_input2_or_emit_with!(input as ItemFn, og_input);
+    let params = ok_or_emit_with!(parse2::<AutoPluginFnArgs>(attr), og_input);
     let vis = &item.vis;
     let attrs = &item.attrs;
     let sig = &item.sig;
@@ -31,42 +29,48 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
     let self_arg = self_args.first();
 
     // TODO: use helper
-    let app_param_ident = match resolve_app_param_name(&item, params.app_param.as_ref()) {
-        Ok(ident) => ident,
-        Err(err) => return err.into_compile_error(),
-    };
+    let app_param_ident = ok_or_emit_with!(
+        resolve_app_param_name(&item, params.app_param.as_ref()),
+        og_input
+    );
 
     if let Err(err) = require_fn_param_mutable_reference(&item, app_param_ident, "bevy app") {
-        return err.to_compile_error();
+        return compile_error_with!(err, og_input);
     }
 
     let mut impl_plugin = quote! {};
 
     let auto_plugin_hook = if let Some(self_arg) = self_arg {
         if params.plugin.is_some() {
-            return syn::Error::new(
-                params.plugin.span(),
-                "auto_plugin on trait impl can't specify plugin ident",
-            )
-            .to_compile_error();
+            return compile_error_with!(
+                syn::Error::new(
+                    params.plugin.span(),
+                    "auto_plugin on trait impl can't specify plugin ident",
+                ),
+                og_input
+            );
         };
         quote! {
             <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::build(#self_arg, #app_param_ident);
         }
     } else {
         if sig.inputs.len() > 1 {
-            return syn::Error::new(
-                sig.inputs.span(),
-                "auto_plugin on bare fn can only accept a single parameter with the type &mut bevy::prelude::App",
-            )
-            .to_compile_error();
+            return compile_error_with!(
+                syn::Error::new(
+                    sig.inputs.span(),
+                    "auto_plugin on bare fn can only accept a single parameter with the type &mut bevy::prelude::App",
+                ),
+                og_input
+            );
         }
         let Some(plugin_ident) = params.plugin else {
-            return syn::Error::new(
-                params.plugin.span(),
-                "auto_plugin on bare fn requires the plugin ident to be specified",
-            )
-            .to_compile_error();
+            return compile_error_with!(
+                syn::Error::new(
+                    params.plugin.span(),
+                    "auto_plugin on bare fn requires the plugin ident to be specified",
+                ),
+                og_input
+            );
         };
         impl_plugin.extend(quote! {
             impl ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::Plugin for #plugin_ident {

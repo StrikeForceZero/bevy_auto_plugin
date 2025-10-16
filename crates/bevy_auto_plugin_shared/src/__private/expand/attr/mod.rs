@@ -5,7 +5,7 @@ use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::with_plugin::{PluginBound, WithPlugin};
 use crate::syntax::diagnostic::kind::item_kind;
-use crate::util::macros::ok_or_return_compiler_error;
+use crate::util::macros::ok_or_emit_with;
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::{format_ident, quote};
@@ -56,20 +56,20 @@ where
     let input = input.into();
 
     // need to clone input so we can pass through input untouched for optimal IDE support
-    let item: Item = ok_or_return_compiler_error!(parse2(input.clone()));
+    let item: Item = ok_or_emit_with!(parse2(input.clone()), input);
 
-    let err_msg = format!("Attribute macro is not allowed on {}", item_kind(&item));
-    let ident = ok_or_return_compiler_error!(
+    let ident = ok_or_emit_with!(
         resolve_ident(&item).map_err(|e| {
             // make sure the call_site span is used instead so the user knows what attribute caused the error
             syn::Error::new(Span::call_site(), e)
         }),
-        err_msg
+        input,
+        format!("Attribute macro is not allowed on {}", item_kind(&item))
     );
 
-    let args = ok_or_return_compiler_error!(parse_attr(attr));
+    let args = ok_or_emit_with!(parse_attr(attr), input);
 
-    let output = ok_or_return_compiler_error!(body(ident, args, &item));
+    let output = ok_or_emit_with!(body(ident, args, &item), input);
 
     quote! {
         #input

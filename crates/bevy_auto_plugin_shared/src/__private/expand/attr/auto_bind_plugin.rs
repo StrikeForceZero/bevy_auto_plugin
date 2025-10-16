@@ -1,3 +1,4 @@
+use crate::util::macros::compile_error_with;
 use proc_macro2::TokenStream as MacroStream;
 
 pub fn auto_bind_plugin_inner(attr: MacroStream, input: MacroStream) -> syn::Result<MacroStream> {
@@ -29,5 +30,6 @@ pub fn auto_bind_plugin_inner(attr: MacroStream, input: MacroStream) -> syn::Res
 }
 
 pub fn auto_bind_plugin_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
-    auto_bind_plugin_inner(attr, input).unwrap_or_else(|err| err.to_compile_error())
+    let og_input = input.clone();
+    auto_bind_plugin_inner(attr, input).unwrap_or_else(|err| compile_error_with!(err, og_input))
 }
