@@ -9,11 +9,12 @@ use std::hash::Hash;
 use std::ops::{AddAssign, Deref};
 
 #[derive(AutoPlugin, Default)]
-#[auto_plugin(impl_generic_plugin_trait, impl_generic_auto_plugin_trait)]
-struct Test<T1, T2>(T1, T2)
-where
-    T1: Default + Send + Sync + 'static,
-    T2: Default + Send + Sync + 'static;
+#[auto_plugin(
+    impl_generic_plugin_trait,
+    impl_generic_auto_plugin_trait,
+    generics(usize, bool)
+)]
+struct Test<T1, T2>(T1, T2);
 
 #[derive(Component, Default, Reflect)]
 #[reflect(Component)]
