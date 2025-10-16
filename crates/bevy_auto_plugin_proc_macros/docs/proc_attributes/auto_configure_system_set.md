@@ -45,6 +45,6 @@ enum TestSet { First, Second }
 struct MyPlugin;
 
 #[auto_configure_system_set(plugin = MyPlugin, generics(usize), schedule = Update)]
-#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+#[derive(SystemSet, Debug, Default, Hash, PartialEq, Eq, Clone)]
 struct MySet<T>(T);
 ```

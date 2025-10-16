@@ -9,7 +9,7 @@ use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_stru
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::{FromMeta, FromVariant};
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::{ToTokens, quote};
 use syn::{Item, parse2};
 
@@ -25,6 +25,8 @@ pub struct ConfigureSystemSetArgsInnerEntry {
     pub order: Option<u32>,
     /// .chain()
     pub chain: Option<bool>,
+    /// .chain_ignore_deferred()
+    pub chain_ignore_deferred: Option<bool>,
     #[darling(default)]
     pub config: ScheduleConfigArgs,
 }
@@ -50,6 +52,8 @@ pub struct ConfigureSystemSetArgs {
     pub schedule_config: ScheduleWithScheduleConfigArgs,
     /// .chain()
     pub chain: Option<bool>,
+    /// .chain_ignore_deferred()
+    pub chain_ignore_deferred: Option<bool>,
     #[darling(skip)]
     /// Some when enum, None when struct
     pub inner: Option<ConfigureSystemSetArgsInner>,
@@ -66,6 +70,7 @@ impl ItemAttributeArgs for ConfigureSystemSetArgs {
 }
 
 impl GenericsArgs for ConfigureSystemSetArgs {
+    const TURBOFISH: bool = true;
     fn type_lists(&self) -> &[TypeList] {
         &self.generics
     }
@@ -81,15 +86,44 @@ impl ToTokensWithConcreteTargetPath for ConfigureSystemSetArgs {
         let config_tokens = self.schedule_config.config.to_token_stream();
         if let Some(inner) = &self.inner {
             // enum
-            let chained = if self.chain.unwrap_or(false) {
+            let has_chain_flag = self.chain.unwrap_or(false);
+            let has_chain_ignore_deferred_flag = self.chain_ignore_deferred.unwrap_or(false);
+            if has_chain_flag && has_chain_ignore_deferred_flag {
+                // TODO: better span? darling flags
+                let err = syn::Error::new(
+                    Span::call_site(),
+                    format!(
+                        "cannot use both chain and chain_ignore_deferred, for: {}",
+                        target.to_token_stream(),
+                    ),
+                )
+                .into_compile_error();
+                tokens.extend(quote! {#err})
+            }
+            let chained = if has_chain_flag {
                 quote! { .chain() }
+            } else if has_chain_ignore_deferred_flag {
+                quote! { .chain_ignore_deferred() }
             } else {
                 quote! {}
             };
             let mut entries = vec![];
             for (ident, entry) in inner.entries.iter() {
-                let chained = if entry.chain.unwrap_or(false) {
+                let has_chain_flag = entry.chain.unwrap_or(false);
+                let has_chain_ignore_deferred_flag = entry.chain_ignore_deferred.unwrap_or(false);
+                if has_chain_flag && has_chain_ignore_deferred_flag {
+                    // TODO: better span? darling flags
+                    let err = syn::Error::new(
+                        Span::call_site(),
+                        format!("cannot use both chain and chain_ignore_deferred, for: {ident}"),
+                    )
+                    .into_compile_error();
+                    tokens.extend(quote! {#err})
+                }
+                let chained = if has_chain_flag {
                     quote! { .chain() }
+                } else if has_chain_ignore_deferred_flag {
+                    quote! { .chain_ignore_deferred() }
                 } else {
                     quote! {}
                 };
@@ -105,9 +139,15 @@ impl ToTokensWithConcreteTargetPath for ConfigureSystemSetArgs {
             }
         } else {
             // struct
-            tokens.extend(quote! {
-                .configure_sets(#schedule, #target #config_tokens)
-            });
+            if target.generics.is_empty() {
+                tokens.extend(quote! {
+                    .configure_sets(#schedule, #target #config_tokens)
+                });
+            } else {
+                tokens.extend(quote! {
+                    .configure_sets(#schedule, #target::default() #config_tokens)
+                });
+            }
         }
     }
 }
@@ -253,7 +293,7 @@ mod tests {
             assert_eq!(
                 token_iter.next().expect("token_iter").to_string(),
                 quote! {
-                    . configure_sets (Update , FooTarget<u8, bool > )
+                    . configure_sets (Update , FooTarget :: <u8, bool > ::default() )
                 }
                 .to_string()
             );
@@ -274,14 +314,14 @@ mod tests {
             assert_eq!(
                 token_iter.next().expect("token_iter").to_string(),
                 quote! {
-                    . configure_sets (Update , FooTarget<u8, bool > )
+                    . configure_sets (Update , FooTarget :: <u8, bool >::default() )
                 }
                 .to_string()
             );
             assert_eq!(
                 token_iter.next().expect("token_iter").to_string(),
                 quote! {
-                    . configure_sets (Update , FooTarget<bool, bool > )
+                    . configure_sets (Update , FooTarget :: <bool, bool >::default() )
                 }
                 .to_string()
             );
@@ -436,6 +476,7 @@ mod tests {
                     group: Some(parse_quote!(A)),
                     generics: vec![],
                     chain: None,
+                    chain_ignore_deferred: None,
                 }
             );
             Ok(())
