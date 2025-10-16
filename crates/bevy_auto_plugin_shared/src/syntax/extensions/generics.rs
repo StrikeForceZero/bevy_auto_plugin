@@ -1,7 +1,15 @@
-use syn::{Lifetime, TraitBound, TraitBoundModifier, TypeParamBound, parse_quote};
+use crate::syntax::extensions::path::PathExt;
+use syn::{Lifetime, Path, TraitBound, TraitBoundModifier, TypeParamBound, parse_quote};
 
 /// Injects `Send + Sync + 'static` constraints to any generics that don't have them
 pub fn inject_send_sync_static(generics: &mut syn::Generics) {
+    let send_marker_path: Path = parse_quote!(::core::marker::Send);
+    let sync_marker_path: Path = parse_quote!(::core::marker::Sync);
+
+    let send_marker: TypeParamBound = parse_quote!(#send_marker_path);
+    let sync_marker: TypeParamBound = parse_quote!(#sync_marker_path);
+    let static_lifetime: TypeParamBound = parse_quote!('static);
+
     for tp in generics.type_params_mut() {
         // Scan existing bounds so we don't duplicate them.
         let mut has_send = false;
@@ -15,12 +23,10 @@ pub fn inject_send_sync_static(generics: &mut syn::Generics) {
                     path,
                     ..
                 }) => {
-                    // TODO: doesn't match `core::marker::Send` or `::core::marker::Send`
-                    if path.is_ident("Send") {
+                    if path.is_similar_path_or_ident(&send_marker_path) {
                         has_send = true;
                     }
-                    // TODO: doesn't match `core::marker::Sync` or `::core::marker::Sync`
-                    if path.is_ident("Sync") {
+                    if path.is_similar_path_or_ident(&sync_marker_path) {
                         has_sync = true;
                     }
                 }
@@ -40,13 +46,13 @@ pub fn inject_send_sync_static(generics: &mut syn::Generics) {
         }
 
         if !has_send {
-            tp.bounds.push(parse_quote!(::core::marker::Send));
+            tp.bounds.push(send_marker.clone());
         }
         if !has_sync {
-            tp.bounds.push(parse_quote!(::core::marker::Sync));
+            tp.bounds.push(sync_marker.clone());
         }
         if !has_static {
-            tp.bounds.push(parse_quote!('static));
+            tp.bounds.push(static_lifetime.clone());
         }
     }
 }
@@ -106,6 +112,22 @@ mod tests {
             generics.to_token_stream().to_string(),
             quote! {
                 <T: 'static + ::core::marker::Send + ::core::marker::Sync>
+            }
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn inject_replay_works() {
+        let mut generics = parse_quote! {
+            <T>
+        };
+        inject_send_sync_static(&mut generics);
+        inject_send_sync_static(&mut generics);
+        assert_eq!(
+            generics.to_token_stream().to_string(),
+            quote! {
+                <T: ::core::marker::Send + ::core::marker::Sync + 'static>
             }
             .to_string()
         );
