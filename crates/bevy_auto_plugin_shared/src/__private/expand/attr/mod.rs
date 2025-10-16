@@ -372,7 +372,7 @@ gen_auto_attribute_outers! {
     auto_add_system            => AddSystemArgs,
     auto_add_observer          => AddObserverArgs,
     auto_add_plugin            => AddPluginArgs,
-    auto_configure_system_sets => ConfigureSystemSetArgs:
+    auto_configure_system_set => ConfigureSystemSetArgs:
         parser = ArgParser::Custom(CustomParser::AttrInput(configure_system_set_args_from_attr_input)),
 }
 
