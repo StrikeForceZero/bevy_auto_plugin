@@ -9,11 +9,7 @@ use std::hash::Hash;
 use std::ops::{AddAssign, Deref};
 
 #[derive(AutoPlugin, Default)]
-#[auto_plugin(
-    impl_generic_plugin_trait,
-    impl_generic_auto_plugin_trait,
-    generics(usize, bool)
-)]
+#[auto_plugin(impl_plugin_trait)]
 struct Test<T1, T2>(T1, T2);
 
 #[derive(Component, Default, Reflect)]

@@ -1,3 +1,5 @@
+#![allow(unused_macros)]
+
 macro_rules! compile_error_with {
     ($err:expr, $user_tokens:expr $(,)?) => {{
         let ce = $err.to_compile_error();
@@ -119,6 +121,7 @@ macro_rules! bevy_crate_path {
     }};
 }
 
+#[allow(unused_imports)]
 #[rustfmt::skip]
 pub(crate) use {
     compile_error_with,

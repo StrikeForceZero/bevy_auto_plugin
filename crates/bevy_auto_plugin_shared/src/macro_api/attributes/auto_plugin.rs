@@ -2,22 +2,31 @@ use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
 use crate::syntax::ast::type_list::TypeList;
 use darling::FromMeta;
+use darling::util::Flag;
 use proc_macro2::Ident;
 use syn::spanned::Spanned;
 use syn::{FnArg, ItemFn, Pat, Path};
 
-#[derive(FromMeta, Debug, Default, Clone, PartialEq)]
+#[derive(FromMeta, Debug, Default, Clone)]
 #[darling(derive_syn_parse, default)]
 pub struct AutoPluginStructOrEnumArgs {
+    #[deprecated(since = "0.8.0", note = "no longer needed - remove `generics(...)`")]
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
-    pub impl_plugin_trait: bool,
-    pub impl_generic_auto_plugin_trait: bool,
-    pub impl_generic_plugin_trait: bool,
+    pub impl_plugin_trait: Flag,
+    #[deprecated(
+        since = "0.8.0",
+        note = "always implemented - remove `impl_generic_auto_plugin_trait`"
+    )]
+    pub impl_generic_auto_plugin_trait: Flag,
+    #[deprecated(since = "0.8.0", note = "use `impl_plugin_trait` instead")]
+    pub impl_generic_plugin_trait: Flag,
 }
 
+// TODO: remove?
 impl GenericsArgs for AutoPluginStructOrEnumArgs {
     fn type_lists(&self) -> &[TypeList] {
+        #[allow(deprecated)]
         &self.generics
     }
 }
@@ -31,6 +40,7 @@ pub struct AutoPluginFnArgs {
     pub app_param: Option<Ident>,
 }
 
+// TODO: remove?
 impl GenericsArgs for AutoPluginFnArgs {
     const TURBOFISH: bool = true;
     fn type_lists(&self) -> &[TypeList] {

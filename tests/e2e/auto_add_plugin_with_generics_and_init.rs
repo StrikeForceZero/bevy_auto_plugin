@@ -8,7 +8,7 @@ use internal_test_proc_macro::xtest;
 struct TestPlugin;
 
 #[derive(AutoPlugin)]
-#[auto_plugin(impl_generic_auto_plugin_trait)]
+#[auto_plugin]
 #[auto_add_plugin(plugin = TestPlugin, generics(usize), init = TestSubPlugin(1))]
 struct TestSubPlugin<T: 'static>(T);
 

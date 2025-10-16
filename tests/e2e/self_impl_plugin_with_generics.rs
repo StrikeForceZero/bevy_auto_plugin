@@ -4,7 +4,7 @@ use bevy_auto_plugin_proc_macros::{auto_init_resource, auto_insert_resource};
 use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin, Default)]
-#[auto_plugin(generics(u8, bool))]
+#[auto_plugin]
 pub struct MyPlugin<T1, T2>(T1, T2)
 where
     T1: Default + Send + Sync + 'static,
@@ -25,7 +25,11 @@ where
     T1: Default + Send + Sync + 'static,
     T2: Default + Send + Sync + 'static;
 
-impl Plugin for MyPlugin<u8, bool> {
+impl<T1, T2> Plugin for MyPlugin<T1, T2>
+where
+    T1: Default + Send + Sync + 'static,
+    T2: Default + Send + Sync + 'static,
+{
     #[auto_plugin(app_param=non_default_app_param_name)]
     fn build(&self, non_default_app_param_name: &mut App) {
         non_default_app_param_name.insert_resource(MyResourceBuild(1u8, true));
