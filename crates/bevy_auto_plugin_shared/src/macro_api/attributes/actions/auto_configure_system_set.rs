@@ -4,16 +4,14 @@ use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
 use crate::macro_api::derives::VariantData;
 use crate::macro_api::schedule_config::{ScheduleConfigArgs, ScheduleWithScheduleConfigArgs};
-use crate::macro_api::with_plugin::{PluginBound, WithPlugin};
+use crate::macro_api::with_plugin::WithPlugin;
 use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
-use crate::util::macros::{ok_or_emit, ok_or_emit_with};
 use darling::{FromMeta, FromVariant};
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
-use syn::spanned::Spanned;
-use syn::{DeriveInput, Item, parse2};
+use syn::{Item, parse2};
 
 const CONFIG_ATTR_NAME: &str = "auto_configure_system_set_config";
 
@@ -208,9 +206,11 @@ fn ident_and_entries_from_args_input(
     }
     entries.sort_by_key(|(_, entry)| entry.order.unwrap_or(0));
     entries.retain(|(_, entry)| {
-        !entry.exclude.unwrap_or(false)
-            && match (&entry.group, &args.group) {
-                (Some(group), Some(args_group)) => group == args_group,
+        !entry.exclude.unwrap_or(false) && entry.group.is_none()
+            || match (&entry.group, &args.group) {
+                (Some(group), Some(args_group)) => {
+                    group == args_group && !entry.exclude.unwrap_or(false)
+                }
                 _ => true,
             }
     });
@@ -391,7 +391,7 @@ mod tests {
             assert_eq!(
                 token_iter.next().expect("token_iter").to_string(),
                 quote! {
-                    . configure_sets (Update , ( Foo::B ))
+                    . configure_sets (Update , ( Foo::A, Foo::B ))
                 }
                 .to_string()
             );
@@ -403,7 +403,7 @@ mod tests {
 
         #[xtest]
         fn test_helper() -> syn::Result<()> {
-            let (ident, args) = ident_and_args_from_attr_input(
+            let (_ident, args) = ident_and_args_from_attr_input(
                 quote! {
                     group = A,
                     schedule = Update,

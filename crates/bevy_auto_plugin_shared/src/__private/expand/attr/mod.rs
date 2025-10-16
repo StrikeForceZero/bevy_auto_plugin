@@ -5,11 +5,9 @@ use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::with_plugin::{PluginBound, WithPlugin};
 use crate::syntax::diagnostic::kind::item_kind;
-use crate::util::macros::{ok_or_emit, ok_or_emit_with};
 use darling::FromMeta;
-use proc_macro2::{Ident, Span, TokenStream as MacroStream, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::{ToTokens, format_ident, quote};
-use syn::spanned::Spanned;
 use syn::{Item, parse2};
 use thiserror::Error;
 
@@ -88,10 +86,8 @@ enum ProcAttributeError {
     FailedToParseItem(syn::Error),
     #[error("Failed to resolve ident: {0}")]
     FailedToResolveIdent(syn::Error),
-    #[error("Failed to parse attr: {0}")]
-    FailedToParseAttr(syn::Error),
-    #[error("Failed to parse input: {0}")]
-    FailedToParseInput(syn::Error),
+    #[error("Failed to parse attr or input: {0}")]
+    FailedToParseAttrOrInput(syn::Error),
     #[error("Failed to generate body: {0}")]
     FailedToGenerateBody(syn::Error),
 }
@@ -101,8 +97,7 @@ impl ProcAttributeError {
         match self {
             ProcAttributeError::FailedToParseItem(err) => err,
             ProcAttributeError::FailedToResolveIdent(err) => err,
-            ProcAttributeError::FailedToParseAttr(err) => err,
-            ProcAttributeError::FailedToParseInput(err) => err,
+            ProcAttributeError::FailedToParseAttrOrInput(err) => err,
             ProcAttributeError::FailedToGenerateBody(err) => err,
         }
     }
@@ -144,7 +139,7 @@ where
 
     let args = parse_attr_input
         .parse(attr, input)
-        .map_err(ProcAttributeError::FailedToParseAttr)?;
+        .map_err(ProcAttributeError::FailedToParseAttrOrInput)?;
 
     let output = body(ident, args, &item).map_err(ProcAttributeError::FailedToGenerateBody)?;
 
