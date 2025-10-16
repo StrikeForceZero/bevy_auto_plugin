@@ -19,7 +19,10 @@ pub struct AutoPluginStructOrEnumArgs {
         note = "always implemented - remove `impl_generic_auto_plugin_trait`"
     )]
     pub impl_generic_auto_plugin_trait: Flag,
-    #[deprecated(since = "0.8.0", note = "use `impl_plugin_trait` instead")]
+    #[deprecated(
+        since = "0.8.0",
+        note = "always implemented - remove `impl_generic_plugin_trait`"
+    )]
     pub impl_generic_plugin_trait: Flag,
 }
 
