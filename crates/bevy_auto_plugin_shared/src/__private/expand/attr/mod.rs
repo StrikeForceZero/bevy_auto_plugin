@@ -83,22 +83,22 @@ fn body<T: PluginBound>(
 #[derive(Error, Debug)]
 enum ProcAttributeError {
     #[error("Failed to parse item: {0}")]
-    FailedToParseItem(syn::Error),
+    ParseItem(syn::Error),
     #[error("Failed to resolve ident: {0}")]
-    FailedToResolveIdent(syn::Error),
+    ResolveIdent(syn::Error),
     #[error("Failed to parse attr or input: {0}")]
-    FailedToParseAttrOrInput(syn::Error),
+    ParseAttrOrInput(syn::Error),
     #[error("Failed to generate body: {0}")]
-    FailedToGenerateBody(syn::Error),
+    GenerateBody(syn::Error),
 }
 
 impl ProcAttributeError {
     fn err(&self) -> &syn::Error {
         match self {
-            ProcAttributeError::FailedToParseItem(err) => err,
-            ProcAttributeError::FailedToResolveIdent(err) => err,
-            ProcAttributeError::FailedToParseAttrOrInput(err) => err,
-            ProcAttributeError::FailedToGenerateBody(err) => err,
+            ProcAttributeError::ParseItem(err) => err,
+            ProcAttributeError::ResolveIdent(err) => err,
+            ProcAttributeError::ParseAttrOrInput(err) => err,
+            ProcAttributeError::GenerateBody(err) => err,
         }
     }
 }
@@ -124,7 +124,7 @@ where
     let attr = attr.into();
 
     // need to clone input so we can pass through input untouched for optimal IDE support
-    let item: Item = parse2(input.clone()).map_err(ProcAttributeError::FailedToParseItem)?;
+    let item: Item = parse2(input.clone()).map_err(ProcAttributeError::ParseItem)?;
 
     let ident = resolve_ident(&item)
         .map_err(|err| {
@@ -135,13 +135,13 @@ where
             // make sure the call_site span is used instead so the user knows what attribute caused the error
             syn::Error::new(Span::call_site(), message)
         })
-        .map_err(ProcAttributeError::FailedToResolveIdent)?;
+        .map_err(ProcAttributeError::ResolveIdent)?;
 
     let args = parse_attr_input
         .parse(attr, input)
-        .map_err(ProcAttributeError::FailedToParseAttrOrInput)?;
+        .map_err(ProcAttributeError::ParseAttrOrInput)?;
 
-    let output = body(ident, args, &item).map_err(ProcAttributeError::FailedToGenerateBody)?;
+    let output = body(ident, args, &item).map_err(ProcAttributeError::GenerateBody)?;
 
     Ok(quote! {
         #input
