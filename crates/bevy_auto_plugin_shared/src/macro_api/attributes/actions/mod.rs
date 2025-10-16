@@ -1,5 +1,6 @@
 pub mod auto_add_message;
 pub mod auto_add_observer;
+pub mod auto_add_plugin;
 pub mod auto_add_system;
 pub mod auto_init_resource;
 pub mod auto_init_state;

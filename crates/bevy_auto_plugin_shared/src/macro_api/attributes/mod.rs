@@ -19,6 +19,7 @@ pub mod prelude {
     };
     pub use crate::macro_api::attributes::actions::auto_add_message::AddMessageArgs;
     pub use crate::macro_api::attributes::actions::auto_add_observer::AddObserverArgs;
+    pub use crate::macro_api::attributes::actions::auto_add_plugin::AddPluginArgs;
     pub use crate::macro_api::attributes::actions::auto_add_system::AddSystemArgs;
     pub use crate::macro_api::attributes::actions::auto_init_resource::InitResourceArgs;
     pub use crate::macro_api::attributes::actions::auto_init_state::InitStateArgs;

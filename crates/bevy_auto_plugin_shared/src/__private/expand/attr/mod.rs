@@ -244,6 +244,7 @@ gen_auto_attribute_outers! {
     auto_register_state_type  => RegisterStateTypeArgs,
     auto_add_system           => AddSystemArgs,
     auto_add_observer         => AddObserverArgs,
+    auto_add_plugin           => AddPluginArgs,
 }
 
 gen_auto_outers! {
