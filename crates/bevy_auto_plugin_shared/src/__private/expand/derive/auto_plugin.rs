@@ -1,61 +1,9 @@
 use crate::util::macros::{ok_or_emit, parse_macro_input2};
 use proc_macro2::TokenStream as MacroStream;
 
-// TODO: move
-pub fn inject_send_sync_static(generics: &mut syn::Generics) {
-    use syn::{Lifetime, Path, TraitBound, TraitBoundModifier, TypeParamBound, parse_quote};
-    fn path_is_ident(path: &Path, name: &str) -> bool {
-        path.segments.len() == 1 && path.segments[0].ident == name
-    }
-    for tp in generics.type_params_mut() {
-        // Scan existing bounds so we don't duplicate them.
-        let mut has_send = false;
-        let mut has_sync = false;
-        let mut has_static = false;
-
-        for b in &tp.bounds {
-            match b {
-                TypeParamBound::Trait(TraitBound {
-                    modifier: TraitBoundModifier::None,
-                    path,
-                    ..
-                }) => {
-                    if path_is_ident(path, "Send") {
-                        has_send = true;
-                    }
-                    if path_is_ident(path, "Sync") {
-                        has_sync = true;
-                    }
-                }
-                TypeParamBound::Trait(TraitBound {
-                    modifier: TraitBoundModifier::Maybe(_),
-                    ..
-                }) => {
-                    // e.g. ?Sized — ignore
-                }
-                TypeParamBound::Lifetime(lt) => {
-                    if lt == &Lifetime::new("'static", lt.apostrophe) {
-                        has_static = true;
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        if !has_send {
-            tp.bounds.push(parse_quote!(::core::marker::Send));
-        }
-        if !has_sync {
-            tp.bounds.push(parse_quote!(::core::marker::Sync));
-        }
-        if !has_static {
-            tp.bounds.push(parse_quote!('static));
-        }
-    }
-}
-
 pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
     use crate::macro_api::derives::auto_plugin::AutoPluginDeriveArgs;
+    use crate::syntax::extensions::generics;
     use darling::FromDeriveInput;
     use quote::ToTokens;
     use quote::quote;
@@ -67,7 +15,7 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
             Ok(params) => params,
             Err(err) => return err.write_errors(),
         };
-        inject_send_sync_static(&mut params.generics);
+        generics::inject_send_sync_static(&mut params.generics);
         params
     };
 
