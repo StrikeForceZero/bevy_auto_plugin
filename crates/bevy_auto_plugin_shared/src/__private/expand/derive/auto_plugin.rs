@@ -1,11 +1,11 @@
-use crate::util::macros::{ok_or_emit, parse_macro_input2};
+use crate::util::macros::parse_macro_input2;
 use proc_macro2::TokenStream as MacroStream;
+use syn::spanned::Spanned;
 
 pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
     use crate::macro_api::derives::auto_plugin::AutoPluginDeriveArgs;
     use crate::syntax::extensions::generics;
     use darling::FromDeriveInput;
-    use quote::ToTokens;
     use quote::quote;
     use syn::DeriveInput;
 
@@ -19,43 +19,53 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
         params
     };
 
+    let mut compile_warnings = quote! {};
+
+    #[allow(deprecated)]
+    if params
+        .auto_plugin
+        .impl_generic_auto_plugin_trait
+        .is_present()
+    {
+        compile_warnings.extend(
+            syn::Error::new(
+                params.auto_plugin.impl_generic_auto_plugin_trait.span(),
+                "always implemented - remove `impl_generic_auto_plugin_trait`",
+            )
+            .to_compile_error(),
+        )
+    }
+
+    #[allow(deprecated)]
+    if params.auto_plugin.impl_generic_plugin_trait.is_present() {
+        compile_warnings.extend(
+            syn::Error::new(
+                params.auto_plugin.impl_generic_plugin_trait.span(),
+                "use `impl_plugin_trait` instead",
+            )
+            .to_compile_error(),
+        )
+    }
+
+    #[allow(deprecated)]
+    for generics in &params.auto_plugin.generics {
+        compile_warnings.extend(
+            syn::Error::new(generics.span(), "no longer needed - remove `generics(...)`")
+                .to_compile_error(),
+        )
+    }
+
     let ident = &params.ident; // `Test`
     let generics = &params.generics; // `<T1, T2>`
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    let mut output = MacroStream::new();
+    let mut output = quote! {
+        impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin
+            for #ident #ty_generics #where_clause
+        {}
+    };
 
-    let mut auto_plugin_implemented = false;
-
-    if params.auto_plugin.impl_plugin_trait {
-        let full_names = if params.auto_plugin.generics.is_empty() {
-            vec![ident.to_string()]
-        } else {
-            params
-                .auto_plugin
-                .generics
-                .iter()
-                .map(|tl| format!("{}::<{}>", ident, tl.to_token_stream()))
-                .collect()
-        };
-        for full_name in full_names {
-            let path_with_generics = ok_or_emit!(syn::parse_str::<syn::Path>(&full_name));
-
-            auto_plugin_implemented = true;
-
-            output.extend(quote! {
-                impl ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::Plugin for #path_with_generics {
-                    fn build(&self, app: &mut ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::App) {
-                        <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::build(self, app);
-                    }
-                }
-
-                impl ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin for #path_with_generics {}
-            });
-        }
-    }
-
-    if params.auto_plugin.impl_generic_plugin_trait {
+    if params.auto_plugin.impl_plugin_trait.is_present() {
         output.extend(quote! {
             impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::Plugin
                 for #ident #ty_generics #where_clause
@@ -67,43 +77,8 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
         });
     }
 
-    // TODO: maybe default to this behavior
-    if params.auto_plugin.impl_generic_auto_plugin_trait {
-        output.extend(quote! {
-            impl #impl_generics ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin
-                for #ident #ty_generics #where_clause
-            {}
-        });
-    } else if !auto_plugin_implemented {
-        auto_plugin_implemented = true;
-
-        let full_names = if params.auto_plugin.generics.is_empty() {
-            vec![ident.to_string()]
-        } else {
-            params
-                .auto_plugin
-                .generics
-                .iter()
-                .map(|tl| format!("{}::<{}>", ident, tl.to_token_stream()))
-                .collect()
-        };
-        for full_name in full_names {
-            let path_with_generics = match syn::parse_str::<syn::Path>(&full_name) {
-                Ok(p) => p,
-                Err(err) => return err.into_compile_error(),
-            };
-
-            auto_plugin_implemented = true;
-
-            output.extend(quote! {
-                impl ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin for #path_with_generics {}
-            });
-        }
+    quote! {
+        #compile_warnings
+        #output
     }
-
-    if auto_plugin_implemented {
-        // satisfy linter #[warn(unused_assignments)]
-    }
-
-    output
 }
