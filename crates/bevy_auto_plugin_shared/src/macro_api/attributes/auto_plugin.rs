@@ -103,7 +103,7 @@ pub fn resolve_app_param_name<'a>(
             }
         }
         [only] => {
-            // Enforce `&mut App` rule if you have such a checker:
+            // Enforce `&mut App` rule
             require_fn_param_mutable_reference(input, only, "auto_plugin")?;
             Ok(*only)
         }
