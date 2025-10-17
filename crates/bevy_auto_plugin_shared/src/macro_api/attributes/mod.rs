@@ -23,7 +23,7 @@ pub mod prelude {
     pub use crate::macro_api::attributes::actions::auto_add_system::AddSystemArgs;
     pub use crate::macro_api::attributes::actions::auto_configure_system_set::{
         ConfigureSystemSetArgs,
-        args_with_plugin_from_attr_input as configure_system_set_args_from_attr_input,
+        with_plugin_args_from_attr_input as configure_system_set_args_from_attr_input,
     };
     pub use crate::macro_api::attributes::actions::auto_init_resource::InitResourceArgs;
     pub use crate::macro_api::attributes::actions::auto_init_state::InitStateArgs;
