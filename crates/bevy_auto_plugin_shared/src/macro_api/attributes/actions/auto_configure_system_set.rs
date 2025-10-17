@@ -24,7 +24,7 @@ pub struct ConfigureSystemSetArgsInnerEntry {
     pub group: Option<Ident>,
     pub exclude: Flag,
     /// order in [`ConfigureSystemSetArgsInner::entries`]
-    pub order: Flag,
+    pub order: Option<usize>,
     /// .chain()
     pub chain: Flag,
     /// .chain_ignore_deferred()
@@ -247,7 +247,7 @@ fn ident_and_entries_from_args_input(
         }
         entries.push((variant_data.ident, entry));
     }
-    entries.sort_by_key(|(_, entry)| entry.order.is_present());
+    entries.sort_by_key(|(_, entry)| entry.order.unwrap_or_default());
     entries.retain(|(_, entry)| {
         !entry.exclude.is_present() && entry.group.is_none()
             || match (&entry.group, &args.group) {
