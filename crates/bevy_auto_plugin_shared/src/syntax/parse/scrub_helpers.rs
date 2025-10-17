@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::syntax::extensions::item::ItemAttrsExt;
 use darling::FromMeta;
 use quote::ToTokens;
@@ -5,40 +6,36 @@ use syn::spanned::Spanned;
 use syn::visit_mut::VisitMut;
 use syn::{Attribute, Ident, Item, Meta};
 
-/// Where a helper attribute was attached.
+/// Where an attribute was attached.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum HelperSite {
-    /// struct/enum (item-level)
+pub enum AttrSite {
     Item,
     /// struct Foo { #[helper] x: T }
-    StructFieldNamed { field: Ident },
+    StructFieldNamed {
+        field: Ident,
+    },
     /// struct Foo( #[helper] T, ... )
-    StructFieldUnnamed { index: usize },
+    StructFieldUnnamed {
+        index: usize,
+    },
     /// enum Foo { #[helper] A, ... }
-    Variant { variant: Ident },
+    Variant {
+        variant: Ident,
+    },
     /// enum Foo { #[helper] x: T, ... }
-    VariantFieldNamed { variant: Ident, field: Ident },
+    VariantFieldNamed {
+        variant: Ident,
+        field: Ident,
+    },
     /// enum Foo( #[helper] T, ... )
-    VariantFieldUnnamed { variant: Ident, index: usize },
-}
-
-impl HelperSite {
-    #[rustfmt::skip]
-    pub fn is_allowed(&self, allowed: &AllowedSite) -> bool {
-        matches!(
-            (self, allowed),
-            (HelperSite::Item, AllowedSite::Item)
-                | (HelperSite::StructFieldNamed { .. }, AllowedSite::StructFieldNamed)
-                | (HelperSite::StructFieldUnnamed { .. }, AllowedSite::StructFieldUnnamed)
-                | (HelperSite::Variant { .. }, AllowedSite::Variant)
-                | (HelperSite::VariantFieldNamed { .. }, AllowedSite::VariantFieldNamed)
-                | (HelperSite::VariantFieldUnnamed { .. }, AllowedSite::VariantFieldUnnamed)
-        )
-    }
+    VariantFieldUnnamed {
+        variant: Ident,
+        index: usize,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum AllowedSite {
+pub enum SiteClass {
     Item,
     StructFieldNamed,
     StructFieldUnnamed,
@@ -47,272 +44,281 @@ pub enum AllowedSite {
     VariantFieldUnnamed,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
-pub enum AllowedSiteConfig {
-    #[default]
-    Any,
-    AllowedSites(Vec<AllowedSite>),
-}
-
-impl AllowedSiteConfig {
-    pub fn is_allowed(&self, helper_site: &HelperSite) -> bool {
-        let allowed_sites = match self {
-            Self::Any => return true,
-            Self::AllowedSites(sites) => sites,
-        };
-        allowed_sites
-            .iter()
-            .any(|allowed| helper_site.is_allowed(allowed))
+impl AttrSite {
+    #[rustfmt::skip]
+    pub fn matches_class(&self, class: &SiteClass) -> bool {
+        matches!(
+            (self, class),
+            (AttrSite::Item, SiteClass::Item)
+            | (AttrSite::StructFieldNamed { .. }, SiteClass::StructFieldNamed)
+            | (AttrSite::StructFieldUnnamed { .. }, SiteClass::StructFieldUnnamed)
+            | (AttrSite::Variant { .. }, SiteClass::Variant)
+            | (AttrSite::VariantFieldNamed { .. }, SiteClass::VariantFieldNamed)
+            | (AttrSite::VariantFieldUnnamed { .. }, SiteClass::VariantFieldUnnamed)
+        )
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct AllowedSites(pub AllowedSiteConfig);
-
-/// A single set of helpers scrubbed from one attachment site.
-#[derive(Debug, Clone, PartialEq)]
-pub struct StrippedHelper {
-    pub site: HelperSite,
-    pub attrs: Vec<Attribute>, // keep raw; parse later with FromMeta
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+pub enum SiteFilter {
+    #[default]
+    Any,
+    Only(Vec<SiteClass>),
+}
+impl SiteFilter {
+    pub fn any() -> Self {
+        Self::Any
+    }
+    pub fn only(classes: impl Into<Vec<SiteClass>>) -> Self {
+        Self::Only(classes.into())
+    }
+    pub fn allows(&self, site: &AttrSite) -> bool {
+        match self {
+            SiteFilter::Any => true,
+            SiteFilter::Only(list) => list.iter().any(|c| site.matches_class(c)),
+        }
+    }
 }
 
-/// All scrubbed helpers from the item.
+/// Attributes found at a single site.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SiteAttrs {
+    pub site: AttrSite,
+    pub attrs: Vec<Attribute>,
+}
+
+/// Thin wrapper: avoids `helpers.helpers` and adds utilities.
 #[derive(Default, Debug, Clone, PartialEq)]
-pub struct StrippedHelpers {
-    pub helpers: Vec<StrippedHelper>,
+pub struct SiteAttrsVec(pub Vec<SiteAttrs>);
+
+impl SiteAttrsVec {
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+    pub fn push(&mut self, site: AttrSite, attrs: Vec<Attribute>) {
+        self.0.push(SiteAttrs { site, attrs });
+    }
+    pub fn iter(&self) -> impl Iterator<Item = &SiteAttrs> {
+        self.0.iter()
+    }
+
+    /// Convenience: parse each attr group to `T: FromMeta`, yielding `(site, parsed)` pairs.
+    pub fn parse_as<T: FromMeta>(&self) -> darling::Result<Vec<(AttrSite, T)>> {
+        let mut out = Vec::new();
+        for sa in &self.0 {
+            for a in &sa.attrs {
+                out.push((sa.site.clone(), T::from_meta(&a.meta)?));
+            }
+        }
+        Ok(out)
+    }
 }
 
 pub struct ScrubOutcome {
-    /// Scrubbed item (no helper attributes remain)
+    /// scrubbed item (no helpers remain)
     pub item: Item,
-    /// Resolved ident for struct/enum
+    /// struct/enum ident
     pub ident: Ident,
-    /// All sites - regardless of whether they were stripped or not
-    pub all_sites: Vec<StrippedHelper>,
-    /// All stripped helpers with their sites
-    pub stripped_helpers: StrippedHelpers,
-    /// Non-fatal errors encountered while scrubbing (we still emit the scrubbed item)
+    /// attrs kept per site (non-helpers or empty)
+    pub observed: SiteAttrsVec,
+    /// helper attrs removed per site
+    pub removed: SiteAttrsVec,
+    /// Errors encountered while scrubbing (we still emit the scrubbed item)
     pub errors: Vec<syn::Error>,
 }
 
-/// Scrub helpers from the whole item tree and resolve its ident.
-/// Always strips helpers regardless of later success, so they never re-trigger compile errors.
-pub fn scrub_helpers_and_ident(
-    input: proc_macro2::TokenStream,
-    is_helper: fn(&Attribute) -> bool,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-) -> syn::Result<ScrubOutcome> {
-    scrub_helpers_and_ident_with_allowed_sites(input, |_, _| true, is_helper, resolve_ident)
+#[derive(Debug, Default)]
+struct KeepSplit {
+    keep: Vec<Attribute>,
+    removed: Vec<Attribute>,
 }
 
-/// Scrub helpers from the whole item tree and resolve its ident.
-/// Returns Errors for any helpers that are not allowed on the given sites.
-/// Always strips helpers regardless of later success, so they never re-trigger compile errors.
-pub fn scrub_helpers_and_ident_with_allowed_sites(
-    input: proc_macro2::TokenStream,
-    is_helper_site_allowed: fn(&HelperSite, &Attribute) -> bool,
+#[derive(Debug, Default)]
+struct ScrubberOut {
+    observed: SiteAttrsVec,
+    removed: SiteAttrsVec,
+}
+
+struct Scrubber {
     is_helper: fn(&Attribute) -> bool,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-) -> syn::Result<ScrubOutcome> {
-    let mut item: Item = syn::parse2(input)?;
-    let ident = resolve_ident(&item)?.clone();
+    out: ScrubberOut,
+    errors: Vec<syn::Error>,
+}
 
-    #[derive(Debug, Default)]
-    struct KeepHelpers {
-        keep: Vec<Attribute>,
-        helpers: Vec<Attribute>,
+impl Scrubber {
+    fn drain_split(&self, attrs: &mut Vec<Attribute>) -> KeepSplit {
+        let mut keep = Vec::with_capacity(attrs.len());
+        let mut removed = Vec::new();
+        for a in attrs.drain(..) {
+            if (self.is_helper)(&a) {
+                removed.push(a);
+            } else {
+                keep.push(a);
+            }
+        }
+        KeepSplit { keep, removed }
     }
 
-    #[derive(Debug, Default)]
-    #[repr(transparent)]
-    struct Helpers(Vec<Attribute>);
+    fn take_helper_attrs(&mut self, it: &mut Item) -> Vec<Attribute> {
+        let mut attrs = match it.take_attrs() {
+            Ok(attrs) => attrs,
+            Err(err) => {
+                self.errors.push(syn::Error::new(
+                    it.span(),
+                    format!("Failed to parse attrs: {err}"),
+                ));
+                return Vec::new();
+            }
+        };
+        let KeepSplit { keep, removed } = self.drain_split(&mut attrs);
+        let _ = it.put_attrs(keep.clone());
+        removed
+    }
+}
 
-    #[derive(Debug, Default)]
-    struct ScrubberOut {
-        all: Vec<StrippedHelper>,
-        helpers: StrippedHelpers,
+impl VisitMut for Scrubber {
+    fn visit_item_mut(&mut self, it: &mut Item) {
+        let removed = self.take_helper_attrs(it);
+        // errors handled in `take_helper_attrs`
+        let item_attrs = it.clone_attrs().unwrap_or_default();
+        self.out.observed.push(AttrSite::Item, item_attrs);
+        if !removed.is_empty() {
+            self.out.removed.push(AttrSite::Item, removed);
+        }
+        syn::visit_mut::visit_item_mut(self, it);
     }
 
-    struct Scrubber {
-        is_helper: fn(&Attribute) -> bool,
-        out: ScrubberOut,
-        errors: Vec<syn::Error>,
-    }
-
-    impl Scrubber {
-        fn drain_split(&self, attrs: &mut Vec<Attribute>) -> KeepHelpers {
-            let mut keep = Vec::with_capacity(attrs.len());
-            let mut helpers = Vec::new();
-            for a in attrs.drain(..) {
-                if (self.is_helper)(&a) {
-                    helpers.push(a);
-                } else {
-                    keep.push(a);
+    fn visit_item_struct_mut(&mut self, it: &mut syn::ItemStruct) {
+        match &mut it.fields {
+            syn::Fields::Named(fields_named) => {
+                for field in &mut fields_named.named {
+                    let field_ident = field.ident.clone().expect("named struct field");
+                    let KeepSplit { keep, removed } = self.drain_split(&mut field.attrs);
+                    field.attrs = keep.clone();
+                    self.out.observed.push(
+                        AttrSite::StructFieldNamed {
+                            field: field_ident.clone(),
+                        },
+                        keep,
+                    );
+                    if !removed.is_empty() {
+                        self.out
+                            .removed
+                            .push(AttrSite::StructFieldNamed { field: field_ident }, removed);
+                    }
                 }
             }
-            KeepHelpers { keep, helpers }
-        }
-
-        fn take_helper_attrs(&mut self, it: &mut Item) -> Helpers {
-            let mut attrs = match it.take_attrs() {
-                Ok(attrs) => attrs,
-                Err(err) => {
-                    self.errors.push(syn::Error::new(
-                        it.span(),
-                        format!("Failed to parse attrs: {err}"),
-                    ));
-                    return Helpers::default();
+            syn::Fields::Unnamed(fields_unnamed) => {
+                for (index, field) in fields_unnamed.unnamed.iter_mut().enumerate() {
+                    let KeepSplit { keep, removed } = self.drain_split(&mut field.attrs);
+                    field.attrs = keep.clone();
+                    self.out
+                        .observed
+                        .push(AttrSite::StructFieldUnnamed { index }, keep);
+                    if !removed.is_empty() {
+                        self.out
+                            .removed
+                            .push(AttrSite::StructFieldUnnamed { index }, removed);
+                    }
                 }
-            };
-            let KeepHelpers { keep, helpers } = self.drain_split(&mut attrs);
-            // Put back what we kept; infallible
-            it.put_attrs(keep).unwrap();
-            Helpers(helpers)
+            }
+            syn::Fields::Unit => {}
         }
+        syn::visit_mut::visit_item_struct_mut(self, it);
     }
 
-    impl VisitMut for Scrubber {
-        fn visit_item_mut(&mut self, it: &mut Item) {
-            // Scrub item-level helpers (for both struct and enum)
-            let Helpers(helpers) = self.take_helper_attrs(it);
-            // failure is handled in `self.take_helper_attrs`
-            let item_attrs = it.clone_attrs().unwrap_or_default();
-            self.out.all.push(StrippedHelper {
-                site: HelperSite::Item,
-                attrs: item_attrs,
-            });
-            if !helpers.is_empty() {
-                self.out.helpers.helpers.push(StrippedHelper {
-                    site: HelperSite::Item,
-                    attrs: helpers,
-                });
-            }
-            syn::visit_mut::visit_item_mut(self, it);
-        }
+    fn visit_item_enum_mut(&mut self, it: &mut syn::ItemEnum) {
+        for variant in &mut it.variants {
+            let variant_ident = variant.ident.clone();
 
-        fn visit_item_struct_mut(&mut self, it: &mut syn::ItemStruct) {
-            // Fields of struct (named & unnamed)
-            match &mut it.fields {
+            // variant-level
+            let KeepSplit { keep, removed } = self.drain_split(&mut variant.attrs);
+            variant.attrs = keep.clone();
+            self.out.observed.push(
+                AttrSite::Variant {
+                    variant: variant_ident.clone(),
+                },
+                keep,
+            );
+            if !removed.is_empty() {
+                self.out.removed.push(
+                    AttrSite::Variant {
+                        variant: variant_ident.clone(),
+                    },
+                    removed,
+                );
+            }
+
+            // fields
+            match &mut variant.fields {
                 syn::Fields::Named(fields_named) => {
                     for field in &mut fields_named.named {
-                        let field_ident = field.ident.clone().expect("named struct field");
-                        let KeepHelpers { keep, helpers } = self.drain_split(&mut field.attrs);
+                        let field_ident = field.ident.clone().expect("named variant field");
+                        let KeepSplit { keep, removed } = self.drain_split(&mut field.attrs);
                         field.attrs = keep.clone();
-                        self.out.all.push(StrippedHelper {
-                            site: HelperSite::StructFieldNamed {
+                        self.out.observed.push(
+                            AttrSite::VariantFieldNamed {
+                                variant: variant_ident.clone(),
                                 field: field_ident.clone(),
                             },
-                            attrs: keep,
-                        });
-                        if !helpers.is_empty() {
-                            self.out.helpers.helpers.push(StrippedHelper {
-                                site: HelperSite::StructFieldNamed { field: field_ident },
-                                attrs: helpers,
-                            });
+                            keep,
+                        );
+                        if !removed.is_empty() {
+                            self.out.removed.push(
+                                AttrSite::VariantFieldNamed {
+                                    variant: variant_ident.clone(),
+                                    field: field_ident,
+                                },
+                                removed,
+                            );
                         }
                     }
                 }
                 syn::Fields::Unnamed(fields_unnamed) => {
-                    for (ix, field) in fields_unnamed.unnamed.iter_mut().enumerate() {
-                        let KeepHelpers { keep, helpers } = self.drain_split(&mut field.attrs);
+                    for (index, field) in fields_unnamed.unnamed.iter_mut().enumerate() {
+                        let KeepSplit { keep, removed } = self.drain_split(&mut field.attrs);
                         field.attrs = keep.clone();
-                        self.out.all.push(StrippedHelper {
-                            site: HelperSite::StructFieldUnnamed { index: ix },
-                            attrs: keep,
-                        });
-                        if !helpers.is_empty() {
-                            self.out.helpers.helpers.push(StrippedHelper {
-                                site: HelperSite::StructFieldUnnamed { index: ix },
-                                attrs: helpers,
-                            });
+                        self.out.observed.push(
+                            AttrSite::VariantFieldUnnamed {
+                                variant: variant_ident.clone(),
+                                index,
+                            },
+                            keep,
+                        );
+                        if !removed.is_empty() {
+                            self.out.removed.push(
+                                AttrSite::VariantFieldUnnamed {
+                                    variant: variant_ident.clone(),
+                                    index,
+                                },
+                                removed,
+                            );
                         }
                     }
                 }
                 syn::Fields::Unit => {}
             }
-
-            syn::visit_mut::visit_item_struct_mut(self, it);
         }
-
-        fn visit_item_enum_mut(&mut self, it: &mut syn::ItemEnum) {
-            // Variants + their fields
-            for variant in &mut it.variants {
-                let variant_ident = variant.ident.clone();
-
-                // Variant-level helpers
-                {
-                    let KeepHelpers { keep, helpers } = self.drain_split(&mut variant.attrs);
-                    variant.attrs = keep.clone();
-                    self.out.all.push(StrippedHelper {
-                        site: HelperSite::Variant {
-                            variant: variant_ident.clone(),
-                        },
-                        attrs: keep,
-                    });
-                    if !helpers.is_empty() {
-                        self.out.helpers.helpers.push(StrippedHelper {
-                            site: HelperSite::Variant {
-                                variant: variant_ident.clone(),
-                            },
-                            attrs: helpers,
-                        });
-                    }
-                }
-
-                // Variant fields
-                match &mut variant.fields {
-                    syn::Fields::Named(fields_named) => {
-                        for field in &mut fields_named.named {
-                            let field_ident = field.ident.clone().expect("named variant field");
-                            let KeepHelpers { keep, helpers } = self.drain_split(&mut field.attrs);
-                            field.attrs = keep.clone();
-                            self.out.all.push(StrippedHelper {
-                                site: HelperSite::VariantFieldNamed {
-                                    variant: variant_ident.clone(),
-                                    field: field_ident.clone(),
-                                },
-                                attrs: keep,
-                            });
-                            if !helpers.is_empty() {
-                                self.out.helpers.helpers.push(StrippedHelper {
-                                    site: HelperSite::VariantFieldNamed {
-                                        variant: variant_ident.clone(),
-                                        field: field_ident,
-                                    },
-                                    attrs: helpers,
-                                });
-                            }
-                        }
-                    }
-                    syn::Fields::Unnamed(fields_unnamed) => {
-                        for (ix, field) in fields_unnamed.unnamed.iter_mut().enumerate() {
-                            let KeepHelpers { keep, helpers } = self.drain_split(&mut field.attrs);
-                            field.attrs = keep.clone();
-                            self.out.all.push(StrippedHelper {
-                                site: HelperSite::VariantFieldUnnamed {
-                                    variant: variant_ident.clone(),
-                                    index: ix,
-                                },
-                                attrs: keep.clone(),
-                            });
-                            if !helpers.is_empty() {
-                                self.out.helpers.helpers.push(StrippedHelper {
-                                    site: HelperSite::VariantFieldUnnamed {
-                                        variant: variant_ident.clone(),
-                                        index: ix,
-                                    },
-                                    attrs: helpers,
-                                });
-                            }
-                        }
-                    }
-                    syn::Fields::Unit => {}
-                }
-            }
-
-            syn::visit_mut::visit_item_enum_mut(self, it);
-        }
+        syn::visit_mut::visit_item_enum_mut(self, it);
     }
+}
+
+pub fn scrub_helpers_and_ident(
+    input: proc_macro2::TokenStream,
+    is_helper: fn(&Attribute) -> bool,
+    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
+) -> syn::Result<ScrubOutcome> {
+    scrub_helpers_and_ident_with_filter(input, |_, _| true, is_helper, resolve_ident)
+}
+
+pub fn scrub_helpers_and_ident_with_filter(
+    input: proc_macro2::TokenStream,
+    is_site_allowed: fn(&AttrSite, &Attribute) -> bool,
+    is_helper: fn(&Attribute) -> bool,
+    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
+) -> syn::Result<ScrubOutcome> {
+    let mut item: Item = syn::parse2(input)?;
+    let ident = resolve_ident(&item)?.clone();
 
     let mut scrubber = Scrubber {
         is_helper,
@@ -321,20 +327,21 @@ pub fn scrub_helpers_and_ident_with_allowed_sites(
     };
     scrubber.visit_item_mut(&mut item);
 
-    for helper in &scrubber.out.helpers.helpers {
-        for attr in &helper.attrs {
-            if !is_helper_site_allowed(&helper.site, attr) {
-                let attr_path = attr.path().to_token_stream().to_string().replace(" ", "");
-                let attr_args = match attr.meta {
+    // validate “removed” helpers against the site filter
+    for group in &scrubber.out.removed.0 {
+        for attr in &group.attrs {
+            if !is_site_allowed(&group.site, attr) {
+                let path = attr.path().to_token_stream().to_string().replace(' ', "");
+                let args = match attr.meta {
                     Meta::Path(_) => "",
                     Meta::List(_) => "(..)",
                     Meta::NameValue(_) => " = ...",
                 };
-                let helper_site = &helper.site;
-                let message = format!(
-                    "Helper #[{attr_path}{attr_args}] not allowed on this site: {helper_site:?} @ {ident}",
+                let msg = format!(
+                    "Helper #[{path}{args}] not allowed on this site: {:?} @ {ident}",
+                    group.site
                 );
-                scrubber.errors.push(syn::Error::new(attr.span(), message));
+                scrubber.errors.push(syn::Error::new(attr.span(), msg));
             }
         }
     }
@@ -342,25 +349,17 @@ pub fn scrub_helpers_and_ident_with_allowed_sites(
     Ok(ScrubOutcome {
         item,
         ident,
-        all_sites: scrubber.out.all,
-        stripped_helpers: scrubber.out.helpers,
+        observed: scrubber.out.observed,
+        removed: scrubber.out.removed,
         errors: scrubber.errors,
     })
 }
 
-/// Convenience: parse all stripped helpers into a concrete `THelperArgs: FromMeta`,
-/// returning `(site, parsed)` pairs
-pub fn parse_stripped_helpers_as<T: FromMeta>(
-    stripped: &StrippedHelpers,
-) -> darling::Result<Vec<(HelperSite, T)>> {
-    let mut out = Vec::new();
-    for helper in &stripped.helpers {
-        for attr in &helper.attrs {
-            let parsed = T::from_meta(&attr.meta)?;
-            out.push((helper.site.clone(), parsed));
-        }
-    }
-    Ok(out)
+// Parse removed helpers into `T`
+pub fn parse_removed_as<T: FromMeta>(
+    removed: &SiteAttrsVec,
+) -> darling::Result<Vec<(AttrSite, T)>> {
+    removed.parse_as::<T>()
 }
 
 #[cfg(test)]
@@ -372,14 +371,14 @@ mod tests {
     use quote::{ToTokens, quote};
     use syn::parse_quote;
 
-    impl StrippedHelpers {
-        pub fn from_vec(helpers: Vec<StrippedHelper>) -> Self {
-            Self { helpers }
+    impl SiteAttrsVec {
+        pub fn from_vec(site_attrs: Vec<SiteAttrs>) -> Self {
+            Self(site_attrs)
         }
         pub fn to_test_string(&self) -> String {
             const INDENT: &str = "\n    ";
             let inner = self
-                .helpers
+                .0
                 .iter()
                 .map(|h| h.to_test_string().replace("\n", INDENT))
                 .collect::<Vec<_>>()
@@ -388,7 +387,7 @@ mod tests {
         }
     }
 
-    impl StrippedHelper {
+    impl SiteAttrs {
         pub fn to_test_string(&self) -> String {
             format!(
                 "{}\n{}\n",
@@ -402,22 +401,22 @@ mod tests {
         }
     }
 
-    impl HelperSite {
+    impl AttrSite {
         pub fn to_test_string(&self) -> String {
             match self {
-                HelperSite::Item => "Item".to_string(),
-                HelperSite::StructFieldNamed { field } => {
+                Self::Item => "Item".to_string(),
+                Self::StructFieldNamed { field } => {
                     format!("StructFieldNamed {{ field: {} }}", field)
                 }
-                HelperSite::StructFieldUnnamed { index } => {
+                Self::StructFieldUnnamed { index } => {
                     format!("StructFieldUnnamed {{ index: {} }}", index)
                 }
-                HelperSite::Variant { variant } => format!("Variant {{ variant: {} }}", variant),
-                HelperSite::VariantFieldNamed { variant, field } => format!(
+                Self::Variant { variant } => format!("Variant {{ variant: {} }}", variant),
+                Self::VariantFieldNamed { variant, field } => format!(
                     "VariantFieldNamed {{ variant: {}, field: {} }}",
                     variant, field
                 ),
-                HelperSite::VariantFieldUnnamed { variant, index } => format!(
+                Self::VariantFieldUnnamed { variant, index } => format!(
                     "VariantFieldUnnamed {{ variant: {}, index: {} }}",
                     variant, index
                 ),
@@ -481,20 +480,20 @@ mod tests {
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
-            let helpers = scrub_outcome.stripped_helpers.helpers;
-            let expected = vec![
-                StrippedHelper {
-                    site: HelperSite::Item,
+            let got = scrub_outcome.removed;
+            let expected = SiteAttrsVec::from_vec(vec![
+                SiteAttrs {
+                    site: AttrSite::Item,
                     attrs: vec![parse_quote!(#[item::helper])],
                 },
-                StrippedHelper {
-                    site: HelperSite::StructFieldNamed {
+                SiteAttrs {
+                    site: AttrSite::StructFieldNamed {
                         field: parse_quote!(x),
                     },
                     attrs: vec![parse_quote!(#[field::helper])],
                 },
-                StrippedHelper {
-                    site: HelperSite::StructFieldNamed {
+                SiteAttrs {
+                    site: AttrSite::StructFieldNamed {
                         field: parse_quote!(z),
                     },
                     attrs: vec![
@@ -502,9 +501,7 @@ mod tests {
                         parse_quote!(#[field::_2::helper]),
                     ],
                 },
-            ];
-            let got = StrippedHelpers::from_vec(helpers);
-            let expected = StrippedHelpers::from_vec(expected);
+            ]);
             assert_eq!(
                 got.to_test_string(),
                 expected.to_test_string(),
@@ -532,20 +529,20 @@ mod tests {
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
-            let helpers = scrub_outcome.stripped_helpers.helpers;
-            let expected = vec![
-                StrippedHelper {
-                    site: HelperSite::Item,
+            let got = scrub_outcome.removed;
+            let expected = SiteAttrsVec::from_vec(vec![
+                SiteAttrs {
+                    site: AttrSite::Item,
                     attrs: vec![parse_quote!(#[item::helper])],
                 },
-                StrippedHelper {
-                    site: HelperSite::Variant {
+                SiteAttrs {
+                    site: AttrSite::Variant {
                         variant: parse_quote!(A),
                     },
                     attrs: vec![parse_quote!(#[field::helper])],
                 },
-                StrippedHelper {
-                    site: HelperSite::Variant {
+                SiteAttrs {
+                    site: AttrSite::Variant {
                         variant: parse_quote!(C),
                     },
                     attrs: vec![
@@ -553,9 +550,7 @@ mod tests {
                         parse_quote!(#[field::_2::helper]),
                     ],
                 },
-            ];
-            let got = StrippedHelpers::from_vec(helpers);
-            let expected = StrippedHelpers::from_vec(expected);
+            ]);
             assert_eq!(
                 got.to_test_string(),
                 expected.to_test_string(),
@@ -632,33 +627,31 @@ mod tests {
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
-            let helpers = scrub_outcome.all_sites;
-            let expected = vec![
-                StrippedHelper {
-                    site: HelperSite::Item,
+            let got = scrub_outcome.observed;
+            let expected = SiteAttrsVec::from_vec(vec![
+                SiteAttrs {
+                    site: AttrSite::Item,
                     attrs: vec![parse_quote!(#[non_helper])],
                 },
-                StrippedHelper {
-                    site: HelperSite::Variant {
+                SiteAttrs {
+                    site: AttrSite::Variant {
                         variant: parse_quote!(A),
                     },
                     attrs: vec![parse_quote!(#[non_helper])],
                 },
-                StrippedHelper {
-                    site: HelperSite::Variant {
+                SiteAttrs {
+                    site: AttrSite::Variant {
                         variant: parse_quote!(B),
                     },
                     attrs: vec![parse_quote!(#[non_helper]), parse_quote!(#[non_helper])],
                 },
-                StrippedHelper {
-                    site: HelperSite::Variant {
+                SiteAttrs {
+                    site: AttrSite::Variant {
                         variant: parse_quote!(C),
                     },
                     attrs: vec![],
                 },
-            ];
-            let got = StrippedHelpers::from_vec(helpers);
-            let expected = StrippedHelpers::from_vec(expected);
+            ]);
             assert_eq!(
                 got.to_test_string(),
                 expected.to_test_string(),
