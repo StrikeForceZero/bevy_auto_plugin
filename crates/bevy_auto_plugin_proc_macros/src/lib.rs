@@ -62,6 +62,13 @@ pub fn auto_init_state(attr: CompilerStream, input: CompilerStream) -> CompilerS
     handle_attribute(expand::attr::auto_init_state, attr, input)
 }
 
+/// Automatically initializes a SubState in the Bevy `App`.
+#[doc = include_str!("../docs/proc_attributes/auto_init_sub_state.md")]
+#[proc_macro_attribute]
+pub fn auto_init_sub_state(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_init_sub_state, attr, input)
+}
+
 /// Automatically registers a required component `Name` with a value using the concrete name of the item.
 #[doc = include_str!("../docs/proc_attributes/auto_name.md")]
 #[proc_macro_attribute]

@@ -240,6 +240,7 @@ gen_auto_attribute_outers! {
     auto_init_resource        => InitResourceArgs,
     auto_insert_resource      => InsertResourceArgs,
     auto_init_state           => InitStateArgs,
+    auto_init_sub_state       => InitSubStateArgs,
     auto_name                 => NameArgs,
     auto_register_state_type  => RegisterStateTypeArgs,
     auto_add_system           => AddSystemArgs,
