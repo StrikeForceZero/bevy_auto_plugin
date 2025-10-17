@@ -109,7 +109,7 @@ impl ToTokens for ProcAttributeError {
     }
 }
 
-fn proc_attribute_inner_inner<A, F>(
+fn proc_attribute_core<A, F>(
     attr: impl Into<MacroStream>,
     // this is the only way we can strip out non-derive based attribute helpers
     input: &mut MacroStream,
@@ -163,7 +163,7 @@ where
     let attr = attr.into();
     let mut input = input.into();
 
-    match proc_attribute_inner_inner(attr, &mut input, resolve_ident, parse_attr_input, body) {
+    match proc_attribute_core(attr, &mut input, resolve_ident, parse_attr_input, body) {
         Ok(res) => res,
         Err(err) => quote! {
             #err
