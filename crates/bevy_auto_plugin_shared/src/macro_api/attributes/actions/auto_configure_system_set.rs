@@ -152,6 +152,9 @@ impl ToTokensWithConcreteTargetPath for ConfigureSystemSetArgs {
                     .configure_sets(#schedule, #target #config_tokens)
                 });
             } else {
+                // TODO: generics are kind of silly here
+                //  but if someone does use them we'll assume its just a marker type
+                //  that can be initialized via `Default::default()`
                 tokens.extend(quote! {
                     .configure_sets(#schedule, #target::default() #config_tokens)
                 });
