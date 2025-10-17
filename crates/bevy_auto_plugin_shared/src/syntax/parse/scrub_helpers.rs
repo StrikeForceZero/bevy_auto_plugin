@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 use crate::syntax::extensions::item::ItemAttrsExt;
 use darling::FromMeta;
-use quote::ToTokens;
+use proc_macro2::TokenStream;
+use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
 use syn::visit_mut::VisitMut;
 use syn::{Attribute, Ident, Item, Meta};
@@ -150,6 +151,26 @@ impl ScrubOutcome {
             });
         }
         out
+    }
+    pub fn write_back(&self, token_stream: &mut TokenStream) -> syn::Result<()> {
+        let item = &self.item;
+        *token_stream = quote! {
+            #item
+        };
+
+        // inject any scrub errors as compile_error! right here.
+        if !self.errors.is_empty() {
+            let err_ts = self.errors.iter().map(syn::Error::to_compile_error);
+            *token_stream = quote! {
+                #( #err_ts )*
+                #token_stream
+            };
+            let mut err = syn::Error::new(item.span(), "failed to scrub helpers");
+            err.extend(self.errors.clone());
+            return Err(err);
+        }
+
+        Ok(())
     }
 }
 
