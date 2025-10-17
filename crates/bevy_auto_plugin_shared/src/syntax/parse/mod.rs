@@ -1,2 +1,2 @@
 pub mod from_meta;
-mod scrub_helpers;
+pub mod scrub_helpers;
