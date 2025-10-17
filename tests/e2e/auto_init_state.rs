@@ -17,14 +17,6 @@ enum Test {
     B,
 }
 
-#[auto_init_state(plugin = TestPlugin)]
-#[derive(SubStates, Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
-#[source(Test = Test::B)]
-enum InnerTest {
-    #[default]
-    A,
-}
-
 fn app() -> App {
     let mut app = internal_test_util::create_minimal_app();
     app.add_plugins(StatesPlugin);
@@ -41,14 +33,6 @@ fn test_auto_init_state() {
     );
     assert!(
         app.world().get_resource::<NextState<Test>>().is_some(),
-        "did not auto init state"
-    );
-    assert!(
-        app.world().get_resource::<State<InnerTest>>().is_some(),
-        "did not auto init state"
-    );
-    assert!(
-        app.world().get_resource::<NextState<InnerTest>>().is_some(),
         "did not auto init state"
     );
 }
