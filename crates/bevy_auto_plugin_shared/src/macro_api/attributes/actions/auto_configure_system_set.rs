@@ -6,6 +6,7 @@ use crate::macro_api::derives::VariantData;
 use crate::macro_api::schedule_config::{ScheduleConfigArgs, ScheduleWithScheduleConfigArgs};
 use crate::macro_api::with_plugin::WithPlugin;
 use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
+use crate::syntax::ast::flag::Flag;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::{FromMeta, FromVariant};
@@ -20,13 +21,13 @@ const CONFIG_ATTR_NAME: &str = "auto_configure_system_set_config";
 pub struct ConfigureSystemSetArgsInnerEntry {
     /// allows individual groups to be configured
     pub group: Option<Ident>,
-    pub exclude: Option<bool>,
+    pub exclude: Flag,
     /// order in [`ConfigureSystemSetArgsInner::entries`]
-    pub order: Option<u32>,
+    pub order: Flag,
     /// .chain()
-    pub chain: Option<bool>,
+    pub chain: Flag,
     /// .chain_ignore_deferred()
-    pub chain_ignore_deferred: Option<bool>,
+    pub chain_ignore_deferred: Flag,
     #[darling(default)]
     pub config: ScheduleConfigArgs,
 }
@@ -51,9 +52,9 @@ pub struct ConfigureSystemSetArgs {
     #[darling(flatten)]
     pub schedule_config: ScheduleWithScheduleConfigArgs,
     /// .chain()
-    pub chain: Option<bool>,
+    pub chain: Flag,
     /// .chain_ignore_deferred()
-    pub chain_ignore_deferred: Option<bool>,
+    pub chain_ignore_deferred: Flag,
     #[darling(skip)]
     /// Some when enum, None when struct
     pub inner: Option<ConfigureSystemSetArgsInner>,
@@ -86,8 +87,8 @@ impl ToTokensWithConcreteTargetPath for ConfigureSystemSetArgs {
         let config_tokens = self.schedule_config.config.to_token_stream();
         if let Some(inner) = &self.inner {
             // enum
-            let has_chain_flag = self.chain.unwrap_or(false);
-            let has_chain_ignore_deferred_flag = self.chain_ignore_deferred.unwrap_or(false);
+            let has_chain_flag = self.chain.is_present();
+            let has_chain_ignore_deferred_flag = self.chain_ignore_deferred.is_present();
             if has_chain_flag && has_chain_ignore_deferred_flag {
                 // TODO: better span? darling flags
                 let err = syn::Error::new(
@@ -109,8 +110,8 @@ impl ToTokensWithConcreteTargetPath for ConfigureSystemSetArgs {
             };
             let mut entries = vec![];
             for (ident, entry) in inner.entries.iter() {
-                let has_chain_flag = entry.chain.unwrap_or(false);
-                let has_chain_ignore_deferred_flag = entry.chain_ignore_deferred.unwrap_or(false);
+                let has_chain_flag = entry.chain.is_present();
+                let has_chain_ignore_deferred_flag = entry.chain_ignore_deferred.is_present();
                 if has_chain_flag && has_chain_ignore_deferred_flag {
                     // TODO: better span? darling flags
                     let err = syn::Error::new(
@@ -244,12 +245,12 @@ fn ident_and_entries_from_args_input(
         }
         entries.push((variant_data.ident, entry));
     }
-    entries.sort_by_key(|(_, entry)| entry.order.unwrap_or(0));
+    entries.sort_by_key(|(_, entry)| entry.order.is_present());
     entries.retain(|(_, entry)| {
-        !entry.exclude.unwrap_or(false) && entry.group.is_none()
+        !entry.exclude.is_present() && entry.group.is_none()
             || match (&entry.group, &args.group) {
                 (Some(group), Some(args_group)) => {
-                    group == args_group && !entry.exclude.unwrap_or(false)
+                    group == args_group && !entry.exclude.is_present()
                 }
                 _ => true,
             }
@@ -475,8 +476,8 @@ mod tests {
                     }),
                     group: Some(parse_quote!(A)),
                     generics: vec![],
-                    chain: None,
-                    chain_ignore_deferred: None,
+                    chain: Flag::from(false),
+                    chain_ignore_deferred: Flag::from(false),
                 }
             );
             Ok(())
