@@ -10,14 +10,15 @@ use crate::syntax::ast::flag::Flag;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::{FromMeta, FromVariant};
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
 use syn::{Item, parse2};
 
 const CONFIG_ATTR_NAME: &str = "auto_configure_system_set_config";
+const CHAIN_CONFLICT_ERR: &str = "`chain` and `chain_ignore_deferred` are mutually exclusive";
 
 #[derive(FromMeta, Default, Debug, Clone, PartialEq, Hash)]
-#[darling(derive_syn_parse)]
+#[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct ConfigureSystemSetArgsInnerEntry {
     /// allows individual groups to be configured
     pub group: Option<Ident>,
@@ -32,6 +33,20 @@ pub struct ConfigureSystemSetArgsInnerEntry {
     pub config: ScheduleConfigArgs,
 }
 
+impl ConfigureSystemSetArgsInnerEntry {
+    fn validate(self) -> darling::Result<Self> {
+        if self.chain.is_present() && self.chain_ignore_deferred.is_present() {
+            let err = darling::Error::custom(
+                "`chain` and `chain_ignore_deferred` are mutually exclusive",
+            )
+            .with_span(&self.chain_ignore_deferred.span());
+            Err(err)
+        } else {
+            Ok(self)
+        }
+    }
+}
+
 pub type ConfigureSystemSetArgsInnerEntries = Vec<(Ident, ConfigureSystemSetArgsInnerEntry)>;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
@@ -43,7 +58,7 @@ pub struct ConfigureSystemSetArgsInner {
 }
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
-#[darling(derive_syn_parse)]
+#[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct ConfigureSystemSetArgs {
     #[darling(multiple, default)]
     pub generics: Vec<TypeList>,
@@ -58,6 +73,18 @@ pub struct ConfigureSystemSetArgs {
     #[darling(skip)]
     /// Some when enum, None when struct
     pub inner: Option<ConfigureSystemSetArgsInner>,
+}
+
+impl ConfigureSystemSetArgs {
+    fn validate(self) -> darling::Result<Self> {
+        if self.chain.is_present() && self.chain_ignore_deferred.is_present() {
+            let err = darling::Error::custom(CHAIN_CONFLICT_ERR)
+                .with_span(&self.chain_ignore_deferred.span());
+            Err(err)
+        } else {
+            Ok(self)
+        }
+    }
 }
 
 impl AttributeIdent for ConfigureSystemSetArgs {
@@ -87,43 +114,18 @@ impl ToTokensWithConcreteTargetPath for ConfigureSystemSetArgs {
         let config_tokens = self.schedule_config.config.to_token_stream();
         if let Some(inner) = &self.inner {
             // enum
-            let has_chain_flag = self.chain.is_present();
-            let has_chain_ignore_deferred_flag = self.chain_ignore_deferred.is_present();
-            if has_chain_flag && has_chain_ignore_deferred_flag {
-                // TODO: better span? darling flags
-                let err = syn::Error::new(
-                    Span::call_site(),
-                    format!(
-                        "cannot use both chain and chain_ignore_deferred, for: {}",
-                        target.to_token_stream(),
-                    ),
-                )
-                .into_compile_error();
-                tokens.extend(quote! {#err})
-            }
-            let chained = if has_chain_flag {
+            let chained = if self.chain.is_present() {
                 quote! { .chain() }
-            } else if has_chain_ignore_deferred_flag {
+            } else if self.chain_ignore_deferred.is_present() {
                 quote! { .chain_ignore_deferred() }
             } else {
                 quote! {}
             };
             let mut entries = vec![];
             for (ident, entry) in inner.entries.iter() {
-                let has_chain_flag = entry.chain.is_present();
-                let has_chain_ignore_deferred_flag = entry.chain_ignore_deferred.is_present();
-                if has_chain_flag && has_chain_ignore_deferred_flag {
-                    // TODO: better span? darling flags
-                    let err = syn::Error::new(
-                        Span::call_site(),
-                        format!("cannot use both chain and chain_ignore_deferred, for: {ident}"),
-                    )
-                    .into_compile_error();
-                    tokens.extend(quote! {#err})
-                }
-                let chained = if has_chain_flag {
+                let chained = if entry.chain.is_present() {
                     quote! { .chain() }
-                } else if has_chain_ignore_deferred_flag {
+                } else if entry.chain_ignore_deferred.is_present() {
                     quote! { .chain_ignore_deferred() }
                 } else {
                     quote! {}
@@ -510,6 +512,44 @@ mod tests {
                 }
                 .to_string()
             );
+        }
+
+        #[xtest]
+        fn test_conflict_outer() {
+            let mut input = quote! {
+                enum Foo {
+                    A,
+                }
+            };
+            let res = ident_and_args_from_attr_input(
+                quote! {
+                    schedule = Update,
+                    chain, chain_ignore_deferred
+                },
+                &mut input,
+            )
+            .map_err(|e| e.to_string());
+
+            assert_eq!(res, Err(CHAIN_CONFLICT_ERR.into()));
+        }
+
+        #[xtest]
+        fn test_conflict_entries() {
+            let mut input = quote! {
+                enum Foo {
+                    #[auto_configure_system_set_config(chain, chain_ignore_deferred)]
+                    A,
+                }
+            };
+            let res = ident_and_args_from_attr_input(
+                quote! {
+                    schedule = Update,
+                },
+                &mut input,
+            )
+            .map_err(|e| e.to_string());
+
+            assert_eq!(res, Err(CHAIN_CONFLICT_ERR.into()));
         }
     }
 }
