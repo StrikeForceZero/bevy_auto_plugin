@@ -1,6 +1,9 @@
 use syn::{Attribute, Item};
+use thiserror::Error;
 
+#[derive(Error, Debug)]
 pub enum TakeAndPutAttrsError {
+    #[error("Item does not have attrs")]
     ItemDoesNotHaveAttrs,
 }
 
