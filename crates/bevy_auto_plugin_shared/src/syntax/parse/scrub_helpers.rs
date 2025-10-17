@@ -92,6 +92,9 @@ pub struct SiteAttrs {
 pub struct SiteAttrsVec(pub Vec<SiteAttrs>);
 
 impl SiteAttrsVec {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -125,6 +128,29 @@ pub struct ScrubOutcome {
     pub removed: SiteAttrsVec,
     /// Errors encountered while scrubbing (we still emit the scrubbed item)
     pub errors: Vec<syn::Error>,
+}
+
+impl ScrubOutcome {
+    pub fn all_with_removed_attrs(&self) -> Vec<SiteAttrs> {
+        let mut out = Vec::with_capacity(self.observed.len());
+        for group in self.observed.iter() {
+            let mut attrs = vec![];
+            // linear search is fine here, since we expect the number of groups to be small
+            if let Some(removed_attrs) = self
+                .removed
+                .iter()
+                .find(|g| g.site == group.site)
+                .map(|g| g.attrs.clone())
+            {
+                attrs.extend(removed_attrs);
+            }
+            out.push(SiteAttrs {
+                site: group.site.clone(),
+                attrs,
+            });
+        }
+        out
+    }
 }
 
 #[derive(Debug, Default)]
@@ -659,6 +685,81 @@ mod tests {
                 got.to_test_string(),
                 expected.to_test_string(),
             );
+            Ok(())
+        }
+
+        #[xtest]
+        fn test_scrub_helpers_and_ident_all_with_removed_attrs() -> syn::Result<()> {
+            let input = quote! {
+                #[item::helper]
+                #[non_helper]
+                enum Foo {
+                    #[field::helper]
+                    #[non_helper]
+                    A,
+                    #[non_helper]
+                    B,
+                    #[field::_1::helper]
+                    #[field::_2::helper]
+                    #[non_helper]
+                    C,
+                    #[field::helper]
+                    X,
+                    Y,
+                }
+            };
+
+            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+
+            let got = SiteAttrsVec::from_vec(scrub_outcome.all_with_removed_attrs());
+            let expected = SiteAttrsVec::from_vec(vec![
+                SiteAttrs {
+                    site: AttrSite::Item,
+                    attrs: vec![parse_quote!(#[item::helper])],
+                },
+                SiteAttrs {
+                    site: AttrSite::Variant {
+                        variant: parse_quote!(A),
+                    },
+                    attrs: vec![parse_quote!(#[field::helper])],
+                },
+                SiteAttrs {
+                    site: AttrSite::Variant {
+                        variant: parse_quote!(B),
+                    },
+                    attrs: vec![],
+                },
+                SiteAttrs {
+                    site: AttrSite::Variant {
+                        variant: parse_quote!(C),
+                    },
+                    attrs: vec![
+                        parse_quote!(#[field::_1::helper]),
+                        parse_quote!(#[field::_2::helper]),
+                    ],
+                },
+                SiteAttrs {
+                    site: AttrSite::Variant {
+                        variant: parse_quote!(X),
+                    },
+                    attrs: vec![parse_quote!(#[field::helper])],
+                },
+                SiteAttrs {
+                    site: AttrSite::Variant {
+                        variant: parse_quote!(Y),
+                    },
+                    attrs: vec![],
+                },
+            ]);
+
+            assert_eq!(
+                got.to_test_string(),
+                expected.to_test_string(),
+                "helpers got:\n{}\n\nexpected:\n{}",
+                got.to_test_string(),
+                expected.to_test_string(),
+            );
+
             Ok(())
         }
     }
