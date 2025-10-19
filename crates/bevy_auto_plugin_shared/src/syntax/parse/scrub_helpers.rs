@@ -152,26 +152,62 @@ impl ScrubOutcome {
         }
         out
     }
-    pub fn write_back(&self, token_stream: &mut TokenStream) -> syn::Result<()> {
-        let item = &self.item;
-        *token_stream = quote! {
-            #item
-        };
-
-        // inject any scrub errors as compile_error! right here.
-        if !self.errors.is_empty() {
-            let err_ts = self.errors.iter().map(syn::Error::to_compile_error);
-            *token_stream = quote! {
-                #( #err_ts )*
-                #token_stream
-            };
-            let mut err = syn::Error::new(item.span(), "failed to scrub helpers");
-            err.extend(self.errors.clone());
-            return Err(err);
-        }
-
-        Ok(())
+    // TODO: Better name?
+    /// If there are errors, it will write them above the scrubbed item.
+    /// Otherwise, will NOT write the scrubbed item back into the TokenStream
+    pub fn write_if_errors_with_scrubbed_item(
+        &self,
+        token_stream: &mut TokenStream,
+    ) -> syn::Result<()> {
+        write_back(
+            token_stream,
+            self.item.span(),
+            self.errors.clone(),
+            "failed to scrub helpers",
+        )
     }
+    pub fn write_back(&self, token_stream: &mut TokenStream) -> syn::Result<()> {
+        write_back_item(
+            token_stream,
+            &self.item,
+            self.errors.clone(),
+            "failed to scrub helpers",
+        )
+    }
+}
+
+pub fn write_back_item(
+    token_stream: &mut TokenStream,
+    item: &Item,
+    errors: Vec<syn::Error>,
+    message: &str,
+) -> syn::Result<()> {
+    *token_stream = quote! {
+        #item
+    };
+
+    write_back(token_stream, item.span(), errors, message)
+}
+
+pub fn write_back(
+    token_stream: &mut TokenStream,
+    span: proc_macro2::Span,
+    errors: Vec<syn::Error>,
+    message: &str,
+) -> syn::Result<()> {
+    // inject any errors as compile_error! right here.
+    if !errors.is_empty() {
+        let err_ts = errors.iter().map(syn::Error::to_compile_error);
+        *token_stream = quote! {
+            #( #err_ts )*
+            #token_stream
+        };
+        let mut err = syn::Error::new(span, message);
+        err.extend(errors.clone());
+        return Err(err);
+    }
+
+    Ok(())
 }
 
 #[derive(Debug, Default)]
