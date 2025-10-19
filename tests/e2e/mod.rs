@@ -13,6 +13,7 @@ mod auto_add_systems_with_set;
 mod auto_bind_plugin;
 mod auto_configure_system_set;
 mod auto_configure_system_set_schedule_config;
+mod auto_configure_system_set_schedule_config_multiple_groups;
 mod auto_init_resource;
 mod auto_init_resource_generic;
 mod auto_init_state;

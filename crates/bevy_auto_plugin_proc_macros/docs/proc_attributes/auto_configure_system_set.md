@@ -3,10 +3,12 @@ Automatically configures a SystemSet for the app.
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should register this system.
 - `schedule = ScheduleName` - Required. Specifies which schedule to add the system to.
+- `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
 - `group` - Optional. Specifies what group this config is for. Omitting acts like a group.
-- `exclude` - Optional. Does not emit for a specified group. Good for when you want a group with a different config.
+  - it's recommended to use the schedule label as your group key. e.g. `Update` or `FixedUpdate`
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
 - `chain` - Optional. calls `.chain()` on the resultant set.
+- `chain_ignore_deferred` - Optional. calls `.chain_ignore_deferred()` on the resultant set.
 - `config(..)`
   - `in_set = SetName` - Optional. See [`bevy IntoScheduleConfigs in_set`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.in_set)
   - `before = SetName or system` - Optional. See [`bevy IntoScheduleConfigs before`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.before)

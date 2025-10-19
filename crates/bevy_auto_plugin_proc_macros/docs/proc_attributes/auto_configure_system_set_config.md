@@ -1,9 +1,10 @@
 Automatically configures a SystemSet for the app.
 
 # Parameters
-- `group` - Optional. Specifies what group this config is for. Omitting acts like a group.
-- `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
+- `group` - Optional. Specifies what group this config is for. Omitting acts like default for all groups.
+  - it's recommended to use the schedule label as your group key. e.g. `Update` or `FixedUpdate`
 - `chain` - Optional. calls `.chain()` on the resultant set.
+- `chain_ignore_deferred` - Optional. calls `.chain_ignore_deferred()` on the resultant set.
 - `config(..)`
   - `in_set = SetName` - Optional. See [`bevy IntoScheduleConfigs in_set`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.in_set)
   - `before = SetName or system` - Optional. See [`bevy IntoScheduleConfigs before`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.before)
@@ -24,39 +25,28 @@ use bevy_auto_plugin::prelude::*;
 #[auto_plugin(impl_plugin_trait)]
 struct MyPlugin;
 
-#[auto_configure_system_set(plugin = MyPlugin, schedule = Update)]
+fn always() -> bool {
+    true
+}
+
+fn never() -> bool {
+    true
+}
+
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
-struct MySet;
-```
-
-# Example Enum
-```rust
-use bevy::prelude::*;
-use bevy_auto_plugin::prelude::*;
-
-#[derive(AutoPlugin)]
-#[auto_plugin(impl_plugin_trait)]
-struct MyPlugin;
-
-#[auto_configure_system_set(plugin = MyPlugin, schedule = Update)]
-#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+#[auto_configure_system_set(plugin = MyPlugin, group = Update, schedule = Update)]
+#[auto_configure_system_set(plugin = MyPlugin, group = FixedUpdate, schedule = FixedUpdate)]
 enum MySet {
     A,
+    #[auto_configure_system_set_config(config(run_if = never))]
     B,
+    #[auto_configure_system_set_config(group = Update, config(run_if = never))]
+    #[auto_configure_system_set_config(group = FixedUpdate, config(run_if = always))]
+    C,
 }
-```
 
-# Example (with generics)
-```rust
-use bevy::prelude::*;
-use bevy_auto_plugin::prelude::*;
-
-
-#[derive(AutoPlugin)]
-#[auto_plugin(impl_plugin_trait)]
-struct MyPlugin;
-
-#[auto_configure_system_set(plugin = MyPlugin, generics(usize), schedule = Update)]
-#[derive(SystemSet, Debug, Default, Hash, PartialEq, Eq, Clone)]
-struct MySet<T>(T);
+/* RESULT:
+app.configure_sets(Update, (MySet::A, MySet::B.run_if(never), MySet::C.run_if(never));
+app.configure_sets(FixedUpdate, (MySet::A, MySet::B.run_if(never), MySet::C.run_if(always));
+*/
 ```
