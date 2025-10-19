@@ -56,3 +56,10 @@
 
 ### Updated Imports
 - `use bevy_auto_plugin::modes::global::prelude::*` -> `use bevy_auto_plugin::prelude::*`
+
+## 0.7 to v0.8
+- Deprecated `#[auto_plugin]` params `impl_generic_plugin_trait`, use `impl_plugin_trait` instead.
+    - `Send + Sync + 'static` are automatically constrained for all generics when `impl_plugin_trait` is set.
+- Deprecated params `impl_generic_auto_plugin_trait`. Remove.
+    - `AutoPlugin` is now always implemented when deriving `AutoPlugin`
+- Removed `generics` from `auto_init_state` and `auto_state` - There should be no valid use cases for this but if you have one and were using it please open an issue.

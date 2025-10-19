@@ -117,4 +117,15 @@
 ---
 ### v0.7.1
 - Restore and deprecate old imports `use bevy_auto_plugin::modes::global::prelude::*` -> `use bevy_auto_plugin::prelude::*`
- 
+
+---
+### v0.8.0
+- Add `auto_configure_system_set` - configures struct or enum variants to be a `SystemSet`.
+- Add `auto_init_sub_state` - registers `SubState`.
+- Add `auto_add_plugin` - adds plugin to target plugin. See docs for params.
+- `generics` were removed from `auto_init_state` and `auto_state` due to not adhering to bevy expectations with States.
+- Deprecated `#[auto_plugin]` params `impl_generic_plugin_trait`, use `impl_plugin_trait` instead.
+  - `Send + Sync + 'static` are automatically constrained for all generics when `impl_plugin_trait` is set.
+- Deprecated params `impl_generic_auto_plugin_trait`. Remove.
+  - `AutoPlugin` is now always implemented when deriving `AutoPlugin`
+- All error paths *should* retain the original tokens from the input; mitigates the IDE from losing syntax highlighting.
