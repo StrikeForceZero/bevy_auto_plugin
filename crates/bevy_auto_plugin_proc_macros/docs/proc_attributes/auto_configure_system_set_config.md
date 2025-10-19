@@ -2,7 +2,6 @@ Automatically configures a SystemSet for the app.
 
 # Parameters
 - `group` - Optional. Specifies what group this config is for. Omitting acts like a group.
-- `exclude` - Optional. Does not emit for a specified group. Good for when you want a group with a different config.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
 - `chain` - Optional. calls `.chain()` on the resultant set.
 - `config(..)`
@@ -42,7 +41,6 @@ struct MyPlugin;
 #[auto_configure_system_set(plugin = MyPlugin, schedule = Update)]
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
 enum MySet {
-    #[auto_configure_system_set(exclude)]
     A,
     B,
 }

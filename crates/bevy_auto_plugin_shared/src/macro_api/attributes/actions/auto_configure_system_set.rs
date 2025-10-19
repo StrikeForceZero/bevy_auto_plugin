@@ -27,7 +27,6 @@ fn is_config_helper(attr: &Attribute) -> bool {
 pub struct ConfigureSystemSetArgsInnerEntry {
     /// allows individual groups to be configured
     pub group: Option<Ident>,
-    pub exclude: Flag,
     /// order in [`ConfigureSystemSetArgsInner::entries`]
     pub order: Option<usize>,
     /// .chain()
@@ -357,13 +356,12 @@ pub fn args_with_plugin_from_args_input(
     // 7) Sort & filter
     entries.sort_by_key(|(_, e)| e.order.unwrap_or_default());
     entries.retain(|(_, e)| {
-        let excluded = e.exclude.is_present();
-        let same_group = match (&e.group, &outer_group) {
+        // same group as outer group
+        match (&e.group, &outer_group) {
             (Some(g), Some(og)) => g == og,
             // If either side is None, keep it (acts as "applies to any")
             _ => true,
-        };
-        !excluded && same_group
+        }
     });
 
     // 8) Store into args and return
@@ -547,34 +545,6 @@ mod tests {
             Ok(())
         }
 
-        #[xtest]
-        fn test_to_tokens_multiple_exclude() -> syn::Result<()> {
-            let (ident, args) = ident_and_args_from_attr_input(
-                quote!(schedule = Update),
-                quote! {
-                    enum Foo {
-                        #[auto_configure_system_set_config(group = A)]
-                        #[auto_configure_system_set_config(group = B, exclude)]
-                        A,
-                        #[auto_configure_system_set_config(group = B)]
-                        B,
-                    }
-                },
-            )?;
-            let args_with_target =
-                WithTargetPath::try_from((PathWithoutGenerics::from(ident), args)).unwrap(); // infallible
-            let mut token_iter = args_with_target.to_tokens_iter();
-            assert_eq!(
-                token_iter.next().expect("token_iter").to_string(),
-                quote! {
-                    . configure_sets (Update , ( Foo::A, Foo::B ))
-                }
-                .to_string()
-            );
-            assert!(token_iter.next().is_none());
-            Ok(())
-        }
-
         // TODO: more tests
 
         #[xtest]
@@ -588,7 +558,7 @@ mod tests {
                     enum Foo {
                         #[auto_configure_system_set_config(group = A)]
                         A,
-                        #[auto_configure_system_set_config(group = A, exclude)]
+                        #[auto_configure_system_set_config(group = A)]
                         B,
                     }
                 },
@@ -601,14 +571,24 @@ mod tests {
                         config: ScheduleConfigArgs::default(),
                     },
                     inner: Some(ConfigureSystemSetArgsInner {
-                        entries: vec![(
-                            parse_quote!(A),
-                            ConfigureSystemSetArgsInnerEntry {
-                                group: parse_quote!(A),
-                                order: Some(1),
-                                ..Default::default()
-                            }
-                        )]
+                        entries: vec![
+                            (
+                                parse_quote!(A),
+                                ConfigureSystemSetArgsInnerEntry {
+                                    group: parse_quote!(A),
+                                    order: Some(1),
+                                    ..Default::default()
+                                }
+                            ),
+                            (
+                                parse_quote!(B),
+                                ConfigureSystemSetArgsInnerEntry {
+                                    group: parse_quote!(A),
+                                    order: Some(2),
+                                    ..Default::default()
+                                }
+                            )
+                        ]
                     }),
                     group: Some(parse_quote!(A)),
                     generics: vec![],
@@ -625,7 +605,7 @@ mod tests {
                 enum Foo {
                     #[auto_configure_system_set_config(group = A)]
                     A,
-                    #[auto_configure_system_set_config(group = A, exclude)]
+                    #[auto_configure_system_set_config(group = A)]
                     B,
                 }
             };

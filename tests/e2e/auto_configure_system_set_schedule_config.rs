@@ -14,13 +14,17 @@ fn should_run(should_run: Res<ShouldRun>) -> bool {
     should_run.0
 }
 
+fn never() -> bool {
+    false
+}
+
 // generates: app.configure_sets(Update, (TestSet::A, TestSet::B, TestSet::C).chain());
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 #[auto_configure_system_set(plugin = TestPlugin, schedule = Update, chain, config(run_if = should_run))]
 enum TestSet {
     A,
     B,
-    #[auto_configure_system_set_config(exclude)]
+    #[auto_configure_system_set_config(config(run_if = never))]
     C,
 }
 
@@ -77,5 +81,5 @@ fn test_auto_configure_system_set() {
     assert_eq!(get_run_log(&app), expect_vec_ref!());
     enable_run(&mut app);
     app.update();
-    assert_eq!(get_run_log(&app), expect_vec_ref!(a, b, c));
+    assert_eq!(get_run_log(&app), expect_vec_ref!(a, b));
 }
