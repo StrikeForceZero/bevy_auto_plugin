@@ -2,6 +2,7 @@ pub mod auto_add_message;
 pub mod auto_add_observer;
 pub mod auto_add_plugin;
 pub mod auto_add_system;
+pub mod auto_configure_system_set;
 pub mod auto_init_resource;
 pub mod auto_init_state;
 pub mod auto_init_sub_state;

@@ -47,7 +47,7 @@ bevy_internal = { version = "0.17", default-features = false }
 bevy_ecs = { version = "0.17", default-features = false }
 bevy_ecs_macros = { version = "0.17", default-features = false }
 proc-macro2 = "1"
-syn = { version = "2", features = ["full", "extra-traits"] }
+syn = { version = "2", features = ["full", "extra-traits", "visit-mut"] }
 quote = "1"
 anyhow = "1"
 thiserror = "2"

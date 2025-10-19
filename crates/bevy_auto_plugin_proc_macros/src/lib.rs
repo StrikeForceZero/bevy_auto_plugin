@@ -41,6 +41,13 @@ pub fn auto_add_message(attr: CompilerStream, input: CompilerStream) -> Compiler
     handle_attribute(expand::attr::auto_add_message, attr, input)
 }
 
+/// Automatically configures a `SystemSet`.
+#[doc = include_str!("../docs/proc_attributes/auto_configure_system_set.md")]
+#[proc_macro_attribute]
+pub fn auto_configure_system_set(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_configure_system_set, attr, input)
+}
+
 /// Automatically inserts a resource in the Bevy `App`.
 #[doc = include_str!("../docs/proc_attributes/auto_init_resource.md")]
 #[proc_macro_attribute]

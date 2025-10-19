@@ -5,14 +5,42 @@ use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::with_plugin::{PluginBound, WithPlugin};
 use crate::syntax::diagnostic::kind::item_kind;
-use crate::util::macros::ok_or_emit_with;
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
-use quote::{format_ident, quote};
+use quote::{ToTokens, format_ident, quote};
 use syn::{Item, parse2};
+use thiserror::Error;
 
 pub mod auto_bind_plugin;
 pub mod auto_plugin;
+
+pub enum ArgParser<T> {
+    SynParse2,
+    Custom(CustomParser<T>),
+}
+
+impl<T: syn::parse::Parse> ArgParser<T> {
+    pub fn parse(&self, attr: MacroStream, input: &mut MacroStream) -> syn::Result<T> {
+        match self {
+            ArgParser::SynParse2 => parse2::<T>(attr),
+            ArgParser::Custom(custom) => custom.parse(attr, input),
+        }
+    }
+}
+
+pub enum CustomParser<T> {
+    AttrOnly(fn(MacroStream) -> syn::Result<T>),
+    AttrInput(fn(MacroStream, &mut MacroStream) -> syn::Result<T>),
+}
+
+impl<T: syn::parse::Parse> CustomParser<T> {
+    pub fn parse(&self, attr: MacroStream, input: &mut MacroStream) -> syn::Result<T> {
+        match self {
+            CustomParser::AttrOnly(f) => f(attr),
+            CustomParser::AttrInput(f) => f(attr, input),
+        }
+    }
+}
 
 fn body<T: PluginBound>(
     body: impl Fn(MacroStream) -> MacroStream,
@@ -52,11 +80,80 @@ fn body<T: PluginBound>(
     }
 }
 
+#[derive(Error, Debug)]
+enum ProcAttributeError {
+    #[error("Failed to parse item: {0}")]
+    ParseItem(syn::Error),
+    #[error("Failed to resolve ident: {0}")]
+    ResolveIdent(syn::Error),
+    #[error("Failed to parse attr or input: {0}")]
+    ParseAttrOrInput(syn::Error),
+    #[error("Failed to generate body: {0}")]
+    GenerateBody(syn::Error),
+}
+
+impl ProcAttributeError {
+    fn err(&self) -> &syn::Error {
+        match self {
+            ProcAttributeError::ParseItem(err) => err,
+            ProcAttributeError::ResolveIdent(err) => err,
+            ProcAttributeError::ParseAttrOrInput(err) => err,
+            ProcAttributeError::GenerateBody(err) => err,
+        }
+    }
+}
+
+impl ToTokens for ProcAttributeError {
+    fn to_tokens(&self, tokens: &mut MacroStream) {
+        tokens.extend(self.err().to_compile_error());
+    }
+}
+
+fn proc_attribute_core<A, F>(
+    attr: impl Into<MacroStream>,
+    // this is the only way we can strip out non-derive based attribute helpers
+    input: &mut MacroStream,
+    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
+    parse_attr_input: ArgParser<A>,
+    body: F,
+) -> Result<MacroStream, ProcAttributeError>
+where
+    A: PluginBound,
+    F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
+{
+    let attr = attr.into();
+
+    // need to clone input so we can pass through input untouched for optimal IDE support
+    let item: Item = parse2(input.clone()).map_err(ProcAttributeError::ParseItem)?;
+
+    let ident = resolve_ident(&item)
+        .map_err(|err| {
+            let message = format!(
+                "Attribute macro is not allowed on {}: {err}",
+                item_kind(&item)
+            );
+            // make sure the call_site span is used instead so the user knows what attribute caused the error
+            syn::Error::new(Span::call_site(), message)
+        })
+        .map_err(ProcAttributeError::ResolveIdent)?;
+
+    let args = parse_attr_input
+        .parse(attr, input)
+        .map_err(ProcAttributeError::ParseAttrOrInput)?;
+
+    let output = body(ident, args, &item).map_err(ProcAttributeError::GenerateBody)?;
+
+    Ok(quote! {
+        #input
+        #output
+    })
+}
+
 fn proc_attribute_inner<A, F>(
     attr: impl Into<MacroStream>,
     input: impl Into<MacroStream>,
     resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-    parse_attr: fn(MacroStream) -> syn::Result<A>,
+    parse_attr_input: ArgParser<A>,
     body: F,
 ) -> MacroStream
 where
@@ -64,27 +161,14 @@ where
     F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
 {
     let attr = attr.into();
-    let input = input.into();
+    let mut input = input.into();
 
-    // need to clone input so we can pass through input untouched for optimal IDE support
-    let item: Item = ok_or_emit_with!(parse2(input.clone()), input);
-
-    let ident = ok_or_emit_with!(
-        resolve_ident(&item).map_err(|e| {
-            // make sure the call_site span is used instead so the user knows what attribute caused the error
-            syn::Error::new(Span::call_site(), e)
-        }),
-        input,
-        format!("Attribute macro is not allowed on {}", item_kind(&item))
-    );
-
-    let args = ok_or_emit_with!(parse_attr(attr), input);
-
-    let output = ok_or_emit_with!(body(ident, args, &item), input);
-
-    quote! {
-        #input
-        #output
+    match proc_attribute_core(attr, &mut input, resolve_ident, parse_attr_input, body) {
+        Ok(res) => res,
+        Err(err) => quote! {
+            #err
+            #input
+        },
     }
 }
 
@@ -104,7 +188,24 @@ where
         attr,
         input,
         resolve_item_ident::<T>,
-        parse2::<T>,
+        ArgParser::<T>::SynParse2,
+        body(|input| quote! { app #input ; }),
+    )
+}
+
+pub fn proc_attribute_with_parser_outer<T>(
+    attr: impl Into<MacroStream>,
+    input: impl Into<MacroStream>,
+    parser: ArgParser<T>,
+) -> MacroStream
+where
+    T: PluginBound,
+{
+    proc_attribute_inner(
+        attr,
+        input,
+        resolve_item_ident::<T>,
+        parser,
         body(|input| quote! { app #input ; }),
     )
 }
@@ -120,7 +221,7 @@ where
         attr,
         input,
         resolve_item_ident::<T>,
-        parse2::<T>,
+        ArgParser::<T>::SynParse2,
         body(|input| quote! { #input(app) ; }),
     )
 }
@@ -220,13 +321,27 @@ macro_rules! gen_auto_attribute_outer_call_fns {
 }
 
 macro_rules! gen_auto_attribute_outers {
-    ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
+    // Each item:  fn_name => ArgsTy [using <expr>]
+    ( $( $fn:ident => $args:ty $(: parser = $parser:expr)? ),+ $(,)? ) => {
         $(
-            #[inline]
-            pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-                proc_attribute_outer::<WithPlugin<$args>>(attr, input)
-            }
+            gen_auto_attribute_outers!(@one $fn, $args $(, $parser)?);
         )+
+    };
+
+    // No parser
+    (@one $fn:ident, $args:ty) => {
+        #[inline]
+        pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
+            proc_attribute_outer::<WithPlugin<$args>>(attr, input)
+        }
+    };
+
+    // With parser
+    (@one $fn:ident, $args:ty, $parser:expr) => {
+        #[inline]
+        pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
+            proc_attribute_with_parser_outer::<WithPlugin<$args>>(attr, input, $parser)
+        }
     };
 }
 
@@ -246,17 +361,19 @@ gen_auto_attribute_outer_call_fns! {
 }
 
 gen_auto_attribute_outers! {
-    auto_register_type        => RegisterTypeArgs,
-    auto_add_message          => AddMessageArgs,
-    auto_init_resource        => InitResourceArgs,
-    auto_insert_resource      => InsertResourceArgs,
-    auto_init_state           => InitStateArgs,
+    auto_register_type         => RegisterTypeArgs,
+    auto_add_message           => AddMessageArgs,
+    auto_init_resource         => InitResourceArgs,
+    auto_insert_resource       => InsertResourceArgs,
+    auto_init_state            => InitStateArgs,
     auto_init_sub_state       => InitSubStateArgs,
-    auto_name                 => NameArgs,
-    auto_register_state_type  => RegisterStateTypeArgs,
-    auto_add_system           => AddSystemArgs,
-    auto_add_observer         => AddObserverArgs,
-    auto_add_plugin           => AddPluginArgs,
+    auto_name                  => NameArgs,
+    auto_register_state_type   => RegisterStateTypeArgs,
+    auto_add_system            => AddSystemArgs,
+    auto_add_observer          => AddObserverArgs,
+    auto_add_plugin            => AddPluginArgs,
+    auto_configure_system_set => ConfigureSystemSetArgs:
+        parser = ArgParser::Custom(CustomParser::AttrInput(configure_system_set_args_from_attr_input)),
 }
 
 gen_auto_outers! {
