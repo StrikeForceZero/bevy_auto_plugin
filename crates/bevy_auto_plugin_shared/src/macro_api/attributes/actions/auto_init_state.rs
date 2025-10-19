@@ -13,10 +13,7 @@ use syn::Item;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct InitStateArgs {
-    #[darling(multiple)]
-    pub generics: Vec<TypeList>,
-}
+pub struct InitStateArgs {}
 
 impl AttributeIdent for InitStateArgs {
     const IDENT: &'static str = "auto_init_state";
@@ -30,7 +27,7 @@ impl ItemAttributeArgs for InitStateArgs {
 
 impl GenericsArgs for InitStateArgs {
     fn type_lists(&self) -> &[TypeList] {
-        &self.generics
+        &[]
     }
 }
 
@@ -72,47 +69,6 @@ mod tests {
             token_iter.next().expect("token_iter").to_string(),
             quote! {
                 .init_state :: < FooTarget > ()
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<InitStateArgs>(quote!(generics(u8, bool)))?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .init_state :: < FooTarget<u8, bool> > ()
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_to_tokens_multiple() -> syn::Result<()> {
-        let args = parse2::<InitStateArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .init_state :: < FooTarget<u8, bool> > ()
-            }
-            .to_string()
-        );
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .init_state :: < FooTarget<bool, bool> > ()
             }
             .to_string()
         );

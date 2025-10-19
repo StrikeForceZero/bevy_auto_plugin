@@ -14,8 +14,6 @@ use quote::quote;
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
 pub struct StatesArgs {
-    #[darling(multiple)]
-    pub generics: Vec<TypeList>,
     pub derive: FlagOrList<NonEmptyPath>,
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
@@ -24,7 +22,7 @@ pub struct StatesArgs {
 
 impl GenericsArgs for StatesArgs {
     fn type_lists(&self) -> &[TypeList] {
-        &self.generics
+        &[]
     }
 }
 
@@ -33,18 +31,14 @@ impl AttributeIdent for StatesArgs {
 }
 
 impl<'a> From<&'a StatesArgs> for RegisterTypeArgs {
-    fn from(value: &'a StatesArgs) -> Self {
-        Self {
-            generics: value.generics.clone(),
-        }
+    fn from(_value: &'a StatesArgs) -> Self {
+        Self::default()
     }
 }
 
 impl<'a> From<&'a StatesArgs> for InitStateArgs {
-    fn from(value: &'a StatesArgs) -> Self {
-        Self {
-            generics: value.generics.clone(),
-        }
+    fn from(_value: &'a StatesArgs) -> Self {
+        Self::default()
     }
 }
 

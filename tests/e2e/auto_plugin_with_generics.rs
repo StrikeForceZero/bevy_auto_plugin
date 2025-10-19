@@ -6,7 +6,7 @@ use internal_test_proc_macro::xtest;
 use internal_test_util::{create_minimal_app, type_id_of, vec_spread};
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::ops::{AddAssign, Deref};
+use std::ops::AddAssign;
 
 #[derive(AutoPlugin, Default)]
 #[auto_plugin(impl_plugin_trait)]
@@ -63,28 +63,6 @@ where
     value1: T1,
     #[allow(dead_code)]
     value2: T2,
-}
-
-#[derive(States, Debug, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
-#[auto_init_state(plugin = Test::<u8, bool>, generics(u8, bool))]
-#[auto_register_state_type(plugin = Test::<u8, bool>, generics(u8, bool))]
-enum FooState<T1, T2>
-where
-    T1: Default + Debug + Default + Copy + Clone + PartialEq + Eq + Hash + Send + Sync + 'static,
-    T2: Default + Debug + Default + Copy + Clone + PartialEq + Eq + Hash + Send + Sync + 'static,
-{
-    Start(T1, T2),
-    End(T1, T2),
-}
-
-impl<T1, T2> Default for FooState<T1, T2>
-where
-    T1: Debug + Default + Copy + Clone + PartialEq + Eq + Hash + Send + Sync + 'static,
-    T2: Debug + Default + Copy + Clone + PartialEq + Eq + Hash + Send + Sync + 'static,
-{
-    fn default() -> Self {
-        Self::Start(T1::default(), T2::default())
-    }
 }
 
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
@@ -305,33 +283,6 @@ fn test_auto_event_foo_entity_event() {
         let &v = app.world_mut().resource::<Counter>().0.get(&e).unwrap();
         assert_eq!(v, 2);
     }
-}
-
-#[xtest]
-fn test_auto_register_state_type_foo_state() {
-    let app = app();
-    let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
-    let type_registry = type_registry.read();
-    assert!(
-        type_registry.contains(type_id_of::<State<FooState<u8, bool>>>()),
-        "did not auto register type"
-    );
-    assert!(
-        type_registry.contains(type_id_of::<NextState<FooState<u8, bool>>>()),
-        "did not auto register type"
-    );
-}
-
-#[xtest]
-fn test_auto_init_state_type_foo_state() {
-    let app = app();
-    assert_eq!(
-        app.world()
-            .get_resource::<State<FooState<u8, bool>>>()
-            .map(Deref::deref),
-        Some(&FooState::<u8, bool>::default()),
-        "did not auto init state"
-    );
 }
 
 #[xtest]
