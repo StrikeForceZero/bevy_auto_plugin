@@ -34,6 +34,27 @@ struct MyPlugin;
 struct MySet;
 ```
 
+# Example Enum 
+
+See [auto_configure_system_set_config](./auto_configure_system_set_config.md) for details.
+
+```rust
+use bevy::prelude::*;
+use bevy_auto_plugin::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+#[auto_configure_system_set(plugin = MyPlugin, schedule = Update)]
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+enum MySet {
+    #[auto_configure_system_set_config(config(run_if = || false))]
+    A,
+    B,
+}
+```
+
 # Example (with generics)
 ```rust
 use bevy::prelude::*;
