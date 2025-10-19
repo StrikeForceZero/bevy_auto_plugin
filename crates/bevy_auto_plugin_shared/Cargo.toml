@@ -12,6 +12,7 @@ publish = true
 
 [features]
 inventory = []
+allow_on_use_statements = []
 debug_log_plugin_registry = ["log"]
 log_plugin_build = ["log"]
 web = [

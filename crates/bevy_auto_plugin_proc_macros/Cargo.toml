@@ -13,6 +13,9 @@ proc-macro = true
 
 [features]
 inventory = ["bevy_auto_plugin_shared/inventory"]
+allow_on_use_statements = [
+    "bevy_auto_plugin_shared/allow_on_use_statements",
+]
 debug_log_plugin_registry = ["bevy_auto_plugin_shared/debug_log_plugin_registry"]
 log_plugin_build = ["bevy_auto_plugin_shared/log_plugin_build"]
 

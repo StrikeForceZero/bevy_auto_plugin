@@ -15,6 +15,10 @@ default = [
 ]
 inventory = ["bevy_auto_plugin_proc_macros/inventory"]
 # optional extras
+allow_on_use_statements = [
+    "bevy_auto_plugin_proc_macros/allow_on_use_statements",
+    "bevy_auto_plugin_shared/allow_on_use_statements",
+]
 debug_log_plugin_registry = ["bevy_auto_plugin_proc_macros/debug_log_plugin_registry", "bevy_auto_plugin_shared/debug_log_plugin_registry"]
 log_plugin_build = ["bevy_auto_plugin_proc_macros/log_plugin_build"]
 web = [

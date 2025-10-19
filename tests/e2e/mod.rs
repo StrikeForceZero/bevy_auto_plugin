@@ -42,3 +42,5 @@ mod self_impl_plugin_default_app_param;
 mod self_impl_plugin_with_generics;
 #[cfg(not(wasm))]
 mod ui_tests;
+#[cfg(feature = "allow_on_use_statements")]
+mod use_statement;

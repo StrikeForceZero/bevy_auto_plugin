@@ -2,7 +2,7 @@ use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
-use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
+use crate::syntax::analysis::item::IdentFromItemResult;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::FromMeta;
@@ -22,8 +22,13 @@ impl AttributeIdent for RegisterTypeArgs {
 }
 
 impl ItemAttributeArgs for RegisterTypeArgs {
+    #[cfg(feature = "allow_on_use_statements")]
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
-        resolve_ident_from_struct_or_enum(item)
+        crate::syntax::analysis::item::resolve_ident_from_struct_or_enum_or_use_item(item)
+    }
+    #[cfg(not(feature = "allow_on_use_statements"))]
+    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
+        crate::syntax::analysis::item::resolve_ident_from_struct_or_enum(item)
     }
 }
 
