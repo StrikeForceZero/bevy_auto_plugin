@@ -1,6 +1,6 @@
 use crate::__private::attribute::RewriteAttribute;
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
-use crate::codegen::with_target_path::WithTargetPath;
+use crate::codegen::with_target_path::{ToTokensIterItem, WithTargetPath};
 use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::with_plugin::{PluginBound, WithPlugin};
@@ -22,16 +22,27 @@ fn body<T: PluginBound>(
         let plugin = params.plugin().clone();
         let with_target_path = WithTargetPath::from((ident.into(), params));
         let output = with_target_path
-            .to_tokens_iter()
+            .to_tokens_iter_items()
             .enumerate()
-            .map(|(ix, input)| {
-                let body = body(input);
-                let expr: syn::ExprClosure = syn::parse_quote!(|app| { #body });
-                // required for generics
-                let unique_ident = format_ident!("{unique_ident}_{ix}");
-                let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
-                Ok(output)
-            })
+            .map(
+                |(
+                    ix,
+                    ToTokensIterItem {
+                        required_uses,
+                        main_tokens: tokens,
+                    },
+                )| {
+                    let body = body(tokens);
+                    let expr: syn::ExprClosure = syn::parse_quote!(|app| {
+                        #(#required_uses)*
+                        #body
+                    });
+                    // required for generics
+                    let unique_ident = format_ident!("{unique_ident}_{ix}");
+                    let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
+                    Ok(output)
+                },
+            )
             .collect::<syn::Result<MacroStream>>()?;
         assert!(
             !output.is_empty(),

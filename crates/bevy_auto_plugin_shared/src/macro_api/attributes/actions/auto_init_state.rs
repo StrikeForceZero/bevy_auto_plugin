@@ -1,3 +1,4 @@
+use crate::codegen::tokens;
 use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::attributes::prelude::GenericsArgs;
@@ -40,9 +41,11 @@ impl ToTokensWithConcreteTargetPath for InitStateArgs {
         target: &ConcreteTargetPath,
     ) {
         tokens.extend(quote! {
-            // TODO: requires bevy_state::app::AppExtStates;
             .init_state::< #target >()
         })
+    }
+    fn required_use_statements(&self) -> Vec<syn::ItemUse> {
+        vec![tokens::use_bevy_state_app_ext_states()]
     }
 }
 
