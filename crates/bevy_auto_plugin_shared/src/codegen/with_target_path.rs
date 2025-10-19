@@ -22,6 +22,22 @@ pub trait ToTokensWithConcreteTargetPath: GenericsArgs {
         self.to_tokens_with_concrete_target_path(&mut tokens, target);
         tokens
     }
+    fn required_use_statements(&self) -> Vec<syn::ItemUse> {
+        vec![]
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ToTokensIterItem {
+    pub required_uses: Vec<syn::ItemUse>,
+    pub main_tokens: TokenStream,
+}
+
+impl ToTokensIterItem {
+    #[cfg(test)]
+    pub fn into_main_tokens(self) -> TokenStream {
+        self.main_tokens
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -46,13 +62,22 @@ impl<T: GenericsArgs + Clone> WithTargetPath<T> {
 }
 
 impl<T: ToTokensWithConcreteTargetPath + Clone> WithTargetPath<T> {
-    pub fn to_tokens_iter(&self) -> impl Iterator<Item = TokenStream> {
+    /// used to reconstruct `|app| { #(#required_uses)* #main_tokens }`
+    pub fn to_tokens_iter_items(&self) -> impl Iterator<Item = ToTokensIterItem> {
         self.concrete_target_paths()
             .into_iter()
-            .map(|concrete_target_path| {
-                self.inner
-                    .to_token_stream_with_concrete_target_path(&concrete_target_path)
+            .map(|concrete_target_path| ToTokensIterItem {
+                required_uses: self.inner.required_use_statements(),
+                main_tokens: self
+                    .inner
+                    .to_token_stream_with_concrete_target_path(&concrete_target_path),
             })
+    }
+    #[cfg(test)]
+    /// used in tests checking the output of `ToTokensIterItem::main_tokens`
+    pub fn to_tokens_iter(&self) -> impl Iterator<Item = TokenStream> {
+        self.to_tokens_iter_items()
+            .map(ToTokensIterItem::into_main_tokens)
     }
 }
 

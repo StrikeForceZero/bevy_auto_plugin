@@ -14,6 +14,7 @@ mod auto_bind_plugin;
 mod auto_init_resource;
 mod auto_init_resource_generic;
 mod auto_init_state;
+mod auto_init_sub_state;
 mod auto_insert_resource;
 mod auto_insert_resource_with_generics;
 mod auto_name;

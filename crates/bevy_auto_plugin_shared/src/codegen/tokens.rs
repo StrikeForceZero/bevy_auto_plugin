@@ -200,6 +200,12 @@ pub fn derive_reflect() -> TokenStream {
     let derive_reflect_path = derive_reflect_path();
     quote! { #[derive(#derive_reflect_path)] }
 }
+
+pub fn use_bevy_state_app_ext_states() -> syn::ItemUse {
+    let root = crate::__private::paths::state::root_path();
+    parse_quote! { use #root::app::AppExtStates as _; }
+}
+
 pub fn auto_register_type(plugin: NonEmptyPath, args: RegisterTypeArgs) -> TokenStream {
     ArgsWithPlugin::new(plugin, args).to_token_stream()
 }

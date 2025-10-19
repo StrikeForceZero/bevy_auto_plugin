@@ -77,6 +77,10 @@ where
         self.inner
             .to_tokens_with_concrete_target_path(tokens, target)
     }
+
+    fn required_use_statements(&self) -> Vec<syn::ItemUse> {
+        self.inner.required_use_statements()
+    }
 }
 
 impl<T> PluginBound for WithPlugin<T>

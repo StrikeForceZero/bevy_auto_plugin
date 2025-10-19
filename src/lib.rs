@@ -27,6 +27,9 @@ pub mod prelude {
     pub use bevy_auto_plugin_proc_macros::auto_init_state;
 
     #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::auto_init_sub_state;
+
+    #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::auto_insert_resource;
 
     #[doc(inline)]
