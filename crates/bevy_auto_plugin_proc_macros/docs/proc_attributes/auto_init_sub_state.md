@@ -21,7 +21,7 @@ enum AppState {
     InGame
 }
 
-#[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
+#[derive(SubStates, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
 #[source(AppState = AppState::InGame)]
 #[auto_init_sub_state(plugin = MyPlugin)]
 #[auto_register_state_type(plugin = MyPlugin)]
