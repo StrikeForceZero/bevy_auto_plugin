@@ -385,13 +385,3 @@ gen_auto_outers! {
     auto_observer  => ObserverArgs,
     auto_states    => StatesArgs,
 }
-
-/// "helper" attributes normally act as a passthrough, but forwarding them to this function
-/// helps the user know the helper attributes are processed/consumed before their parent attribute
-pub fn passthrough_attr_unhandled(
-    _attr: MacroStream,
-    _input: MacroStream,
-    message: &'static str,
-) -> MacroStream {
-    syn::Error::new(Span::call_site(), message).to_compile_error()
-}
