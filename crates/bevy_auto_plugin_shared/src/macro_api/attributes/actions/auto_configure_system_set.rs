@@ -7,13 +7,14 @@ use crate::macro_api::with_plugin::WithPlugin;
 use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
 use crate::syntax::ast::flag::Flag;
 use crate::syntax::ast::type_list::TypeList;
+use crate::syntax::parse::item::ts_item_has_attr;
 use crate::syntax::parse::scrub_helpers::{AttrSite, scrub_helpers_and_ident_with_filter};
 use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
-use syn::{Attribute, Item, parse2};
+use syn::{Attribute, Item, parse_quote, parse2};
 
 const CONFIG_ATTR_NAME: &str = "auto_configure_system_set_config";
 const CHAIN_CONFLICT_ERR: &str = "`chain` and `chain_ignore_deferred` are mutually exclusive";
@@ -25,7 +26,7 @@ fn is_config_helper(attr: &Attribute) -> bool {
 #[derive(FromMeta, Default, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct ConfigureSystemSetArgsInnerEntry {
-    /// allows individual groups to be configured
+    /// allows per schedule entry/variants to be configured
     pub group: Option<Ident>,
     /// order in [`ConfigureSystemSetArgsInner::entries`]
     pub order: Option<usize>,
@@ -66,7 +67,7 @@ pub struct ConfigureSystemSetArgsInner {
 pub struct ConfigureSystemSetArgs {
     #[darling(multiple, default)]
     pub generics: Vec<TypeList>,
-    /// allows individual groups to be configured
+    /// allows per schedule entry/variants to be configured
     pub group: Option<Ident>,
     #[darling(flatten)]
     pub schedule_config: ScheduleWithScheduleConfigArgs,
@@ -77,6 +78,9 @@ pub struct ConfigureSystemSetArgs {
     #[darling(skip)]
     /// Some when enum, None when struct
     pub inner: Option<ConfigureSystemSetArgsInner>,
+    #[darling(skip, default)]
+    /// internal - used to track if this is the last attribute in the item to strip helpers
+    pub _strip_helpers: bool,
 }
 
 impl ConfigureSystemSetArgs {
@@ -173,6 +177,14 @@ impl ArgsBackToTokens for ConfigureSystemSetArgs {
     }
 }
 
+/// HACK - if the item doesn't have anymore `auto_configure_system_set` - set a flag to strip out the helper attributes
+fn check_strip_helpers(input: TokenStream, args: &mut ConfigureSystemSetArgs) -> syn::Result<()> {
+    if !ts_item_has_attr(input, &parse_quote!(auto_configure_system_set))? {
+        args._strip_helpers = true;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 pub fn args_from_attr_input(
     attr: TokenStream,
@@ -180,6 +192,7 @@ pub fn args_from_attr_input(
     input: &mut TokenStream,
 ) -> syn::Result<ConfigureSystemSetArgs> {
     let mut args = parse2::<ConfigureSystemSetArgs>(attr)?;
+    check_strip_helpers(input.clone(), &mut args)?;
     args_with_plugin_from_args_input(&mut args, input)?;
     Ok(args)
 }
@@ -190,6 +203,7 @@ pub fn with_plugin_args_from_attr_input(
     input: &mut TokenStream,
 ) -> syn::Result<WithPlugin<ConfigureSystemSetArgs>> {
     let mut args = parse2::<WithPlugin<ConfigureSystemSetArgs>>(attr)?;
+    check_strip_helpers(input.clone(), &mut args.inner)?;
     args_with_plugin_from_args_input(&mut args.inner, input)?;
     Ok(args)
 }
@@ -216,8 +230,15 @@ pub fn args_with_plugin_from_args_input(
         resolve_ident,
     )?;
 
-    // 3) Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
-    scrub.write_back(input)?;
+    // 3)
+    if args._strip_helpers {
+        // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
+        scrub.write_back(input)?;
+    } else {
+        // Check if we have errors to print and if so, strip helpers from the item
+        // Otherwise, maintain helpers for the next attribute to process
+        scrub.write_if_errors_with_scrubbed_item(input)?;
+    }
 
     // 4) If it's a struct, there are no entries to compute
     let data_enum = match scrub.item {
@@ -278,10 +299,7 @@ pub fn args_with_plugin_from_args_input(
                         if bucket.per_group.contains_key(g) {
                             return Err(syn::Error::new(
                                 attr.span(),
-                                format!(
-                                    "duplicate helper for variant `{}` and group `{}`",
-                                    variant, g
-                                ),
+                                format!("duplicate helper for variant `{variant}` and group `{g}`",),
                             ));
                         }
                         bucket.per_group.insert(g.clone(), entry);
@@ -291,8 +309,7 @@ pub fn args_with_plugin_from_args_input(
                             return Err(syn::Error::new(
                                 attr.span(),
                                 format!(
-                                    "duplicate default (no-group) helper for variant `{}`",
-                                    variant
+                                    "duplicate default (no-group) helper for variant `{variant}`",
                                 ),
                             ));
                         }
@@ -594,6 +611,7 @@ mod tests {
                     generics: vec![],
                     chain: Flag::from(false),
                     chain_ignore_deferred: Flag::from(false),
+                    _strip_helpers: true,
                 }
             );
             Ok(())
