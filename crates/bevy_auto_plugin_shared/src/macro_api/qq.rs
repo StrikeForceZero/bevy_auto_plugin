@@ -41,7 +41,7 @@ where
 
 impl ToTokens for QQ<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithGenerics>>> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let schedule = &self.args.args.core.schedule_config.schedule;
+        let schedule = &self.args.args.base.schedule_config.schedule;
         let extra_args = self.args.args.extra_args();
         tokens.extend(quote! {
             #(#extra_args),*

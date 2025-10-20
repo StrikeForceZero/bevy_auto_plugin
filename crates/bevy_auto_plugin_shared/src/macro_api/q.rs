@@ -17,7 +17,7 @@ struct Q<'a, T> {
 
 impl ToTokens for Q<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithGenerics>>> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let schedule = &self.args.args.core.schedule_config.schedule;
+        let schedule = &self.args.args.base.schedule_config.schedule;
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {
                 app.add_system(#schedule, #concrete_path);
