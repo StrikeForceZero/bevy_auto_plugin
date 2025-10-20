@@ -4,7 +4,7 @@ use crate::macro_api::composed::Composed;
 use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
 use crate::macro_api::macro_paths::MacroPathProvider;
-use crate::macro_api::mixins::generics::with::WithGenerics;
+use crate::macro_api::mixins::generics::with_many::WithZeroOrManyGenerics;
 use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::syntax::extensions::item::ItemAttrsExt;
 use proc_macro2::TokenStream;
@@ -39,7 +39,9 @@ where
     }
 }
 
-impl ToTokens for QQ<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithGenerics>>> {
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>>>
+{
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let schedule = &self.args.args.base.schedule_config.schedule;
         let extra_args = self.args.args.extra_args();

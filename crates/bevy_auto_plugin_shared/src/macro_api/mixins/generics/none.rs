@@ -9,29 +9,29 @@ use syn::parse::{Parse, ParseStream};
 use syn::spanned::Spanned;
 
 #[derive(Debug, Clone, Default)]
-pub struct WithoutGenerics {}
+pub struct WithNoGenerics {}
 
-impl WithoutGenerics {
+impl WithNoGenerics {
     pub const KEYS: &'static [&'static str] = &["generics"];
 }
 
-impl HasKeys for WithoutGenerics {
+impl HasKeys for WithNoGenerics {
     fn keys() -> &'static [&'static str] {
-        WithoutGenerics::KEYS
+        WithNoGenerics::KEYS
     }
 }
 
-impl HasGenerics for WithoutGenerics {
+impl HasGenerics for WithNoGenerics {
     fn generics(&self) -> &[TypeList] {
         &[]
     }
 }
 
-impl ToTokens for WithoutGenerics {
+impl ToTokens for WithNoGenerics {
     fn to_tokens(&self, _tokens: &mut TokenStream) {}
 }
 
-impl FromMeta for WithoutGenerics {
+impl FromMeta for WithNoGenerics {
     fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
         if !items.is_empty() {
             let errors = items
@@ -47,7 +47,7 @@ impl FromMeta for WithoutGenerics {
     }
 }
 
-impl Parse for WithoutGenerics {
+impl Parse for WithNoGenerics {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         if !input.is_empty() {
             return Err(input.error("generics are not supported"));

@@ -7,28 +7,28 @@ use quote::{ToTokens, quote};
 
 #[derive(Debug, Clone, Default, FromMeta)]
 #[darling(derive_syn_parse)]
-pub struct WithGenerics {
+pub struct WithZeroOrManyGenerics {
     #[darling(multiple, default, rename = "generics")]
     pub generics: Vec<TypeList>,
 }
 
-impl WithGenerics {
+impl WithZeroOrManyGenerics {
     pub const KEYS: &'static [&'static str] = &["generics"];
 }
 
-impl HasKeys for WithGenerics {
+impl HasKeys for WithZeroOrManyGenerics {
     fn keys() -> &'static [&'static str] {
-        WithGenerics::KEYS
+        WithZeroOrManyGenerics::KEYS
     }
 }
 
-impl HasGenerics for WithGenerics {
+impl HasGenerics for WithZeroOrManyGenerics {
     fn generics(&self) -> &[TypeList] {
         &self.generics
     }
 }
 
-impl ToTokens for WithGenerics {
+impl ToTokens for WithZeroOrManyGenerics {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if !self.generics.is_empty() {
             for g in &self.generics {
