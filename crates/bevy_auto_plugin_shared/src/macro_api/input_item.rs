@@ -18,7 +18,7 @@ impl InputItem {
         }
         Ok(())
     }
-    fn ensure_ast(&mut self) -> syn::Result<&syn::Item> {
+    pub fn ensure_ast(&mut self) -> syn::Result<&syn::Item> {
         self._upgrade()?;
         Ok(match &*self {
             Self::Ast(ast) => ast.as_ref(),

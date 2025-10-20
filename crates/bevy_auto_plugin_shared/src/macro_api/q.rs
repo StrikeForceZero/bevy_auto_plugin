@@ -1,5 +1,5 @@
-use crate::macro_api::attributes::ItemAttribute;
 use crate::macro_api::attributes::prelude::*;
+use crate::macro_api::attributes::{AllowFn, AllowStructOrEnum, ItemAttribute};
 use crate::macro_api::composed::Composed;
 use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
@@ -18,7 +18,7 @@ struct Q<'a, T> {
 }
 
 impl ToTokens
-    for Q<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for Q<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let schedule = &self.args.args.base.schedule_config.schedule;
@@ -31,7 +31,13 @@ impl ToTokens
 }
 
 impl ToTokens
-    for Q<'_, ItemAttribute<Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for Q<
+        '_,
+        ItemAttribute<
+            Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
@@ -43,7 +49,7 @@ impl ToTokens
 }
 
 impl ToTokens
-    for Q<'_, ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for Q<'_, ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
@@ -55,7 +61,13 @@ impl ToTokens
 }
 
 impl ToTokens
-    for Q<'_, ItemAttribute<Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for Q<
+        '_,
+        ItemAttribute<
+            Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
@@ -67,7 +79,13 @@ impl ToTokens
 }
 
 impl ToTokens
-    for Q<'_, ItemAttribute<Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for Q<
+        '_,
+        ItemAttribute<
+            Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
@@ -78,7 +96,9 @@ impl ToTokens
     }
 }
 
-impl ToTokens for Q<'_, ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>>> {
+impl ToTokens
+    for Q<'_, ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>>
+{
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {
@@ -88,7 +108,12 @@ impl ToTokens for Q<'_, ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNo
     }
 }
 
-impl ToTokens for Q<'_, ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>>> {
+impl ToTokens
+    for Q<
+        '_,
+        ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>,
+    >
+{
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {
@@ -99,7 +124,13 @@ impl ToTokens for Q<'_, ItemAttribute<Composed<InitSubStateArgs, WithPlugin, Wit
 }
 
 impl ToTokens
-    for Q<'_, ItemAttribute<Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>>>
+    for Q<
+        '_,
+        ItemAttribute<
+            Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
@@ -111,7 +142,13 @@ impl ToTokens
 }
 
 impl ToTokens
-    for Q<'_, ItemAttribute<Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for Q<
+        '_,
+        ItemAttribute<
+            Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
@@ -123,7 +160,13 @@ impl ToTokens
 }
 
 impl ToTokens
-    for Q<'_, ItemAttribute<Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for Q<
+        '_,
+        ItemAttribute<
+            Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
@@ -135,7 +178,13 @@ impl ToTokens
 }
 
 impl ToTokens
-    for Q<'_, ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for Q<
+        '_,
+        ItemAttribute<
+            Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {

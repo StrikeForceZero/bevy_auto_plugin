@@ -1,5 +1,5 @@
-use crate::macro_api::attributes::ItemAttribute;
 use crate::macro_api::attributes::prelude::*;
+use crate::macro_api::attributes::{AllowFn, AllowStructOrEnum, ItemAttribute};
 use crate::macro_api::composed::Composed;
 use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
@@ -42,7 +42,7 @@ where
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for QQ<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let schedule = &self.args.args.base.schedule_config.schedule;
@@ -55,7 +55,13 @@ impl ToTokens
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for QQ<
+        '_,
+        ItemAttribute<
+            Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let extra_args = self.args.args.extra_args();
@@ -66,7 +72,10 @@ impl ToTokens
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for QQ<
+        '_,
+        ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let extra_args = self.args.args.extra_args();
@@ -77,7 +86,13 @@ impl ToTokens
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for QQ<
+        '_,
+        ItemAttribute<
+            Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let extra_args = self.args.args.extra_args();
@@ -88,36 +103,13 @@ impl ToTokens
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>>>
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
-        tokens.extend(quote! {
-            #(#extra_args),*
-        });
-    }
-}
-
-impl ToTokens for QQ<'_, ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>>> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
-        tokens.extend(quote! {
-            #(#extra_args),*
-        });
-    }
-}
-
-impl ToTokens for QQ<'_, ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>>> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
-        tokens.extend(quote! {
-            #(#extra_args),*
-        });
-    }
-}
-
-impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>>>
+    for QQ<
+        '_,
+        ItemAttribute<
+            Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let extra_args = self.args.args.extra_args();
@@ -128,7 +120,10 @@ impl ToTokens
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for QQ<
+        '_,
+        ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let extra_args = self.args.args.extra_args();
@@ -139,7 +134,10 @@ impl ToTokens
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for QQ<
+        '_,
+        ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let extra_args = self.args.args.extra_args();
@@ -150,7 +148,64 @@ impl ToTokens
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>>>
+    for QQ<
+        '_,
+        ItemAttribute<
+            Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<
+        '_,
+        ItemAttribute<
+            Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<
+        '_,
+        ItemAttribute<
+            Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<
+        '_,
+        ItemAttribute<
+            Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let extra_args = self.args.args.extra_args();

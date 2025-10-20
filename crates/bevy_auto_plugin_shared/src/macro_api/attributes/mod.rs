@@ -10,6 +10,7 @@ use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
 use quote::format_ident;
 use std::hash::Hash;
+use std::marker::PhantomData;
 use syn::parse::Parse;
 use syn::spanned::Spanned;
 use syn::{Item, parse_quote, parse2};
@@ -66,16 +67,46 @@ pub trait ItemAttributeArgs:
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;
 }
 
-pub struct ItemAttribute<T> {
+pub trait IdentPathResolver {
+    const NOT_ALLOWED_MESSAGE: &'static str = "Unable to resolve ident path";
+    fn resolve_ident_path(item: &Item) -> Option<syn::Path>;
+}
+
+pub struct AllowStructOrEnum;
+impl IdentPathResolver for AllowStructOrEnum {
+    const NOT_ALLOWED_MESSAGE: &'static str = "Only allowed on Struct Or Enum items";
+    fn resolve_ident_path(item: &Item) -> Option<syn::Path> {
+        Some(match item {
+            Item::Struct(item) => item.ident.clone().into(),
+            Item::Enum(item) => item.ident.clone().into(),
+            _ => return None,
+        })
+    }
+}
+
+pub struct AllowFn;
+impl IdentPathResolver for AllowFn {
+    const NOT_ALLOWED_MESSAGE: &'static str = "Only allowed on Fn items";
+    fn resolve_ident_path(item: &Item) -> Option<syn::Path> {
+        Some(match item {
+            Item::Fn(item) => item.sig.ident.clone().into(),
+            _ => return None,
+        })
+    }
+}
+
+pub struct ItemAttribute<T, Resolver> {
     pub args: T,
     pub context: Context,
     pub input_item: InputItem,
-    pub target: syn::Ident,
+    pub target: syn::Path,
+    pub _resolver: PhantomData<Resolver>,
 }
 
-impl<T> ItemAttribute<T>
+impl<T, Resolver> ItemAttribute<T, Resolver>
 where
     T: Parse,
+    Resolver: IdentPathResolver,
 {
     pub fn from_attr_input(
         attr: TokenStream,
@@ -83,10 +114,11 @@ where
         context: Context,
     ) -> syn::Result<Self> {
         let mut input_item = InputItem::new(input);
-        let Some(target) = input_item.get_ident()?.cloned() else {
+        let item = input_item.ensure_ast()?;
+        let Some(target) = Resolver::resolve_ident_path(item) else {
             return Err(syn::Error::new(
                 input_item.span(),
-                "Unable to resolve target ident",
+                Resolver::NOT_ALLOWED_MESSAGE,
             ));
         };
         Ok(Self {
@@ -94,17 +126,18 @@ where
             context,
             input_item,
             target,
+            _resolver: PhantomData,
         })
     }
 }
 
-impl<T, M2> ItemAttribute<Composed<T, WithPlugin, M2>> {
+impl<T, M2, Resolver> ItemAttribute<Composed<T, WithPlugin, M2>, Resolver> {
     pub fn plugin(&self) -> &syn::Path {
         self.args.plugin()
     }
 }
 
-impl<T, M1, M2> ItemAttribute<Composed<T, M1, M2>>
+impl<T, M1, M2, Resolver> ItemAttribute<Composed<T, M1, M2>, Resolver>
 where
     M2: HasGenerics,
 {
@@ -113,8 +146,8 @@ where
     }
 }
 
-impl<T1> ItemAttribute<T1> {
-    fn convert_into<T2>(value: ItemAttribute<T1>) -> ItemAttribute<T2>
+impl<T1, Resolver> ItemAttribute<T1, Resolver> {
+    fn convert_into<T2>(value: ItemAttribute<T1, Resolver>) -> ItemAttribute<T2, Resolver>
     where
         T2: From<T1>,
     {
@@ -123,6 +156,7 @@ impl<T1> ItemAttribute<T1> {
             context: value.context,
             input_item: value.input_item,
             target: value.target,
+            _resolver: PhantomData,
         }
     }
 }
