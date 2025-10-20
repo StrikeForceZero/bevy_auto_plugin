@@ -1,12 +1,18 @@
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
+use crate::macro_api::composed::Composed;
+use crate::macro_api::context::Context;
+use crate::macro_api::input_item::InputItem;
+use crate::macro_api::mixins::generics::HasGenerics;
+use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::syntax::analysis::item::IdentFromItemResult;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use darling::FromMeta;
-use proc_macro2::Ident;
+use proc_macro2::{Ident, TokenStream};
 use quote::format_ident;
 use std::hash::Hash;
 use syn::parse::Parse;
-use syn::{Item, parse_quote};
+use syn::spanned::Spanned;
+use syn::{Item, parse_quote, parse2};
 
 mod actions;
 mod auto_plugin;
@@ -58,4 +64,65 @@ pub trait ItemAttributeArgs:
         format_ident!("_auto_plugin_{}_", Self::IDENT)
     }
     fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;
+}
+
+pub struct ItemAttribute<T> {
+    pub args: T,
+    pub context: Context,
+    pub input_item: InputItem,
+    pub target: syn::Ident,
+}
+
+impl<T> ItemAttribute<T>
+where
+    T: Parse,
+{
+    pub fn from_attr_input(
+        attr: TokenStream,
+        input: TokenStream,
+        context: Context,
+    ) -> syn::Result<Self> {
+        let mut input_item = InputItem::new(input);
+        let Some(target) = input_item.get_ident()?.cloned() else {
+            return Err(syn::Error::new(
+                input_item.span(),
+                "Unable to resolve target ident",
+            ));
+        };
+        Ok(Self {
+            args: parse2::<T>(attr)?,
+            context,
+            input_item,
+            target,
+        })
+    }
+}
+
+impl<T, M2> ItemAttribute<Composed<T, WithPlugin, M2>> {
+    pub fn plugin(&self) -> &syn::Path {
+        self.args.plugin()
+    }
+}
+
+impl<T, M1, M2> ItemAttribute<Composed<T, M1, M2>>
+where
+    M2: HasGenerics,
+{
+    pub fn concrete_paths(&self) -> Vec<syn::Path> {
+        self.args.concrete_paths(&self.target.clone().into())
+    }
+}
+
+impl<T1> ItemAttribute<T1> {
+    fn convert_into<T2>(value: ItemAttribute<T1>) -> ItemAttribute<T2>
+    where
+        T2: From<T1>,
+    {
+        ItemAttribute {
+            args: T2::from(value.args),
+            context: value.context,
+            input_item: value.input_item,
+            target: value.target,
+        }
+    }
 }
