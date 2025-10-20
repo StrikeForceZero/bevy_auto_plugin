@@ -1,10 +1,12 @@
 use crate::macro_api::attributes::ItemAttribute;
-use crate::macro_api::attributes::prelude::AddSystemArgs;
+use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::composed::Composed;
 use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
 use crate::macro_api::macro_paths::MacroPathProvider;
+use crate::macro_api::mixins::generics::none::WithNoGenerics;
 use crate::macro_api::mixins::generics::with_many::WithZeroOrManyGenerics;
+use crate::macro_api::mixins::generics::with_single::WithZeroOrOneGenerics;
 use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::syntax::extensions::item::ItemAttrsExt;
 use proc_macro2::TokenStream;
@@ -48,6 +50,112 @@ impl ToTokens
         tokens.extend(quote! {
             #(#extra_args),*
             schedule = #schedule,
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>>>
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>>>
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>>>
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>>>
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens for QQ<'_, ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>>> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens for QQ<'_, ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>>> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>>>
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>>>
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>>>
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>>>
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let extra_args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#extra_args),*
         });
     }
 }
