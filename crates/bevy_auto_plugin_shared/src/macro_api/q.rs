@@ -1,5 +1,5 @@
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::attributes::{AllowFn, AllowStructOrEnum, ItemAttribute};
+use crate::macro_api::attributes::{AllowFn, AllowStructOrEnum, GenericsCap, ItemAttribute};
 use crate::macro_api::composed::Composed;
 use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
@@ -100,11 +100,10 @@ impl ToTokens
     for Q<'_, ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        for concrete_path in self.args.concrete_paths() {
-            tokens.extend(quote! { |app| {
-                app.init_state::<#concrete_path>();
-            }});
-        }
+        let target = &self.args.target;
+        tokens.extend(quote! { |app| {
+            app.init_state::<#target>();
+        }});
     }
 }
 
@@ -115,11 +114,10 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        for concrete_path in self.args.concrete_paths() {
-            tokens.extend(quote! { |app| {
-                app.init_sub_state::<#concrete_path>();
-            }});
-        }
+        let target = &self.args.target;
+        tokens.extend(quote! { |app| {
+            app.init_sub_state::<#target>();
+        }});
     }
 }
 

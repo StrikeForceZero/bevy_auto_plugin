@@ -1,6 +1,4 @@
 use crate::macro_api::mixins::HasKeys;
-use crate::macro_api::mixins::generics::HasGenerics;
-use crate::syntax::ast::type_list::TypeList;
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::TokenStream;
@@ -18,12 +16,6 @@ impl WithNoGenerics {
 impl HasKeys for WithNoGenerics {
     fn keys() -> &'static [&'static str] {
         WithNoGenerics::KEYS
-    }
-}
-
-impl HasGenerics for WithNoGenerics {
-    fn generics(&self) -> &[TypeList] {
-        &[]
     }
 }
 

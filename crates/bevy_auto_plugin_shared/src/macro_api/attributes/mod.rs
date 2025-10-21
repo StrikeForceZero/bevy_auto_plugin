@@ -3,8 +3,11 @@ use crate::macro_api::composed::Composed;
 use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
 use crate::macro_api::mixins::generics::HasGenerics;
+use crate::macro_api::mixins::generics::with_many::WithZeroOrManyGenerics;
+use crate::macro_api::mixins::generics::with_single::WithZeroOrOneGenerics;
 use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::syntax::analysis::item::IdentFromItemResult;
+use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
@@ -95,6 +98,15 @@ impl IdentPathResolver for AllowFn {
     }
 }
 
+pub trait PluginCap {
+    fn plugin_path(&self) -> &syn::Path;
+}
+
+pub trait GenericsCap {
+    fn generics(&self) -> &[TypeList];
+    fn concrete_paths(&self) -> Vec<syn::Path>;
+}
+
 pub struct ItemAttribute<T, Resolver> {
     pub args: T,
     pub context: Context,
@@ -131,21 +143,6 @@ where
     }
 }
 
-impl<T, M2, Resolver> ItemAttribute<Composed<T, WithPlugin, M2>, Resolver> {
-    pub fn plugin(&self) -> &syn::Path {
-        self.args.plugin()
-    }
-}
-
-impl<T, M1, M2, Resolver> ItemAttribute<Composed<T, M1, M2>, Resolver>
-where
-    M2: HasGenerics,
-{
-    pub fn concrete_paths(&self) -> Vec<syn::Path> {
-        self.args.concrete_paths(&self.target.clone().into())
-    }
-}
-
 impl<T1, Resolver> ItemAttribute<T1, Resolver> {
     fn convert_into<T2>(value: ItemAttribute<T1, Resolver>) -> ItemAttribute<T2, Resolver>
     where
@@ -157,6 +154,34 @@ impl<T1, Resolver> ItemAttribute<T1, Resolver> {
             input_item: value.input_item,
             target: value.target,
             _resolver: PhantomData,
+        }
+    }
+}
+
+impl<C, M2, R> PluginCap for ItemAttribute<Composed<C, WithPlugin, M2>, R> {
+    fn plugin_path(&self) -> &syn::Path {
+        &self.args.plugin.plugin
+    }
+}
+
+impl<C, M1, M2, R> GenericsCap for ItemAttribute<Composed<C, M1, M2>, R>
+where
+    M2: HasGenerics,
+{
+    fn generics(&self) -> &[TypeList] {
+        self.args.generics.generics()
+    }
+    fn concrete_paths(&self) -> Vec<syn::Path> {
+        let target = &self.target;
+        if self.args.generics.generics().is_empty() {
+            vec![target.clone()]
+        } else {
+            self.args
+                .generics
+                .generics()
+                .iter()
+                .map(|g| syn::parse_quote!(#target::<#g>))
+                .collect()
         }
     }
 }
