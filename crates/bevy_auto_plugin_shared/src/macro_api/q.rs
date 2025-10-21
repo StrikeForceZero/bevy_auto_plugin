@@ -1,29 +1,41 @@
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::attributes::{AllowFn, AllowStructOrEnum, GenericsCap, ItemAttribute};
+use crate::macro_api::attributes::{
+    AllowFn, AllowStructOrEnum, GenericsCap, ItemAttribute, ItemAttributeParse,
+};
 use crate::macro_api::composed::Composed;
-use crate::macro_api::context::Context;
-use crate::macro_api::input_item::InputItem;
 use crate::macro_api::mixins::generics::none::WithNoGenerics;
 use crate::macro_api::mixins::generics::with_many::WithZeroOrManyGenerics;
 use crate::macro_api::mixins::generics::with_single::WithZeroOrOneGenerics;
 use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::syntax::extensions::lit::LitExt;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{ToTokens, format_ident, quote};
+use syn::parse::{Parse, ParseStream};
 
 /// for codegen attaching to bevy app
 pub(crate) struct Q<'a, T> {
     pub(crate) args: &'a T,
-    pub(crate) context: &'a Context,
-    pub(crate) input_item: &'a InputItem,
-    pub(crate) app_param: &'a syn::Ident,
+    // TODO: maybe app params should just be part of another wrapper struct?
+    pub(crate) app_param: syn::Ident,
+}
+
+impl<T> Q<'_, T>
+where
+    T: ItemAttributeParse,
+{
+    pub fn from_args(args: &T) -> Q<T> {
+        Q::<T> {
+            args,
+            app_param: format_ident!("app"),
+        }
+    }
 }
 
 pub trait RequiredUseQTokens {
     fn required_uses(&self) -> Vec<TokenStream> {
         vec![]
     }
-    fn to_tokens(&self, tokens: &mut TokenStream);
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident);
 }
 
 impl<'a, T> ToTokens for Q<'a, T>
@@ -32,15 +44,15 @@ where
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         tokens.extend(self.required_uses());
-        RequiredUseQTokens::to_tokens(self, tokens);
+        RequiredUseQTokens::to_tokens(self, tokens, &self.app_param);
     }
 }
 
-impl RequiredUseQTokens
-    for Q<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type AddSystem =
+    ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+pub type QAddSystemArgs<'a> = Q<'a, AddSystem>;
+impl RequiredUseQTokens for QAddSystemArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let schedule = &self.args.args.base.schedule_config.schedule;
         let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();
         for concrete_path in self.args.concrete_paths() {
@@ -51,17 +63,11 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<
-        '_,
-        ItemAttribute<
-            Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>,
-            AllowStructOrEnum,
-        >,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type AddMessage =
+    ItemAttribute<Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type QAddMessageArgs<'a> = Q<'a, AddMessage>;
+impl RequiredUseQTokens for QAddMessageArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
                 #app_param.add_message::<#concrete_path>();
@@ -70,11 +76,11 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<'_, ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type AddObserver =
+    ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+pub type QAddObserverArgs<'a> = Q<'a, AddObserver>;
+impl RequiredUseQTokens for QAddObserverArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
                 #app_param.add_observer::<#concrete_path>();
@@ -83,17 +89,11 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<
-        '_,
-        ItemAttribute<
-            Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>,
-            AllowStructOrEnum,
-        >,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type AddPlugin =
+    ItemAttribute<Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type QAddPluginArgs<'a> = Q<'a, AddPlugin>;
+impl RequiredUseQTokens for QAddPluginArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             if let Some(expr) = &self.args.args.base.init.expr {
                 tokens.extend(quote! {
@@ -112,17 +112,13 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<
-        '_,
-        ItemAttribute<
-            Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>,
-            AllowStructOrEnum,
-        >,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type InitResource = ItemAttribute<
+    Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>,
+    AllowStructOrEnum,
+>;
+pub type QInitResourceArgs<'a> = Q<'a, InitResource>;
+impl RequiredUseQTokens for QInitResourceArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
                 #app_param.init_resource::<#concrete_path>();
@@ -131,11 +127,11 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<'_, ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>>
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type InitState =
+    ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
+pub type QInitStateArgs<'a> = Q<'a, InitState>;
+impl RequiredUseQTokens for QInitStateArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let target = &self.args.target;
         tokens.extend(quote! {
             #app_param.init_state::<#target>();
@@ -143,14 +139,11 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<
-        '_,
-        ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type InitSubState =
+    ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
+pub type QInitSubStateArgs<'a> = Q<'a, InitSubState>;
+impl RequiredUseQTokens for QInitSubStateArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let target = &self.args.target;
         tokens.extend(quote! {
             #app_param.init_sub_state::<#target>();
@@ -158,17 +151,13 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<
-        '_,
-        ItemAttribute<
-            Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>,
-            AllowStructOrEnum,
-        >,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type InsertResource = ItemAttribute<
+    Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>,
+    AllowStructOrEnum,
+>;
+pub type QInsertResourceArgs<'a> = Q<'a, InsertResource>;
+impl RequiredUseQTokens for QInsertResourceArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {
                 #app_param.insert_resource(#concrete_path::default());
@@ -177,17 +166,13 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<
-        '_,
-        ItemAttribute<
-            Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
-            AllowStructOrEnum,
-        >,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type RegisterStateType = ItemAttribute<
+    Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
+    AllowStructOrEnum,
+>;
+pub type QRegisterStateTypeArgs<'a> = Q<'a, RegisterStateType>;
+impl RequiredUseQTokens for QRegisterStateTypeArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             let bevy_state = crate::__private::paths::state::root_path();
             tokens.extend(quote! {
@@ -198,17 +183,13 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<
-        '_,
-        ItemAttribute<
-            Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
-            AllowStructOrEnum,
-        >,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type RegisterType = ItemAttribute<
+    Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
+    AllowStructOrEnum,
+>;
+pub type QRegisterTypeArgs<'a> = Q<'a, RegisterType>;
+impl RequiredUseQTokens for QRegisterTypeArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
                 #app_param.register_type::<#concrete_path>();
@@ -217,17 +198,11 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<
-        '_,
-        ItemAttribute<
-            Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>,
-            AllowStructOrEnum,
-        >,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type RunOnBuild =
+    ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type QRunOnBuildArgs<'a> = Q<'a, RunOnBuild>;
+impl RequiredUseQTokens for QRunOnBuildArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
                 #concrete_path(#app_param);
@@ -236,17 +211,13 @@ impl RequiredUseQTokens
     }
 }
 
-impl RequiredUseQTokens
-    for Q<
-        '_,
-        ItemAttribute<
-            Composed<ConfigureSystemSetArgs, WithPlugin, WithZeroOrManyGenerics>,
-            AllowStructOrEnum,
-        >,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type ConfigureSystemSet = ItemAttribute<
+    Composed<ConfigureSystemSetArgs, WithPlugin, WithZeroOrManyGenerics>,
+    AllowStructOrEnum,
+>;
+pub type QConfigureSystemSetArgs<'a> = Q<'a, ConfigureSystemSet>;
+impl RequiredUseQTokens for QConfigureSystemSetArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args;
         let generics = args.generics();
         let base = &self.args.args.base;
@@ -300,14 +271,11 @@ impl RequiredUseQTokens
     }
 }
 
-impl ToTokens
-    for Q<
-        '_,
-        ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
-    >
-{
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let app_param = self.app_param;
+pub type Name =
+    ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type QNameArgs<'a> = Q<'a, Name>;
+impl RequiredUseQTokens for QNameArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args.base;
         for concrete_path in self.args.concrete_paths() {
             let name = args

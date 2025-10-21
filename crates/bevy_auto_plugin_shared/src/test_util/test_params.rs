@@ -1,7 +1,9 @@
 use crate::__private::attribute::RewriteAttribute;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::with_plugin::WithPlugin;
+use crate::macro_api::composed::Composed;
+use crate::macro_api::mixins::nothing::Nothing;
+use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use anyhow::anyhow;
 use darling::ast::NestedMeta;
@@ -63,18 +65,19 @@ pub(crate) fn _inject_derive(
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct TestParams<T: FromMeta> {
-    pub args: WithPlugin<T>,
+pub(crate) struct TestParams<T: FromMeta, G = Nothing> {
+    pub args: Composed<T, WithPlugin, G>,
     pub expected_derives: ExpandAttrs,
     pub expected_reflect: ExpandAttrs,
     pub expected_extras: ExpandAttrs,
 }
 
-impl<T: FromMeta + Clone + RewriteAttribute> TestParams<T>
+impl<T, G> TestParams<T, G>
 where
     for<'a> RegisterTypeArgs: From<&'a T>,
+    T: FromMeta + Clone + RewriteAttribute,
 {
-    pub(crate) fn new(args: WithPlugin<T>) -> Self {
+    pub(crate) fn new(args: Composed<T, WithPlugin, G>) -> Self {
         Self {
             args,
             expected_derives: ExpandAttrs::default(),
@@ -84,12 +87,12 @@ where
     }
     #[allow(dead_code)]
     pub(crate) fn from_list(nested_metas: &[NestedMeta]) -> syn::Result<Self> {
-        let args = WithPlugin::<T>::from_list(nested_metas)?;
+        let args = Composed::<T, WithPlugin, G>::from_list(nested_metas)?;
         Ok(Self::new(args))
     }
     #[allow(dead_code)]
     pub(crate) fn from_nested_meta(nested_meta: NestedMeta) -> syn::Result<Self> {
-        let args = WithPlugin::<T>::from_nested_meta(&nested_meta)?;
+        let args = Composed::<T, WithPlugin, G>::from_nested_meta(&nested_meta)?;
         Ok(Self::new(args))
     }
 
@@ -132,9 +135,10 @@ where
 
     /// calling order matters
     pub(crate) fn with_register(mut self) -> Self {
+        let plugin_path = NonEmptyPath::new(self.args.plugin().clone()).expect("bad plugin path");
         self.expected_extras.attrs.insert(
             0,
-            tokens::auto_register_type(self.args.plugin(), (&self.args.inner).into()),
+            tokens::auto_register_type(plugin_path, (&self.args.base).into()),
         );
         self
     }

@@ -2,6 +2,7 @@ use crate::macro_api::composed::Composed;
 use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
 use crate::macro_api::mixins::generics::HasGenerics;
+use crate::macro_api::mixins::nothing::Nothing;
 use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
@@ -9,7 +10,7 @@ use proc_macro2::{Ident, TokenStream};
 use quote::format_ident;
 use std::hash::Hash;
 use std::marker::PhantomData;
-use syn::parse::Parse;
+use syn::parse::{Parse, ParseStream};
 use syn::spanned::Spanned;
 use syn::{Item, parse_quote, parse2};
 
@@ -124,6 +125,40 @@ where
 
     pub fn get_unique_ident(&self, ident: &Ident) -> Ident {
         self._get_unique_ident(T::global_build_prefix(), ident)
+    }
+}
+
+pub trait ItemAttributeInput {
+    fn input_item(&self) -> &InputItem;
+}
+
+impl<T, Resolver> ItemAttributeInput for ItemAttribute<T, Resolver> {
+    fn input_item(&self) -> &InputItem {
+        &self.input_item
+    }
+}
+
+pub trait ItemAttributeParse {
+    fn from_attr_input_with_context(
+        attr: TokenStream,
+        input: TokenStream,
+        context: Context,
+    ) -> syn::Result<Self>
+    where
+        Self: Sized;
+}
+
+impl<T, Resolver> ItemAttributeParse for ItemAttribute<T, Resolver>
+where
+    T: Parse,
+    Resolver: IdentPathResolver,
+{
+    fn from_attr_input_with_context(
+        attr: TokenStream,
+        input: TokenStream,
+        context: Context,
+    ) -> syn::Result<Self> {
+        Self::from_attr_input(attr, input, context)
     }
 }
 

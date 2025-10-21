@@ -1,55 +1,40 @@
-use crate::__private::attribute::RewriteAttribute;
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
-use crate::codegen::with_target_path::{ToTokensIterItem, WithTargetPath};
-use crate::macro_api::attributes::ItemAttribute;
-use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
+use crate::macro_api::attributes::{ItemAttribute, ItemAttributeInput, PluginCap};
+use crate::macro_api::attributes::{ItemAttributeArgs, ItemAttributeParse};
 use crate::macro_api::composed::Composed;
-use crate::macro_api::mixins::with_plugin::WithPlugin;
-use crate::syntax::diagnostic::kind::item_kind;
-use darling::FromMeta;
-use proc_macro2::{Ident, Span, TokenStream as MacroStream};
+use crate::macro_api::context::Context;
+use crate::macro_api::mixins::prelude::*;
+use crate::macro_api::q::*;
+use crate::util::macros::ok_or_emit_with;
+use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::{ToTokens, format_ident, quote};
 use std::hash::Hash;
-use syn::{Item, parse2};
-use thiserror::Error;
+use syn::Item;
+use syn::parse::Parse;
 
 pub mod auto_bind_plugin;
 pub mod auto_plugin;
 
 fn body<T, G, R>(
     body: impl Fn(MacroStream) -> MacroStream,
-) -> impl Fn(&Ident, ItemAttribute<Composed<T, WithPlugin, G>, R>, &Item) -> syn::Result<MacroStream>
+) -> impl Fn(&Ident, Q<'_, ItemAttribute<Composed<T, WithPlugin, G>, R>>) -> syn::Result<MacroStream>
 where
     T: ItemAttributeArgs + Hash,
+    G: Hash + Clone,
+    for<'a> Q<'a, ItemAttribute<Composed<T, WithPlugin, G>, R>>: ToTokens,
 {
-    move |ident, params, _item| {
-        let unique_ident = params.get_unique_ident(ident);
-        let plugin = params.plugin().clone();
-        let with_target_path = WithTargetPath::from((ident.into(), params));
-        let output = with_target_path
-            .to_tokens_iter_items()
-            .enumerate()
-            .map(
-                |(
-                    ix,
-                    ToTokensIterItem {
-                        required_uses,
-                        main_tokens: tokens,
-                    },
-                )| {
-                    let body = body(tokens);
-                    let expr: syn::ExprClosure = syn::parse_quote!(|app| {
-                        #(#required_uses)*
-                        #body
-                    });
-                    // required for generics
-                    let unique_ident = format_ident!("{unique_ident}_{ix}");
-                    let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
-                    Ok(output)
-                },
-            )
-            .collect::<syn::Result<MacroStream>>()?;
+    move |ident, params| {
+        let app_param = &params.app_param;
+        let unique_ident = params.args.get_unique_ident(ident);
+        let plugin = params.args.plugin_path().clone();
+        let body = body(params.to_token_stream());
+        let expr: syn::ExprClosure = syn::parse_quote!(|#app_param| {
+            #body
+        });
+        // required for generics
+        let unique_ident = format_ident!("{unique_ident}");
+        let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
         assert!(
             !output.is_empty(),
             "No plugin entry points were generated for ident: {ident}"
@@ -58,11 +43,25 @@ where
     }
 }
 
-pub fn proc_attribute_rewrite_outer<T: RewriteAttribute + FromMeta>(
-    attr: MacroStream,
-    input: MacroStream,
-) -> MacroStream {
-    proc_attribute_rewrite_inner::<T>(attr, input).unwrap_or_else(|err| err.to_compile_error())
+fn proc_attribute_outer<T>(attr: MacroStream, input: MacroStream) -> MacroStream
+where
+    T: ItemAttributeParse + ItemAttributeInput,
+    for<'a> Q<'a, T>: ToTokens,
+{
+    let args = ok_or_emit_with!(
+        T::from_attr_input_with_context(attr, input.clone(), Context::default()),
+        input
+    );
+    let input = args.input_item();
+    let after_item_tokens = Q::from_args(&args).to_token_stream();
+    quote! {
+        #input
+        #after_item_tokens
+    }
+}
+
+fn proc_attribute_rewrite_outer<T>(attr: MacroStream, input: MacroStream) -> MacroStream {
+    todo!()
 }
 
 pub fn inject_plugin_arg_for_attributes(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {
@@ -128,17 +127,6 @@ fn list_has_key(ml: &syn::MetaList, key: &str) -> bool {
     }
 }
 
-macro_rules! gen_auto_attribute_outer_call_fns {
-    ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
-        $(
-            #[inline]
-            pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-                proc_attribute_outer_call_fn::<WithPlugin<$args>>(attr, input)
-            }
-        )+
-    };
-}
-
 macro_rules! gen_auto_attribute_outers {
     // Each item:  fn_name => ArgsTy [using <expr>]
     ( $( $fn:ident => $args:ty $(: parser = $parser:expr)? ),+ $(,)? ) => {
@@ -151,7 +139,7 @@ macro_rules! gen_auto_attribute_outers {
     (@one $fn:ident, $args:ty) => {
         #[inline]
         pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-            proc_attribute_outer::<WithPlugin<$args>>(attr, input)
+            proc_attribute_outer::<$args>(attr, input)
         }
     };
 
@@ -159,7 +147,7 @@ macro_rules! gen_auto_attribute_outers {
     (@one $fn:ident, $args:ty, $parser:expr) => {
         #[inline]
         pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-            proc_attribute_with_parser_outer::<WithPlugin<$args>>(attr, input, $parser)
+            proc_attribute_with_parser_outer::<$args>(attr, input, $parser)
         }
     };
 }
@@ -175,24 +163,20 @@ macro_rules! gen_auto_outers {
     };
 }
 
-gen_auto_attribute_outer_call_fns! {
-    auto_run_on_build         => RunOnBuildArgs,
-}
-
 gen_auto_attribute_outers! {
-    auto_register_type         => RegisterTypeArgs,
-    auto_add_message           => AddMessageArgs,
-    auto_init_resource         => InitResourceArgs,
-    auto_insert_resource       => InsertResourceArgs,
-    auto_init_state            => InitStateArgs,
-    auto_init_sub_state       => InitSubStateArgs,
-    auto_name                  => NameArgs,
-    auto_register_state_type   => RegisterStateTypeArgs,
-    auto_add_system            => AddSystemArgs,
-    auto_add_observer          => AddObserverArgs,
-    auto_add_plugin            => AddPluginArgs,
-    auto_configure_system_set => ConfigureSystemSetArgs:
-        parser = ArgParser::Custom(CustomParser::AttrInput(configure_system_set_args_from_attr_input)),
+    auto_run_on_build          => RunOnBuild,
+    auto_register_type         => RegisterType,
+    auto_add_message           => AddMessage,
+    auto_init_resource         => InitResource,
+    auto_insert_resource       => InsertResource,
+    auto_init_state            => InitState,
+    auto_init_sub_state        => InitSubState,
+    auto_name                  => Name,
+    auto_register_state_type   => RegisterStateType,
+    auto_add_system            => AddSystem,
+    auto_add_observer          => AddObserver,
+    auto_add_plugin            => AddPlugin,
+    auto_configure_system_set  => ConfigureSystemSet,
 }
 
 gen_auto_outers! {
