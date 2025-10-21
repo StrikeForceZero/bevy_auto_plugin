@@ -30,10 +30,13 @@ impl HasGenerics for WithZeroOrOneGenerics {
 
 impl ToTokens for WithZeroOrOneGenerics {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        if !self.generics.is_empty() {
-            for g in &self.generics {
-                tokens.extend(quote! { generics(#g) });
-            }
+        if self.generics.is_empty() {
+            return;
         }
+
+        let sets = self.generics.iter().map(|g| quote! { generics(#g) });
+        tokens.extend(quote! {
+            #(#sets),*
+        });
     }
 }
