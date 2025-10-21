@@ -14,5 +14,6 @@ pub(crate) mod prelude {
     pub use attributes::*;
     pub use composed::*;
     pub use mixins::prelude::*;
+    pub use q::*;
     pub use qq::*;
 }
