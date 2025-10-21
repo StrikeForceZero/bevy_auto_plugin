@@ -22,9 +22,10 @@ impl ToTokens
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let schedule = &self.args.args.base.schedule_config.schedule;
+        let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {
-                app.add_system(#schedule, #concrete_path);
+                .add_systems(#schedule, #concrete_path #config_tokens)
             }});
         }
     }
@@ -71,9 +72,19 @@ impl ToTokens
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
-            tokens.extend(quote! { |app| {
-                app.add_plugin::<#concrete_path>();
-            }});
+            if let Some(expr) = &self.args.args.base.init.expr {
+                tokens.extend(quote! { |app| {
+                    app.add_plugins({ let plugin: #concrete_path = #expr; plugin })
+                }});
+            } else if self.args.args.base.init.present {
+                tokens.extend(quote! { |app| {
+                    app.add_plugins(#concrete_path::default())
+                }});
+            } else {
+                tokens.extend(quote! { |app| {
+                    app.add_plugins(#concrete_path)
+                }});
+            }
         }
     }
 }
