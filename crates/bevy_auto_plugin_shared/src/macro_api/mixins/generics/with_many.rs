@@ -5,7 +5,7 @@ use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 
-#[derive(Debug, Clone, Default, FromMeta)]
+#[derive(Debug, Clone, Default, FromMeta, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct WithZeroOrManyGenerics {
     #[darling(multiple, default, rename = "generics")]

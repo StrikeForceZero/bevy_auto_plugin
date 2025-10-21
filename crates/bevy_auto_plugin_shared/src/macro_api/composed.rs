@@ -1,3 +1,4 @@
+use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
 use crate::macro_api::context::Context;
 use crate::macro_api::macro_paths::MacroPathProvider;
 use crate::macro_api::mixins::Mixin;
@@ -10,11 +11,12 @@ use darling::ast::NestedMeta;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::collections::HashSet;
+use std::hash::Hash;
 use syn::parse::{Parse, ParseStream};
 use syn::parse_quote;
 use syn::punctuated::Punctuated;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Composed<CBase, MPlugin = Nothing, MGenerics = Nothing> {
     pub base: CBase,
     pub plugin: MPlugin,
@@ -94,6 +96,21 @@ where
         Composed::<CBase, MPlugin, MGenerics>::from_list(&items)
             .map_err(|e| syn::Error::new(e.span(), e.to_string()))
     }
+}
+
+impl<T, P, G> AttributeIdent for Composed<T, P, G>
+where
+    T: AttributeIdent,
+{
+    const IDENT: &'static str = T::IDENT;
+}
+
+impl<T, P, G> ItemAttributeArgs for Composed<T, P, G>
+where
+    T: ItemAttributeArgs,
+    P: Hash + Clone,
+    G: Hash + Clone,
+{
 }
 
 impl<CBase, MPlugin, MGenerics> Composed<CBase, MPlugin, MGenerics> {

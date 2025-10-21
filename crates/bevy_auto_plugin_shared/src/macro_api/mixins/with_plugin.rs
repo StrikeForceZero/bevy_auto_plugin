@@ -3,7 +3,7 @@ use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 
-#[derive(Debug, Clone, FromMeta)]
+#[derive(Debug, Clone, FromMeta, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct WithPlugin {
     #[darling(rename = "plugin")]

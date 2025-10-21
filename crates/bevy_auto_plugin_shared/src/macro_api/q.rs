@@ -12,10 +12,10 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 
 /// for codegen attaching to bevy app
-struct Q<'a, T> {
-    args: &'a T,
-    context: &'a Context,
-    input_item: &'a InputItem,
+pub(crate) struct Q<'a, T> {
+    pub(crate) args: &'a T,
+    pub(crate) context: &'a Context,
+    pub(crate) input_item: &'a InputItem,
 }
 
 impl ToTokens

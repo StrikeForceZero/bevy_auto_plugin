@@ -1,48 +1,28 @@
 use crate::__private::attribute::RewriteAttribute;
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::codegen::with_target_path::{ToTokensIterItem, WithTargetPath};
+use crate::macro_api::attributes::ItemAttribute;
+use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
+use crate::macro_api::composed::Composed;
+use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::syntax::diagnostic::kind::item_kind;
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};
 use quote::{ToTokens, format_ident, quote};
+use std::hash::Hash;
 use syn::{Item, parse2};
 use thiserror::Error;
 
 pub mod auto_bind_plugin;
 pub mod auto_plugin;
 
-pub enum ArgParser<T> {
-    SynParse2,
-    Custom(CustomParser<T>),
-}
-
-impl<T: syn::parse::Parse> ArgParser<T> {
-    pub fn parse(&self, attr: MacroStream, input: &mut MacroStream) -> syn::Result<T> {
-        match self {
-            ArgParser::SynParse2 => parse2::<T>(attr),
-            ArgParser::Custom(custom) => custom.parse(attr, input),
-        }
-    }
-}
-
-pub enum CustomParser<T> {
-    AttrOnly(fn(MacroStream) -> syn::Result<T>),
-    AttrInput(fn(MacroStream, &mut MacroStream) -> syn::Result<T>),
-}
-
-impl<T: syn::parse::Parse> CustomParser<T> {
-    pub fn parse(&self, attr: MacroStream, input: &mut MacroStream) -> syn::Result<T> {
-        match self {
-            CustomParser::AttrOnly(f) => f(attr),
-            CustomParser::AttrInput(f) => f(attr, input),
-        }
-    }
-}
-
-fn body<T: PluginBound>(
+fn body<T, G, R>(
     body: impl Fn(MacroStream) -> MacroStream,
-) -> impl Fn(&Ident, T, &Item) -> syn::Result<MacroStream> {
+) -> impl Fn(&Ident, ItemAttribute<Composed<T, WithPlugin, G>, R>, &Item) -> syn::Result<MacroStream>
+where
+    T: ItemAttributeArgs + Hash,
+{
     move |ident, params, _item| {
         let unique_ident = params.get_unique_ident(ident);
         let plugin = params.plugin().clone();
@@ -76,165 +56,6 @@ fn body<T: PluginBound>(
         );
         Ok(output)
     }
-}
-
-#[derive(Error, Debug)]
-enum ProcAttributeError {
-    #[error("Failed to parse item: {0}")]
-    ParseItem(syn::Error),
-    #[error("Failed to resolve ident: {0}")]
-    ResolveIdent(syn::Error),
-    #[error("Failed to parse attr or input: {0}")]
-    ParseAttrOrInput(syn::Error),
-    #[error("Failed to generate body: {0}")]
-    GenerateBody(syn::Error),
-}
-
-impl ProcAttributeError {
-    fn err(&self) -> &syn::Error {
-        match self {
-            ProcAttributeError::ParseItem(err) => err,
-            ProcAttributeError::ResolveIdent(err) => err,
-            ProcAttributeError::ParseAttrOrInput(err) => err,
-            ProcAttributeError::GenerateBody(err) => err,
-        }
-    }
-}
-
-impl ToTokens for ProcAttributeError {
-    fn to_tokens(&self, tokens: &mut MacroStream) {
-        tokens.extend(self.err().to_compile_error());
-    }
-}
-
-fn proc_attribute_core<A, F>(
-    attr: impl Into<MacroStream>,
-    // this is the only way we can strip out non-derive based attribute helpers
-    input: &mut MacroStream,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-    parse_attr_input: ArgParser<A>,
-    body: F,
-) -> Result<MacroStream, ProcAttributeError>
-where
-    A: PluginBound,
-    F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
-{
-    let attr = attr.into();
-
-    // need to clone input so we can pass through input untouched for optimal IDE support
-    let item: Item = parse2(input.clone()).map_err(ProcAttributeError::ParseItem)?;
-
-    let ident = resolve_ident(&item)
-        .map_err(|err| {
-            let message = format!(
-                "Attribute macro is not allowed on {}: {err}",
-                item_kind(&item)
-            );
-            // make sure the call_site span is used instead so the user knows what attribute caused the error
-            syn::Error::new(Span::call_site(), message)
-        })
-        .map_err(ProcAttributeError::ResolveIdent)?;
-
-    let args = parse_attr_input
-        .parse(attr, input)
-        .map_err(ProcAttributeError::ParseAttrOrInput)?;
-
-    let output = body(ident, args, &item).map_err(ProcAttributeError::GenerateBody)?;
-
-    Ok(quote! {
-        #input
-        #output
-    })
-}
-
-fn proc_attribute_inner<A, F>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-    parse_attr_input: ArgParser<A>,
-    body: F,
-) -> MacroStream
-where
-    A: PluginBound,
-    F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
-{
-    let attr = attr.into();
-    let mut input = input.into();
-
-    match proc_attribute_core(attr, &mut input, resolve_ident, parse_attr_input, body) {
-        Ok(res) => res,
-        Err(err) => quote! {
-            #err
-            #input
-        },
-    }
-}
-
-/// Maps [`crate::syntax::analysis::item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
-fn resolve_item_ident<T: PluginBound>(item: &Item) -> syn::Result<&Ident> {
-    T::Inner::resolve_item_ident(item).map_err(syn::Error::from)
-}
-
-pub fn proc_attribute_outer<T>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-) -> MacroStream
-where
-    T: PluginBound,
-{
-    proc_attribute_inner(
-        attr,
-        input,
-        resolve_item_ident::<T>,
-        ArgParser::<T>::SynParse2,
-        body(|input| quote! { app #input ; }),
-    )
-}
-
-pub fn proc_attribute_with_parser_outer<T>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-    parser: ArgParser<T>,
-) -> MacroStream
-where
-    T: PluginBound,
-{
-    proc_attribute_inner(
-        attr,
-        input,
-        resolve_item_ident::<T>,
-        parser,
-        body(|input| quote! { app #input ; }),
-    )
-}
-
-pub fn proc_attribute_outer_call_fn<T>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-) -> MacroStream
-where
-    T: PluginBound,
-{
-    proc_attribute_inner(
-        attr,
-        input,
-        resolve_item_ident::<T>,
-        ArgParser::<T>::SynParse2,
-        body(|input| quote! { #input(app) ; }),
-    )
-}
-
-fn proc_attribute_rewrite_inner<T: RewriteAttribute + FromMeta>(
-    attr: MacroStream,
-    input: MacroStream,
-) -> syn::Result<MacroStream> {
-    use crate::macro_api::with_plugin::WithPlugin;
-    let args = parse2::<WithPlugin<T>>(attr)?;
-    let args_ts = args.inner.expand_attrs(&args.plugin());
-    Ok(quote! {
-        #args_ts
-        #input
-    })
 }
 
 pub fn proc_attribute_rewrite_outer<T: RewriteAttribute + FromMeta>(

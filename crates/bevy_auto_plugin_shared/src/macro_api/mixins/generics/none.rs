@@ -6,7 +6,7 @@ use quote::ToTokens;
 use syn::parse::{Parse, ParseStream};
 use syn::spanned::Spanned;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Hash)]
 pub struct WithNoGenerics {}
 
 impl WithNoGenerics {

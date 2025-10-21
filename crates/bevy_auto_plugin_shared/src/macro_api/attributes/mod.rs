@@ -109,7 +109,7 @@ impl<T, R> ItemAttribute<T, R>
 where
     T: ItemAttributeArgs + Hash,
 {
-    fn _concat_ident_hash(&self, ident: &Ident) -> String {
+    pub fn _concat_ident_hash(&self, ident: &Ident) -> String {
         use std::hash::{Hash, Hasher};
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         ident.hash(&mut hasher);
@@ -117,12 +117,12 @@ where
         format!("{:x}", hasher.finish())
     }
 
-    fn _get_unique_ident(&self, prefix: Ident, ident: &Ident) -> Ident {
+    pub fn _get_unique_ident(&self, prefix: Ident, ident: &Ident) -> Ident {
         let hash = self._concat_ident_hash(ident);
         format_ident!("{prefix}_{hash}")
     }
 
-    fn get_unique_ident(&self, ident: &Ident) -> Ident {
+    pub fn get_unique_ident(&self, ident: &Ident) -> Ident {
         self._get_unique_ident(T::global_build_prefix(), ident)
     }
 }

@@ -15,10 +15,10 @@ use syn::parse_quote;
 use syn::spanned::Spanned;
 
 /// for codegen re-emitting macro args
-struct QQ<'a, T> {
-    args: &'a T,
-    context: &'a Context,
-    input_item: &'a mut InputItem,
+pub(crate) struct QQ<'a, T> {
+    pub(crate) args: &'a T,
+    pub(crate) context: &'a Context,
+    pub(crate) input_item: &'a mut InputItem,
 }
 
 impl<T> QQ<'_, T>
@@ -26,7 +26,7 @@ where
     T: MacroPathProvider,
     Self: ToTokens,
 {
-    fn inject_attribute_macro(&mut self) -> syn::Result<()> {
+    pub fn inject_attribute_macro(&mut self) -> syn::Result<()> {
         let args = self.to_token_stream();
         self.input_item.map_ast(|item| {
             let macro_path = T::macro_path(self.context);
