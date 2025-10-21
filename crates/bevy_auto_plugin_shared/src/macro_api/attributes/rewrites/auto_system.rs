@@ -55,7 +55,7 @@ impl RewriteAttribute for SystemArgs {
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<SystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
+    for Q<'_, ItemAttribute<Composed<SystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
 }

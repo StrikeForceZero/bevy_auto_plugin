@@ -49,7 +49,7 @@ impl RewriteAttribute for ObserverArgs {
 }
 
 impl ToTokens
-    for QQ<'_, ItemAttribute<Composed<ObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
+    for Q<'_, ItemAttribute<Composed<ObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
 }

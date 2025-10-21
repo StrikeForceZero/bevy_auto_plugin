@@ -75,7 +75,7 @@ impl RewriteAttribute for MessageArgs {
 }
 
 impl ToTokens
-    for QQ<
+    for Q<
         '_,
         ItemAttribute<Composed<MessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
     >

@@ -72,7 +72,7 @@ impl RewriteAttribute for StatesArgs {
 }
 
 impl ToTokens
-    for QQ<
+    for Q<
         '_,
         ItemAttribute<Composed<StatesArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
     >

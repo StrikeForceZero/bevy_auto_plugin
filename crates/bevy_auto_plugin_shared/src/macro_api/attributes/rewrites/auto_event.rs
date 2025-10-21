@@ -93,7 +93,7 @@ impl RewriteAttribute for EventArgs {
 }
 
 impl ToTokens
-    for QQ<
+    for Q<
         '_,
         ItemAttribute<Composed<EventArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
     >

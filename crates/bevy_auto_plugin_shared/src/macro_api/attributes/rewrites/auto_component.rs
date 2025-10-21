@@ -80,7 +80,7 @@ impl RewriteAttribute for ComponentArgs {
 }
 
 impl ToTokens
-    for QQ<
+    for Q<
         '_,
         ItemAttribute<
             Composed<ComponentArgs, WithPlugin, WithZeroOrManyGenerics>,

@@ -77,7 +77,7 @@ impl RewriteAttribute for ResourceArgs {
 }
 
 impl ToTokens
-    for QQ<
+    for Q<
         '_,
         ItemAttribute<Composed<EventArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
     >
