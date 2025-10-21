@@ -1,6 +1,11 @@
-use crate::macro_api::attributes::AttributeIdent;
+use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, GenericsCap, ItemAttribute};
+use crate::macro_api::composed::Composed;
+use crate::macro_api::prelude::{WithPlugin, WithZeroOrManyGenerics};
+use crate::macro_api::q::{Q, RequiredUseQTokens};
 use crate::syntax::ast::flag_or_expr::FlagOrExpr;
 use darling::FromMeta;
+use proc_macro2::TokenStream;
+use quote::quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -11,4 +16,28 @@ pub struct AddPluginArgs {
 
 impl AttributeIdent for AddPluginArgs {
     const IDENT: &'static str = "auto_add_plugin";
+}
+
+pub type AddPlugin =
+    ItemAttribute<Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type QAddPluginArgs<'a> = Q<'a, AddPlugin>;
+
+impl RequiredUseQTokens for QAddPluginArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+        for concrete_path in self.args.concrete_paths() {
+            if let Some(expr) = &self.args.args.base.init.expr {
+                tokens.extend(quote! {
+                    #app_param.add_plugins({ let plugin: #concrete_path = #expr; plugin });
+                });
+            } else if self.args.args.base.init.present {
+                tokens.extend(quote! {
+                    #app_param.add_plugins(#concrete_path::default());
+                });
+            } else {
+                tokens.extend(quote! {
+                    #app_param.add_plugins(#concrete_path);
+                });
+            }
+        }
+    }
 }

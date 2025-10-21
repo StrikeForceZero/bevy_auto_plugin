@@ -1,4 +1,7 @@
-use crate::macro_api::attributes::AttributeIdent;
+use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, GenericsCap, ItemAttribute};
+use crate::macro_api::composed::Composed;
+use crate::macro_api::prelude::{WithPlugin, WithZeroOrManyGenerics};
+use crate::macro_api::q::{Q, RequiredUseQTokens};
 use crate::macro_api::schedule_config::{ScheduleConfigArgs, ScheduleWithScheduleConfigArgs};
 use crate::syntax::analysis::item::resolve_ident_from_struct_or_enum;
 use crate::syntax::ast::flag::Flag;
@@ -6,6 +9,7 @@ use crate::syntax::parse::item::ts_item_has_attr;
 use crate::syntax::parse::scrub_helpers::{AttrSite, scrub_helpers_and_ident_with_filter};
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
+use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
 use syn::{Attribute, Item, parse_quote};
 
@@ -586,6 +590,67 @@ mod tests {
             .map_err(|e| e.to_string());
 
             assert_eq!(res, Err(CHAIN_CONFLICT_ERR.into()));
+        }
+    }
+}
+
+pub type ConfigureSystemSet = ItemAttribute<
+    Composed<ConfigureSystemSetArgs, WithPlugin, WithZeroOrManyGenerics>,
+    AllowStructOrEnum,
+>;
+pub type QConfigureSystemSetArgs<'a> = Q<'a, ConfigureSystemSet>;
+
+impl RequiredUseQTokens for QConfigureSystemSetArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+        let args = &self.args.args;
+        let generics = args.generics();
+        let base = &self.args.args.base;
+        let schedule = &args.base.schedule_config.schedule;
+        let config_tokens = args.base.schedule_config.config.to_token_stream();
+        for concrete_path in self.args.concrete_paths() {
+            if let Some(inner) = &base.inner {
+                // enum
+                let chained = if base.chain.is_present() {
+                    quote! { .chain() }
+                } else if base.chain_ignore_deferred.is_present() {
+                    quote! { .chain_ignore_deferred() }
+                } else {
+                    quote! {}
+                };
+                let mut entries = vec![];
+                for (ident, entry) in inner.entries.iter() {
+                    let chained = if entry.chain.is_present() {
+                        quote! { .chain() }
+                    } else if entry.chain_ignore_deferred.is_present() {
+                        quote! { .chain_ignore_deferred() }
+                    } else {
+                        quote! {}
+                    };
+                    let config_tokens = entry.config.to_token_stream();
+                    entries.push(quote! {
+                        #concrete_path :: #ident #chained #config_tokens
+                    });
+                }
+                if !entries.is_empty() {
+                    tokens.extend(quote! {
+                         #app_param.configure_sets(#schedule, (#(#entries),*) #chained #config_tokens);
+                    });
+                }
+            } else {
+                // struct
+                if generics.is_empty() {
+                    tokens.extend(quote! {
+                        #app_param.configure_sets(#schedule, #concrete_path #config_tokens);
+                    });
+                } else {
+                    // TODO: generics are kind of silly here
+                    //  but if someone does use them we'll assume its just a marker type
+                    //  that can be initialized via `Default::default()`
+                    tokens.extend(quote! {
+                        #app_param.configure_sets(#schedule, #concrete_path::default() #config_tokens);
+                    });
+                }
+            }
         }
     }
 }
