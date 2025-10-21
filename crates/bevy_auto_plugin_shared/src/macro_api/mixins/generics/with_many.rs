@@ -30,13 +30,47 @@ impl HasGenerics for WithZeroOrManyGenerics {
 
 impl ToTokens for WithZeroOrManyGenerics {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        if self.generics.is_empty() {
-            return;
-        }
-
         let sets = self.generics.iter().map(|g| quote! { generics(#g) });
         tokens.extend(quote! {
             #(#sets),*
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use internal_test_proc_macro::xtest;
+    use syn::parse_quote;
+
+    #[xtest]
+    fn test_to_tokens_zero() {
+        WithZeroOrManyGenerics { generics: vec![] }
+            .to_token_stream()
+            .to_string()
+            == r#""#;
+    }
+
+    #[xtest]
+    fn test_to_tokens_single() {
+        WithZeroOrManyGenerics {
+            generics: vec![TypeList(vec![parse_quote!(bool), parse_quote!(u32)])],
+        }
+        .to_token_stream()
+        .to_string()
+            == r#"generics(bool, u32)"#;
+    }
+
+    #[xtest]
+    fn test_to_tokens_multiple() {
+        WithZeroOrManyGenerics {
+            generics: vec![
+                TypeList(vec![parse_quote!(bool), parse_quote!(u32)]),
+                TypeList(vec![parse_quote!(usize)]),
+            ],
+        }
+        .to_token_stream()
+        .to_string()
+            == r#"generics(bool, u32), generics(usize)"#;
     }
 }

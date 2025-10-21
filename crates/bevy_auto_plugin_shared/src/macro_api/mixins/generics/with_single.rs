@@ -8,8 +8,8 @@ use quote::{ToTokens, quote};
 #[derive(Debug, Clone, Default, FromMeta)]
 #[darling(derive_syn_parse)]
 pub struct WithZeroOrOneGenerics {
-    #[darling(multiple, default, rename = "generics")]
-    pub generics: Vec<TypeList>,
+    #[darling(default, rename = "generics")]
+    pub generics: Option<TypeList>,
 }
 
 impl WithZeroOrOneGenerics {
@@ -24,19 +24,40 @@ impl HasKeys for WithZeroOrOneGenerics {
 
 impl HasGenerics for WithZeroOrOneGenerics {
     fn generics(&self) -> &[TypeList] {
-        &self.generics
+        self.generics.as_slice()
     }
 }
 
 impl ToTokens for WithZeroOrOneGenerics {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        if self.generics.is_empty() {
-            return;
-        }
-
         let sets = self.generics.iter().map(|g| quote! { generics(#g) });
         tokens.extend(quote! {
             #(#sets),*
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use internal_test_proc_macro::xtest;
+    use syn::parse_quote;
+
+    #[xtest]
+    fn test_to_tokens_zero() {
+        WithZeroOrOneGenerics { generics: None }
+            .to_token_stream()
+            .to_string()
+            == r#""#;
+    }
+
+    #[xtest]
+    fn test_to_tokens_single() {
+        WithZeroOrOneGenerics {
+            generics: Some(TypeList(vec![parse_quote!(bool), parse_quote!(u32)])),
+        }
+        .to_token_stream()
+        .to_string()
+            == r#"generics(bool, u32)"#;
     }
 }
