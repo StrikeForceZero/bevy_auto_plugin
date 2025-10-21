@@ -30,7 +30,7 @@ where
 
 pub mod prelude {
     use super::*;
-    pub use generics::*;
+    pub use generics::prelude::*;
     pub use nothing::*;
     pub use with_plugin::*;
 }
