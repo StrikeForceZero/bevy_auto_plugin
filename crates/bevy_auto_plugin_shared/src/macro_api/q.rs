@@ -26,7 +26,7 @@ impl ToTokens
         let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {
-                .add_systems(#schedule, #concrete_path #config_tokens)
+                app.add_systems(#schedule, #concrete_path #config_tokens)
             }});
         }
     }
