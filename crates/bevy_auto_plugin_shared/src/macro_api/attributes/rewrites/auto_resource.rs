@@ -1,14 +1,14 @@
 use crate::__private::attribute::RewriteAttribute;
-use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::macro_api::attributes::prelude::*;
+use crate::macro_api::prelude::*;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
-use quote::quote;
+use quote::{ToTokens, quote};
 use syn::parse_quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
@@ -74,4 +74,13 @@ impl RewriteAttribute for ResourceArgs {
         }
         expanded_attrs
     }
+}
+
+impl ToTokens
+    for QQ<
+        '_,
+        ItemAttribute<Composed<EventArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
+    >
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {}
 }

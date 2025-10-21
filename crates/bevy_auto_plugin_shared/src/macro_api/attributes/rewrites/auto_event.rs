@@ -1,9 +1,9 @@
 use crate::__private::attribute::RewriteAttribute;
-use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::macro_api::attributes::prelude::*;
+use crate::macro_api::prelude::*;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use darling::FromMeta;
@@ -90,4 +90,13 @@ impl RewriteAttribute for EventArgs {
         }
         expanded_attrs
     }
+}
+
+impl ToTokens
+    for QQ<
+        '_,
+        ItemAttribute<Composed<EventArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
+    >
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {}
 }

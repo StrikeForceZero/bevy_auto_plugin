@@ -3,10 +3,11 @@ use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::macro_api::attributes::prelude::*;
+use crate::macro_api::prelude::*;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use darling::FromMeta;
-use proc_macro2::TokenStream as MacroStream;
-use quote::quote;
+use proc_macro2::{TokenStream as MacroStream, TokenStream};
+use quote::{ToTokens, quote};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -45,4 +46,10 @@ impl RewriteAttribute for ObserverArgs {
             .push(tokens::auto_add_observer(plugin.clone(), self.into()));
         expanded_attrs
     }
+}
+
+impl ToTokens
+    for QQ<'_, ItemAttribute<Composed<ObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {}
 }
