@@ -8,4 +8,3 @@ pub(super) mod mixins;
 pub(crate) mod q;
 pub(crate) mod qq;
 pub mod schedule_config;
-pub mod with_plugin;

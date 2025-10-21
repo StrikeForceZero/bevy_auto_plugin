@@ -1,20 +1,13 @@
-use crate::codegen::tokens::ArgsBackToTokens;
-use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
-use crate::macro_api::attributes::prelude::GenericsArgs;
-use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
+use crate::macro_api::attributes::AttributeIdent;
 use crate::macro_api::schedule_config::{ScheduleConfigArgs, ScheduleWithScheduleConfigArgs};
-use crate::macro_api::with_plugin::WithPlugin;
-use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
+use crate::syntax::analysis::item::resolve_ident_from_struct_or_enum;
 use crate::syntax::ast::flag::Flag;
-use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::parse::item::ts_item_has_attr;
 use crate::syntax::parse::scrub_helpers::{AttrSite, scrub_helpers_and_ident_with_filter};
-use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
-use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
-use syn::{Attribute, Item, parse_quote, parse2};
+use syn::{Attribute, Item, parse_quote};
 
 const CONFIG_ATTR_NAME: &str = "auto_configure_system_set_config";
 const CHAIN_CONFLICT_ERR: &str = "`chain` and `chain_ignore_deferred` are mutually exclusive";
@@ -65,8 +58,6 @@ pub struct ConfigureSystemSetArgsInner {
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct ConfigureSystemSetArgs {
-    #[darling(multiple, default)]
-    pub generics: Vec<TypeList>,
     /// allows per schedule entry/variants to be configured
     pub group: Option<Ident>,
     #[darling(flatten)]
@@ -99,84 +90,6 @@ impl AttributeIdent for ConfigureSystemSetArgs {
     const IDENT: &'static str = "auto_configure_system_set";
 }
 
-impl ItemAttributeArgs for ConfigureSystemSetArgs {
-    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
-        resolve_ident_from_struct_or_enum(item)
-    }
-}
-
-impl GenericsArgs for ConfigureSystemSetArgs {
-    const TURBOFISH: bool = true;
-    fn type_lists(&self) -> &[TypeList] {
-        &self.generics
-    }
-}
-
-impl ToTokensWithConcreteTargetPath for ConfigureSystemSetArgs {
-    fn to_tokens_with_concrete_target_path(
-        &self,
-        tokens: &mut TokenStream,
-        target: &ConcreteTargetPath,
-    ) {
-        let schedule = &self.schedule_config.schedule;
-        let config_tokens = self.schedule_config.config.to_token_stream();
-        if let Some(inner) = &self.inner {
-            // enum
-            let chained = if self.chain.is_present() {
-                quote! { .chain() }
-            } else if self.chain_ignore_deferred.is_present() {
-                quote! { .chain_ignore_deferred() }
-            } else {
-                quote! {}
-            };
-            let mut entries = vec![];
-            for (ident, entry) in inner.entries.iter() {
-                let chained = if entry.chain.is_present() {
-                    quote! { .chain() }
-                } else if entry.chain_ignore_deferred.is_present() {
-                    quote! { .chain_ignore_deferred() }
-                } else {
-                    quote! {}
-                };
-                let config_tokens = entry.config.to_token_stream();
-                entries.push(quote! {
-                    #target :: #ident #chained #config_tokens
-                });
-            }
-            if !entries.is_empty() {
-                tokens.extend(quote! {
-                     .configure_sets(#schedule, (#(#entries),*) #chained #config_tokens)
-                });
-            }
-        } else {
-            // struct
-            if target.generics.is_empty() {
-                tokens.extend(quote! {
-                    .configure_sets(#schedule, #target #config_tokens)
-                });
-            } else {
-                // TODO: generics are kind of silly here
-                //  but if someone does use them we'll assume its just a marker type
-                //  that can be initialized via `Default::default()`
-                tokens.extend(quote! {
-                    .configure_sets(#schedule, #target::default() #config_tokens)
-                });
-            }
-        }
-    }
-}
-
-impl ArgsBackToTokens for ConfigureSystemSetArgs {
-    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        let mut args = vec![];
-        if !self.generics().is_empty() {
-            args.extend(self.generics().to_attribute_arg_vec_tokens());
-        }
-        args.extend(self.schedule_config.to_inner_arg_tokens_vec());
-        tokens.extend(quote! { #(#args),* });
-    }
-}
-
 /// HACK - if the item doesn't have anymore `auto_configure_system_set` - set a flag to strip out the helper attributes
 fn check_strip_helpers(input: TokenStream, args: &mut ConfigureSystemSetArgs) -> syn::Result<()> {
     if !ts_item_has_attr(input, &parse_quote!(auto_configure_system_set))? {
@@ -191,20 +104,9 @@ pub fn args_from_attr_input(
     // this is the only way we can strip out non-derive based attribute helpers
     input: &mut TokenStream,
 ) -> syn::Result<ConfigureSystemSetArgs> {
-    let mut args = parse2::<ConfigureSystemSetArgs>(attr)?;
+    let mut args = syn::parse2::<ConfigureSystemSetArgs>(attr)?;
     check_strip_helpers(input.clone(), &mut args)?;
     args_with_plugin_from_args_input(&mut args, input)?;
-    Ok(args)
-}
-
-pub fn with_plugin_args_from_attr_input(
-    attr: TokenStream,
-    // this is the only way we can strip out non-derive based attribute helpers
-    input: &mut TokenStream,
-) -> syn::Result<WithPlugin<ConfigureSystemSetArgs>> {
-    let mut args = parse2::<WithPlugin<ConfigureSystemSetArgs>>(attr)?;
-    check_strip_helpers(input.clone(), &mut args.inner)?;
-    args_with_plugin_from_args_input(&mut args.inner, input)?;
     Ok(args)
 }
 
@@ -417,6 +319,7 @@ mod tests {
 
     mod test_struct {
         use super::*;
+        use quote::quote;
         #[xtest]
         fn test_to_tokens_no_generics() -> syn::Result<()> {
             let args = parse2::<ConfigureSystemSetArgs>(quote!(schedule = Update))?;
@@ -484,6 +387,7 @@ mod tests {
     mod test_enum {
         use super::*;
         use crate::syntax::validated::path_without_generics::PathWithoutGenerics;
+        use quote::quote;
 
         #[xtest]
         fn test_to_tokens_no_generics() -> syn::Result<()> {

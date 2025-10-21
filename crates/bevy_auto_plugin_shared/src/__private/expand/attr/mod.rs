@@ -1,9 +1,7 @@
 use crate::__private::attribute::RewriteAttribute;
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::codegen::with_target_path::{ToTokensIterItem, WithTargetPath};
-use crate::macro_api::attributes::ItemAttributeArgs;
 use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::with_plugin::{PluginBound, WithPlugin};
 use crate::syntax::diagnostic::kind::item_kind;
 use darling::FromMeta;
 use proc_macro2::{Ident, Span, TokenStream as MacroStream};

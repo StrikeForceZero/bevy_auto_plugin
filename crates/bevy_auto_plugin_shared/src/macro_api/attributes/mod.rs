@@ -1,15 +1,10 @@
-use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::composed::Composed;
 use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
 use crate::macro_api::mixins::generics::HasGenerics;
-use crate::macro_api::mixins::generics::with_many::WithZeroOrManyGenerics;
-use crate::macro_api::mixins::generics::with_single::WithZeroOrOneGenerics;
 use crate::macro_api::mixins::with_plugin::WithPlugin;
-use crate::syntax::analysis::item::IdentFromItemResult;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
-use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
 use quote::format_ident;
 use std::hash::Hash;
@@ -31,10 +26,7 @@ pub mod prelude {
     pub use crate::macro_api::attributes::actions::auto_add_observer::AddObserverArgs;
     pub use crate::macro_api::attributes::actions::auto_add_plugin::AddPluginArgs;
     pub use crate::macro_api::attributes::actions::auto_add_system::AddSystemArgs;
-    pub use crate::macro_api::attributes::actions::auto_configure_system_set::{
-        ConfigureSystemSetArgs,
-        with_plugin_args_from_attr_input as configure_system_set_args_from_attr_input,
-    };
+    pub use crate::macro_api::attributes::actions::auto_configure_system_set::ConfigureSystemSetArgs;
     pub use crate::macro_api::attributes::actions::auto_init_resource::InitResourceArgs;
     pub use crate::macro_api::attributes::actions::auto_init_state::InitStateArgs;
     pub use crate::macro_api::attributes::actions::auto_init_sub_state::InitSubStateArgs;
@@ -61,13 +53,10 @@ pub trait AttributeIdent {
     }
 }
 
-pub trait ItemAttributeArgs:
-    AttributeIdent + FromMeta + Parse + ToTokensWithConcreteTargetPath + Hash + Clone
-{
+pub trait ItemAttributeArgs: AttributeIdent + Hash + Clone {
     fn global_build_prefix() -> Ident {
         format_ident!("_auto_plugin_{}_", Self::IDENT)
     }
-    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_>;
 }
 
 pub trait IdentPathResolver {
@@ -113,6 +102,29 @@ pub struct ItemAttribute<T, Resolver> {
     pub input_item: InputItem,
     pub target: syn::Path,
     pub _resolver: PhantomData<Resolver>,
+}
+
+// TODO: where should this live?
+impl<T, R> ItemAttribute<T, R>
+where
+    T: ItemAttributeArgs + Hash,
+{
+    fn _concat_ident_hash(&self, ident: &Ident) -> String {
+        use std::hash::{Hash, Hasher};
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        ident.hash(&mut hasher);
+        self.args.hash(&mut hasher);
+        format!("{:x}", hasher.finish())
+    }
+
+    fn _get_unique_ident(&self, prefix: Ident, ident: &Ident) -> Ident {
+        let hash = self._concat_ident_hash(ident);
+        format_ident!("{prefix}_{hash}")
+    }
+
+    fn get_unique_ident(&self, ident: &Ident) -> Ident {
+        self._get_unique_ident(T::global_build_prefix(), ident)
+    }
 }
 
 impl<T, Resolver> ItemAttribute<T, Resolver>
