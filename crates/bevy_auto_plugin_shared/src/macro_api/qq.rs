@@ -46,10 +46,10 @@ impl ToTokens
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let schedule = &self.args.args.base.schedule_config.schedule;
-        let extra_args = self.args.args.extra_args();
+        let mut args = self.args.args.extra_args();
+        args.push(quote! { schedule = #schedule });
         tokens.extend(quote! {
-            #(#extra_args),*
-            schedule = #schedule,
+            #(#args),*
         });
     }
 }
@@ -64,9 +64,9 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
@@ -78,9 +78,9 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
@@ -95,9 +95,9 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
@@ -112,9 +112,9 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
@@ -126,9 +126,9 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
@@ -140,9 +140,9 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
@@ -157,9 +157,11 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let mut args = self.args.args.extra_args();
+        let resource = &self.args.args.base.resource;
+        args.push(quote! { resource = #resource });
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
@@ -174,9 +176,9 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
@@ -191,9 +193,9 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
@@ -208,9 +210,9 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let extra_args = self.args.args.extra_args();
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            #(#extra_args),*
+            #(#args),*
         });
     }
 }
