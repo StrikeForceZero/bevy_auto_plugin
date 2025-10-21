@@ -36,26 +36,6 @@ impl<'a> From<&'a ResourceArgs> for InitResourceArgs {
     }
 }
 
-impl ArgsBackToTokens for ResourceArgs {
-    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        let mut items = vec![];
-        items.extend(self.generics().to_attribute_arg_vec_tokens());
-        if self.derive.present {
-            items.push(self.derive.to_outer_tokens("derive"));
-        }
-        if self.reflect.present {
-            items.push(self.reflect.to_outer_tokens("reflect"));
-        }
-        if self.register {
-            items.push(quote!(register));
-        }
-        if self.init {
-            items.push(quote!(init));
-        }
-        tokens.extend(quote! { #(#items),* });
-    }
-}
-
 impl RewriteAttribute for ResourceArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();

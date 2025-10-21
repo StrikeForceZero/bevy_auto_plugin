@@ -52,25 +52,6 @@ impl<'a> From<&'a EventArgs> for RegisterTypeArgs {
     }
 }
 
-impl ArgsBackToTokens for EventArgs {
-    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        let mut items = vec![];
-        let target = self.target;
-        items.push(quote! { target(#target) });
-        items.extend(self.generics().to_attribute_arg_vec_tokens());
-        if self.derive.present {
-            items.push(self.derive.to_outer_tokens("derive"));
-        }
-        if self.reflect.present {
-            items.push(self.reflect.to_outer_tokens("reflect"));
-        }
-        if self.register {
-            items.push(quote!(register));
-        }
-        tokens.extend(quote! { #(#items),* });
-    }
-}
-
 impl RewriteAttribute for EventArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();

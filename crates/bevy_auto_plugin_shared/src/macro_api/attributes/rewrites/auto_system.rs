@@ -35,15 +35,6 @@ impl<'a> From<&'a SystemArgs> for AddSystemArgs {
     }
 }
 
-impl ArgsBackToTokens for SystemArgs {
-    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        let mut items = vec![];
-        items.extend(self.generics().to_attribute_arg_vec_tokens());
-        items.extend(self.schedule_config.to_inner_arg_tokens_vec());
-        tokens.extend(quote! { #(#items),* });
-    }
-}
-
 impl RewriteAttribute for SystemArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
