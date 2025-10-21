@@ -82,7 +82,10 @@ impl RewriteAttribute for ComponentArgs {
 impl ToTokens
     for QQ<
         '_,
-        ItemAttribute<Composed<EventArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
+        ItemAttribute<
+            Composed<ComponentArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
