@@ -203,3 +203,66 @@ impl ToTokens
         }
     }
 }
+
+impl ToTokens
+    for Q<
+        '_,
+        ItemAttribute<
+            Composed<ConfigureSystemSetArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let args = &self.args.args;
+        let generics = args.generics();
+        let base = &self.args.args.base;
+        let schedule = &args.base.schedule_config.schedule;
+        let config_tokens = args.base.schedule_config.config.to_token_stream();
+        for concrete_path in self.args.concrete_paths() {
+            if let Some(inner) = &base.inner {
+                // enum
+                let chained = if base.chain.is_present() {
+                    quote! { .chain() }
+                } else if base.chain_ignore_deferred.is_present() {
+                    quote! { .chain_ignore_deferred() }
+                } else {
+                    quote! {}
+                };
+                let mut entries = vec![];
+                for (ident, entry) in inner.entries.iter() {
+                    let chained = if entry.chain.is_present() {
+                        quote! { .chain() }
+                    } else if entry.chain_ignore_deferred.is_present() {
+                        quote! { .chain_ignore_deferred() }
+                    } else {
+                        quote! {}
+                    };
+                    let config_tokens = entry.config.to_token_stream();
+                    entries.push(quote! {
+                        #concrete_path :: #ident #chained #config_tokens
+                    });
+                }
+                if !entries.is_empty() {
+                    tokens.extend(quote! {
+                         .configure_sets(#schedule, (#(#entries),*) #chained #config_tokens)
+                    });
+                }
+            } else {
+                // struct
+                if generics.is_empty() {
+                    tokens.extend(quote! {
+                        .configure_sets(#schedule, #concrete_path #config_tokens)
+                    });
+                } else {
+                    // TODO: generics are kind of silly here
+                    //  but if someone does use them we'll assume its just a marker type
+                    //  that can be initialized via `Default::default()`
+                    tokens.extend(quote! {
+                        .configure_sets(#schedule, #concrete_path::default() #config_tokens)
+                    });
+                }
+            }
+        }
+    }
+}

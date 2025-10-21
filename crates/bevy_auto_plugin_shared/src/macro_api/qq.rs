@@ -45,9 +45,15 @@ impl ToTokens
     for QQ<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let schedule = &self.args.args.base.schedule_config.schedule;
         let mut args = self.args.args.extra_args();
-        args.push(quote! { schedule = #schedule });
+        // TODO: cleanup
+        args.extend(
+            self.args
+                .args
+                .base
+                .schedule_config
+                .to_inner_arg_tokens_vec(),
+        );
         tokens.extend(quote! {
             #(#args),*
         });
@@ -211,6 +217,31 @@ impl ToTokens
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#args),*
+        });
+    }
+}
+
+impl ToTokens
+    for QQ<
+        '_,
+        ItemAttribute<
+            Composed<ConfigureSystemSetArgs, WithPlugin, WithZeroOrManyGenerics>,
+            AllowStructOrEnum,
+        >,
+    >
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = self.args.args.extra_args();
+        // TODO: cleanup
+        args.extend(
+            self.args
+                .args
+                .base
+                .schedule_config
+                .to_inner_arg_tokens_vec(),
+        );
         tokens.extend(quote! {
             #(#args),*
         });
