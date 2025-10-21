@@ -7,6 +7,7 @@ use crate::macro_api::mixins::generics::none::WithNoGenerics;
 use crate::macro_api::mixins::generics::with_many::WithZeroOrManyGenerics;
 use crate::macro_api::mixins::generics::with_single::WithZeroOrOneGenerics;
 use crate::macro_api::mixins::with_plugin::WithPlugin;
+use crate::syntax::extensions::lit::LitExt;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 
@@ -161,8 +162,10 @@ impl ToTokens
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for concrete_path in self.args.concrete_paths() {
+            let bevy_state = crate::__private::paths::state::root_path();
             tokens.extend(quote! { |app| {
-                app.register_state_type::<#concrete_path>();
+                app.register_type :: < #bevy_state::prelude::State< #concrete_path > >();
+                app.register_type :: < #bevy_state::prelude::NextState< #concrete_path > >();
             }});
         }
     }
@@ -263,6 +266,37 @@ impl ToTokens
                     });
                 }
             }
+        }
+    }
+}
+
+impl ToTokens
+    for Q<
+        '_,
+        ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
+    >
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let args = &self.args.args.base;
+        for concrete_path in self.args.concrete_paths() {
+            let name = args
+                .name
+                .as_ref()
+                .map(|name| name.unquoted_string())
+                .unwrap_or_else(|| {
+                    // TODO: move to util fn
+                    quote!(#concrete_path)
+                        .to_string()
+                        .replace(" < ", "<")
+                        .replace(" >", ">")
+                        .replace(" ,", ",")
+                    // TODO: offer option to only remove all spaces?
+                    //  .replace(" ", "")
+                });
+            let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
+            tokens.extend(quote! { |app| {
+                app.register_required_components_with::<#concrete_path, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new(#name));
+            }});
         }
     }
 }

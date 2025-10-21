@@ -247,3 +247,20 @@ impl ToTokens
         });
     }
 }
+
+impl ToTokens
+    for QQ<
+        '_,
+        ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
+    >
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = self.args.args.extra_args();
+        if let Some(name) = &self.args.args.base.name {
+            args.push(quote! { name = #name });
+        }
+        tokens.extend(quote! {
+            #(#args),*
+        });
+    }
+}
