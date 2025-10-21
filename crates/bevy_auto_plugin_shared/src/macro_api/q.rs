@@ -16,23 +16,42 @@ pub(crate) struct Q<'a, T> {
     pub(crate) args: &'a T,
     pub(crate) context: &'a Context,
     pub(crate) input_item: &'a InputItem,
+    pub(crate) app_param: &'a syn::Ident,
 }
 
-impl ToTokens
+pub trait RequiredUseQTokens {
+    fn required_uses(&self) -> Vec<TokenStream> {
+        vec![]
+    }
+    fn to_tokens(&self, tokens: &mut TokenStream);
+}
+
+impl<'a, T> ToTokens for Q<'a, T>
+where
+    Self: RequiredUseQTokens,
+{
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.required_uses());
+        RequiredUseQTokens::to_tokens(self, tokens);
+    }
+}
+
+impl RequiredUseQTokens
     for Q<'_, ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         let schedule = &self.args.args.base.schedule_config.schedule;
         let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();
         for concrete_path in self.args.concrete_paths() {
-            tokens.extend(quote! { |app| {
-                app.add_systems(#schedule, #concrete_path #config_tokens);
-            }});
+            tokens.extend(quote! {
+                #app_param.add_systems(#schedule, #concrete_path #config_tokens);
+            });
         }
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<
         '_,
         ItemAttribute<
@@ -42,27 +61,29 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         for concrete_path in self.args.concrete_paths() {
-            tokens.extend(quote! { |app| {
-                app.add_message::<#concrete_path>();
-            }});
+            tokens.extend(quote! {
+                #app_param.add_message::<#concrete_path>();
+            });
         }
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<'_, ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         for concrete_path in self.args.concrete_paths() {
-            tokens.extend(quote! { |app| {
-                app.add_observer::<#concrete_path>();
-            }});
+            tokens.extend(quote! {
+                #app_param.add_observer::<#concrete_path>();
+            });
         }
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<
         '_,
         ItemAttribute<
@@ -72,25 +93,26 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         for concrete_path in self.args.concrete_paths() {
             if let Some(expr) = &self.args.args.base.init.expr {
-                tokens.extend(quote! { |app| {
-                    app.add_plugins({ let plugin: #concrete_path = #expr; plugin });
-                }});
+                tokens.extend(quote! {
+                    #app_param.add_plugins({ let plugin: #concrete_path = #expr; plugin });
+                });
             } else if self.args.args.base.init.present {
-                tokens.extend(quote! { |app| {
-                    app.add_plugins(#concrete_path::default());
-                }});
+                tokens.extend(quote! {
+                    #app_param.add_plugins(#concrete_path::default());
+                });
             } else {
-                tokens.extend(quote! { |app| {
-                    app.add_plugins(#concrete_path);
-                }});
+                tokens.extend(quote! {
+                    #app_param.add_plugins(#concrete_path);
+                });
             }
         }
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<
         '_,
         ItemAttribute<
@@ -100,40 +122,43 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         for concrete_path in self.args.concrete_paths() {
-            tokens.extend(quote! { |app| {
-                app.init_resource::<#concrete_path>();
-            }});
+            tokens.extend(quote! {
+                #app_param.init_resource::<#concrete_path>();
+            });
         }
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<'_, ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>>
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         let target = &self.args.target;
-        tokens.extend(quote! { |app| {
-            app.init_state::<#target>();
-        }});
+        tokens.extend(quote! {
+            #app_param.init_state::<#target>();
+        });
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<
         '_,
         ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>,
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         let target = &self.args.target;
-        tokens.extend(quote! { |app| {
-            app.init_sub_state::<#target>();
-        }});
+        tokens.extend(quote! {
+            #app_param.init_sub_state::<#target>();
+        });
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<
         '_,
         ItemAttribute<
@@ -143,15 +168,16 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {
-                app.insert_resource(#concrete_path::default());
+                #app_param.insert_resource(#concrete_path::default());
             }});
         }
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<
         '_,
         ItemAttribute<
@@ -161,17 +187,18 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         for concrete_path in self.args.concrete_paths() {
             let bevy_state = crate::__private::paths::state::root_path();
-            tokens.extend(quote! { |app| {
-                app.register_type :: < #bevy_state::prelude::State< #concrete_path > >();
-                app.register_type :: < #bevy_state::prelude::NextState< #concrete_path > >();
-            }});
+            tokens.extend(quote! {
+                #app_param.register_type :: < #bevy_state::prelude::State< #concrete_path > >();
+                #app_param.register_type :: < #bevy_state::prelude::NextState< #concrete_path > >();
+            });
         }
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<
         '_,
         ItemAttribute<
@@ -181,15 +208,16 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         for concrete_path in self.args.concrete_paths() {
-            tokens.extend(quote! { |app| {
-                app.register_type::<#concrete_path>();
-            }});
+            tokens.extend(quote! {
+                #app_param.register_type::<#concrete_path>();
+            });
         }
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<
         '_,
         ItemAttribute<
@@ -199,15 +227,16 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         for concrete_path in self.args.concrete_paths() {
-            tokens.extend(quote! { |app| {
-                #concrete_path(app);
-            }});
+            tokens.extend(quote! {
+                #concrete_path(#app_param);
+            });
         }
     }
 }
 
-impl ToTokens
+impl RequiredUseQTokens
     for Q<
         '_,
         ItemAttribute<
@@ -217,6 +246,7 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         let args = &self.args.args;
         let generics = args.generics();
         let base = &self.args.args.base;
@@ -248,21 +278,21 @@ impl ToTokens
                 }
                 if !entries.is_empty() {
                     tokens.extend(quote! {
-                         .configure_sets(#schedule, (#(#entries),*) #chained #config_tokens)
+                         #app_param.configure_sets(#schedule, (#(#entries),*) #chained #config_tokens);
                     });
                 }
             } else {
                 // struct
                 if generics.is_empty() {
                     tokens.extend(quote! {
-                        .configure_sets(#schedule, #concrete_path #config_tokens)
+                        #app_param.configure_sets(#schedule, #concrete_path #config_tokens);
                     });
                 } else {
                     // TODO: generics are kind of silly here
                     //  but if someone does use them we'll assume its just a marker type
                     //  that can be initialized via `Default::default()`
                     tokens.extend(quote! {
-                        .configure_sets(#schedule, #concrete_path::default() #config_tokens)
+                        #app_param.configure_sets(#schedule, #concrete_path::default() #config_tokens);
                     });
                 }
             }
@@ -277,6 +307,7 @@ impl ToTokens
     >
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let app_param = self.app_param;
         let args = &self.args.args.base;
         for concrete_path in self.args.concrete_paths() {
             let name = args
@@ -294,9 +325,9 @@ impl ToTokens
                     //  .replace(" ", "")
                 });
             let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
-            tokens.extend(quote! { |app| {
-                app.register_required_components_with::<#concrete_path, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new(#name));
-            }});
+            tokens.extend(quote! {
+                #app_param.register_required_components_with::<#concrete_path, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new(#name));
+            });
         }
     }
 }
