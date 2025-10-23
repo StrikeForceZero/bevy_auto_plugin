@@ -1,11 +1,9 @@
 use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, GenericsCap, ItemAttribute};
-use crate::macro_api::composed::Composed;
-use crate::macro_api::prelude::{WithPlugin, WithZeroOrManyGenerics};
-use crate::macro_api::q::{Q, RequiredUseQTokens};
+use crate::macro_api::prelude::*;
 use crate::syntax::extensions::lit::LitExt;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{ToTokens, quote};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -20,6 +18,7 @@ impl AttributeIdent for NameArgs {
 pub type Name =
     ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
 pub type QNameArgs<'a> = Q<'a, Name>;
+pub type QQNameArgs<'a> = QQ<'a, Name>;
 
 impl RequiredUseQTokens for QNameArgs<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
@@ -44,5 +43,17 @@ impl RequiredUseQTokens for QNameArgs<'_> {
                 #app_param.register_required_components_with::<#concrete_path, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new(#name));
             });
         }
+    }
+}
+
+impl ToTokens for QQNameArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = self.args.args.extra_args();
+        if let Some(name) = &self.args.args.base.name {
+            args.push(quote! { name = #name });
+        }
+        tokens.extend(quote! {
+            #(#args),*
+        });
     }
 }

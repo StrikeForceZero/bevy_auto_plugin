@@ -1,7 +1,5 @@
 use crate::macro_api::attributes::{AllowFn, AttributeIdent, GenericsCap, ItemAttribute};
-use crate::macro_api::composed::Composed;
-use crate::macro_api::prelude::{WithPlugin, WithZeroOrManyGenerics};
-use crate::macro_api::q::{Q, RequiredUseQTokens};
+use crate::macro_api::prelude::*;
 use crate::macro_api::schedule_config::ScheduleWithScheduleConfigArgs;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
@@ -21,6 +19,7 @@ impl AttributeIdent for AddSystemArgs {
 pub type AddSystem =
     ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
 pub type QAddSystemArgs<'a> = Q<'a, AddSystem>;
+pub type QQAddSystem<'a> = QQ<'a, AddSystem>;
 
 impl RequiredUseQTokens for QAddSystemArgs<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
@@ -31,5 +30,22 @@ impl RequiredUseQTokens for QAddSystemArgs<'_> {
                 #app_param.add_systems(#schedule, #concrete_path #config_tokens);
             });
         }
+    }
+}
+
+impl ToTokens for QQAddSystem<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = self.args.args.extra_args();
+        // TODO: cleanup
+        args.extend(
+            self.args
+                .args
+                .base
+                .schedule_config
+                .to_inner_arg_tokens_vec(),
+        );
+        tokens.extend(quote! {
+            #(#args),*
+        });
     }
 }

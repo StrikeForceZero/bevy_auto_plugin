@@ -1,10 +1,8 @@
 use crate::macro_api::attributes::{AllowFn, AttributeIdent, GenericsCap, ItemAttribute};
-use crate::macro_api::composed::Composed;
-use crate::macro_api::prelude::{WithPlugin, WithZeroOrManyGenerics};
-use crate::macro_api::q::{Q, RequiredUseQTokens};
+use crate::macro_api::prelude::*;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{ToTokens, quote};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -17,6 +15,7 @@ impl AttributeIdent for AddObserverArgs {
 pub type AddObserver =
     ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
 pub type QAddObserverArgs<'a> = Q<'a, AddObserver>;
+pub type QQAddObserverArgs<'a> = QQ<'a, AddObserver>;
 
 impl RequiredUseQTokens for QAddObserverArgs<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
@@ -25,5 +24,14 @@ impl RequiredUseQTokens for QAddObserverArgs<'_> {
                 #app_param.add_observer::<#concrete_path>();
             });
         }
+    }
+}
+
+impl ToTokens for QQAddObserverArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#args),*
+        });
     }
 }

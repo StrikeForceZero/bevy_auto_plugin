@@ -1,11 +1,9 @@
 use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, GenericsCap, ItemAttribute};
-use crate::macro_api::composed::Composed;
-use crate::macro_api::prelude::{WithPlugin, WithZeroOrOneGenerics};
-use crate::macro_api::q::{Q, RequiredUseQTokens};
+use crate::macro_api::prelude::*;
 use crate::syntax::ast::any_expr::AnyExprCallClosureMacroPath;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{ToTokens, quote};
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
@@ -22,6 +20,7 @@ pub type InsertResource = ItemAttribute<
     AllowStructOrEnum,
 >;
 pub type QInsertResourceArgs<'a> = Q<'a, InsertResource>;
+pub type QQInsertResourceArgs<'a> = QQ<'a, InsertResource>;
 
 impl RequiredUseQTokens for QInsertResourceArgs<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
@@ -30,5 +29,16 @@ impl RequiredUseQTokens for QInsertResourceArgs<'_> {
                 #app_param.insert_resource(#concrete_path::default());
             }});
         }
+    }
+}
+
+impl ToTokens for QQInsertResourceArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = self.args.args.extra_args();
+        let resource = &self.args.args.base.resource;
+        args.push(quote! { resource = #resource });
+        tokens.extend(quote! {
+            #(#args),*
+        });
     }
 }

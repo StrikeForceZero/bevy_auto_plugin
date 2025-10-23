@@ -1,10 +1,9 @@
 use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, GenericsCap, ItemAttribute};
-use crate::macro_api::composed::Composed;
-use crate::macro_api::prelude::{WithPlugin, WithZeroOrManyGenerics};
+use crate::macro_api::prelude::*;
 use crate::macro_api::q::{Q, RequiredUseQTokens};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{ToTokens, quote};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -19,6 +18,7 @@ pub type InitResource = ItemAttribute<
     AllowStructOrEnum,
 >;
 pub type QInitResourceArgs<'a> = Q<'a, InitResource>;
+pub type QQInitResourceArgs<'a> = QQ<'a, InitResource>;
 
 impl RequiredUseQTokens for QInitResourceArgs<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
@@ -27,5 +27,14 @@ impl RequiredUseQTokens for QInitResourceArgs<'_> {
                 #app_param.init_resource::<#concrete_path>();
             });
         }
+    }
+}
+
+impl ToTokens for QQInitResourceArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#args),*
+        });
     }
 }

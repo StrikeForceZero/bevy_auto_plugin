@@ -1,10 +1,8 @@
 use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, GenericsCap, ItemAttribute};
-use crate::macro_api::composed::Composed;
-use crate::macro_api::prelude::{WithPlugin, WithZeroOrManyGenerics};
-use crate::macro_api::q::{Q, RequiredUseQTokens};
+use crate::macro_api::prelude::*;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{ToTokens, quote};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -19,6 +17,7 @@ pub type RegisterStateType = ItemAttribute<
     AllowStructOrEnum,
 >;
 pub type QRegisterStateTypeArgs<'a> = Q<'a, RegisterStateType>;
+pub type QQRegisterStateTypeArgs<'a> = QQ<'a, RegisterStateType>;
 
 impl RequiredUseQTokens for QRegisterStateTypeArgs<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
@@ -29,5 +28,14 @@ impl RequiredUseQTokens for QRegisterStateTypeArgs<'_> {
                 #app_param.register_type :: < #bevy_state::prelude::NextState< #concrete_path > >();
             });
         }
+    }
+}
+
+impl ToTokens for QQRegisterStateTypeArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#args),*
+        });
     }
 }

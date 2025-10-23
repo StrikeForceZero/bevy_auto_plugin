@@ -1,10 +1,8 @@
 use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, ItemAttribute};
-use crate::macro_api::composed::Composed;
-use crate::macro_api::prelude::{WithNoGenerics, WithPlugin};
-use crate::macro_api::q::{Q, RequiredUseQTokens};
+use crate::macro_api::prelude::*;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{ToTokens, quote};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -17,12 +15,22 @@ impl AttributeIdent for InitStateArgs {
 pub type InitState =
     ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
 pub type QInitStateArgs<'a> = Q<'a, InitState>;
+pub type QQInitStateArgs<'a> = QQ<'a, InitState>;
 
 impl RequiredUseQTokens for QInitStateArgs<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let target = &self.args.target;
         tokens.extend(quote! {
             #app_param.init_state::<#target>();
+        });
+    }
+}
+
+impl ToTokens for QQInitStateArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#args),*
         });
     }
 }

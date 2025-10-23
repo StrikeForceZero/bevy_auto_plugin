@@ -1,10 +1,8 @@
 use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, GenericsCap, ItemAttribute};
-use crate::macro_api::composed::Composed;
-use crate::macro_api::prelude::{WithPlugin, WithZeroOrManyGenerics};
-use crate::macro_api::q::{Q, RequiredUseQTokens};
+use crate::macro_api::prelude::*;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{ToTokens, quote};
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
@@ -17,6 +15,7 @@ impl AttributeIdent for RunOnBuildArgs {
 pub type RunOnBuild =
     ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
 pub type QRunOnBuildArgs<'a> = Q<'a, RunOnBuild>;
+pub type QQRunOnBuildArgs<'a> = QQ<'a, RunOnBuild>;
 
 impl RequiredUseQTokens for QRunOnBuildArgs<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
@@ -25,5 +24,14 @@ impl RequiredUseQTokens for QRunOnBuildArgs<'_> {
                 #concrete_path(#app_param);
             });
         }
+    }
+}
+
+impl ToTokens for QQRunOnBuildArgs<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let args = self.args.args.extra_args();
+        tokens.extend(quote! {
+            #(#args),*
+        });
     }
 }
