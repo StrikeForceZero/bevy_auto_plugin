@@ -68,11 +68,9 @@ impl RewriteAttribute for StatesArgs {
     }
 }
 
-impl ToTokens
-    for Q<
-        '_,
-        ItemAttribute<Composed<StatesArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
-    >
-{
+pub type State =
+    ItemAttribute<Composed<StatesArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type QState<'a> = Q<'a, State>;
+impl ToTokens for QState<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
 }

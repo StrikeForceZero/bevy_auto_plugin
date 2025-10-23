@@ -76,14 +76,9 @@ impl RewriteAttribute for ComponentArgs {
     }
 }
 
-impl ToTokens
-    for Q<
-        '_,
-        ItemAttribute<
-            Composed<ComponentArgs, WithPlugin, WithZeroOrManyGenerics>,
-            AllowStructOrEnum,
-        >,
-    >
-{
+pub type Component =
+    ItemAttribute<Composed<ComponentArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type QComponentArgs<'a> = Q<'a, Component>;
+impl ToTokens for QComponentArgs<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
 }

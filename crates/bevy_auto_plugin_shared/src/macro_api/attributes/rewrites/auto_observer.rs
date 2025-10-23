@@ -45,8 +45,9 @@ impl RewriteAttribute for ObserverArgs {
     }
 }
 
-impl ToTokens
-    for Q<'_, ItemAttribute<Composed<ObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>>
-{
+pub type Observer =
+    ItemAttribute<Composed<ObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+pub type QObserver<'a> = Q<'a, Observer>;
+impl ToTokens for QObserver<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
 }

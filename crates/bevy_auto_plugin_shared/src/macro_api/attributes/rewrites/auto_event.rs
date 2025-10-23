@@ -89,11 +89,9 @@ impl RewriteAttribute for EventArgs {
     }
 }
 
-impl ToTokens
-    for Q<
-        '_,
-        ItemAttribute<Composed<EventArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>,
-    >
-{
+pub type Event =
+    ItemAttribute<Composed<EventArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type QEvent<'a> = Q<'a, Event>;
+impl ToTokens for QEvent<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
 }
