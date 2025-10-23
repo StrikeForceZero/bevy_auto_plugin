@@ -11,12 +11,12 @@ impl AttributeIdent for AddMessageArgs {
     const IDENT: &'static str = "auto_add_message";
 }
 
-pub type AddMessage =
+pub type IaAddMessage =
     ItemAttribute<Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QAddMessageArgs<'a> = Q<'a, AddMessage>;
-pub type QQAddMessageArgs<'a> = QQ<'a, AddMessage>;
+pub type QAddMessage<'a> = Q<'a, IaAddMessage>;
+pub type QQAddMessage<'a> = QQ<'a, IaAddMessage>;
 
-impl RequiredUseQTokens for QAddMessageArgs<'_> {
+impl RequiredUseQTokens for QAddMessage<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -26,7 +26,7 @@ impl RequiredUseQTokens for QAddMessageArgs<'_> {
     }
 }
 
-impl ToTokens for QQAddMessageArgs<'_> {
+impl ToTokens for QQAddMessage<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

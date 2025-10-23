@@ -14,14 +14,14 @@ impl AttributeIdent for InsertResourceArgs {
     const IDENT: &'static str = "auto_insert_resource";
 }
 
-pub type InsertResource = ItemAttribute<
+pub type IaInsertResource = ItemAttribute<
     Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>,
     AllowStructOrEnum,
 >;
-pub type QInsertResourceArgs<'a> = Q<'a, InsertResource>;
-pub type QQInsertResourceArgs<'a> = QQ<'a, InsertResource>;
+pub type QInsertResource<'a> = Q<'a, IaInsertResource>;
+pub type QQInsertResource<'a> = QQ<'a, IaInsertResource>;
 
-impl RequiredUseQTokens for QInsertResourceArgs<'_> {
+impl RequiredUseQTokens for QInsertResource<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {
@@ -31,7 +31,7 @@ impl RequiredUseQTokens for QInsertResourceArgs<'_> {
     }
 }
 
-impl ToTokens for QQInsertResourceArgs<'_> {
+impl ToTokens for QQInsertResource<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
         let resource = &self.args.args.base.resource;

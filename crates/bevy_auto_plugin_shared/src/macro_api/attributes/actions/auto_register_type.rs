@@ -11,14 +11,14 @@ impl AttributeIdent for RegisterTypeArgs {
     const IDENT: &'static str = "auto_register_type";
 }
 
-pub type RegisterType = ItemAttribute<
+pub type IaRegisterType = ItemAttribute<
     Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QRegisterTypeArgs<'a> = Q<'a, RegisterType>;
-pub type QQRegisterTypeArgs<'a> = QQ<'a, RegisterType>;
+pub type QRegisterType<'a> = Q<'a, IaRegisterType>;
+pub type QQRegisterType<'a> = QQ<'a, IaRegisterType>;
 
-impl RequiredUseQTokens for QRegisterTypeArgs<'_> {
+impl RequiredUseQTokens for QRegisterType<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -27,7 +27,7 @@ impl RequiredUseQTokens for QRegisterTypeArgs<'_> {
         }
     }
 }
-impl ToTokens for QQRegisterTypeArgs<'_> {
+impl ToTokens for QQRegisterType<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

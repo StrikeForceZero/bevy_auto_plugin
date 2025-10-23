@@ -70,9 +70,9 @@ impl RewriteAttribute for MessageArgs {
     }
 }
 
-pub type Message =
+pub type IaMessage =
     ItemAttribute<Composed<MessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QMessage<'a> = Q<'a, Message>;
+pub type QMessage<'a> = Q<'a, IaMessage>;
 impl ToTokens for QMessage<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
 }

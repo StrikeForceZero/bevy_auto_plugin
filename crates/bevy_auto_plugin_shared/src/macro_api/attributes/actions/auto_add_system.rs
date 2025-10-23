@@ -15,12 +15,12 @@ impl AttributeIdent for AddSystemArgs {
     const IDENT: &'static str = "auto_add_system";
 }
 
-pub type AddSystem =
+pub type IaAddSystem =
     ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type QAddSystemArgs<'a> = Q<'a, AddSystem>;
-pub type QQAddSystem<'a> = QQ<'a, AddSystem>;
+pub type QAddSystem<'a> = Q<'a, IaAddSystem>;
+pub type QQAddSystem<'a> = QQ<'a, IaAddSystem>;
 
-impl RequiredUseQTokens for QAddSystemArgs<'_> {
+impl RequiredUseQTokens for QAddSystem<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let schedule = &self.args.args.base.schedule_config.schedule;
         let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();

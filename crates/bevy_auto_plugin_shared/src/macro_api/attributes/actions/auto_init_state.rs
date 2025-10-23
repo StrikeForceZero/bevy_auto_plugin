@@ -11,12 +11,12 @@ impl AttributeIdent for InitStateArgs {
     const IDENT: &'static str = "auto_init_state";
 }
 
-pub type InitState =
+pub type IaInitState =
     ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
-pub type QInitStateArgs<'a> = Q<'a, InitState>;
-pub type QQInitStateArgs<'a> = QQ<'a, InitState>;
+pub type QInitState<'a> = Q<'a, IaInitState>;
+pub type QQInitState<'a> = QQ<'a, IaInitState>;
 
-impl RequiredUseQTokens for QInitStateArgs<'_> {
+impl RequiredUseQTokens for QInitState<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let target = &self.args.target;
         tokens.extend(quote! {
@@ -25,7 +25,7 @@ impl RequiredUseQTokens for QInitStateArgs<'_> {
     }
 }
 
-impl ToTokens for QQInitStateArgs<'_> {
+impl ToTokens for QQInitState<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

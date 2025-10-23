@@ -14,12 +14,12 @@ impl AttributeIdent for NameArgs {
     const IDENT: &'static str = "auto_name";
 }
 
-pub type Name =
+pub type IaName =
     ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QNameArgs<'a> = Q<'a, Name>;
-pub type QQNameArgs<'a> = QQ<'a, Name>;
+pub type QName<'a> = Q<'a, IaName>;
+pub type QQName<'a> = QQ<'a, IaName>;
 
-impl RequiredUseQTokens for QNameArgs<'_> {
+impl RequiredUseQTokens for QName<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args.base;
         for concrete_path in self.args.concrete_paths() {
@@ -45,7 +45,7 @@ impl RequiredUseQTokens for QNameArgs<'_> {
     }
 }
 
-impl ToTokens for QQNameArgs<'_> {
+impl ToTokens for QQName<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
         if let Some(name) = &self.args.args.base.name {

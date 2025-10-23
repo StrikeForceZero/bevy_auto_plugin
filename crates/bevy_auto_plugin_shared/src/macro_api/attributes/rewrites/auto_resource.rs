@@ -73,9 +73,9 @@ impl RewriteAttribute for ResourceArgs {
     }
 }
 
-pub type Resource =
+pub type IaResource =
     ItemAttribute<Composed<ResourceArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QResourceArgs<'a> = Q<'a, Resource>;
-impl ToTokens for QResourceArgs<'_> {
+pub type QResource<'a> = Q<'a, IaResource>;
+impl ToTokens for QResource<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
 }

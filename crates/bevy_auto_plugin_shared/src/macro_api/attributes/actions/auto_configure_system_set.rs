@@ -91,14 +91,14 @@ impl AttributeIdent for ConfigureSystemSetArgs {
     const IDENT: &'static str = "auto_configure_system_set";
 }
 
-pub type ConfigureSystemSet = ItemAttribute<
+pub type IaConfigureSystemSet = ItemAttribute<
     Composed<ConfigureSystemSetArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QConfigureSystemSetArgs<'a> = Q<'a, ConfigureSystemSet>;
-pub type QQConfigureSystemSetArgs<'a> = QQ<'a, ConfigureSystemSet>;
+pub type QConfigureSystemSet<'a> = Q<'a, IaConfigureSystemSet>;
+pub type QQConfigureSystemSet<'a> = QQ<'a, IaConfigureSystemSet>;
 
-impl RequiredUseQTokens for QConfigureSystemSetArgs<'_> {
+impl RequiredUseQTokens for QConfigureSystemSet<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args;
         let generics = args.generics();
@@ -153,7 +153,7 @@ impl RequiredUseQTokens for QConfigureSystemSetArgs<'_> {
     }
 }
 
-impl ToTokens for QQConfigureSystemSetArgs<'_> {
+impl ToTokens for QQConfigureSystemSet<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
         // TODO: cleanup

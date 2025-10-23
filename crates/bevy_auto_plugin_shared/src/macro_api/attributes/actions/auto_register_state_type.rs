@@ -11,14 +11,14 @@ impl AttributeIdent for RegisterStateTypeArgs {
     const IDENT: &'static str = "auto_register_state_type";
 }
 
-pub type RegisterStateType = ItemAttribute<
+pub type IaRegisterStateType = ItemAttribute<
     Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QRegisterStateTypeArgs<'a> = Q<'a, RegisterStateType>;
-pub type QQRegisterStateTypeArgs<'a> = QQ<'a, RegisterStateType>;
+pub type QRegisterStateType<'a> = Q<'a, IaRegisterStateType>;
+pub type QQRegisterStateType<'a> = QQ<'a, IaRegisterStateType>;
 
-impl RequiredUseQTokens for QRegisterStateTypeArgs<'_> {
+impl RequiredUseQTokens for QRegisterStateType<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             let bevy_state = crate::__private::paths::state::root_path();
@@ -30,7 +30,7 @@ impl RequiredUseQTokens for QRegisterStateTypeArgs<'_> {
     }
 }
 
-impl ToTokens for QQRegisterStateTypeArgs<'_> {
+impl ToTokens for QQRegisterStateType<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

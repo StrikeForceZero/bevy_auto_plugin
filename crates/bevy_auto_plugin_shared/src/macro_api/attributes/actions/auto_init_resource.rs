@@ -12,14 +12,14 @@ impl AttributeIdent for InitResourceArgs {
     const IDENT: &'static str = "auto_init_resource";
 }
 
-pub type InitResource = ItemAttribute<
+pub type IaInitResource = ItemAttribute<
     Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QInitResourceArgs<'a> = Q<'a, InitResource>;
-pub type QQInitResourceArgs<'a> = QQ<'a, InitResource>;
+pub type QInitResource<'a> = Q<'a, IaInitResource>;
+pub type QQInitResource<'a> = QQ<'a, IaInitResource>;
 
-impl RequiredUseQTokens for QInitResourceArgs<'_> {
+impl RequiredUseQTokens for QInitResource<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -29,7 +29,7 @@ impl RequiredUseQTokens for QInitResourceArgs<'_> {
     }
 }
 
-impl ToTokens for QQInitResourceArgs<'_> {
+impl ToTokens for QQInitResource<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {
