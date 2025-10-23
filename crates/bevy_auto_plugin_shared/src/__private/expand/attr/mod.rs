@@ -1,7 +1,4 @@
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
-use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::attributes::{ItemAttribute, ItemAttributeInput, PluginCap};
-use crate::macro_api::attributes::{ItemAttributeArgs, ItemAttributeParse};
 use crate::macro_api::prelude::*;
 use crate::util::macros::ok_or_emit_with;
 use proc_macro2::{Ident, TokenStream as MacroStream};

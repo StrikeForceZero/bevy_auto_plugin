@@ -1,4 +1,3 @@
-use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, GenericsCap, ItemAttribute};
 use crate::macro_api::prelude::*;
 use crate::syntax::extensions::lit::LitExt;
 use darling::FromMeta;

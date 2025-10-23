@@ -1,8 +1,5 @@
 use crate::__private::attribute::RewriteAttribute;
 use crate::codegen::{ExpandAttrs, tokens};
-use crate::macro_api::attributes::prelude::GenericsArgs;
-use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::attributes::{AttributeIdent, ItemAttribute};
 use crate::macro_api::prelude::*;
 use crate::macro_api::schedule_config::ScheduleWithScheduleConfigArgs;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;

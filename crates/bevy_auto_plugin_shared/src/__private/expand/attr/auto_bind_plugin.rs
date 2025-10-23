@@ -1,9 +1,5 @@
 use crate::__private::expand::attr;
-use crate::macro_api::attributes::ItemAttribute;
-use crate::macro_api::composed::Composed;
-use crate::macro_api::context::Context;
-use crate::macro_api::mixins::nothing::Nothing;
-use crate::macro_api::mixins::with_plugin::WithPlugin;
+use crate::macro_api::prelude::*;
 use crate::syntax::extensions::item::ItemAttrsExt;
 use crate::util::macros::{compile_error_with, ok_or_emit_with};
 use proc_macro2::TokenStream as MacroStream;

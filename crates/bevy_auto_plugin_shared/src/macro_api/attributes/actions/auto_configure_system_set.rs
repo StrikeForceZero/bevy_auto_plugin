@@ -1,4 +1,3 @@
-use crate::macro_api::attributes::{AllowStructOrEnum, AttributeIdent, GenericsCap, ItemAttribute};
 use crate::macro_api::prelude::*;
 use crate::macro_api::schedule_config::{ScheduleConfigArgs, ScheduleWithScheduleConfigArgs};
 use crate::syntax::analysis::item::resolve_ident_from_struct_or_enum;

@@ -2,7 +2,6 @@ use crate::macro_api::composed::Composed;
 use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
 use crate::macro_api::mixins::generics::HasGenerics;
-use crate::macro_api::mixins::nothing::Nothing;
 use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
@@ -10,7 +9,7 @@ use proc_macro2::{Ident, TokenStream};
 use quote::format_ident;
 use std::hash::Hash;
 use std::marker::PhantomData;
-use syn::parse::{Parse, ParseStream};
+use syn::parse::Parse;
 use syn::spanned::Spanned;
 use syn::{Item, parse_quote, parse2};
 
@@ -20,29 +19,39 @@ mod rewrites;
 mod traits;
 
 pub mod prelude {
+    pub use super::AllowFn;
+    pub use super::AllowStructOrEnum;
+    pub use super::AttributeIdent;
+    pub use super::GenericsCap;
+    pub use super::IdentPathResolver;
+    pub use super::ItemAttribute;
+    pub use super::ItemAttributeArgs;
+    pub use super::ItemAttributeInput;
+    pub use super::ItemAttributeParse;
+    pub use super::PluginCap;
     pub use super::auto_plugin::{
         AutoPluginFnArgs, AutoPluginStructOrEnumArgs, resolve_app_param_name,
     };
-    pub use crate::macro_api::attributes::actions::auto_add_message::AddMessageArgs;
-    pub use crate::macro_api::attributes::actions::auto_add_observer::AddObserverArgs;
-    pub use crate::macro_api::attributes::actions::auto_add_plugin::AddPluginArgs;
-    pub use crate::macro_api::attributes::actions::auto_add_system::AddSystemArgs;
-    pub use crate::macro_api::attributes::actions::auto_configure_system_set::ConfigureSystemSetArgs;
-    pub use crate::macro_api::attributes::actions::auto_init_resource::InitResourceArgs;
-    pub use crate::macro_api::attributes::actions::auto_init_state::InitStateArgs;
-    pub use crate::macro_api::attributes::actions::auto_init_sub_state::InitSubStateArgs;
-    pub use crate::macro_api::attributes::actions::auto_insert_resource::InsertResourceArgs;
-    pub use crate::macro_api::attributes::actions::auto_name::NameArgs;
-    pub use crate::macro_api::attributes::actions::auto_register_state_type::RegisterStateTypeArgs;
-    pub use crate::macro_api::attributes::actions::auto_register_type::RegisterTypeArgs;
-    pub use crate::macro_api::attributes::actions::auto_run_on_build::RunOnBuildArgs;
-    pub use crate::macro_api::attributes::rewrites::auto_component::ComponentArgs;
-    pub use crate::macro_api::attributes::rewrites::auto_event::EventArgs;
-    pub use crate::macro_api::attributes::rewrites::auto_message::MessageArgs;
-    pub use crate::macro_api::attributes::rewrites::auto_observer::ObserverArgs;
-    pub use crate::macro_api::attributes::rewrites::auto_resource::ResourceArgs;
-    pub use crate::macro_api::attributes::rewrites::auto_states::StatesArgs;
-    pub use crate::macro_api::attributes::rewrites::auto_system::SystemArgs;
+    pub use crate::macro_api::attributes::actions::prelude::AddMessageArgs;
+    pub use crate::macro_api::attributes::actions::prelude::AddObserverArgs;
+    pub use crate::macro_api::attributes::actions::prelude::AddPluginArgs;
+    pub use crate::macro_api::attributes::actions::prelude::AddSystemArgs;
+    pub use crate::macro_api::attributes::actions::prelude::ConfigureSystemSetArgs;
+    pub use crate::macro_api::attributes::actions::prelude::InitResourceArgs;
+    pub use crate::macro_api::attributes::actions::prelude::InitStateArgs;
+    pub use crate::macro_api::attributes::actions::prelude::InitSubStateArgs;
+    pub use crate::macro_api::attributes::actions::prelude::InsertResourceArgs;
+    pub use crate::macro_api::attributes::actions::prelude::NameArgs;
+    pub use crate::macro_api::attributes::actions::prelude::RegisterStateTypeArgs;
+    pub use crate::macro_api::attributes::actions::prelude::RegisterTypeArgs;
+    pub use crate::macro_api::attributes::actions::prelude::RunOnBuildArgs;
+    pub use crate::macro_api::attributes::rewrites::prelude::ComponentArgs;
+    pub use crate::macro_api::attributes::rewrites::prelude::EventArgs;
+    pub use crate::macro_api::attributes::rewrites::prelude::MessageArgs;
+    pub use crate::macro_api::attributes::rewrites::prelude::ObserverArgs;
+    pub use crate::macro_api::attributes::rewrites::prelude::ResourceArgs;
+    pub use crate::macro_api::attributes::rewrites::prelude::StatesArgs;
+    pub use crate::macro_api::attributes::rewrites::prelude::SystemArgs;
     pub use crate::macro_api::attributes::traits::prelude::*;
 }
 

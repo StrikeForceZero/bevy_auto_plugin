@@ -1,4 +1,3 @@
-use crate::macro_api::attributes::{AllowFn, AttributeIdent, GenericsCap, ItemAttribute};
 use crate::macro_api::prelude::*;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
