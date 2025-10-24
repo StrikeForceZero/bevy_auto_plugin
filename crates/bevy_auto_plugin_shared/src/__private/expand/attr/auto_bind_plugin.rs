@@ -34,12 +34,8 @@ pub fn auto_bind_plugin_inner(
     Ok(item_attribute.input_item.to_token_stream())
 }
 
-pub fn auto_bind_plugin_outer(
-    attr: MacroStream,
-    input: MacroStream,
-    context: Context,
-) -> MacroStream {
+pub fn auto_bind_plugin_outer(attr: MacroStream, input: MacroStream) -> MacroStream {
     let og_input = input.clone();
-    auto_bind_plugin_inner(attr, input, context)
+    auto_bind_plugin_inner(attr, input, Context::default())
         .unwrap_or_else(|err| compile_error_with!(err, og_input))
 }
