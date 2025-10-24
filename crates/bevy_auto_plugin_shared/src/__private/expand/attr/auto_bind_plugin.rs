@@ -12,15 +12,15 @@ pub fn auto_bind_plugin_inner(
     context: Context,
 ) -> syn::Result<MacroStream> {
     // TODO: need to determine correct flow to maintain input tokens for errors
-    let mut item_attribute = ItemAttribute::<Composed<Nothing, WithPlugin>, _>::from_attr_input(
-        attr,
-        input.clone(),
-        context,
-    )
-    .map_err(|err| compile_error_with!(err, input.clone()))?;
+    let mut item_attribute =
+        ItemAttribute::<Composed<Nothing, WithPlugin>, AllowAny>::from_attr_input(
+            attr,
+            input.clone(),
+            context,
+        )?;
 
     let plugin_path = item_attribute.args.plugin();
-    let mut item = item_attribute.input_item.ensure_ast_mut()?;
+    let item = item_attribute.input_item.ensure_ast_mut()?;
     let mut attrs = item
         .take_attrs()
         .map_err(|err| syn::Error::new(item.span(), err))?;
