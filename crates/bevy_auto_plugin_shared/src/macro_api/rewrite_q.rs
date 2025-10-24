@@ -35,25 +35,31 @@ where
     }
 }
 
-impl<TFrom, TTo, P, G, R> From<RewriteQ<ItemAttribute<Composed<TFrom, P, G>, R>>>
-    for QQ<ItemAttribute<Composed<TTo, P, G>, R>>
+impl<TFrom, TTo, P, GFrom, GTo, RFrom, RTo>
+    From<RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>>
+    for QQ<ItemAttribute<Composed<TTo, P, GTo>, RTo>>
 where
     TTo: From<TFrom>,
+    GTo: From<GFrom>,
+    RTo: From<RFrom>,
 {
-    fn from(value: RewriteQ<ItemAttribute<Composed<TFrom, P, G>, R>>) -> Self {
-        let args = ItemAttribute::<ConvertComposed<Composed<TTo, P, G>>, R>::from(value.args);
-        let args = ItemAttribute::<Composed<TTo, P, G>, R>::from(args);
+    fn from(value: RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>) -> Self {
+        let args = ItemAttribute::<ConvertComposed<Composed<TTo, P, GTo>>, RTo>::from(value.args);
+        let args = ItemAttribute::<Composed<TTo, P, GTo>, RTo>::from(args);
         Self::from_args(args)
     }
 }
 
-impl<TFrom, TTo, P, G, R> From<&RewriteQ<ItemAttribute<Composed<TFrom, P, G>, R>>>
-    for QQ<ItemAttribute<Composed<TTo, P, G>, R>>
+impl<TFrom, TTo, P, GFrom, GTo, RFrom, RTo>
+    From<&RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>>
+    for QQ<ItemAttribute<Composed<TTo, P, GTo>, RTo>>
 where
     TTo: From<TFrom>,
-    RewriteQ<ItemAttribute<Composed<TFrom, P, G>, R>>: Clone,
+    GTo: From<GFrom>,
+    RTo: From<RFrom>,
+    RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>: Clone,
 {
-    fn from(value: &RewriteQ<ItemAttribute<Composed<TFrom, P, G>, R>>) -> Self {
+    fn from(value: &RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>) -> Self {
         Self::from(value.clone())
     }
 }

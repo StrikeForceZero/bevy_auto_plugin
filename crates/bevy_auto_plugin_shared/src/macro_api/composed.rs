@@ -179,16 +179,18 @@ impl<CBase, MPlugin, MGenerics> ConvertComposed<Composed<CBase, MPlugin, MGeneri
     }
 }
 
-impl<CBaseFrom, CBaseTo, MPlugin, MGenerics> From<Composed<CBaseFrom, MPlugin, MGenerics>>
-    for ConvertComposed<Composed<CBaseTo, MPlugin, MGenerics>>
+impl<CBaseFrom, CBaseTo, MPlugin, MGenericsFrom, MGenericsTo>
+    From<Composed<CBaseFrom, MPlugin, MGenericsFrom>>
+    for ConvertComposed<Composed<CBaseTo, MPlugin, MGenericsTo>>
 where
     CBaseTo: From<CBaseFrom>,
+    MGenericsTo: From<MGenericsFrom>,
 {
-    fn from(value: Composed<CBaseFrom, MPlugin, MGenerics>) -> Self {
+    fn from(value: Composed<CBaseFrom, MPlugin, MGenericsFrom>) -> Self {
         Self(Composed {
             base: value.base.into(),
             plugin: value.plugin,
-            generics: value.generics,
+            generics: value.generics.into(),
         })
     }
 }

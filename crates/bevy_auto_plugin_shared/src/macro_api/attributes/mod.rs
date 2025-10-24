@@ -6,6 +6,7 @@ use crate::macro_api::mixins::with_plugin::WithPlugin;
 use crate::macro_api::prelude::ConvertComposed;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
+use crate::util::macros::impl_from_default;
 use proc_macro2::{Ident, TokenStream};
 use quote::format_ident;
 use std::hash::Hash;
@@ -74,7 +75,7 @@ pub trait IdentPathResolver {
     fn resolve_ident_path(item: &Item) -> Option<syn::Path>;
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AllowStructOrEnum;
 impl IdentPathResolver for AllowStructOrEnum {
     const NOT_ALLOWED_MESSAGE: &'static str = "Only allowed on Struct Or Enum items";
@@ -87,7 +88,7 @@ impl IdentPathResolver for AllowStructOrEnum {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AllowFn;
 impl IdentPathResolver for AllowFn {
     const NOT_ALLOWED_MESSAGE: &'static str = "Only allowed on Fn items";
@@ -99,7 +100,7 @@ impl IdentPathResolver for AllowFn {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AllowAny;
 impl IdentPathResolver for AllowAny {
     fn resolve_ident_path(item: &Item) -> Option<syn::Path> {
@@ -125,6 +126,7 @@ impl IdentPathResolver for AllowAny {
         })
     }
 }
+impl_from_default!(AllowAny => (AllowStructOrEnum, AllowFn));
 
 pub trait PluginCap {
     fn plugin_path(&self) -> &syn::Path;
@@ -299,12 +301,14 @@ where
     }
 }
 
-impl<TFrom, TTo, P, G, R> From<ItemAttribute<Composed<TFrom, P, G>, R>>
-    for ItemAttribute<ConvertComposed<Composed<TTo, P, G>>, R>
+impl<TFrom, TTo, P, GFrom, GTo, RFrom, RTo> From<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>
+    for ItemAttribute<ConvertComposed<Composed<TTo, P, GTo>>, RTo>
 where
     TTo: From<TFrom>,
+    GTo: From<GFrom>,
+    RTo: From<RFrom>,
 {
-    fn from(value: ItemAttribute<Composed<TFrom, P, G>, R>) -> Self {
+    fn from(value: ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>) -> Self {
         ItemAttribute {
             args: ConvertComposed::from(value.args),
             context: value.context,
