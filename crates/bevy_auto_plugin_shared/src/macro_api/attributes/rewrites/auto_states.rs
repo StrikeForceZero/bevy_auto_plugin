@@ -33,15 +33,6 @@ impl<'a> From<&'a StatesArgs> for InitStateArgs {
 }
 
 impl RewriteAttribute for StatesArgs {
-    fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
-        let mut args = Vec::new();
-        args.push(quote! { plugin = #plugin });
-        if !self.generics().is_empty() {
-            args.extend(self.generics().to_attribute_arg_vec_tokens());
-        }
-        quote! { #(#args),* }
-    }
-
     fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
         let mut expanded_attrs = ExpandAttrs::default();
 
