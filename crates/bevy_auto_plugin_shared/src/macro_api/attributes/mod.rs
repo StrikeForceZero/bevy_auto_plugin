@@ -19,6 +19,7 @@ mod rewrites;
 mod traits;
 
 pub mod prelude {
+    pub use super::AllowAny;
     pub use super::AllowFn;
     pub use super::AllowStructOrEnum;
     pub use super::AttributeIdent;
@@ -92,6 +93,32 @@ impl IdentPathResolver for AllowFn {
     fn resolve_ident_path(item: &Item) -> Option<syn::Path> {
         Some(match item {
             Item::Fn(item) => item.sig.ident.clone().into(),
+            _ => return None,
+        })
+    }
+}
+
+pub struct AllowAny;
+impl IdentPathResolver for AllowAny {
+    fn resolve_ident_path(item: &Item) -> Option<syn::Path> {
+        Some(match item {
+            Item::Const(item) => item.ident.clone().into(),
+            Item::Enum(item) => item.ident.clone().into(),
+            Item::ExternCrate(item) => item.ident.clone().into(),
+            Item::Fn(item) => item.sig.ident.clone().into(),
+            Item::ForeignMod(_) => return None,
+            Item::Impl(_) => return None,
+            Item::Macro(item) => return item.ident.clone().map(Into::into),
+            Item::Mod(item) => item.ident.clone().into(),
+            Item::Static(item) => item.ident.clone().into(),
+            Item::Struct(item) => item.ident.clone().into(),
+            Item::Trait(item) => item.ident.clone().into(),
+            Item::TraitAlias(item) => item.ident.clone().into(),
+            Item::Type(item) => item.ident.clone().into(),
+            Item::Union(item) => item.ident.clone().into(),
+            // TODO: implement
+            Item::Use(_) => return None,
+            Item::Verbatim(_) => return None,
             _ => return None,
         })
     }
