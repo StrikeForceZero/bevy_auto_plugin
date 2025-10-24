@@ -33,26 +33,8 @@ pub mod prelude {
     pub use super::auto_plugin::{
         AutoPluginFnArgs, AutoPluginStructOrEnumArgs, resolve_app_param_name,
     };
-    pub use crate::macro_api::attributes::actions::prelude::AddMessageArgs;
-    pub use crate::macro_api::attributes::actions::prelude::AddObserverArgs;
-    pub use crate::macro_api::attributes::actions::prelude::AddPluginArgs;
-    pub use crate::macro_api::attributes::actions::prelude::AddSystemArgs;
-    pub use crate::macro_api::attributes::actions::prelude::ConfigureSystemSetArgs;
-    pub use crate::macro_api::attributes::actions::prelude::InitResourceArgs;
-    pub use crate::macro_api::attributes::actions::prelude::InitStateArgs;
-    pub use crate::macro_api::attributes::actions::prelude::InitSubStateArgs;
-    pub use crate::macro_api::attributes::actions::prelude::InsertResourceArgs;
-    pub use crate::macro_api::attributes::actions::prelude::NameArgs;
-    pub use crate::macro_api::attributes::actions::prelude::RegisterStateTypeArgs;
-    pub use crate::macro_api::attributes::actions::prelude::RegisterTypeArgs;
-    pub use crate::macro_api::attributes::actions::prelude::RunOnBuildArgs;
-    pub use crate::macro_api::attributes::rewrites::prelude::ComponentArgs;
-    pub use crate::macro_api::attributes::rewrites::prelude::EventArgs;
-    pub use crate::macro_api::attributes::rewrites::prelude::MessageArgs;
-    pub use crate::macro_api::attributes::rewrites::prelude::ObserverArgs;
-    pub use crate::macro_api::attributes::rewrites::prelude::ResourceArgs;
-    pub use crate::macro_api::attributes::rewrites::prelude::StatesArgs;
-    pub use crate::macro_api::attributes::rewrites::prelude::SystemArgs;
+    pub use crate::macro_api::attributes::actions::prelude::*;
+    pub use crate::macro_api::attributes::rewrites::prelude::*;
     pub use crate::macro_api::attributes::traits::prelude::*;
 }
 
