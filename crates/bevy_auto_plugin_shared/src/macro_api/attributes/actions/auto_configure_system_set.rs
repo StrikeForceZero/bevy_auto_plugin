@@ -4,11 +4,12 @@ use crate::syntax::analysis::item::resolve_ident_from_struct_or_enum;
 use crate::syntax::ast::flag::Flag;
 use crate::syntax::parse::item::ts_item_has_attr;
 use crate::syntax::parse::scrub_helpers::{AttrSite, scrub_helpers_and_ident_with_filter};
+use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
-use syn::{Attribute, Item, parse_quote};
+use syn::{Attribute, Item, Path, parse_quote};
 
 const CONFIG_ATTR_NAME: &str = "auto_configure_system_set_config";
 const CHAIN_CONFLICT_ERR: &str = "`chain` and `chain_ignore_deferred` are mutually exclusive";
@@ -98,57 +99,72 @@ pub type IaConfigureSystemSet = ItemAttribute<
 pub type QConfigureSystemSet = Q<IaConfigureSystemSet>;
 pub type QQConfigureSystemSet = QQ<IaConfigureSystemSet>;
 
+fn output(
+    args: &ConfigureSystemSetArgs,
+    app_param: &Ident,
+    concrete_path: &Path,
+    has_generics: bool,
+) -> TokenStream {
+    let mut tokens = TokenStream::new();
+    let schedule = &args.schedule_config.schedule;
+    let config_tokens = args.schedule_config.config.to_token_stream();
+    if let Some(inner) = &args.inner {
+        // enum
+        let chained = if args.chain.is_present() {
+            quote! { .chain() }
+        } else if args.chain_ignore_deferred.is_present() {
+            quote! { .chain_ignore_deferred() }
+        } else {
+            quote! {}
+        };
+        let mut entries = vec![];
+        for (ident, entry) in inner.entries.iter() {
+            let chained = if entry.chain.is_present() {
+                quote! { .chain() }
+            } else if entry.chain_ignore_deferred.is_present() {
+                quote! { .chain_ignore_deferred() }
+            } else {
+                quote! {}
+            };
+            let config_tokens = entry.config.to_token_stream();
+            entries.push(quote! {
+                #concrete_path :: #ident #chained #config_tokens
+            });
+        }
+        if !entries.is_empty() {
+            tokens.extend(quote! {
+                 #app_param.configure_sets(#schedule, (#(#entries),*) #chained #config_tokens);
+            });
+        }
+    } else {
+        // struct
+        if has_generics {
+            // TODO: generics are kind of silly here
+            //  but if someone does use them we'll assume its just a marker type
+            //  that can be initialized via `Default::default()`
+            tokens.extend(quote! {
+                #app_param.configure_sets(#schedule, #concrete_path::default() #config_tokens);
+            });
+        } else {
+            tokens.extend(quote! {
+                #app_param.configure_sets(#schedule, #concrete_path #config_tokens);
+            });
+        }
+    }
+    tokens
+}
+
 impl ToTokensWithAppParam for QConfigureSystemSet {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args;
         let generics = args.generics();
-        let base = &self.args.args.base;
-        let schedule = &args.base.schedule_config.schedule;
-        let config_tokens = args.base.schedule_config.config.to_token_stream();
         for concrete_path in self.args.concrete_paths() {
-            if let Some(inner) = &base.inner {
-                // enum
-                let chained = if base.chain.is_present() {
-                    quote! { .chain() }
-                } else if base.chain_ignore_deferred.is_present() {
-                    quote! { .chain_ignore_deferred() }
-                } else {
-                    quote! {}
-                };
-                let mut entries = vec![];
-                for (ident, entry) in inner.entries.iter() {
-                    let chained = if entry.chain.is_present() {
-                        quote! { .chain() }
-                    } else if entry.chain_ignore_deferred.is_present() {
-                        quote! { .chain_ignore_deferred() }
-                    } else {
-                        quote! {}
-                    };
-                    let config_tokens = entry.config.to_token_stream();
-                    entries.push(quote! {
-                        #concrete_path :: #ident #chained #config_tokens
-                    });
-                }
-                if !entries.is_empty() {
-                    tokens.extend(quote! {
-                         #app_param.configure_sets(#schedule, (#(#entries),*) #chained #config_tokens);
-                    });
-                }
-            } else {
-                // struct
-                if generics.is_empty() {
-                    tokens.extend(quote! {
-                        #app_param.configure_sets(#schedule, #concrete_path #config_tokens);
-                    });
-                } else {
-                    // TODO: generics are kind of silly here
-                    //  but if someone does use them we'll assume its just a marker type
-                    //  that can be initialized via `Default::default()`
-                    tokens.extend(quote! {
-                        #app_param.configure_sets(#schedule, #concrete_path::default() #config_tokens);
-                    });
-                }
-            }
+            tokens.extend(output(
+                &args.base,
+                app_param,
+                &concrete_path,
+                !generics.is_empty(),
+            ));
         }
     }
 }
@@ -371,7 +387,6 @@ pub fn args_with_plugin_from_args_input(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::codegen::with_target_path::WithTargetPath;
     use internal_test_proc_macro::xtest;
     use syn::{Path, parse_quote, parse2};
 
@@ -404,62 +419,68 @@ mod tests {
         fn test_to_tokens_no_generics() -> syn::Result<()> {
             let args = parse2::<ConfigureSystemSetArgs>(quote!(schedule = Update))?;
             let path: Path = parse_quote!(FooTarget);
-            let args_with_target = WithTargetPath::try_from((path, args))?;
-            let mut token_iter = args_with_target.to_tokens_iter();
+            let app_param = parse_quote!(app);
+            let tokens = output(&args, &app_param, &path, false);
             assert_eq!(
-                token_iter.next().expect("token_iter").to_string(),
+                tokens.to_string(),
                 quote! {
-                    . configure_sets (Update , FooTarget)
+                   #app_param . configure_sets (Update , FooTarget)
                 }
                 .to_string()
             );
-            assert!(token_iter.next().is_none());
             Ok(())
         }
 
         #[xtest]
         fn test_to_tokens_single() -> syn::Result<()> {
-            let args =
-                parse2::<ConfigureSystemSetArgs>(quote!(schedule = Update, generics(u8, bool)))?;
-            let path: Path = parse_quote!(FooTarget);
-            let args_with_target = WithTargetPath::try_from((path, args))?;
-            let mut token_iter = args_with_target.to_tokens_iter();
+            let args = parse2::<ConfigureSystemSetArgs>(quote!(schedule = Update))?;
+            let app_param = parse_quote!(app);
+            let tokens = output(
+                &args,
+                &app_param,
+                &parse_quote!(FooTarget::<u8, bool>),
+                true,
+            );
             assert_eq!(
-                token_iter.next().expect("token_iter").to_string(),
+                tokens.to_string(),
                 quote! {
-                    . configure_sets (Update , FooTarget :: <u8, bool > ::default() )
+                    #app_param . configure_sets (Update , FooTarget :: <u8, bool > ::default() )
                 }
                 .to_string()
             );
-            assert!(token_iter.next().is_none());
             Ok(())
         }
 
         #[xtest]
         fn test_to_tokens_multiple() -> syn::Result<()> {
-            let args = parse2::<ConfigureSystemSetArgs>(quote!(
-                schedule = Update,
-                generics(u8, bool),
-                generics(bool, bool)
-            ))?;
-            let path: Path = parse_quote!(FooTarget);
-            let args_with_target = WithTargetPath::try_from((path, args))?;
-            let mut token_iter = args_with_target.to_tokens_iter();
+            let args = parse2::<ConfigureSystemSetArgs>(quote!(schedule = Update))?;
+            let app_param = parse_quote!(app);
+            let tokens = output(
+                &args,
+                &app_param,
+                &parse_quote!(FooTarget::<u8, bool>),
+                true,
+            );
             assert_eq!(
-                token_iter.next().expect("token_iter").to_string(),
+                tokens.to_string(),
                 quote! {
-                    . configure_sets (Update , FooTarget :: <u8, bool >::default() )
+                    #app_param . configure_sets (Update , FooTarget :: <u8, bool >::default() )
                 }
                 .to_string()
             );
+            let tokens = output(
+                &args,
+                &app_param,
+                &parse_quote!(FooTarget::<bool, bool>),
+                true,
+            );
             assert_eq!(
-                token_iter.next().expect("token_iter").to_string(),
+                tokens.to_string(),
                 quote! {
-                    . configure_sets (Update , FooTarget :: <bool, bool >::default() )
+                    #app_param . configure_sets (Update , FooTarget :: <bool, bool >::default() )
                 }
                 .to_string()
             );
-            assert!(token_iter.next().is_none());
             Ok(())
         }
     }
@@ -480,17 +501,15 @@ mod tests {
                     }
                 },
             )?;
-            let args_with_target =
-                WithTargetPath::try_from((PathWithoutGenerics::from(ident), args)).unwrap(); // infallible
-            let mut token_iter = args_with_target.to_tokens_iter();
+            let app_param = parse_quote!(app);
+            let output = output(&args, &app_param, &(ident.into()), false);
             assert_eq!(
-                token_iter.next().expect("token_iter").to_string(),
+                output.to_string(),
                 quote! {
-                    . configure_sets (Update , ( Foo::A , Foo::B ))
+                    #app_param . configure_sets (Update , ( Foo::A , Foo::B ))
                 }
                 .to_string()
             );
-            assert!(token_iter.next().is_none());
             Ok(())
         }
 
@@ -505,17 +524,15 @@ mod tests {
                     }
                 },
             )?;
-            let args_with_target =
-                WithTargetPath::try_from((PathWithoutGenerics::from(ident), args)).unwrap(); // infallible
-            let mut token_iter = args_with_target.to_tokens_iter();
+            let app_param = parse_quote!(app);
+            let tokens = output(&args, &app_param, &(ident.into()), false);
             assert_eq!(
-                token_iter.next().expect("token_iter").to_string(),
+                tokens.to_string(),
                 quote! {
-                    . configure_sets (Update , ( Foo::A , Foo::B ))
+                    #app_param . configure_sets (Update , ( Foo::A , Foo::B ))
                 }
                 .to_string()
             );
-            assert!(token_iter.next().is_none());
             Ok(())
         }
 
@@ -532,17 +549,15 @@ mod tests {
                     }
                 },
             )?;
-            let args_with_target =
-                WithTargetPath::try_from((PathWithoutGenerics::from(ident), args)).unwrap(); // infallible
-            let mut token_iter = args_with_target.to_tokens_iter();
+            let app_param = parse_quote!(app);
+            let tokens = output(&args, &app_param, &(ident.into()), false);
             assert_eq!(
-                token_iter.next().expect("token_iter").to_string(),
+                tokens.to_string(),
                 quote! {
-                    . configure_sets (Update , ( Foo::A , Foo::B ))
+                    #app_param . configure_sets (Update , ( Foo::A , Foo::B ))
                 }
                 .to_string()
             );
-            assert!(token_iter.next().is_none());
             Ok(())
         }
 
@@ -592,7 +607,6 @@ mod tests {
                         ]
                     }),
                     group: Some(parse_quote!(A)),
-                    generics: vec![],
                     chain: Flag::from(false),
                     chain_ignore_deferred: Flag::from(false),
                     _strip_helpers: true,
