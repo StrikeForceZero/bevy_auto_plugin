@@ -156,19 +156,19 @@ macro_rules! gen_auto_outers {
 }
 
 gen_auto_attribute_outers! {
-    auto_run_on_build          => RunOnBuild,
-    auto_register_type         => RegisterType,
-    auto_add_message           => AddMessage,
-    auto_init_resource         => InitResource,
-    auto_insert_resource       => InsertResource,
-    auto_init_state            => InitState,
-    auto_init_sub_state        => InitSubState,
-    auto_name                  => Name,
-    auto_register_state_type   => RegisterStateType,
-    auto_add_system            => AddSystem,
-    auto_add_observer          => AddObserver,
-    auto_add_plugin            => AddPlugin,
-    auto_configure_system_set  => ConfigureSystemSet,
+    auto_run_on_build          => IaRunOnBuild,
+    auto_register_type         => IaRegisterType,
+    auto_add_message           => IaAddMessage,
+    auto_init_resource         => IaInitResource,
+    auto_insert_resource       => IaInsertResource,
+    auto_init_state            => IaInitState,
+    auto_init_sub_state        => IaInitSubState,
+    auto_name                  => IaName,
+    auto_register_state_type   => IaRegisterStateType,
+    auto_add_system            => IaAddSystem,
+    auto_add_observer          => IaAddObserver,
+    auto_add_plugin            => IaAddPlugin,
+    auto_configure_system_set  => IaConfigureSystemSet,
 }
 
 gen_auto_outers! {
