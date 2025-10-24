@@ -1,4 +1,3 @@
-use crate::codegen::with_target_path::WithTargetPath;
 use crate::macro_api::prelude::*;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::generics::{Generics, GenericsCollection};
@@ -81,13 +80,6 @@ impl<T: GenericsArgs> TryFrom<(Path, T)> for ConcreteTargetPathWithGenericsColle
     fn try_from(value: (Path, T)) -> Result<Self, Self::Error> {
         let (target, args) = value;
         Ok(Self::from((target.try_into()?, args)))
-    }
-}
-
-impl<T: GenericsArgs> From<WithTargetPath<T>> for ConcreteTargetPathWithGenericsCollection {
-    fn from(value: WithTargetPath<T>) -> Self {
-        let (target, args) = value.into();
-        Self::from((target, args))
     }
 }
 

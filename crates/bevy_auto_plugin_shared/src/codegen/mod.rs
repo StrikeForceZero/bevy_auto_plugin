@@ -1,5 +1,4 @@
 pub mod tokens;
-pub mod with_target_path;
 
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
