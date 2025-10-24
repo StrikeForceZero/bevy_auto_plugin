@@ -51,10 +51,9 @@ impl RewriteAttribute for SystemArgs {
     }
 }
 
-pub type IaSystem = ItemAttribute<Composed<SystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>
-pub type QSystem<'a> =  Q<'a, IaSystem>;
-impl ToTokens
-    for QSystem<'_>
-{
+pub type IaSystem =
+    ItemAttribute<Composed<SystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+pub type QSystem<'a> = Q<'a, IaSystem>;
+impl ToTokens for QSystem<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {}
 }
