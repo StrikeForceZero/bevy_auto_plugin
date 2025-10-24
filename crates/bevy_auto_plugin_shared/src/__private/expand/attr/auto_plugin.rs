@@ -3,7 +3,7 @@ use proc_macro2::TokenStream as MacroStream;
 use syn::ItemFn;
 
 pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream {
-    use crate::macro_api::attributes::prelude::{AutoPluginFnArgs, resolve_app_param_name};
+    use crate::macro_api::prelude::*;
     use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
     use proc_macro2::Ident;
     use quote::quote;
