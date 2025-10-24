@@ -18,10 +18,10 @@ pub type IaInsertResource = ItemAttribute<
     Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>,
     AllowStructOrEnum,
 >;
-pub type QInsertResource<'a> = Q<'a, IaInsertResource>;
-pub type QQInsertResource<'a> = QQ<'a, IaInsertResource>;
+pub type QInsertResource = Q<IaInsertResource>;
+pub type QQInsertResource = QQ<IaInsertResource>;
 
-impl ToTokensWithAppParam for QInsertResource<'_> {
+impl ToTokensWithAppParam for QInsertResource {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {
@@ -31,7 +31,7 @@ impl ToTokensWithAppParam for QInsertResource<'_> {
     }
 }
 
-impl ToTokens for QQInsertResource<'_> {
+impl ToTokens for QQInsertResource {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
         let resource = &self.args.args.base.resource;

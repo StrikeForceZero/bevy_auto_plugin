@@ -2,6 +2,7 @@ use crate::__private::attribute::RewriteAttribute;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::prelude::*;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
+use crate::util::macros::impl_from_default;
 use darling::FromMeta;
 use proc_macro2::{TokenStream as MacroStream, TokenStream};
 use quote::{ToTokens, quote};
@@ -26,19 +27,16 @@ impl<'a> From<&'a ObserverArgs> for AddObserverArgs {
     }
 }
 
-impl RewriteAttribute for ObserverArgs {
-    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
-        let mut expanded_attrs = ExpandAttrs::default();
-        expanded_attrs
+pub type IaObserver =
+    ItemAttribute<Composed<ObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+pub type RewriteQObserver = RewriteQ<IaObserver>;
+
+impl RewriteQToExpandAttr for RewriteQObserver {
+    fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
+        expand_attrs
             .attrs
-            .push(tokens::auto_add_observer(plugin.clone(), self.into()));
-        expanded_attrs
+            .push(tokens::auto_add_observer(self.into()));
     }
 }
 
-pub type IaObserver =
-    ItemAttribute<Composed<ObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type QObserver<'a> = Q<'a, IaObserver>;
-impl ToTokens for QObserver<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {}
-}
+impl_from_default!(ObserverArgs => (AddObserverArgs));

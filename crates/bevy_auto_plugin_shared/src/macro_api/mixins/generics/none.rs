@@ -1,4 +1,6 @@
 use crate::macro_api::mixins::HasKeys;
+use crate::macro_api::prelude::{WithZeroOrManyGenerics, WithZeroOrOneGenerics};
+use crate::util::macros::impl_from_default;
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro2::TokenStream;
@@ -47,3 +49,5 @@ impl Parse for WithNoGenerics {
         Ok(Self::default())
     }
 }
+
+impl_from_default!(WithNoGenerics => (WithZeroOrOneGenerics, WithZeroOrManyGenerics));

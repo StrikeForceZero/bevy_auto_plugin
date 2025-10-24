@@ -10,11 +10,11 @@ pub mod auto_plugin;
 
 fn body<T, G, R>(
     body: impl Fn(MacroStream) -> MacroStream,
-) -> impl Fn(&Ident, Q<'_, ItemAttribute<Composed<T, WithPlugin, G>, R>>) -> syn::Result<MacroStream>
+) -> impl Fn(&Ident, Q<ItemAttribute<Composed<T, WithPlugin, G>, R>>) -> syn::Result<MacroStream>
 where
     T: ItemAttributeArgs + Hash,
     G: Hash + Clone,
-    for<'a> Q<'a, ItemAttribute<Composed<T, WithPlugin, G>, R>>: ToTokens,
+    Q<ItemAttribute<Composed<T, WithPlugin, G>, R>>: ToTokens,
 {
     move |ident, params| {
         let app_param = &params.app_param;
@@ -37,15 +37,15 @@ where
 
 fn proc_attribute_outer<T>(attr: MacroStream, input: MacroStream) -> MacroStream
 where
-    T: ItemAttributeParse + ItemAttributeInput,
-    for<'a> Q<'a, T>: ToTokens,
+    T: ItemAttributeArgs + ItemAttributeParse + ItemAttributeInput + ItemAttributeContext,
+    Q<T>: ToTokens,
 {
     let args = ok_or_emit_with!(
         T::from_attr_input_with_context(attr, input.clone(), Context::default()),
         input
     );
-    let input = args.input_item();
-    let after_item_tokens = Q::from_args(&args).to_token_stream();
+    let input = args.input_item().clone();
+    let after_item_tokens = Q::from_args(args).to_token_stream();
     quote! {
         #input
         #after_item_tokens

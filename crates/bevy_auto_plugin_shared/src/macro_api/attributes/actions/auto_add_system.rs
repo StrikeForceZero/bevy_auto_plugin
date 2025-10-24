@@ -17,10 +17,10 @@ impl AttributeIdent for AddSystemArgs {
 
 pub type IaAddSystem =
     ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type QAddSystem<'a> = Q<'a, IaAddSystem>;
-pub type QQAddSystem<'a> = QQ<'a, IaAddSystem>;
+pub type QAddSystem = Q<IaAddSystem>;
+pub type QQAddSystem = QQ<IaAddSystem>;
 
-impl ToTokensWithAppParam for QAddSystem<'_> {
+impl ToTokensWithAppParam for QAddSystem {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let schedule = &self.args.args.base.schedule_config.schedule;
         let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();
@@ -32,7 +32,7 @@ impl ToTokensWithAppParam for QAddSystem<'_> {
     }
 }
 
-impl ToTokens for QQAddSystem<'_> {
+impl ToTokens for QQAddSystem {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
         // TODO: cleanup

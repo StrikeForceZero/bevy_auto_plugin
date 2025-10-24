@@ -4,6 +4,7 @@ use crate::macro_api::prelude::*;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::ast::flag_or_lit::FlagOrLit;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
+use crate::util::macros::impl_from_default;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::{ToTokens, quote};
@@ -38,10 +39,10 @@ impl<'a> From<&'a ComponentArgs> for NameArgs {
 
 pub type IaComponent =
     ItemAttribute<Composed<ComponentArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type RewriteQComponent<'a> = RewriteQ<'a, IaComponent>;
+pub type RewriteQComponent = RewriteQ<IaComponent>;
 
-impl RewriteQToExpandAttr for RewriteQComponent<'_> {
-    fn to_expand_attr(&self, expand_attrs: &mut ExpandAttrs) {
+impl RewriteQToExpandAttr for RewriteQComponent {
+    fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         if self.args.args.base.derive.present {
             expand_attrs
                 .attrs
@@ -66,3 +67,5 @@ impl RewriteQToExpandAttr for RewriteQComponent<'_> {
         }
     }
 }
+
+impl_from_default!(ComponentArgs => (RegisterTypeArgs, NameArgs));

@@ -170,3 +170,30 @@ where
         CBase::macro_path(context)
     }
 }
+
+pub struct ConvertComposed<T>(T);
+
+impl<CBase, MPlugin, MGenerics> ConvertComposed<Composed<CBase, MPlugin, MGenerics>> {
+    pub fn new(value: impl Into<Composed<CBase, MPlugin, MGenerics>>) -> Self {
+        Self(value.into())
+    }
+}
+
+impl<CBaseFrom, CBaseTo, MPlugin, MGenerics> From<Composed<CBaseFrom, MPlugin, MGenerics>>
+    for ConvertComposed<Composed<CBaseTo, MPlugin, MGenerics>>
+where
+    CBaseTo: From<CBaseFrom>,
+{
+    fn from(value: Composed<CBaseFrom, MPlugin, MGenerics>) -> Self {
+        Self(Composed {
+            base: value.base.into(),
+            plugin: value.plugin,
+            generics: value.generics,
+        })
+    }
+}
+impl<T, P, G> From<ConvertComposed<Composed<T, P, G>>> for Composed<T, P, G> {
+    fn from(value: ConvertComposed<Composed<T, P, G>>) -> Self {
+        value.0
+    }
+}

@@ -3,6 +3,7 @@ use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::prelude::*;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
+use crate::util::macros::impl_from_default;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::{ToTokens, quote};
@@ -31,39 +32,34 @@ impl<'a> From<&'a MessageArgs> for AddMessageArgs {
     }
 }
 
-impl RewriteAttribute for MessageArgs {
-    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
-        let mut expanded_attrs = ExpandAttrs::default();
+pub type IaMessage =
+    ItemAttribute<Composed<MessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type RewriteQMessage = RewriteQ<IaMessage>;
 
-        if self.derive.present {
-            expanded_attrs
+impl RewriteQToExpandAttr for RewriteQMessage {
+    fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
+        if self.args.args.base.derive.present {
+            expand_attrs
                 .attrs
-                .push(tokens::derive_message(&self.derive.items));
+                .push(tokens::derive_message(&self.args.args.base.derive.items));
         }
-        if self.reflect.present {
-            if self.derive.present {
-                expanded_attrs.attrs.push(tokens::derive_reflect());
+        if self.args.args.base.reflect.present {
+            if self.args.args.base.derive.present {
+                expand_attrs.attrs.push(tokens::derive_reflect());
             }
-            expanded_attrs.append(tokens::reflect(&self.reflect.items))
+            expand_attrs.append(tokens::reflect(&self.args.args.base.reflect.items))
         }
-        if self.register {
-            expanded_attrs
+        if self.args.args.base.register {
+            expand_attrs
                 .attrs
-                .push(tokens::auto_register_type(plugin.clone(), self.into()));
+                .push(tokens::auto_register_type(self.into()));
         }
 
         // TODO: should this be gated behind a flag?
-        expanded_attrs
+        expand_attrs
             .attrs
-            .push(tokens::auto_add_message(plugin.clone(), self.into()));
-
-        expanded_attrs
+            .push(tokens::auto_add_message(self.into()));
     }
 }
 
-pub type IaMessage =
-    ItemAttribute<Composed<MessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QMessage<'a> = Q<'a, IaMessage>;
-impl ToTokens for QMessage<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {}
-}
+impl_from_default!(MessageArgs => (RegisterTypeArgs, AddMessageArgs));

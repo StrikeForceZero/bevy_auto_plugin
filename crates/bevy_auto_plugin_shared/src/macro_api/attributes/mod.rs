@@ -3,6 +3,7 @@ use crate::macro_api::context::Context;
 use crate::macro_api::input_item::InputItem;
 use crate::macro_api::mixins::generics::HasGenerics;
 use crate::macro_api::mixins::with_plugin::WithPlugin;
+use crate::macro_api::prelude::ConvertComposed;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use proc_macro2::{Ident, TokenStream};
@@ -27,6 +28,7 @@ pub mod prelude {
     pub use super::IdentPathResolver;
     pub use super::ItemAttribute;
     pub use super::ItemAttributeArgs;
+    pub use super::ItemAttributeContext;
     pub use super::ItemAttributeInput;
     pub use super::ItemAttributeParse;
     pub use super::PluginCap;
@@ -52,11 +54,27 @@ pub trait ItemAttributeArgs: AttributeIdent + Hash + Clone {
     }
 }
 
+impl<T, P, G, R> AttributeIdent for ItemAttribute<Composed<T, P, G>, R>
+where
+    T: AttributeIdent + Hash + Clone,
+{
+    const IDENT: &'static str = T::IDENT;
+}
+impl<T, P, G, R> ItemAttributeArgs for ItemAttribute<Composed<T, P, G>, R>
+where
+    T: AttributeIdent + Hash + Clone,
+    P: Clone + Hash,
+    G: Clone + Hash,
+    R: Clone + Hash,
+{
+}
+
 pub trait IdentPathResolver {
     const NOT_ALLOWED_MESSAGE: &'static str = "Unable to resolve ident path";
     fn resolve_ident_path(item: &Item) -> Option<syn::Path>;
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AllowStructOrEnum;
 impl IdentPathResolver for AllowStructOrEnum {
     const NOT_ALLOWED_MESSAGE: &'static str = "Only allowed on Struct Or Enum items";
@@ -69,6 +87,7 @@ impl IdentPathResolver for AllowStructOrEnum {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AllowFn;
 impl IdentPathResolver for AllowFn {
     const NOT_ALLOWED_MESSAGE: &'static str = "Only allowed on Fn items";
@@ -80,6 +99,7 @@ impl IdentPathResolver for AllowFn {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AllowAny;
 impl IdentPathResolver for AllowAny {
     fn resolve_ident_path(item: &Item) -> Option<syn::Path> {
@@ -115,12 +135,26 @@ pub trait GenericsCap {
     fn concrete_paths(&self) -> Vec<syn::Path>;
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct ItemAttribute<T, Resolver> {
     pub args: T,
     pub context: Context,
     pub input_item: InputItem,
     pub target: syn::Path,
     pub _resolver: PhantomData<Resolver>,
+}
+
+impl<T, R> Hash for ItemAttribute<T, R>
+where
+    T: Hash,
+    R: Hash,
+{
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.args.hash(state);
+        self.context.hash(state);
+        self.target.hash(state);
+        self._resolver.hash(state);
+    }
 }
 
 // TODO: where should this live?
@@ -204,7 +238,7 @@ where
         input: TokenStream,
         context: Context,
     ) -> syn::Result<Self> {
-        let mut input_item = InputItem::new(input);
+        let mut input_item = InputItem::Tokens(input);
         let item = input_item.ensure_ast()?;
         let Some(target) = Resolver::resolve_ident_path(item) else {
             return Err(syn::Error::new(
@@ -261,6 +295,37 @@ where
                 .iter()
                 .map(|g| syn::parse_quote!(#target::<#g>))
                 .collect()
+        }
+    }
+}
+
+impl<TFrom, TTo, P, G, R> From<ItemAttribute<Composed<TFrom, P, G>, R>>
+    for ItemAttribute<ConvertComposed<Composed<TTo, P, G>>, R>
+where
+    TTo: From<TFrom>,
+{
+    fn from(value: ItemAttribute<Composed<TFrom, P, G>, R>) -> Self {
+        ItemAttribute {
+            args: ConvertComposed::from(value.args),
+            context: value.context,
+            input_item: value.input_item,
+            target: value.target,
+            _resolver: PhantomData,
+        }
+    }
+}
+
+impl<T, R> From<ItemAttribute<ConvertComposed<T>, R>> for ItemAttribute<T, R>
+where
+    T: From<ConvertComposed<T>>,
+{
+    fn from(value: ItemAttribute<ConvertComposed<T>, R>) -> Self {
+        ItemAttribute {
+            args: T::from(value.args),
+            context: value.context,
+            input_item: value.input_item,
+            target: value.target,
+            _resolver: PhantomData,
         }
     }
 }

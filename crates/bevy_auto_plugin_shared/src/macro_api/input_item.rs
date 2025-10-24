@@ -2,33 +2,41 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::parse2;
 
-pub enum InputItem {
+#[derive(Debug, Clone)]
+pub(crate) enum InputItem {
     Tokens(TokenStream),
-    Ast(Box<syn::Item>),
+    Item(Box<syn::Item>),
+}
+
+impl PartialEq for InputItem {
+    fn eq(&self, other: &Self) -> bool {
+        let self_tokens = self.to_token_stream();
+        let other_tokens = other.to_token_stream();
+        self_tokens.to_string() == other_tokens.to_string()
+    }
 }
 
 impl InputItem {
-    pub fn new(item_ts: TokenStream) -> Self {
+    pub fn from_mut_ref(item_ts: TokenStream) -> Self {
         Self::Tokens(item_ts)
     }
     fn _upgrade(&mut self) -> syn::Result<()> {
-        if let Self::Tokens(ts) = &self {
-            let parsed: syn::Item = parse2(ts.clone())?;
-            *self = Self::Ast(Box::new(parsed));
+        if let Self::Tokens(tokens) = self {
+            *self = Self::Item(parse2(tokens.clone())?);
         }
         Ok(())
     }
     pub fn ensure_ast(&mut self) -> syn::Result<&syn::Item> {
         self._upgrade()?;
         Ok(match &*self {
-            Self::Ast(ast) => ast.as_ref(),
+            Self::Item(item) => item.as_ref(),
             _ => unreachable!(),
         })
     }
     pub fn ensure_ast_mut(&mut self) -> syn::Result<&mut syn::Item> {
         self._upgrade()?;
         Ok(match &mut *self {
-            Self::Ast(ast) => ast.as_mut(),
+            Self::Item(item) => item.as_mut(),
             _ => unreachable!(),
         })
     }
@@ -69,7 +77,7 @@ impl ToTokens for InputItem {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         tokens.extend(match self {
             InputItem::Tokens(ts) => ts.clone(),
-            InputItem::Ast(ast) => quote! { #ast },
+            InputItem::Item(item) => quote! { #item },
         })
     }
 }

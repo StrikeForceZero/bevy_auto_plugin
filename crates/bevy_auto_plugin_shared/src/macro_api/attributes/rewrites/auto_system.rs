@@ -32,19 +32,22 @@ impl<'a> From<&'a SystemArgs> for AddSystemArgs {
     }
 }
 
-impl RewriteAttribute for SystemArgs {
-    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
-        let mut expanded_attrs = ExpandAttrs::default();
-        expanded_attrs
+pub type IaSystem =
+    ItemAttribute<Composed<SystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+pub type RewriteQSystem = RewriteQ<IaSystem>;
+
+impl RewriteQToExpandAttr for RewriteQSystem {
+    fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
+        expand_attrs
             .attrs
-            .push(tokens::auto_add_systems(plugin.clone(), self.into()));
-        expanded_attrs
+            .push(tokens::auto_add_systems(self.into()));
     }
 }
 
-pub type IaSystem =
-    ItemAttribute<Composed<SystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type QSystem<'a> = Q<'a, IaSystem>;
-impl ToTokens for QSystem<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {}
+impl From<SystemArgs> for AddSystemArgs {
+    fn from(value: SystemArgs) -> Self {
+        Self {
+            schedule_config: value.schedule_config,
+        }
+    }
 }

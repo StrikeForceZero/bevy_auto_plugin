@@ -95,10 +95,10 @@ pub type IaConfigureSystemSet = ItemAttribute<
     Composed<ConfigureSystemSetArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QConfigureSystemSet<'a> = Q<'a, IaConfigureSystemSet>;
-pub type QQConfigureSystemSet<'a> = QQ<'a, IaConfigureSystemSet>;
+pub type QConfigureSystemSet = Q<IaConfigureSystemSet>;
+pub type QQConfigureSystemSet = QQ<IaConfigureSystemSet>;
 
-impl ToTokensWithAppParam for QConfigureSystemSet<'_> {
+impl ToTokensWithAppParam for QConfigureSystemSet {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args;
         let generics = args.generics();
@@ -153,7 +153,7 @@ impl ToTokensWithAppParam for QConfigureSystemSet<'_> {
     }
 }
 
-impl ToTokens for QQConfigureSystemSet<'_> {
+impl ToTokens for QQConfigureSystemSet {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
         // TODO: cleanup

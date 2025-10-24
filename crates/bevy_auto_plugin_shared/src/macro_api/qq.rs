@@ -1,33 +1,20 @@
 use crate::codegen::ExpandAttrs;
-use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::attributes::{
-    AllowFn, AllowStructOrEnum, ItemAttribute, ItemAttributeContext,
-};
-use crate::macro_api::composed::Composed;
-use crate::macro_api::context::Context;
-use crate::macro_api::input_item::InputItem;
-use crate::macro_api::macro_paths::MacroPathProvider;
-use crate::macro_api::mixins::generics::none::WithNoGenerics;
-use crate::macro_api::mixins::generics::with_many::WithZeroOrManyGenerics;
-use crate::macro_api::mixins::generics::with_single::WithZeroOrOneGenerics;
-use crate::macro_api::mixins::with_plugin::WithPlugin;
+use crate::macro_api::prelude::*;
 use crate::syntax::extensions::item::ItemAttrsExt;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::ToTokens;
 use syn::parse_quote;
 use syn::spanned::Spanned;
 
 /// for codegen re-emitting macro args
-pub(crate) struct QQ<'a, T> {
-    pub(crate) args: &'a mut T,
+#[derive(Debug, Clone)]
+pub(crate) struct QQ<T> {
+    pub(crate) args: T,
 }
 
-impl<'a, T> QQ<'a, T>
-where
-    T: ItemAttributeInput,
-{
-    pub(crate) fn from_args(args: &'a mut T) -> QQ<'a, T> {
-        QQ::<'a, T> { args }
+impl<T> QQ<T> {
+    pub(crate) fn from_args(args: T) -> QQ<T> {
+        QQ::<T> { args }
     }
 }
 
@@ -35,7 +22,7 @@ pub trait QQToExpandAttr {
     fn to_expand_attr(&self, expand_attrs: &mut ExpandAttrs);
 }
 
-impl<'a, T> ToTokens for QQ<'a, T>
+impl<T> ToTokens for QQ<T>
 where
     Self: QQToExpandAttr,
 {
@@ -46,7 +33,7 @@ where
     }
 }
 
-impl<T> QQ<'_, T>
+impl<T> QQ<T>
 where
     T: MacroPathProvider + ItemAttributeInput + ItemAttributeContext,
     Self: ToTokens,

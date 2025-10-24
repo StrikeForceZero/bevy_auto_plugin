@@ -13,10 +13,10 @@ impl AttributeIdent for AddObserverArgs {
 
 pub type IaAddObserver =
     ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type QAddObserver<'a> = Q<'a, IaAddObserver>;
-pub type QQAddObserver<'a> = QQ<'a, IaAddObserver>;
+pub type QAddObserver = Q<IaAddObserver>;
+pub type QQAddObserver = QQ<IaAddObserver>;
 
-impl ToTokensWithAppParam for QAddObserver<'_> {
+impl ToTokensWithAppParam for QAddObserver {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -26,7 +26,7 @@ impl ToTokensWithAppParam for QAddObserver<'_> {
     }
 }
 
-impl ToTokens for QQAddObserver<'_> {
+impl ToTokens for QQAddObserver {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

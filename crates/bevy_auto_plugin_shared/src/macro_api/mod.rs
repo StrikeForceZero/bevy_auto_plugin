@@ -16,6 +16,7 @@ pub(crate) mod prelude {
     pub use composed::*;
     pub use context::*;
     pub use derives::prelude::*;
+    pub use macro_paths::*;
     pub use mixins::prelude::*;
     pub use q::*;
     pub use qq::*;

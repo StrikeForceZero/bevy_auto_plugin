@@ -1,6 +1,8 @@
 use crate::macro_api::mixins::HasKeys;
 use crate::macro_api::mixins::generics::HasGenerics;
+use crate::macro_api::prelude::WithZeroOrManyGenerics;
 use crate::syntax::ast::type_list::TypeList;
+use crate::util::macros::impl_from_default;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
@@ -36,6 +38,8 @@ impl ToTokens for WithZeroOrOneGenerics {
         });
     }
 }
+
+impl_from_default!(WithZeroOrOneGenerics => (WithZeroOrManyGenerics));
 
 #[cfg(test)]
 mod tests {

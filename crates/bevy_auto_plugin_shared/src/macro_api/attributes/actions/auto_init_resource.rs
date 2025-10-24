@@ -16,10 +16,10 @@ pub type IaInitResource = ItemAttribute<
     Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QInitResource<'a> = Q<'a, IaInitResource>;
-pub type QQInitResource<'a> = QQ<'a, IaInitResource>;
+pub type QInitResource = Q<IaInitResource>;
+pub type QQInitResource = QQ<IaInitResource>;
 
-impl ToTokensWithAppParam for QInitResource<'_> {
+impl ToTokensWithAppParam for QInitResource {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -29,7 +29,7 @@ impl ToTokensWithAppParam for QInitResource<'_> {
     }
 }
 
-impl ToTokens for QQInitResource<'_> {
+impl ToTokens for QQInitResource {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

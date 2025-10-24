@@ -16,10 +16,10 @@ impl AttributeIdent for NameArgs {
 
 pub type IaName =
     ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QName<'a> = Q<'a, IaName>;
-pub type QQName<'a> = QQ<'a, IaName>;
+pub type QName = Q<IaName>;
+pub type QQName = QQ<IaName>;
 
-impl ToTokensWithAppParam for QName<'_> {
+impl ToTokensWithAppParam for QName {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args.base;
         for concrete_path in self.args.concrete_paths() {
@@ -45,7 +45,7 @@ impl ToTokensWithAppParam for QName<'_> {
     }
 }
 
-impl ToTokens for QQName<'_> {
+impl ToTokens for QQName {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
         if let Some(name) = &self.args.args.base.name {

@@ -13,10 +13,10 @@ impl AttributeIdent for RunOnBuildArgs {
 
 pub type IaRunOnBuild =
     ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QRunOnBuild<'a> = Q<'a, IaRunOnBuild>;
-pub type QQRunOnBuild<'a> = QQ<'a, IaRunOnBuild>;
+pub type QRunOnBuild = Q<IaRunOnBuild>;
+pub type QQRunOnBuild = QQ<IaRunOnBuild>;
 
-impl ToTokensWithAppParam for QRunOnBuild<'_> {
+impl ToTokensWithAppParam for QRunOnBuild {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -26,7 +26,7 @@ impl ToTokensWithAppParam for QRunOnBuild<'_> {
     }
 }
 
-impl ToTokens for QQRunOnBuild<'_> {
+impl ToTokens for QQRunOnBuild {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

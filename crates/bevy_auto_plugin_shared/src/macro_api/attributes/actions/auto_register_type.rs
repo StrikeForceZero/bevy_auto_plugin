@@ -15,10 +15,10 @@ pub type IaRegisterType = ItemAttribute<
     Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QRegisterType<'a> = Q<'a, IaRegisterType>;
-pub type QQRegisterType<'a> = QQ<'a, IaRegisterType>;
+pub type QRegisterType = Q<IaRegisterType>;
+pub type QQRegisterType = QQ<IaRegisterType>;
 
-impl ToTokensWithAppParam for QRegisterType<'_> {
+impl ToTokensWithAppParam for QRegisterType {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -27,7 +27,7 @@ impl ToTokensWithAppParam for QRegisterType<'_> {
         }
     }
 }
-impl ToTokens for QQRegisterType<'_> {
+impl ToTokens for QQRegisterType {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

@@ -13,10 +13,10 @@ impl AttributeIdent for InitSubStateArgs {
 
 pub type IaInitSubState =
     ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
-pub type QInitSubState<'a> = Q<'a, IaInitSubState>;
-pub type QQInitSubState<'a> = QQ<'a, IaInitSubState>;
+pub type QInitSubState = Q<IaInitSubState>;
+pub type QQInitSubState = QQ<IaInitSubState>;
 
-impl ToTokensWithAppParam for QInitSubState<'_> {
+impl ToTokensWithAppParam for QInitSubState {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let target = &self.args.target;
         tokens.extend(quote! {
@@ -25,7 +25,7 @@ impl ToTokensWithAppParam for QInitSubState<'_> {
     }
 }
 
-impl ToTokens for QQInitSubState<'_> {
+impl ToTokens for QQInitSubState {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

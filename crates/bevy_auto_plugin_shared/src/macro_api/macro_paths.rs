@@ -2,7 +2,7 @@ use crate::macro_api::attributes::prelude::*;
 use crate::macro_api::context::Context;
 use syn::parse_quote;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub struct MacroPaths {
     /// resolved absolute path to `auto_add_system`
     pub emit_add_system_macro: syn::Path,

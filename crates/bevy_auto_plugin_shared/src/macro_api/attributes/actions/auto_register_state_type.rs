@@ -15,10 +15,10 @@ pub type IaRegisterStateType = ItemAttribute<
     Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QRegisterStateType<'a> = Q<'a, IaRegisterStateType>;
-pub type QQRegisterStateType<'a> = QQ<'a, IaRegisterStateType>;
+pub type QRegisterStateType = Q<IaRegisterStateType>;
+pub type QQRegisterStateType = QQ<IaRegisterStateType>;
 
-impl ToTokensWithAppParam for QRegisterStateType<'_> {
+impl ToTokensWithAppParam for QRegisterStateType {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             let bevy_state = crate::__private::paths::state::root_path();
@@ -30,7 +30,7 @@ impl ToTokensWithAppParam for QRegisterStateType<'_> {
     }
 }
 
-impl ToTokens for QQRegisterStateType<'_> {
+impl ToTokens for QQRegisterStateType {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

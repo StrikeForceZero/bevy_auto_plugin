@@ -3,6 +3,7 @@ use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::prelude::*;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
+use crate::util::macros::impl_from_default;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::{ToTokens, quote};
@@ -33,40 +34,36 @@ impl<'a> From<&'a ResourceArgs> for InitResourceArgs {
     }
 }
 
-impl RewriteAttribute for ResourceArgs {
-    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
-        let mut expanded_attrs = ExpandAttrs::default();
-
-        if self.derive.present {
-            expanded_attrs
+pub type IaResource =
+    ItemAttribute<Composed<ResourceArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type RewriteQResource = RewriteQ<IaResource>;
+impl RewriteQToExpandAttr for RewriteQResource {
+    fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
+        if self.args.args.base.derive.present {
+            expand_attrs
                 .attrs
-                .push(tokens::derive_resource(&self.derive.items));
+                .push(tokens::derive_resource(&self.args.args.base.derive.items));
         }
-        if self.reflect.present {
-            if self.derive.present {
-                expanded_attrs.attrs.push(tokens::derive_reflect());
+        if self.args.args.base.reflect.present {
+            if self.args.args.base.derive.present {
+                expand_attrs.attrs.push(tokens::derive_reflect());
             }
             let component_ident: Ident = parse_quote!(Resource);
-            let items = std::iter::once(&component_ident).chain(self.reflect.items.iter());
-            expanded_attrs.append(tokens::reflect(items))
+            let items =
+                std::iter::once(&component_ident).chain(self.args.args.base.reflect.items.iter());
+            expand_attrs.append(tokens::reflect(items))
         }
-        if self.register {
-            expanded_attrs
+        if self.args.args.base.register {
+            expand_attrs
                 .attrs
-                .push(tokens::auto_register_type(plugin.clone(), self.into()));
+                .push(tokens::auto_register_type(self.into()));
         }
-        if self.init {
-            expanded_attrs
+        if self.args.args.base.init {
+            expand_attrs
                 .attrs
-                .push(tokens::auto_init_resource(plugin.clone(), self.into()));
+                .push(tokens::auto_init_resource(self.into()));
         }
-        expanded_attrs
     }
 }
 
-pub type IaResource =
-    ItemAttribute<Composed<ResourceArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QResource<'a> = Q<'a, IaResource>;
-impl ToTokens for QResource<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {}
-}
+impl_from_default!(ResourceArgs => (RegisterTypeArgs, InitResourceArgs));

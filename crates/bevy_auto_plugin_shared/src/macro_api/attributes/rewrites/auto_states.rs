@@ -3,6 +3,7 @@ use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::prelude::*;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
+use crate::util::macros::impl_from_default;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::{ToTokens, quote};
@@ -31,37 +32,31 @@ impl<'a> From<&'a StatesArgs> for InitStateArgs {
         Self::default()
     }
 }
-
-impl RewriteAttribute for StatesArgs {
-    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
-        let mut expanded_attrs = ExpandAttrs::default();
-
-        if self.derive.present {
-            expanded_attrs.append(tokens::derive_states(&self.derive.items));
+pub type IaState =
+    ItemAttribute<Composed<StatesArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
+pub type RewriteQState = RewriteQ<IaState>;
+impl RewriteQToExpandAttr for RewriteQState {
+    fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
+        if self.args.args.base.derive.present {
+            expand_attrs.append(tokens::derive_states(&self.args.args.base.derive.items));
         }
-        if self.reflect.present {
-            if self.derive.present {
-                expanded_attrs.attrs.push(tokens::derive_reflect());
+        if self.args.args.base.reflect.present {
+            if self.args.args.base.derive.present {
+                expand_attrs.attrs.push(tokens::derive_reflect());
             }
-            expanded_attrs.append(tokens::reflect(&self.reflect.items))
+            expand_attrs.append(tokens::reflect(&self.args.args.base.reflect.items))
         }
-        if self.register {
-            expanded_attrs
+        if self.args.args.base.register {
+            expand_attrs
                 .attrs
-                .push(tokens::auto_register_type(plugin.clone(), self.into()));
+                .push(tokens::auto_register_type(self.into()));
         }
-        if self.init {
-            expanded_attrs
+        if self.args.args.base.init {
+            expand_attrs
                 .attrs
-                .push(tokens::auto_init_states(plugin.clone(), self.into()));
+                .push(tokens::auto_init_states(self.into()));
         }
-        expanded_attrs
     }
 }
 
-pub type IaState =
-    ItemAttribute<Composed<StatesArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QState<'a> = Q<'a, IaState>;
-impl ToTokens for QState<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {}
-}
+impl_from_default!(StatesArgs => (RegisterTypeArgs, InitStateArgs));
