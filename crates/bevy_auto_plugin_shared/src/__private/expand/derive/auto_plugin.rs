@@ -3,7 +3,7 @@ use proc_macro2::TokenStream as MacroStream;
 use syn::spanned::Spanned;
 
 pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
-    use crate::macro_api::derives::auto_plugin::AutoPluginDeriveArgs;
+    use crate::macro_api::prelude::*;
     use crate::syntax::extensions::generics;
     use darling::FromDeriveInput;
     use quote::quote;
