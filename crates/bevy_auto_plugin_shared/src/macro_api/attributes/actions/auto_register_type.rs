@@ -18,7 +18,7 @@ pub type IaRegisterType = ItemAttribute<
 pub type QRegisterType<'a> = Q<'a, IaRegisterType>;
 pub type QQRegisterType<'a> = QQ<'a, IaRegisterType>;
 
-impl RequiredUseQTokens for QRegisterType<'_> {
+impl ToTokensWithAppParam for QRegisterType<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {

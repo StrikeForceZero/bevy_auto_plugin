@@ -146,13 +146,27 @@ where
     }
 }
 
+pub trait ItemAttributeContext {
+    fn context(&self) -> &Context;
+}
+
+impl<T, Resolver> ItemAttributeContext for ItemAttribute<T, Resolver> {
+    fn context(&self) -> &Context {
+        &self.context
+    }
+}
+
 pub trait ItemAttributeInput {
     fn input_item(&self) -> &InputItem;
+    fn input_item_mut(&mut self) -> &mut InputItem;
 }
 
 impl<T, Resolver> ItemAttributeInput for ItemAttribute<T, Resolver> {
     fn input_item(&self) -> &InputItem {
         &self.input_item
+    }
+    fn input_item_mut(&mut self) -> &mut InputItem {
+        &mut self.input_item
     }
 }
 
@@ -163,7 +177,7 @@ pub trait ItemAttributeParse {
         context: Context,
     ) -> syn::Result<Self>
     where
-        Self: Sized;
+        Self: Sized + ItemAttributeInput + ItemAttributeContext + ItemAttributeArgs;
 }
 
 impl<T, Resolver> ItemAttributeParse for ItemAttribute<T, Resolver>

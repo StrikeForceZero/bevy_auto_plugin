@@ -18,7 +18,7 @@ pub type IaRegisterStateType = ItemAttribute<
 pub type QRegisterStateType<'a> = Q<'a, IaRegisterStateType>;
 pub type QQRegisterStateType<'a> = QQ<'a, IaRegisterStateType>;
 
-impl RequiredUseQTokens for QRegisterStateType<'_> {
+impl ToTokensWithAppParam for QRegisterStateType<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             let bevy_state = crate::__private::paths::state::root_path();

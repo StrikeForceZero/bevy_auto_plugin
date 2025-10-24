@@ -19,7 +19,7 @@ pub type IaAddPlugin =
     ItemAttribute<Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
 pub type QAddPlugin<'a> = Q<'a, IaAddPlugin>;
 
-impl RequiredUseQTokens for QAddPlugin<'_> {
+impl ToTokensWithAppParam for QAddPlugin<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             if let Some(expr) = &self.args.args.base.init.expr {

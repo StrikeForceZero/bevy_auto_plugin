@@ -16,7 +16,7 @@ pub type IaAddMessage =
 pub type QAddMessage<'a> = Q<'a, IaAddMessage>;
 pub type QQAddMessage<'a> = QQ<'a, IaAddMessage>;
 
-impl RequiredUseQTokens for QAddMessage<'_> {
+impl ToTokensWithAppParam for QAddMessage<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {

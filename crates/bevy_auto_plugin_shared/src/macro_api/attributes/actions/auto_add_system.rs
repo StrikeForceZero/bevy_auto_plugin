@@ -20,7 +20,7 @@ pub type IaAddSystem =
 pub type QAddSystem<'a> = Q<'a, IaAddSystem>;
 pub type QQAddSystem<'a> = QQ<'a, IaAddSystem>;
 
-impl RequiredUseQTokens for QAddSystem<'_> {
+impl ToTokensWithAppParam for QAddSystem<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let schedule = &self.args.args.base.schedule_config.schedule;
         let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();

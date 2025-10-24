@@ -16,7 +16,7 @@ pub type IaInitState =
 pub type QInitState<'a> = Q<'a, IaInitState>;
 pub type QQInitState<'a> = QQ<'a, IaInitState>;
 
-impl RequiredUseQTokens for QInitState<'_> {
+impl ToTokensWithAppParam for QInitState<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let target = &self.args.target;
         tokens.extend(quote! {

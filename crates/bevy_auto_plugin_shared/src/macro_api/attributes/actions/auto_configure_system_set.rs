@@ -98,7 +98,7 @@ pub type IaConfigureSystemSet = ItemAttribute<
 pub type QConfigureSystemSet<'a> = Q<'a, IaConfigureSystemSet>;
 pub type QQConfigureSystemSet<'a> = QQ<'a, IaConfigureSystemSet>;
 
-impl RequiredUseQTokens for QConfigureSystemSet<'_> {
+impl ToTokensWithAppParam for QConfigureSystemSet<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args;
         let generics = args.generics();

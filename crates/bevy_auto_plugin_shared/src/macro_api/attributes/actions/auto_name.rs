@@ -19,7 +19,7 @@ pub type IaName =
 pub type QName<'a> = Q<'a, IaName>;
 pub type QQName<'a> = QQ<'a, IaName>;
 
-impl RequiredUseQTokens for QName<'_> {
+impl ToTokensWithAppParam for QName<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args.base;
         for concrete_path in self.args.concrete_paths() {

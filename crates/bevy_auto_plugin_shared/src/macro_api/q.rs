@@ -1,8 +1,6 @@
-use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::attributes::{GenericsCap, ItemAttributeParse};
+use crate::macro_api::attributes::ItemAttributeParse;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident};
-use syn::parse::Parse;
 
 /// for codegen attaching to bevy app
 pub(crate) struct Q<'a, T> {
@@ -23,19 +21,15 @@ where
     }
 }
 
-pub trait RequiredUseQTokens {
-    fn required_uses(&self) -> Vec<TokenStream> {
-        vec![]
-    }
+pub trait ToTokensWithAppParam {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident);
 }
 
 impl<'a, T> ToTokens for Q<'a, T>
 where
-    Self: RequiredUseQTokens,
+    Self: ToTokensWithAppParam,
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.extend(self.required_uses());
-        RequiredUseQTokens::to_tokens(self, tokens, &self.app_param);
+        ToTokensWithAppParam::to_tokens(self, tokens, &self.app_param);
     }
 }

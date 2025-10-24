@@ -36,40 +36,33 @@ impl<'a> From<&'a ComponentArgs> for NameArgs {
     }
 }
 
-impl RewriteAttribute for ComponentArgs {
-    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
-        let mut expanded_attrs = ExpandAttrs::default();
-
-        if self.derive.present {
-            expanded_attrs
-                .attrs
-                .push(tokens::derive_component(&self.derive.items));
-        }
-        if self.reflect.present {
-            if self.derive.present {
-                expanded_attrs.attrs.push(tokens::derive_reflect());
-            }
-            let component_ident: Ident = parse_quote!(Component);
-            let items = std::iter::once(&component_ident).chain(self.reflect.items.iter());
-            expanded_attrs.append(tokens::reflect(items))
-        }
-        if self.register {
-            expanded_attrs
-                .attrs
-                .push(tokens::auto_register_type(plugin.clone(), self.into()));
-        }
-        if self.auto_name.present {
-            expanded_attrs
-                .attrs
-                .push(tokens::auto_name(plugin.clone(), self.into()));
-        }
-        expanded_attrs
-    }
-}
-
 pub type IaComponent =
     ItemAttribute<Composed<ComponentArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QComponent<'a> = Q<'a, IaComponent>;
-impl ToTokens for QComponent<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {}
+pub type RewriteQComponent<'a> = RewriteQ<'a, IaComponent>;
+
+impl RewriteQToExpandAttr for RewriteQComponent<'_> {
+    fn to_expand_attr(&self, expand_attrs: &mut ExpandAttrs) {
+        if self.args.args.base.derive.present {
+            expand_attrs
+                .attrs
+                .push(tokens::derive_component(&self.args.args.base.derive.items));
+        }
+        if self.args.args.base.reflect.present {
+            if self.args.args.base.derive.present {
+                expand_attrs.attrs.push(tokens::derive_reflect());
+            }
+            let component_ident: Ident = parse_quote!(Component);
+            let items =
+                std::iter::once(&component_ident).chain(self.args.args.base.reflect.items.iter());
+            expand_attrs.append(tokens::reflect(items))
+        }
+        if self.args.args.base.register {
+            expand_attrs
+                .attrs
+                .push(tokens::auto_register_type(self.into()));
+        }
+        if self.args.args.base.auto_name.present {
+            expand_attrs.attrs.push(tokens::auto_name(self.into()));
+        }
+    }
 }

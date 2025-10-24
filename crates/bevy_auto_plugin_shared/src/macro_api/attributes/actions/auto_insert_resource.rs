@@ -21,7 +21,7 @@ pub type IaInsertResource = ItemAttribute<
 pub type QInsertResource<'a> = Q<'a, IaInsertResource>;
 pub type QQInsertResource<'a> = QQ<'a, IaInsertResource>;
 
-impl RequiredUseQTokens for QInsertResource<'_> {
+impl ToTokensWithAppParam for QInsertResource<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! { |app| {

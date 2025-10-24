@@ -1,5 +1,5 @@
 use crate::macro_api::prelude::*;
-use crate::macro_api::q::{Q, RequiredUseQTokens};
+use crate::macro_api::q::{Q, ToTokensWithAppParam};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
@@ -19,7 +19,7 @@ pub type IaInitResource = ItemAttribute<
 pub type QInitResource<'a> = Q<'a, IaInitResource>;
 pub type QQInitResource<'a> = QQ<'a, IaInitResource>;
 
-impl RequiredUseQTokens for QInitResource<'_> {
+impl ToTokensWithAppParam for QInitResource<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {

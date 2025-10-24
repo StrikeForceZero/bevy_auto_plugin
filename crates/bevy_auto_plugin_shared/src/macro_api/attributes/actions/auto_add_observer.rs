@@ -16,7 +16,7 @@ pub type IaAddObserver =
 pub type QAddObserver<'a> = Q<'a, IaAddObserver>;
 pub type QQAddObserver<'a> = QQ<'a, IaAddObserver>;
 
-impl RequiredUseQTokens for QAddObserver<'_> {
+impl ToTokensWithAppParam for QAddObserver<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {

@@ -7,6 +7,7 @@ mod macro_paths;
 mod mixins;
 mod q;
 mod qq;
+mod rewrite_q;
 mod schedule_config;
 
 pub(crate) mod prelude {
@@ -18,4 +19,5 @@ pub(crate) mod prelude {
     pub use mixins::prelude::*;
     pub use q::*;
     pub use qq::*;
+    pub use rewrite_q::*;
 }
