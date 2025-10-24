@@ -121,6 +121,18 @@ macro_rules! bevy_crate_path {
     }};
 }
 
+macro_rules! impl_from_default {
+    ($from:ident => ($($to:ident),* $(,)?)) => {
+        $(
+            impl From<$from> for $to {
+                fn from(_: $from) -> Self {
+                    Self::default()
+                }
+            }
+        )*
+    };
+}
+
 #[allow(unused_imports)]
 #[rustfmt::skip]
 pub(crate) use {
@@ -131,6 +143,7 @@ pub(crate) use {
     parse_macro_input2_or_emit_with,
     as_cargo_alias,
     bevy_crate_path,
+    impl_from_default,
 };
 
 #[cfg(test)]
