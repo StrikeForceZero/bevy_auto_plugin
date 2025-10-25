@@ -1,5 +1,5 @@
+use crate::syntax::analysis::path;
 use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::validated::concrete_path;
 use syn::Path;
 
 pub trait PathExt {
@@ -19,7 +19,7 @@ impl PathExt for Path {
     }
 
     fn generics(&self) -> syn::Result<TypeList> {
-        concrete_path::generics_from_path(self)
+        path::generics_from_path(self)
     }
 
     fn is_similar_path_or_ident(&self, other: &Self) -> bool {
