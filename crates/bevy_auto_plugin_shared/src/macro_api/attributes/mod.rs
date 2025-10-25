@@ -45,7 +45,7 @@ pub trait AttributeIdent {
     }
 }
 
-pub trait ItemAttributeArgs: AttributeIdent + Hash + Clone {
+pub trait ItemAttributeArgs: AttributeIdent + Clone {
     fn global_build_prefix() -> Ident {
         format_ident!("_auto_plugin_{}_", Self::IDENT)
     }
@@ -53,16 +53,16 @@ pub trait ItemAttributeArgs: AttributeIdent + Hash + Clone {
 
 impl<T, R> AttributeIdent for ItemAttribute<T, R>
 where
-    T: AttributeIdent + Hash + Clone,
+    T: AttributeIdent + Clone,
 {
     const IDENT: &'static str = T::IDENT;
 }
 impl<T, P, G, R> ItemAttributeArgs for ItemAttribute<Composed<T, P, G>, R>
 where
-    T: AttributeIdent + Hash + Clone,
-    P: Clone + Hash,
-    G: Clone + Hash,
-    R: Clone + Hash,
+    T: AttributeIdent + Clone,
+    P: Clone,
+    G: Clone,
+    R: Clone,
 {
 }
 
@@ -137,23 +137,12 @@ pub struct ItemAttribute<T, Resolver> {
     pub _resolver: PhantomData<Resolver>,
 }
 
-// TODO: this impl doesnt make sense for this context but its required for ItemAttributeArgs
-impl<T, R> Hash for ItemAttribute<T, R>
-where
-    T: Hash,
-    R: Hash,
-{
-    fn hash<H: std::hash::Hasher>(&self, _state: &mut H) {
-        panic!("ItemAttribute should not be hashed");
-    }
-}
-
 // TODO: where should this live?
-impl<T, R> ItemAttribute<T, R>
-where
-    T: Hash,
-{
-    pub fn _concat_ident_hash(&self, ident: &Ident) -> String {
+impl<T, R> ItemAttribute<T, R> {
+    pub fn _concat_ident_hash(&self, ident: &Ident) -> String
+    where
+        T: Hash,
+    {
         use std::hash::{Hash, Hasher};
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         ident.hash(&mut hasher);
@@ -161,7 +150,10 @@ where
         format!("{:x}", hasher.finish())
     }
 
-    pub fn _get_unique_ident(&self, prefix: Ident, ident: &Ident) -> Ident {
+    pub fn _get_unique_ident(&self, prefix: Ident, ident: &Ident) -> Ident
+    where
+        T: Hash,
+    {
         let hash = self._concat_ident_hash(ident);
         format_ident!("{prefix}_{hash}")
     }
@@ -194,7 +186,7 @@ pub trait ItemAttributeTarget {
 impl<T, Resolver> ItemAttributeTarget for ItemAttribute<T, Resolver>
 where
     T: AttributeIdent + Hash + Clone,
-    Resolver: Hash + Clone,
+    Resolver: Clone,
 {
     fn target(&self) -> &syn::Path {
         &self.target
@@ -209,7 +201,7 @@ impl<T, Resolver> ItemAttributeUniqueIdent for ItemAttribute<T, Resolver>
 where
     ItemAttribute<T, Resolver>: ItemAttributeArgs,
     T: AttributeIdent + Hash + Clone,
-    Resolver: Hash + Clone,
+    Resolver: Clone,
 {
     fn get_unique_ident(&self) -> Ident {
         self._get_unique_ident(

@@ -11,16 +11,29 @@ use darling::ast::NestedMeta;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::collections::HashSet;
-use std::hash::Hash;
+use std::hash::{Hash, Hasher};
 use syn::parse::{Parse, ParseStream};
 use syn::parse_quote;
 use syn::punctuated::Punctuated;
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Composed<CBase, MPlugin = Nothing, MGenerics = Nothing> {
     pub base: CBase,
     pub plugin: MPlugin,
     pub generics: MGenerics,
+}
+
+impl<C, P, G> Hash for Composed<C, P, G>
+where
+    C: Hash,
+    P: Hash,
+    G: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.base.hash(state);
+        self.plugin.hash(state);
+        self.generics.hash(state);
+    }
 }
 
 impl<CBase, MPlugin, MGenerics> FromMeta for Composed<CBase, MPlugin, MGenerics>
@@ -108,8 +121,8 @@ where
 impl<T, P, G> ItemAttributeArgs for Composed<T, P, G>
 where
     T: ItemAttributeArgs,
-    P: Hash + Clone,
-    G: Hash + Clone,
+    P: Clone,
+    G: Clone,
 {
 }
 
