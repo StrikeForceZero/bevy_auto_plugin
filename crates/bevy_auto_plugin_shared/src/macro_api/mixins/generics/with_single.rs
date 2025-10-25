@@ -55,19 +55,23 @@ mod tests {
 
     #[xtest]
     fn test_to_tokens_zero() {
-        WithZeroOrOneGenerics { generics: None }
-            .to_token_stream()
-            .to_string()
-            == r#""#;
+        assert_eq!(
+            WithZeroOrOneGenerics { generics: None }
+                .to_token_stream()
+                .to_string(),
+            quote!().to_string(),
+        );
     }
 
     #[xtest]
     fn test_to_tokens_single() {
-        WithZeroOrOneGenerics {
-            generics: Some(TypeList(vec![parse_quote!(bool), parse_quote!(u32)])),
-        }
-        .to_token_stream()
-        .to_string()
-            == r#"generics(bool, u32)"#;
+        assert_eq!(
+            WithZeroOrOneGenerics {
+                generics: Some(TypeList(vec![parse_quote!(bool), parse_quote!(u32)])),
+            }
+            .to_token_stream()
+            .to_string(),
+            quote!(generics(bool, u32)).to_string(),
+        );
     }
 }
