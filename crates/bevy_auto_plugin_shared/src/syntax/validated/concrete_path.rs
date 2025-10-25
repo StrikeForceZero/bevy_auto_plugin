@@ -1,9 +1,6 @@
-use crate::macro_api::prelude::*;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::generics::{Generics, GenericsCollection};
-use crate::syntax::validated::path_without_generics::{
-    PathWithoutGenerics, TryFromPathWithoutGenericsError,
-};
+use crate::syntax::validated::path_without_generics::PathWithoutGenerics;
 use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, quote};
 use syn::{Path, PathArguments, parse2};
