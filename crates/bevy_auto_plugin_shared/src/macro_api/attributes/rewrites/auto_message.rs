@@ -19,13 +19,13 @@ impl AttributeIdent for MessageArgs {
 }
 
 impl<'a> From<&'a MessageArgs> for RegisterTypeArgs {
-    fn from(value: &'a MessageArgs) -> Self {
+    fn from(_: &'a MessageArgs) -> Self {
         Self {}
     }
 }
 
 impl<'a> From<&'a MessageArgs> for AddMessageArgs {
-    fn from(value: &'a MessageArgs) -> Self {
+    fn from(_: &'a MessageArgs) -> Self {
         Self {}
     }
 }

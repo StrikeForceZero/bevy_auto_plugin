@@ -12,13 +12,13 @@ impl AttributeIdent for ObserverArgs {
 }
 
 impl<'a> From<&'a ObserverArgs> for RegisterTypeArgs {
-    fn from(value: &'a ObserverArgs) -> Self {
+    fn from(_: &'a ObserverArgs) -> Self {
         Self {}
     }
 }
 
 impl<'a> From<&'a ObserverArgs> for AddObserverArgs {
-    fn from(value: &'a ObserverArgs) -> Self {
+    fn from(_: &'a ObserverArgs) -> Self {
         AddObserverArgs {}
     }
 }

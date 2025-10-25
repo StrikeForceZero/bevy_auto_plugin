@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-use crate::macro_api::prelude::InputItem;
 use crate::syntax::extensions::item::ItemAttrsExt;
 use darling::FromMeta;
 use proc_macro2::TokenStream;

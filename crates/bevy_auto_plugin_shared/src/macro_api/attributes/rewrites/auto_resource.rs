@@ -21,7 +21,7 @@ impl AttributeIdent for ResourceArgs {
 }
 
 impl<'a> From<&'a ResourceArgs> for RegisterTypeArgs {
-    fn from(value: &'a ResourceArgs) -> Self {
+    fn from(_: &'a ResourceArgs) -> Self {
         Self {}
     }
 }

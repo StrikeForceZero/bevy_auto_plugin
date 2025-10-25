@@ -1,10 +1,8 @@
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::macro_api::prelude::*;
 use crate::util::macros::ok_or_emit_with;
-use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
+use proc_macro2::TokenStream as MacroStream;
 use quote::{ToTokens, format_ident, quote};
-use std::hash::Hash;
-use syn::token::Typeof;
 
 pub mod auto_bind_plugin;
 pub mod auto_plugin;

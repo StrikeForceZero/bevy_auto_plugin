@@ -16,18 +16,6 @@ impl PartialEq for ExpandAttrs {
 }
 
 impl ExpandAttrs {
-    pub fn to_use_attr_ts_tuple(&self) -> (MacroStream, MacroStream) {
-        let use_items = &self.use_items;
-        let attrs = &self.attrs;
-        (
-            quote! {
-                #(#use_items)*
-            },
-            quote! {
-                #(#attrs)*
-            },
-        )
-    }
     pub fn with(mut self, other: Self) -> Self {
         self.append(other);
         self

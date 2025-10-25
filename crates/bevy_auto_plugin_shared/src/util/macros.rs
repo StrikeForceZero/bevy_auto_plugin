@@ -148,7 +148,6 @@ pub(crate) use {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use internal_test_proc_macro::xtest;
     use proc_macro2::{Span, TokenStream};
     use quote::{ToTokens, quote};

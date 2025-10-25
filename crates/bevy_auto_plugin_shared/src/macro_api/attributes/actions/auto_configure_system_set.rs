@@ -498,7 +498,6 @@ mod tests {
 
     mod test_enum {
         use super::*;
-        use crate::syntax::validated::path_without_generics::PathWithoutGenerics;
         use quote::quote;
 
         #[xtest]

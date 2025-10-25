@@ -44,7 +44,7 @@ impl AttributeIdent for EventArgs {
 }
 
 impl<'a> From<&'a EventArgs> for RegisterTypeArgs {
-    fn from(value: &'a EventArgs) -> Self {
+    fn from(_: &'a EventArgs) -> Self {
         Self {}
     }
 }

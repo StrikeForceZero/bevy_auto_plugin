@@ -21,8 +21,8 @@ impl AttributeIdent for ComponentArgs {
     const IDENT: &'static str = "auto_component";
 }
 
-impl<'a> From<&'a ComponentArgs> for RegisterTypeArgs {
-    fn from(value: &'a ComponentArgs) -> Self {
+impl From<&ComponentArgs> for RegisterTypeArgs {
+    fn from(_: &ComponentArgs) -> Self {
         Self {}
     }
 }

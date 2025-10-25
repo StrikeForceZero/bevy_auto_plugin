@@ -3,7 +3,7 @@ use quote::{ToTokens, quote};
 use syn::parse2;
 
 #[derive(Debug, Clone)]
-pub(crate) enum InputItem {
+pub enum InputItem {
     Tokens(TokenStream),
     Item(Box<syn::Item>),
 }
@@ -17,9 +17,6 @@ impl PartialEq for InputItem {
 }
 
 impl InputItem {
-    pub fn from_mut_ref(item_ts: TokenStream) -> Self {
-        Self::Tokens(item_ts)
-    }
     fn _upgrade(&mut self) -> syn::Result<()> {
         if let Self::Tokens(tokens) = self {
             *self = Self::Item(parse2(tokens.clone())?);
@@ -60,7 +57,7 @@ impl InputItem {
             Item::Union(item) => Some(&item.ident),
             // TODO: implement
             Item::Use(_) => None,
-            Item::Verbatim(item) => None,
+            Item::Verbatim(_) => None,
             _ => None,
         })
     }

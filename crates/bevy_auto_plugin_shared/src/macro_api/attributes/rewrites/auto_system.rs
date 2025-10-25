@@ -15,7 +15,7 @@ impl AttributeIdent for SystemArgs {
 }
 
 impl<'a> From<&'a SystemArgs> for RegisterTypeArgs {
-    fn from(value: &'a SystemArgs) -> Self {
+    fn from(_: &'a SystemArgs) -> Self {
         Self {}
     }
 }

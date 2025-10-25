@@ -29,7 +29,6 @@ pub mod prelude {
     pub use super::ItemAttributePlugin;
     pub use super::ItemAttributeTarget;
     pub use super::ItemAttributeUniqueIdent;
-    pub use super::PluginCap;
     pub use super::auto_plugin::{
         AutoPluginFnArgs, AutoPluginStructOrEnumArgs, resolve_app_param_name,
     };
@@ -149,12 +148,8 @@ where
     T: Hash,
     R: Hash,
 {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    fn hash<H: std::hash::Hasher>(&self, _state: &mut H) {
         panic!("ItemAttribute should not be hashed");
-        self.args.hash(state);
-        self.context.hash(state);
-        self.target.hash(state);
-        self._resolver.hash(state);
     }
 }
 
