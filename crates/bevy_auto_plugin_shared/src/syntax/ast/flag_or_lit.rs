@@ -14,6 +14,7 @@ pub struct FlagOrLit {
 }
 
 impl FlagOrLit {
+    #[cfg(test)]
     pub fn to_outer_tokens(&self, flag_name: &str) -> TokenStream {
         use syn::spanned::Spanned;
         let flag_ident = Ident::new(flag_name, self.present.span());

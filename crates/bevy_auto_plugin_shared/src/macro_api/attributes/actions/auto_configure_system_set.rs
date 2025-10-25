@@ -223,6 +223,7 @@ pub fn args_with_plugin_from_args_input(
     input: &mut TokenStream,
 ) -> syn::Result<()> {
     fn resolve_ident(item: &Item) -> syn::Result<&Ident> {
+        // TODO: remove and use ident from higher level
         resolve_ident_from_struct_or_enum(item)
             .map_err(|err| syn::Error::new(item.span(), format!("failed to resolve ident: {err}")))
     }

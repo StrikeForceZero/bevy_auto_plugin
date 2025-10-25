@@ -37,6 +37,8 @@ impl InputItem {
             _ => unreachable!(),
         })
     }
+    // TODO: use instead of analysis/item helpers?
+    #[allow(dead_code)]
     pub fn get_ident(&mut self) -> syn::Result<Option<&syn::Ident>> {
         use syn::Item;
         let item = self.ensure_ast()?;

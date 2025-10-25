@@ -39,16 +39,6 @@ pub struct ConcreteTargetPathWithGenericsCollection {
     pub turbofish: bool,
 }
 
-impl ConcreteTargetPathWithGenericsCollection {
-    pub fn from_args<T: GenericsArgs>(path: PathWithoutGenerics, args: &T) -> Self {
-        Self {
-            target: path,
-            generics: args.generics(),
-            turbofish: T::TURBOFISH,
-        }
-    }
-}
-
 impl IntoIterator for ConcreteTargetPathWithGenericsCollection {
     type Item = ConcreteTargetPath;
     type IntoIter = std::vec::IntoIter<Self::Item>;
@@ -65,21 +55,6 @@ impl IntoIterator for ConcreteTargetPathWithGenericsCollection {
             })
             .collect::<Vec<_>>()
             .into_iter()
-    }
-}
-
-impl<T: GenericsArgs> From<(PathWithoutGenerics, T)> for ConcreteTargetPathWithGenericsCollection {
-    fn from(value: (PathWithoutGenerics, T)) -> Self {
-        let (target, args) = value;
-        Self::from_args(target, &args)
-    }
-}
-
-impl<T: GenericsArgs> TryFrom<(Path, T)> for ConcreteTargetPathWithGenericsCollection {
-    type Error = TryFromPathWithoutGenericsError;
-    fn try_from(value: (Path, T)) -> Result<Self, Self::Error> {
-        let (target, args) = value;
-        Ok(Self::from((target.try_into()?, args)))
     }
 }
 

@@ -48,6 +48,8 @@ where
     T: MacroPathProvider + ItemAttributeInput + ItemAttributeContext,
     Self: ToTokens,
 {
+    // TODO: replace the one ins expand/attr
+    #[allow(dead_code)]
     pub fn inject_attribute_macro(&mut self) -> syn::Result<()> {
         let args = self.to_token_stream();
         let macro_path = T::macro_path(self.args.context()).clone();

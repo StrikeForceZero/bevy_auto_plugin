@@ -16,10 +16,6 @@ impl PartialEq for ExpandAttrs {
 }
 
 impl ExpandAttrs {
-    pub fn with(mut self, other: Self) -> Self {
-        self.append(other);
-        self
-    }
     pub fn append(&mut self, other: Self) {
         self.attrs.extend(other.attrs);
         self.use_items.extend(other.use_items);

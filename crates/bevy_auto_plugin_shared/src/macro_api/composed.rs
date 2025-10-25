@@ -113,12 +113,6 @@ where
 {
 }
 
-impl<CBase, MPlugin, MGenerics> Composed<CBase, MPlugin, MGenerics> {
-    pub fn args(&self) -> &CBase {
-        &self.base
-    }
-}
-
 impl<CBase, MGenerics> Composed<CBase, WithPlugin, MGenerics> {
     pub fn plugin(&self) -> &syn::Path {
         &self.plugin.plugin

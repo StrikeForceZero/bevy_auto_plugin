@@ -85,6 +85,8 @@ macro_rules! bevy_crate_path {
         use ::syn::parse2;
         use ::std::{concat, stringify};
         use ::syn::Path;
+        // unused import for tests
+        #[cfg(not(test))]
         use $crate::util::macros::as_cargo_alias;
         #[allow(clippy::result_large_err)]
         let res: Result::<Path, String> = match crate_name(concat!("bevy_", stringify!($target_crate))) {

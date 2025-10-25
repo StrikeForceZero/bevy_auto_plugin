@@ -1,4 +1,3 @@
-use crate::macro_api::prelude::*;
 use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
 use crate::syntax::ast::type_list::TypeList;
 use darling::FromMeta;
@@ -26,14 +25,6 @@ pub struct AutoPluginStructOrEnumArgs {
     pub impl_generic_plugin_trait: Flag,
 }
 
-// TODO: remove?
-impl GenericsArgs for AutoPluginStructOrEnumArgs {
-    fn type_lists(&self) -> &[TypeList] {
-        #[allow(deprecated)]
-        &self.generics
-    }
-}
-
 #[derive(FromMeta, Debug, Default, Clone, PartialEq)]
 #[darling(derive_syn_parse, default)]
 pub struct AutoPluginFnArgs {
@@ -41,14 +32,6 @@ pub struct AutoPluginFnArgs {
     pub generics: Vec<TypeList>,
     pub plugin: Option<Path>,
     pub app_param: Option<Ident>,
-}
-
-// TODO: remove?
-impl GenericsArgs for AutoPluginFnArgs {
-    const TURBOFISH: bool = true;
-    fn type_lists(&self) -> &[TypeList] {
-        &self.generics
-    }
 }
 
 pub fn resolve_app_param_name<'a>(

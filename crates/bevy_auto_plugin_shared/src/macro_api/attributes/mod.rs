@@ -1,5 +1,4 @@
 use crate::macro_api::prelude::*;
-use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use crate::util::macros::impl_from_default;
 use proc_macro2::{Ident, TokenStream};
@@ -13,7 +12,6 @@ use syn::{Item, Path, parse_quote, parse2};
 mod actions;
 mod auto_plugin;
 mod rewrites;
-mod traits;
 
 pub mod prelude {
     pub use super::AllowAny;
@@ -34,11 +32,13 @@ pub mod prelude {
     };
     pub use crate::macro_api::attributes::actions::prelude::*;
     pub use crate::macro_api::attributes::rewrites::prelude::*;
-    pub use crate::macro_api::attributes::traits::prelude::*;
 }
 
 pub trait AttributeIdent {
     const IDENT: &'static str;
+    #[allow(dead_code)]
+    // TODO: should we use this over the context macro_paths?
+    //  context macro paths would allow us to resolve aliased versions of this crate
     fn full_attribute_path() -> NonEmptyPath {
         let ident = format_ident!("{}", Self::IDENT);
         parse_quote!( ::bevy_auto_plugin::prelude::#ident )
@@ -124,12 +124,7 @@ impl IdentPathResolver for AllowAny {
 }
 impl_from_default!(AllowAny => (AllowStructOrEnum, AllowFn));
 
-pub trait PluginCap {
-    fn plugin_path(&self) -> &syn::Path;
-}
-
 pub trait GenericsCap {
-    fn generics(&self) -> &[TypeList];
     fn concrete_paths(&self) -> Vec<syn::Path>;
 }
 
@@ -290,34 +285,10 @@ where
     }
 }
 
-impl<T1, Resolver> ItemAttribute<T1, Resolver> {
-    fn convert_into<T2>(value: ItemAttribute<T1, Resolver>) -> ItemAttribute<T2, Resolver>
-    where
-        T2: From<T1>,
-    {
-        ItemAttribute {
-            args: T2::from(value.args),
-            context: value.context,
-            input_item: value.input_item,
-            target: value.target,
-            _resolver: PhantomData,
-        }
-    }
-}
-
-impl<C, M2, R> PluginCap for ItemAttribute<Composed<C, WithPlugin, M2>, R> {
-    fn plugin_path(&self) -> &syn::Path {
-        &self.args.plugin.plugin
-    }
-}
-
 impl<C, M1, M2, R> GenericsCap for ItemAttribute<Composed<C, M1, M2>, R>
 where
     M2: HasGenerics,
 {
-    fn generics(&self) -> &[TypeList] {
-        self.args.generics.generics()
-    }
     fn concrete_paths(&self) -> Vec<syn::Path> {
         let target = &self.target;
         if self.args.generics.generics().is_empty() {

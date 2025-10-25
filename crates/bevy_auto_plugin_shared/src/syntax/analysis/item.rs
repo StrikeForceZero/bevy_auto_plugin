@@ -28,13 +28,6 @@ impl From<ResolveIdentFromItemError<'_>> for syn::Error {
 
 pub type IdentFromItemResult<'a> = Result<&'a Ident, ResolveIdentFromItemError<'a>>;
 
-pub fn resolve_ident_from_fn(item: &Item) -> IdentFromItemResult<'_> {
-    match item {
-        Item::Fn(f) => Ok(&f.sig.ident),
-        _ => Err(ResolveIdentFromItemError::NotFn(item)),
-    }
-}
-
 pub fn resolve_ident_from_struct_or_enum(item: &Item) -> IdentFromItemResult<'_> {
     match item {
         Item::Struct(s) => Ok(&s.ident),

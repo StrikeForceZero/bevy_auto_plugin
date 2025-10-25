@@ -151,6 +151,8 @@ pub fn derive_reflect() -> TokenStream {
     quote! { #[derive(#derive_reflect_path)] }
 }
 
+// TODO: we forgot to add this back in, but tests are still passing?
+#[allow(dead_code)]
 pub fn use_bevy_state_app_ext_states() -> syn::ItemUse {
     let root = crate::__private::paths::state::root_path();
     parse_quote! { use #root::app::AppExtStates as _; }
