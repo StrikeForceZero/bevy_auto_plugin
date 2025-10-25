@@ -12,7 +12,7 @@ impl AttributeIdent for RunOnBuildArgs {
 }
 
 pub type IaRunOnBuild =
-    ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+    ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
 pub type QRunOnBuild = Q<IaRunOnBuild>;
 pub type QQRunOnBuild = QQ<IaRunOnBuild>;
 

@@ -39,5 +39,6 @@ impl ToTokens for QQInsertResource {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }

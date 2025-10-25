@@ -46,5 +46,6 @@ impl ToTokens for QQAddPlugin {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }

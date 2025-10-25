@@ -1,7 +1,7 @@
 use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::macro_api::prelude::*;
 use crate::util::macros::ok_or_emit_with;
-use proc_macro2::{Ident, TokenStream as MacroStream};
+use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
 use quote::{ToTokens, format_ident, quote};
 use std::hash::Hash;
 use syn::token::Typeof;
@@ -74,12 +74,7 @@ where
         T::from_attr_input_with_context(attr, input.clone(), Context::default()),
         input
     );
-    let input = args.input_item().clone();
-    let after_item_tokens = RewriteQ::from_item_attribute(args).to_token_stream();
-    quote! {
-        #input
-        #after_item_tokens
-    }
+    RewriteQ::from_item_attribute(args).to_token_stream()
 }
 
 pub fn inject_plugin_arg_for_attributes(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {

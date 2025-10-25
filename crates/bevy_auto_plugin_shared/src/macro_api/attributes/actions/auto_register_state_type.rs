@@ -36,5 +36,6 @@ impl ToTokens for QQRegisterStateType {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }

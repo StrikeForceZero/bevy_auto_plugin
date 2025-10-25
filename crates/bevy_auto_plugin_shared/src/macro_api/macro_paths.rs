@@ -26,23 +26,29 @@ pub struct MacroPaths {
     pub emit_register_type_macro: syn::Path,
     /// resolved absolute path to `auto_run_on_build`
     pub emit_run_on_build_macro: syn::Path,
+    /// resolved absolute path to `auto_name`
+    pub emit_auto_name_macro: syn::Path,
+    /// resolved absolute path to `auto_configure_system_set`
+    pub emit_configure_system_set_macro: syn::Path,
 }
 
 impl Default for MacroPaths {
     #[rustfmt::skip]
     fn default() -> Self {
         Self {
-            emit_add_system_macro:          parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_system            ),
-            emit_add_message_macro:         parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_message           ),
-            emit_add_observer_macro:        parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_observer          ),
-            emit_add_plugin_macro:          parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_plugin            ),
-            emit_init_resource_macro:       parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_resource         ),
-            emit_init_state_macro:          parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_state            ),
-            emit_init_sub_state_macro:      parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_sub_state        ),
-            emit_insert_resource_macro:     parse_quote!(  ::bevy_auto_plugin::prelude::auto_insert_resource       ),
-            emit_register_state_type_macro: parse_quote!(  ::bevy_auto_plugin::prelude::auto_register_state_type   ),
-            emit_register_type_macro:       parse_quote!(  ::bevy_auto_plugin::prelude::auto_register_type         ),
-            emit_run_on_build_macro:        parse_quote!(  ::bevy_auto_plugin::prelude::auto_run_on_build          ),
+            emit_add_system_macro:              parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_system            ),
+            emit_add_message_macro:             parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_message           ),
+            emit_add_observer_macro:            parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_observer          ),
+            emit_add_plugin_macro:              parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_plugin            ),
+            emit_init_resource_macro:           parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_resource         ),
+            emit_init_state_macro:              parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_state            ),
+            emit_init_sub_state_macro:          parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_sub_state        ),
+            emit_insert_resource_macro:         parse_quote!(  ::bevy_auto_plugin::prelude::auto_insert_resource       ),
+            emit_register_state_type_macro:     parse_quote!(  ::bevy_auto_plugin::prelude::auto_register_state_type   ),
+            emit_register_type_macro:           parse_quote!(  ::bevy_auto_plugin::prelude::auto_register_type         ),
+            emit_run_on_build_macro:            parse_quote!(  ::bevy_auto_plugin::prelude::auto_run_on_build          ),
+            emit_auto_name_macro:               parse_quote!(  ::bevy_auto_plugin::prelude::auto_name                  ),
+            emit_configure_system_set_macro:    parse_quote!(  ::bevy_auto_plugin::prelude::auto_configure_system_set  ),
         }
     }
 }
@@ -114,5 +120,17 @@ impl MacroPathProvider for RegisterTypeArgs {
 impl MacroPathProvider for RunOnBuildArgs {
     fn macro_path(context: &Context) -> &syn::Path {
         &context.macros.emit_run_on_build_macro
+    }
+}
+
+impl MacroPathProvider for NameArgs {
+    fn macro_path(context: &Context) -> &syn::Path {
+        &context.macros.emit_auto_name_macro
+    }
+}
+
+impl MacroPathProvider for ConfigureSystemSetArgs {
+    fn macro_path(context: &Context) -> &syn::Path {
+        &context.macros.emit_configure_system_set_macro
     }
 }

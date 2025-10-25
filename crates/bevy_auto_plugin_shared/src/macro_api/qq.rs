@@ -2,7 +2,7 @@ use crate::codegen::ExpandAttrs;
 use crate::macro_api::prelude::*;
 use crate::syntax::extensions::item::ItemAttrsExt;
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::{ToTokens, quote};
 use syn::parse_quote;
 use syn::spanned::Spanned;
 
@@ -15,6 +15,16 @@ pub(crate) struct QQ<T> {
 impl<T> QQ<T> {
     pub(crate) fn from_args(args: T) -> QQ<T> {
         QQ::<T> { args }
+    }
+}
+
+impl<T, P, G, R> QQ<ItemAttribute<Composed<T, P, G>, R>>
+where
+    T: MacroPathProvider,
+{
+    pub(crate) fn wrap(&self, args: &TokenStream) -> TokenStream {
+        let macro_path = T::macro_path(self.args.context());
+        quote! { #[#macro_path( #args )] }
     }
 }
 

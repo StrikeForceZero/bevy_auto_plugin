@@ -26,7 +26,7 @@ impl ToTokensWithAppParam for QAddSystem {
         let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
-                #app_param.add_systems(#schedule, #concrete_path #config_tokens);
+                #app_param . add_systems(#schedule, #concrete_path #config_tokens);
             });
         }
     }
@@ -46,5 +46,6 @@ impl ToTokens for QQAddSystem {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }

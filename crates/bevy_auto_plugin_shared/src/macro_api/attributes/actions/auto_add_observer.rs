@@ -32,5 +32,6 @@ impl ToTokens for QQAddObserver {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }

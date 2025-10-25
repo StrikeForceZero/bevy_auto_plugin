@@ -31,7 +31,9 @@ pub fn auto_bind_plugin_inner(
         unreachable!()
     };
 
-    Ok(item_attribute.input_item.to_token_stream())
+    println!("{}", item.to_token_stream());
+
+    Ok(item.to_token_stream())
 }
 
 pub fn auto_bind_plugin_outer(attr: MacroStream, input: MacroStream) -> MacroStream {

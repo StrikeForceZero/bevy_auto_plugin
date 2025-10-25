@@ -33,5 +33,6 @@ impl ToTokens for QQRegisterType {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }

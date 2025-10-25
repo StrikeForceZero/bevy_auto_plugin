@@ -2,6 +2,7 @@ use crate::codegen::ExpandAttrs;
 use crate::macro_api::prelude::*;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
+use std::marker::PhantomData;
 
 /// for codegen rewriting attrs
 #[derive(Debug, Clone)]
@@ -27,11 +28,13 @@ pub trait RewriteQToExpandAttr {
 impl<T> ToTokens for RewriteQ<T>
 where
     Self: RewriteQToExpandAttr,
+    T: ItemAttributeInput,
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut expand_attr = ExpandAttrs::default();
         RewriteQToExpandAttr::to_expand_attrs(self, &mut expand_attr);
-        expand_attr.to_tokens(tokens);
+        tokens.extend(expand_attr.to_token_stream());
+        tokens.extend(self.args.input_item().to_token_stream());
     }
 }
 
@@ -44,8 +47,28 @@ where
     RTo: From<RFrom>,
 {
     fn from(value: RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>) -> Self {
-        let args = ItemAttribute::<ConvertComposed<Composed<TTo, P, GTo>>, RTo>::from(value.args);
-        let args = ItemAttribute::<Composed<TTo, P, GTo>, RTo>::from(args);
+        let ItemAttribute {
+            args,
+            context,
+            input_item,
+            target,
+            _resolver,
+        } = value.args;
+
+        let mapped = Composed {
+            base: args.base.into(),         // TTo: From<TFrom>
+            plugin: args.plugin,            // same P
+            generics: args.generics.into(), // GTo: From<GFrom>
+        };
+
+        let args = ItemAttribute::<Composed<TTo, P, GTo>, RTo> {
+            args: mapped,
+            context, // RTo: From<RFrom>
+            input_item,
+            target,
+            _resolver: PhantomData,
+        };
+
         Self::from_args(args)
     }
 }
@@ -60,6 +83,8 @@ where
     RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>: Clone,
 {
     fn from(value: &RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>) -> Self {
-        Self::from(value.clone())
+        <Self as From<RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>>>::from(
+            value.clone(),
+        )
     }
 }

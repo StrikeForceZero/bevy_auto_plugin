@@ -54,5 +54,6 @@ impl ToTokens for QQName {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }

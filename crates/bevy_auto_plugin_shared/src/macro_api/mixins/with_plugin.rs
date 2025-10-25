@@ -16,7 +16,8 @@ impl WithPlugin {
 
 impl ToTokens for WithPlugin {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.extend(quote! { plugin = #self.plugin });
+        let plugin = &self.plugin;
+        tokens.extend(quote! { plugin = #plugin });
     }
 }
 

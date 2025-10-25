@@ -337,36 +337,3 @@ where
         }
     }
 }
-
-impl<TFrom, TTo, P, GFrom, GTo, RFrom, RTo> From<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>
-    for ItemAttribute<ConvertComposed<Composed<TTo, P, GTo>>, RTo>
-where
-    TTo: From<TFrom>,
-    GTo: From<GFrom>,
-    RTo: From<RFrom>,
-{
-    fn from(value: ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>) -> Self {
-        ItemAttribute {
-            args: ConvertComposed::from(value.args),
-            context: value.context,
-            input_item: value.input_item,
-            target: value.target,
-            _resolver: PhantomData,
-        }
-    }
-}
-
-impl<T, R> From<ItemAttribute<ConvertComposed<T>, R>> for ItemAttribute<T, R>
-where
-    T: From<ConvertComposed<T>>,
-{
-    fn from(value: ItemAttribute<ConvertComposed<T>, R>) -> Self {
-        ItemAttribute {
-            args: T::from(value.args),
-            context: value.context,
-            input_item: value.input_item,
-            target: value.target,
-            _resolver: PhantomData,
-        }
-    }
-}

@@ -32,5 +32,6 @@ impl ToTokens for QQAddMessage {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }

@@ -31,5 +31,6 @@ impl ToTokens for QQInitState {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }

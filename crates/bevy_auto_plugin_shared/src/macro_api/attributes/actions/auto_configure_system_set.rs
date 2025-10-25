@@ -171,6 +171,7 @@ impl ToTokensWithAppParam for QConfigureSystemSet {
 impl ToTokens for QQConfigureSystemSet {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
+        // TODO: scrub input
         // TODO: cleanup
         args.extend(
             self.args
@@ -182,6 +183,7 @@ impl ToTokens for QQConfigureSystemSet {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }
 

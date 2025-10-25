@@ -39,7 +39,13 @@ impl ToTokens for WithZeroOrOneGenerics {
     }
 }
 
-impl_from_default!(WithZeroOrOneGenerics => (WithZeroOrManyGenerics));
+impl From<WithZeroOrOneGenerics> for WithZeroOrManyGenerics {
+    fn from(value: WithZeroOrOneGenerics) -> Self {
+        Self {
+            generics: value.generics.as_slice().to_vec(),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

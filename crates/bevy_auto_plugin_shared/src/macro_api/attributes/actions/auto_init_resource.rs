@@ -35,5 +35,6 @@ impl ToTokens for QQInitResource {
         tokens.extend(quote! {
             #(#args),*
         });
+        *tokens = self.wrap(tokens);
     }
 }
