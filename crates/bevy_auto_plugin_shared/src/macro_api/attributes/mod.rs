@@ -8,7 +8,7 @@ use std::hash::Hash;
 use std::marker::PhantomData;
 use syn::parse::Parse;
 use syn::spanned::Spanned;
-use syn::{Item, parse_quote, parse2};
+use syn::{Item, Path, parse_quote, parse2};
 
 mod actions;
 mod auto_plugin;
@@ -21,12 +21,14 @@ pub mod prelude {
     pub use super::AllowStructOrEnum;
     pub use super::AttributeIdent;
     pub use super::GenericsCap;
-    
     pub use super::ItemAttribute;
     pub use super::ItemAttributeArgs;
     pub use super::ItemAttributeContext;
     pub use super::ItemAttributeInput;
     pub use super::ItemAttributeParse;
+    pub use super::ItemAttributePlugin;
+    pub use super::ItemAttributeTarget;
+    pub use super::ItemAttributeUniqueIdent;
     pub use super::PluginCap;
     pub use super::auto_plugin::{
         AutoPluginFnArgs, AutoPluginStructOrEnumArgs, resolve_app_param_name,
@@ -50,7 +52,7 @@ pub trait ItemAttributeArgs: AttributeIdent + Hash + Clone {
     }
 }
 
-impl<T, P, G, R> AttributeIdent for ItemAttribute<Composed<T, P, G>, R>
+impl<T, R> AttributeIdent for ItemAttribute<T, R>
 where
     T: AttributeIdent + Hash + Clone,
 {
@@ -141,12 +143,14 @@ pub struct ItemAttribute<T, Resolver> {
     pub _resolver: PhantomData<Resolver>,
 }
 
+// TODO: this impl doesnt make sense for this context but its required for ItemAttributeArgs
 impl<T, R> Hash for ItemAttribute<T, R>
 where
     T: Hash,
     R: Hash,
 {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        panic!("ItemAttribute should not be hashed");
         self.args.hash(state);
         self.context.hash(state);
         self.target.hash(state);
@@ -157,7 +161,7 @@ where
 // TODO: where should this live?
 impl<T, R> ItemAttribute<T, R>
 where
-    T: ItemAttributeArgs + Hash,
+    T: Hash,
 {
     pub fn _concat_ident_hash(&self, ident: &Ident) -> String {
         use std::hash::{Hash, Hasher};
@@ -171,9 +175,15 @@ where
         let hash = self._concat_ident_hash(ident);
         format_ident!("{prefix}_{hash}")
     }
+}
 
-    pub fn get_unique_ident(&self, ident: &Ident) -> Ident {
-        self._get_unique_ident(T::global_build_prefix(), ident)
+pub trait ItemAttributePlugin {
+    fn plugin(&self) -> &syn::Path;
+}
+
+impl<T, G, Resolver> ItemAttributePlugin for ItemAttribute<Composed<T, WithPlugin, G>, Resolver> {
+    fn plugin(&self) -> &Path {
+        self.args.plugin()
     }
 }
 
@@ -184,6 +194,38 @@ pub trait ItemAttributeContext {
 impl<T, Resolver> ItemAttributeContext for ItemAttribute<T, Resolver> {
     fn context(&self) -> &Context {
         &self.context
+    }
+}
+
+pub trait ItemAttributeTarget {
+    fn target(&self) -> &syn::Path;
+}
+
+impl<T, Resolver> ItemAttributeTarget for ItemAttribute<T, Resolver>
+where
+    T: AttributeIdent + Hash + Clone,
+    Resolver: Hash + Clone,
+{
+    fn target(&self) -> &syn::Path {
+        &self.target
+    }
+}
+
+pub trait ItemAttributeUniqueIdent: ItemAttributeTarget + ItemAttributeArgs {
+    fn get_unique_ident(&self) -> Ident;
+}
+
+impl<T, Resolver> ItemAttributeUniqueIdent for ItemAttribute<T, Resolver>
+where
+    ItemAttribute<T, Resolver>: ItemAttributeArgs,
+    T: AttributeIdent + Hash + Clone,
+    Resolver: Hash + Clone,
+{
+    fn get_unique_ident(&self) -> Ident {
+        self._get_unique_ident(
+            ItemAttribute::<T, Resolver>::global_build_prefix(),
+            self.target.get_ident().unwrap(), // infallible
+        )
     }
 }
 

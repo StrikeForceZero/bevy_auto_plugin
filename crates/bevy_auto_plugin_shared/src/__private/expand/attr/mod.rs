@@ -4,22 +4,27 @@ use crate::util::macros::ok_or_emit_with;
 use proc_macro2::{Ident, TokenStream as MacroStream};
 use quote::{ToTokens, format_ident, quote};
 use std::hash::Hash;
+use syn::token::Typeof;
 
 pub mod auto_bind_plugin;
 pub mod auto_plugin;
 
-fn body<T, G, R>(
-    body: impl Fn(MacroStream) -> MacroStream,
-) -> impl Fn(&Ident, Q<ItemAttribute<Composed<T, WithPlugin, G>, R>>) -> syn::Result<MacroStream>
+fn body<T>(body: impl Fn(MacroStream) -> MacroStream) -> impl Fn(Q<T>) -> syn::Result<MacroStream>
 where
-    T: ItemAttributeArgs + Hash,
-    G: Hash + Clone,
-    Q<ItemAttribute<Composed<T, WithPlugin, G>, R>>: ToTokens,
+    T: ItemAttributeArgs
+        + ItemAttributeParse
+        + ItemAttributeInput
+        + ItemAttributeTarget
+        + ItemAttributeContext
+        + ItemAttributeUniqueIdent
+        + ItemAttributePlugin,
+    Q<T>: ToTokens,
 {
-    move |ident, params| {
+    move |params| -> syn::Result<MacroStream> {
+        let ident = params.args.target().to_token_stream();
         let app_param = &params.app_param;
-        let unique_ident = params.args.get_unique_ident(ident);
-        let plugin = params.args.plugin_path().clone();
+        let unique_ident = params.args.get_unique_ident();
+        let plugin = params.args.plugin().clone();
         let body = body(params.to_token_stream());
         let expr: syn::ExprClosure = syn::parse_quote!(|#app_param| {
             #body
@@ -37,15 +42,23 @@ where
 
 fn proc_attribute_outer<T>(attr: MacroStream, input: MacroStream) -> MacroStream
 where
-    T: ItemAttributeArgs + ItemAttributeParse + ItemAttributeInput + ItemAttributeContext,
+    T: ItemAttributeArgs
+        + ItemAttributeParse
+        + ItemAttributeInput
+        + ItemAttributeTarget
+        + ItemAttributeUniqueIdent
+        + ItemAttributeContext
+        + ItemAttributePlugin,
     Q<T>: ToTokens,
 {
     let args = ok_or_emit_with!(
         T::from_attr_input_with_context(attr, input.clone(), Context::default()),
         input
     );
-    let input = args.input_item().clone();
-    let after_item_tokens = Q::from_args(args).to_token_stream();
+    let body_fn = body(|body| quote! { #body });
+    let q = Q::from_args(args);
+    let input = q.args.input_item().to_token_stream();
+    let after_item_tokens = ok_or_emit_with!(body_fn(q), input);
     quote! {
         #input
         #after_item_tokens
