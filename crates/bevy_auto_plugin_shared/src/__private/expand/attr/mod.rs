@@ -52,8 +52,21 @@ where
     }
 }
 
-fn proc_attribute_rewrite_outer<T>(attr: MacroStream, input: MacroStream) -> MacroStream {
-    todo!()
+fn proc_attribute_rewrite_outer<T>(attr: MacroStream, input: MacroStream) -> MacroStream
+where
+    RewriteQ<T>: ToTokens,
+    T: ItemAttributeArgs + ItemAttributeParse + ItemAttributeInput + ItemAttributeContext,
+{
+    let args = ok_or_emit_with!(
+        T::from_attr_input_with_context(attr, input.clone(), Context::default()),
+        input
+    );
+    let input = args.input_item().clone();
+    let after_item_tokens = RewriteQ::from_item_attribute(args).to_token_stream();
+    quote! {
+        #input
+        #after_item_tokens
+    }
 }
 
 pub fn inject_plugin_arg_for_attributes(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {
@@ -172,11 +185,11 @@ gen_auto_attribute_outers! {
 }
 
 gen_auto_outers! {
-    auto_component => ComponentArgs,
-    auto_resource  => ResourceArgs,
-    auto_system    => SystemArgs,
-    auto_event     => EventArgs,
-    auto_message   => MessageArgs,
-    auto_observer  => ObserverArgs,
-    auto_states    => StatesArgs,
+    auto_component => IaComponent,
+    auto_resource  => IaResource,
+    auto_system    => IaSystem,
+    auto_event     => IaEvent,
+    auto_message   => IaMessage,
+    auto_observer  => IaObserver,
+    auto_states    => IaState,
 }
