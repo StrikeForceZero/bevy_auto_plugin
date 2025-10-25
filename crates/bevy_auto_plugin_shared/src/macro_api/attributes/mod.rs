@@ -21,7 +21,7 @@ pub mod prelude {
     pub use super::AllowStructOrEnum;
     pub use super::AttributeIdent;
     pub use super::GenericsCap;
-    pub use super::IdentPathResolver;
+    
     pub use super::ItemAttribute;
     pub use super::ItemAttributeArgs;
     pub use super::ItemAttributeContext;

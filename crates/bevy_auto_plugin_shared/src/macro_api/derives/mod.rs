@@ -19,7 +19,7 @@ pub struct VariantData {
 }
 
 pub mod prelude {
-    pub use super::FieldData;
-    pub use super::VariantData;
+    
+    
     pub use super::auto_plugin::*;
 }

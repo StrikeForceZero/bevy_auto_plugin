@@ -1,4 +1,3 @@
-use crate::macro_api::attributes::ItemAttributeParse;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident};
 

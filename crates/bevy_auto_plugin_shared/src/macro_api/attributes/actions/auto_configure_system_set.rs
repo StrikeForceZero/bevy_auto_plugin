@@ -4,7 +4,6 @@ use crate::syntax::analysis::item::resolve_ident_from_struct_or_enum;
 use crate::syntax::ast::flag::Flag;
 use crate::syntax::parse::item::ts_item_has_attr;
 use crate::syntax::parse::scrub_helpers::{AttrSite, scrub_helpers_and_ident_with_filter};
-use crate::syntax::validated::concrete_path::ConcreteTargetPath;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};

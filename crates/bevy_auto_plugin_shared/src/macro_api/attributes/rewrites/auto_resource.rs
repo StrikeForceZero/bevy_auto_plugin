@@ -1,12 +1,10 @@
-use crate::__private::attribute::RewriteAttribute;
 use crate::codegen::{ExpandAttrs, tokens};
 use crate::macro_api::prelude::*;
 use crate::syntax::ast::flag_or_list::FlagOrList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use crate::util::macros::impl_from_default;
 use darling::FromMeta;
-use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
-use quote::{ToTokens, quote};
+use proc_macro2::Ident;
 use syn::parse_quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
