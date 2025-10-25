@@ -436,7 +436,7 @@ mod tests {
             assert_eq!(
                 tokens.to_string(),
                 quote! {
-                   #app_param . configure_sets (Update , FooTarget)
+                   #app_param . configure_sets (Update , FooTarget);
                 }
                 .to_string()
             );
@@ -456,7 +456,7 @@ mod tests {
             assert_eq!(
                 tokens.to_string(),
                 quote! {
-                    #app_param . configure_sets (Update , FooTarget :: <u8, bool > ::default() )
+                    #app_param . configure_sets (Update , FooTarget :: <u8, bool > ::default() );
                 }
                 .to_string()
             );
@@ -476,7 +476,7 @@ mod tests {
             assert_eq!(
                 tokens.to_string(),
                 quote! {
-                    #app_param . configure_sets (Update , FooTarget :: <u8, bool >::default() )
+                    #app_param . configure_sets (Update , FooTarget :: <u8, bool >::default() );
                 }
                 .to_string()
             );
@@ -489,7 +489,7 @@ mod tests {
             assert_eq!(
                 tokens.to_string(),
                 quote! {
-                    #app_param . configure_sets (Update , FooTarget :: <bool, bool >::default() )
+                    #app_param . configure_sets (Update , FooTarget :: <bool, bool >::default() );
                 }
                 .to_string()
             );
@@ -518,7 +518,7 @@ mod tests {
             assert_eq!(
                 output.to_string(),
                 quote! {
-                    #app_param . configure_sets (Update , ( Foo::A , Foo::B ))
+                    #app_param . configure_sets (Update , ( Foo::A , Foo::B ));
                 }
                 .to_string()
             );
@@ -541,7 +541,7 @@ mod tests {
             assert_eq!(
                 tokens.to_string(),
                 quote! {
-                    #app_param . configure_sets (Update , ( Foo::A , Foo::B ))
+                    #app_param . configure_sets (Update , ( Foo::A , Foo::B ));
                 }
                 .to_string()
             );
@@ -566,7 +566,7 @@ mod tests {
             assert_eq!(
                 tokens.to_string(),
                 quote! {
-                    #app_param . configure_sets (Update , ( Foo::A , Foo::B ))
+                    #app_param . configure_sets (Update , ( Foo::A , Foo::B ));
                 }
                 .to_string()
             );

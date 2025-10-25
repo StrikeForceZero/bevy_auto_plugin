@@ -31,6 +31,7 @@ impl ToTokensWithAppParam for QName {
                     // TODO: move to util fn
                     quote!(#concrete_path)
                         .to_string()
+                        .replace(" :: < ", "<")
                         .replace(" < ", "<")
                         .replace(" >", ">")
                         .replace(" ,", ",")
