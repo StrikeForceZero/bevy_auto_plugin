@@ -20,7 +20,7 @@ impl ToTokensWithAppParam for QInitSubState {
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let target = &self.args.target;
         tokens.extend(quote! {
-            #app_param.init_sub_state::<#target>();
+            #app_param.add_sub_state::<#target>();
         });
     }
 }

@@ -39,3 +39,32 @@ pub fn auto_bind_plugin_outer(attr: MacroStream, input: MacroStream) -> MacroStr
     auto_bind_plugin_inner(attr, input, Context::default())
         .unwrap_or_else(|err| compile_error_with!(err, og_input))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use internal_test_proc_macro::xtest;
+    use quote::quote;
+    #[xtest]
+    fn test_auto_bind_plugin_inner() {
+        let attr = quote!(plugin = Test);
+        let input = quote! {
+            #[derive(Component, Reflect)]
+            #[reflect(Component)]
+            #[auto_register_type]
+            #[some::path::auto_name]
+            struct FooComponent;
+        };
+        assert_eq!(
+            auto_bind_plugin_outer(attr, input).to_string(),
+            quote! {
+                # [derive (Component , Reflect)]
+                # [reflect (Component)]
+                # [auto_register_type (plugin = Test)]
+                # [some::path::auto_name (plugin = Test)]
+                struct FooComponent ;
+            }
+            .to_string()
+        );
+    }
+}
