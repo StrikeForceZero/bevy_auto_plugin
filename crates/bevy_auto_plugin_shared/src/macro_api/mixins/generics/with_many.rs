@@ -45,32 +45,38 @@ mod tests {
 
     #[xtest]
     fn test_to_tokens_zero() {
-        WithZeroOrManyGenerics { generics: vec![] }
-            .to_token_stream()
-            .to_string()
-            == r#""#;
+        assert_eq!(
+            WithZeroOrManyGenerics { generics: vec![] }
+                .to_token_stream()
+                .to_string(),
+            quote!().to_string()
+        );
     }
 
     #[xtest]
     fn test_to_tokens_single() {
-        WithZeroOrManyGenerics {
-            generics: vec![TypeList(vec![parse_quote!(bool), parse_quote!(u32)])],
-        }
-        .to_token_stream()
-        .to_string()
-            == r#"generics(bool, u32)"#;
+        assert_eq!(
+            WithZeroOrManyGenerics {
+                generics: vec![TypeList(vec![parse_quote!(bool), parse_quote!(u32)])],
+            }
+            .to_token_stream()
+            .to_string(),
+            quote!(generics(bool, u32)).to_string()
+        );
     }
 
     #[xtest]
     fn test_to_tokens_multiple() {
-        WithZeroOrManyGenerics {
-            generics: vec![
-                TypeList(vec![parse_quote!(bool), parse_quote!(u32)]),
-                TypeList(vec![parse_quote!(usize)]),
-            ],
-        }
-        .to_token_stream()
-        .to_string()
-            == r#"generics(bool, u32), generics(usize)"#;
+        assert_eq!(
+            WithZeroOrManyGenerics {
+                generics: vec![
+                    TypeList(vec![parse_quote!(bool), parse_quote!(u32)]),
+                    TypeList(vec![parse_quote!(usize)]),
+                ],
+            }
+            .to_token_stream()
+            .to_string(),
+            quote!(generics(bool, u32), generics(usize)).to_string()
+        );
     }
 }
