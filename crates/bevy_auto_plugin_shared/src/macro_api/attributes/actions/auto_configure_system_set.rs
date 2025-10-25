@@ -162,10 +162,9 @@ impl ToTokensWithAppParam for QConfigureSystemSet {
         Ok(())
     }
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        // TODO: HACK - scrub input
+        // TODO: HACK - probably shouldn't be scrubbing here
         let mut this = self.clone();
         this.scrub_item().unwrap();
-        // end hack
 
         let generics = this.args.args.generics();
         for concrete_path in this.args.concrete_paths() {
@@ -410,7 +409,7 @@ mod tests {
         let ident = resolve_ident_from_struct_or_enum(&item).map_err(|err| {
             syn::Error::new(item.span(), format!("failed to resolve ident: {err}"))
         })?;
-        args_from_attr_input(attr, &mut input).and_then(|args| Ok((ident.clone(), args)))
+        args_from_attr_input(attr, &mut input).map(|args| (ident.clone(), args))
     }
 
     fn ident_and_args_from_attr_mut_input(
@@ -421,7 +420,7 @@ mod tests {
         let ident = resolve_ident_from_struct_or_enum(&item).map_err(|err| {
             syn::Error::new(item.span(), format!("failed to resolve ident: {err}"))
         })?;
-        args_from_attr_input(attr, input).and_then(|args| Ok((ident.clone(), args)))
+        args_from_attr_input(attr, input).map(|args| (ident.clone(), args))
     }
 
     mod test_struct {
