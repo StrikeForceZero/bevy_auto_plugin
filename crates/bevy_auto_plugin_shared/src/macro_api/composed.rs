@@ -139,6 +139,8 @@ where
     pub fn generics(&self) -> &[TypeList] {
         self.generics.generics()
     }
+    #[allow(dead_code)]
+    // TODO: which one to use?
     pub fn concrete_paths(&self, target: &syn::Path) -> Vec<syn::Path> {
         if self.generics.generics().is_empty() {
             vec![target.clone()]

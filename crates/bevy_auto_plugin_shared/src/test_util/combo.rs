@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+/// might still need when rewriting the old tests that were removed
 use internal_test_util::vec_spread;
 use std::borrow::Borrow;
 
