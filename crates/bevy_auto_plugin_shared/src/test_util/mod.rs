@@ -1,6 +1,5 @@
 pub(crate) mod combo;
 pub(crate) mod macros;
-pub(crate) mod test_params;
 
 pub(crate) fn assert_tokens_match(
     plugin: impl std::fmt::Debug,
