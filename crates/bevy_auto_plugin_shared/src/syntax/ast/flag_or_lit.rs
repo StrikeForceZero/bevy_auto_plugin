@@ -1,6 +1,4 @@
 use darling::{Error, FromMeta, Result};
-use proc_macro2::{Ident, TokenStream};
-use quote::quote;
 use smart_default::SmartDefault;
 use syn::spanned::Spanned;
 use syn::{Expr, Lit, Meta};
@@ -15,9 +13,10 @@ pub struct FlagOrLit {
 
 impl FlagOrLit {
     #[cfg(test)]
-    pub fn to_outer_tokens(&self, flag_name: &str) -> TokenStream {
+    pub fn to_outer_tokens(&self, flag_name: &str) -> proc_macro2::TokenStream {
+        use quote::quote;
         use syn::spanned::Spanned;
-        let flag_ident = Ident::new(flag_name, self.present.span());
+        let flag_ident = proc_macro2::Ident::new(flag_name, self.present.span());
         if self.present {
             let items = &self.lit;
             if let Some(lit) = items {
@@ -59,6 +58,7 @@ impl FromMeta for FlagOrLit {
 mod tests {
     use super::*;
     use internal_test_proc_macro::xtest;
+    use quote::quote;
     use syn::parse_quote;
 
     #[xtest]

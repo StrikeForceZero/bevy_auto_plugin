@@ -1,6 +1,5 @@
 use darling::{Error, FromMeta, Result};
-use proc_macro2::{Ident, TokenStream};
-use quote::{ToTokens, quote};
+use quote::ToTokens;
 use smart_default::SmartDefault;
 use syn::parse::Parse;
 use syn::punctuated::Punctuated;
@@ -22,9 +21,10 @@ where
     T: ToTokens + Parse,
 {
     #[cfg(test)]
-    pub fn to_outer_tokens(&self, flag_name: &str) -> TokenStream {
+    pub fn to_outer_tokens(&self, flag_name: &str) -> proc_macro2::TokenStream {
+        use quote::quote;
         use syn::spanned::Spanned;
-        let flag_ident = Ident::new(flag_name, self.present.span());
+        let flag_ident = proc_macro2::Ident::new(flag_name, self.present.span());
         if self.present {
             let items = &self.items;
             if !items.is_empty() {
@@ -71,6 +71,8 @@ where
 mod tests {
     use super::*;
     use internal_test_proc_macro::xtest;
+    use proc_macro2::Ident;
+    use quote::quote;
     use syn::parse_quote;
 
     #[xtest]
