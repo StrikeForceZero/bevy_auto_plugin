@@ -9,6 +9,7 @@ pub trait HasGenerics {
 }
 
 pub mod prelude {
+    pub use super::HasGenerics;
     use super::*;
     pub use none::*;
     pub use with_many::*;

@@ -1,9 +1,4 @@
-use crate::macro_api::composed::Composed;
-use crate::macro_api::context::Context;
-use crate::macro_api::input_item::InputItem;
-use crate::macro_api::mixins::generics::HasGenerics;
-use crate::macro_api::mixins::with_plugin::WithPlugin;
-use crate::macro_api::prelude::ConvertComposed;
+use crate::macro_api::prelude::*;
 use crate::syntax::ast::type_list::TypeList;
 use crate::syntax::validated::non_empty_path::NonEmptyPath;
 use crate::util::macros::impl_from_default;
