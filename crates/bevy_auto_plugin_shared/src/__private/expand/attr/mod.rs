@@ -49,14 +49,18 @@ where
         + ItemAttributeUniqueIdent
         + ItemAttributeContext
         + ItemAttributePlugin,
-    Q<T>: ToTokens,
+    Q<T>: ToTokens + ToTokensWithAppParam,
 {
     let args = ok_or_emit_with!(
         T::from_attr_input_with_context(attr, input.clone(), Context::default()),
         input
     );
     let body_fn = body(|body| quote! { #body });
-    let q = Q::from_args(args);
+    let mut q = Q::from_args(args);
+    let input = q.args.input_item().to_token_stream();
+    // TODO: hack for auto_configure_system_set
+    // mutates q.args.input_item
+    ok_or_emit_with!(q.scrub_item(), input);
     let input = q.args.input_item().to_token_stream();
     let after_item_tokens = ok_or_emit_with!(body_fn(q), input);
     quote! {

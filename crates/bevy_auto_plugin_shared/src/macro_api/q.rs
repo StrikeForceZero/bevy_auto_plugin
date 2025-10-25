@@ -1,3 +1,4 @@
+use crate::macro_api::prelude::*;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident};
 
@@ -19,14 +20,19 @@ impl<T> Q<T> {
 }
 
 pub trait ToTokensWithAppParam {
+    fn scrub_item(&mut self) -> syn::Result<()> {
+        Ok(())
+    }
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident);
 }
 
 impl<T> ToTokens for Q<T>
 where
     Self: ToTokensWithAppParam,
+    T: ItemAttributeInput,
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        // TODO: this mutates item which is already emitted
         ToTokensWithAppParam::to_tokens(self, tokens, &self.app_param);
     }
 }

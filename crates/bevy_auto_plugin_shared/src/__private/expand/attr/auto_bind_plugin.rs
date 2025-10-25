@@ -31,8 +31,6 @@ pub fn auto_bind_plugin_inner(
         unreachable!()
     };
 
-    println!("{}", item.to_token_stream());
-
     Ok(item.to_token_stream())
 }
 

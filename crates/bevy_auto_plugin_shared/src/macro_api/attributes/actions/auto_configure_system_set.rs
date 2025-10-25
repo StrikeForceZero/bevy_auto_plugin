@@ -154,12 +154,23 @@ fn output(
 }
 
 impl ToTokensWithAppParam for QConfigureSystemSet {
+    fn scrub_item(&mut self) -> syn::Result<()> {
+        let mut input_ts = self.args.input_item.to_token_stream();
+        check_strip_helpers(input_ts.clone(), &mut self.args.args.base)?;
+        args_with_plugin_from_args_input(&mut self.args.args.base, &mut input_ts)?;
+        self.args.input_item = InputItem::Tokens(input_ts);
+        Ok(())
+    }
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        let args = &self.args.args;
-        let generics = args.generics();
-        for concrete_path in self.args.concrete_paths() {
+        // TODO: HACK - scrub input
+        let mut this = self.clone();
+        this.scrub_item().unwrap();
+        // end hack
+
+        let generics = this.args.args.generics();
+        for concrete_path in this.args.concrete_paths() {
             tokens.extend(output(
-                &args.base,
+                &this.args.args.base,
                 app_param,
                 &concrete_path,
                 !generics.is_empty(),
