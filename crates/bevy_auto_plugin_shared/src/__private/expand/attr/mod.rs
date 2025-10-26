@@ -7,7 +7,9 @@ use quote::{ToTokens, format_ident, quote};
 pub mod auto_bind_plugin;
 pub mod auto_plugin;
 
-fn body<T>(body: impl Fn(MacroStream) -> MacroStream) -> impl Fn(Q<T>) -> syn::Result<MacroStream>
+fn body<T>(
+    body: impl Fn(MacroStream) -> MacroStream,
+) -> impl Fn(AppMutationEmitter<T>) -> syn::Result<MacroStream>
 where
     T: ItemAttributeArgs
         + ItemAttributeParse
@@ -16,7 +18,7 @@ where
         + ItemAttributeContext
         + ItemAttributeUniqueIdent
         + ItemAttributePlugin,
-    Q<T>: ToTokens,
+    AppMutationEmitter<T>: ToTokens,
 {
     move |params| -> syn::Result<MacroStream> {
         let ident = params.args.target().to_token_stream();
@@ -47,14 +49,14 @@ where
         + ItemAttributeUniqueIdent
         + ItemAttributeContext
         + ItemAttributePlugin,
-    Q<T>: ToTokens + ToTokensWithAppParam,
+    AppMutationEmitter<T>: ToTokens + EmitAppMutationTokens,
 {
     let args = ok_or_emit_with!(
         T::from_attr_input_with_context(attr, input.clone(), Context::default()),
         input
     );
     let body_fn = body(|body| quote! { #body });
-    let mut q = Q::from_args(args);
+    let mut q = AppMutationEmitter::from_args(args);
     let scrubbed_input = {
         ok_or_emit_with!(q.scrub_item(), q.args.input_item());
         q.args.input_item().to_token_stream()

@@ -18,11 +18,11 @@ pub type IaInsertResource = ItemAttribute<
     Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>,
     AllowStructOrEnum,
 >;
-pub type QInsertResource = Q<IaInsertResource>;
+pub type QInsertResource = AppMutationEmitter<IaInsertResource>;
 pub type QQInsertResource = QQ<IaInsertResource>;
 
-impl ToTokensWithAppParam for QInsertResource {
-    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+impl EmitAppMutationTokens for QInsertResource {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let resource = &self.args.args.base.resource;
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {

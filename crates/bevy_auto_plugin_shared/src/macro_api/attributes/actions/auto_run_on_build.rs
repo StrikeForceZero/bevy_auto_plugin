@@ -13,11 +13,11 @@ impl AttributeIdent for RunOnBuildArgs {
 
 pub type IaRunOnBuild =
     ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type QRunOnBuild = Q<IaRunOnBuild>;
+pub type QRunOnBuild = AppMutationEmitter<IaRunOnBuild>;
 pub type QQRunOnBuild = QQ<IaRunOnBuild>;
 
-impl ToTokensWithAppParam for QRunOnBuild {
-    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+impl EmitAppMutationTokens for QRunOnBuild {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
                 #concrete_path(#app_param);

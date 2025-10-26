@@ -17,11 +17,11 @@ impl AttributeIdent for AddSystemArgs {
 
 pub type IaAddSystem =
     ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type QAddSystem = Q<IaAddSystem>;
+pub type QAddSystem = AppMutationEmitter<IaAddSystem>;
 pub type QQAddSystem = QQ<IaAddSystem>;
 
-impl ToTokensWithAppParam for QAddSystem {
-    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+impl EmitAppMutationTokens for QAddSystem {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let schedule = &self.args.args.base.schedule_config.schedule;
         let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();
         for concrete_path in self.args.concrete_paths() {

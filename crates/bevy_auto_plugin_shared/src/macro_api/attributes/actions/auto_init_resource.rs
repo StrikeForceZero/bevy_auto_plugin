@@ -1,5 +1,5 @@
+use crate::macro_api::app_mutation_emitter::{AppMutationEmitter, EmitAppMutationTokens};
 use crate::macro_api::prelude::*;
-use crate::macro_api::q::{Q, ToTokensWithAppParam};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
@@ -16,11 +16,11 @@ pub type IaInitResource = ItemAttribute<
     Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QInitResource = Q<IaInitResource>;
+pub type QInitResource = AppMutationEmitter<IaInitResource>;
 pub type QQInitResource = QQ<IaInitResource>;
 
-impl ToTokensWithAppParam for QInitResource {
-    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+impl EmitAppMutationTokens for QInitResource {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
                 #app_param.init_resource::<#concrete_path>();

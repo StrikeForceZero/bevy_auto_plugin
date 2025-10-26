@@ -15,11 +15,11 @@ pub type IaRegisterType = ItemAttribute<
     Composed<RegisterTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QRegisterType = Q<IaRegisterType>;
+pub type QRegisterType = AppMutationEmitter<IaRegisterType>;
 pub type QQRegisterType = QQ<IaRegisterType>;
 
-impl ToTokensWithAppParam for QRegisterType {
-    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+impl EmitAppMutationTokens for QRegisterType {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
                 #app_param.register_type::<#concrete_path>();

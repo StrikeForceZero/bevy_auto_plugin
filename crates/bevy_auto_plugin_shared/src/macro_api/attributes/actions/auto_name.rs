@@ -16,11 +16,11 @@ impl AttributeIdent for NameArgs {
 
 pub type IaName =
     ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QName = Q<IaName>;
+pub type QName = AppMutationEmitter<IaName>;
 pub type QQName = QQ<IaName>;
 
-impl ToTokensWithAppParam for QName {
-    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+impl EmitAppMutationTokens for QName {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args.base;
         for concrete_path in self.args.concrete_paths() {
             let name = args

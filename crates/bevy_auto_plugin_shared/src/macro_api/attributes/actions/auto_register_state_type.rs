@@ -15,11 +15,11 @@ pub type IaRegisterStateType = ItemAttribute<
     Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QRegisterStateType = Q<IaRegisterStateType>;
+pub type QRegisterStateType = AppMutationEmitter<IaRegisterStateType>;
 pub type QQRegisterStateType = QQ<IaRegisterStateType>;
 
-impl ToTokensWithAppParam for QRegisterStateType {
-    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+impl EmitAppMutationTokens for QRegisterStateType {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             let bevy_state = crate::__private::paths::state::root_path();
             tokens.extend(quote! {

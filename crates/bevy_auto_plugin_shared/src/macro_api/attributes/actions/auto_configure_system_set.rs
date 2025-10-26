@@ -95,7 +95,7 @@ pub type IaConfigureSystemSet = ItemAttribute<
     Composed<ConfigureSystemSetArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QConfigureSystemSet = Q<IaConfigureSystemSet>;
+pub type QConfigureSystemSet = AppMutationEmitter<IaConfigureSystemSet>;
 pub type QQConfigureSystemSet = QQ<IaConfigureSystemSet>;
 
 fn output(
@@ -153,7 +153,7 @@ fn output(
     tokens
 }
 
-impl ToTokensWithAppParam for QConfigureSystemSet {
+impl EmitAppMutationTokens for QConfigureSystemSet {
     // TODO: it would prob make more sense to return the token stream instead of inserting back into args
     //  but then that makes no-op default impl look weird. Would we return ItemInput regardless?
     //  or maybe we require a &mut TokenStream to be passed in and we mutate it
@@ -168,7 +168,7 @@ impl ToTokensWithAppParam for QConfigureSystemSet {
         *input_item = InputItem::Tokens(res.scrubbed_tokens);
         Ok(())
     }
-    fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = self.args.args.base.clone();
         // checks if we need to inflate args
         let inflated_args = if args.inner.is_none() {
