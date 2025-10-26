@@ -24,7 +24,11 @@ where
 {
     pub(crate) fn wrap_as_attr(&self, args: &TokenStream) -> TokenStream {
         let macro_path = T::macro_path(self.args.context());
-        quote! { #[#macro_path( #args )] }
+        if args.is_empty() {
+            quote! { #[#macro_path] }
+        } else {
+            quote! { #[#macro_path( #args )] }
+        }
     }
 }
 
