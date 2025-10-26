@@ -25,7 +25,7 @@ pub fn auto_bind_plugin_inner(
         .take_attrs()
         .map_err(|err| syn::Error::new(item.span(), err))?;
 
-    attr::inject_plugin_arg_for_attributes(&mut attrs, plugin_path);
+    attr::attrs_inject_plugin_param(&mut attrs, plugin_path);
 
     let Ok(_) = item.put_attrs(attrs) else {
         unreachable!()

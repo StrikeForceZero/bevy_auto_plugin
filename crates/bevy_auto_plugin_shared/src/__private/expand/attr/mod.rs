@@ -7,7 +7,7 @@ pub mod auto_bind_plugin;
 pub mod auto_plugin;
 pub mod rewrite;
 
-pub fn inject_plugin_arg_for_attributes(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {
+pub fn attrs_inject_plugin_param(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {
     use syn::Meta;
 
     for attr in attrs {
@@ -32,11 +32,11 @@ pub fn inject_plugin_arg_for_attributes(attrs: &mut Vec<syn::Attribute>, plugin:
             continue;
         }
 
-        inject_plugin_arg(attr, plugin);
+        attr_inject_plugin_param(attr, plugin);
     }
 }
 
-fn inject_plugin_arg(attr: &mut syn::Attribute, plugin: &syn::Path) {
+fn attr_inject_plugin_param(attr: &mut syn::Attribute, plugin: &syn::Path) {
     use syn::Meta;
     use syn::parse_quote;
     match &attr.meta {
