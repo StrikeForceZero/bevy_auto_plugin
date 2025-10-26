@@ -1,6 +1,8 @@
+use crate::syntax::extensions::item::ItemAttrsExt;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::parse2;
+use syn::spanned::Spanned;
 
 #[derive(Debug, Clone)]
 pub enum InputItem {
@@ -37,30 +39,15 @@ impl InputItem {
             _ => unreachable!(),
         })
     }
-    // TODO: use instead of analysis/item helpers?
-    #[allow(dead_code)]
+    // TODO: use instead of analysis/item helpers
     pub fn get_ident(&mut self) -> syn::Result<Option<&syn::Ident>> {
-        use syn::Item;
         let item = self.ensure_ast()?;
-        Ok(match item {
-            Item::Const(item) => Some(&item.ident),
-            Item::Enum(item) => Some(&item.ident),
-            Item::ExternCrate(item) => Some(&item.ident),
-            Item::Fn(item) => Some(&item.sig.ident),
-            Item::ForeignMod(_) => None,
-            Item::Impl(_) => None,
-            Item::Macro(item) => item.ident.as_ref(),
-            Item::Mod(item) => Some(&item.ident),
-            Item::Static(item) => Some(&item.ident),
-            Item::Struct(item) => Some(&item.ident),
-            Item::Trait(item) => Some(&item.ident),
-            Item::TraitAlias(item) => Some(&item.ident),
-            Item::Type(item) => Some(&item.ident),
-            Item::Union(item) => Some(&item.ident),
-            // TODO: implement
-            Item::Use(_) => None,
-            Item::Verbatim(_) => None,
-            _ => None,
+        Ok(item.get_ident())
+    }
+    pub fn ident(&mut self) -> syn::Result<&syn::Ident> {
+        self.ensure_ast().and_then(|item| {
+            item.get_ident()
+                .ok_or_else(|| syn::Error::new(item.span(), "expected item to have an ident"))
         })
     }
     pub fn map_ast<F>(&mut self, f: F) -> syn::Result<()>
