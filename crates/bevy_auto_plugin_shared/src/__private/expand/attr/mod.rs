@@ -79,13 +79,6 @@ macro_rules! gen_action_outers {
             }
          )+
     };
-
-    (@one $fn:ident, $args:ty) => {
-        #[inline]
-        pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-            action::proc_attribute_outer::<$args>(attr, input)
-        }
-    };
 }
 
 macro_rules! gen_rewrite_outers {
