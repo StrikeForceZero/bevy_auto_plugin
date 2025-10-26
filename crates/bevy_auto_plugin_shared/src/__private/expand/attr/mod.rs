@@ -1,6 +1,5 @@
 use crate::macro_api::prelude::*;
 use proc_macro2::TokenStream as MacroStream;
-use quote::ToTokens;
 
 pub mod action;
 pub mod auto_bind_plugin;
