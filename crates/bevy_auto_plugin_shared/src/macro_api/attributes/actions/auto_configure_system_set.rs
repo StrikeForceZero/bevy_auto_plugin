@@ -154,18 +154,41 @@ fn output(
 }
 
 impl ToTokensWithAppParam for QConfigureSystemSet {
+    // TODO: it would prob make more sense to return the token stream instead of inserting back into args
+    //  but then that makes no-op default impl look weird. Would we return ItemInput regardless?
+    //  or maybe we require a &mut TokenStream to be passed in and we mutate it
     fn scrub_item(&mut self) -> syn::Result<()> {
-        let mut input_ts = self.args.input_item.to_token_stream();
+        let input_ts = self.args.input_item.to_token_stream();
         check_strip_helpers(input_ts.clone(), &mut self.args.args.base)?;
-        args_with_plugin_from_args_input(&mut self.args.args.base, &mut input_ts)?;
+        let (args, input_ts) =
+            inflate_args_with_plugin_from_input(self.args.args.base.clone(), input_ts)?
+                .into_tuple();
+        self.args.args.base = args;
         self.args.input_item = InputItem::Tokens(input_ts);
         Ok(())
     }
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+        let args = self.args.args.base.clone();
+        // checks if we need to inflate args
+        let inflated_args = if args.inner.is_none() {
+            let (inflated_args, _) = match inflate_args_with_plugin_from_input(
+                args.clone(),
+                self.args.input_item.to_token_stream(),
+            ) {
+                Ok(res) => res.into_tuple(),
+                Err(err) => {
+                    tokens.extend(err.to_compile_error());
+                    return;
+                }
+            };
+            inflated_args
+        } else {
+            args
+        };
         let generics = self.args.args.generics();
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(output(
-                &self.args.args.base,
+                &inflated_args,
                 app_param,
                 &concrete_path,
                 !generics.is_empty(),
@@ -209,15 +232,28 @@ pub fn args_from_attr_input(
 ) -> syn::Result<ConfigureSystemSetArgs> {
     let mut args = syn::parse2::<ConfigureSystemSetArgs>(attr)?;
     check_strip_helpers(input.clone(), &mut args)?;
-    args_with_plugin_from_args_input(&mut args, input)?;
-    Ok(args)
+    let output = inflate_args_with_plugin_from_input(args, input.clone())?;
+    *input = output.scrubbed_tokens;
+    Ok(output.inflated_args)
 }
 
-pub fn args_with_plugin_from_args_input(
-    args: &mut ConfigureSystemSetArgs,
+#[derive(Debug)]
+pub struct InflateArgsOutput {
+    scrubbed_tokens: TokenStream,
+    inflated_args: ConfigureSystemSetArgs,
+}
+
+impl InflateArgsOutput {
+    pub fn into_tuple(self) -> (ConfigureSystemSetArgs, TokenStream) {
+        (self.inflated_args, self.scrubbed_tokens)
+    }
+}
+
+pub fn inflate_args_with_plugin_from_input(
+    mut args: ConfigureSystemSetArgs,
     // this is the only way we can strip out non-derive based attribute helpers
-    input: &mut TokenStream,
-) -> syn::Result<()> {
+    mut input: TokenStream,
+) -> syn::Result<InflateArgsOutput> {
     fn resolve_ident(item: &Item) -> syn::Result<&Ident> {
         // TODO: remove and use ident from higher level
         resolve_ident_from_struct_or_enum(item)
@@ -239,17 +275,20 @@ pub fn args_with_plugin_from_args_input(
     // 3)
     if args._strip_helpers {
         // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
-        scrub.write_back(input)?;
+        scrub.write_back(&mut input)?;
     } else {
         // Check if we have errors to print and if so, strip helpers from the item
         // Otherwise, maintain helpers for the next attribute to process
-        scrub.write_if_errors_with_scrubbed_item(input)?;
+        scrub.write_if_errors_with_scrubbed_item(&mut input)?;
     }
 
     // 4) If it's a struct, there are no entries to compute
     let data_enum = match scrub.item {
         Item::Struct(_) => {
-            return Ok(());
+            return Ok(InflateArgsOutput {
+                inflated_args: args,
+                scrubbed_tokens: input,
+            });
         }
         Item::Enum(ref en) => en,
         _ => unreachable!("resolve_ident_from_struct_or_enum guarantees struct|enum"),
@@ -389,7 +428,10 @@ pub fn args_with_plugin_from_args_input(
 
     // 8) Store into args and return
     args.inner = Some(ConfigureSystemSetArgsInner { entries });
-    Ok(())
+    Ok(InflateArgsOutput {
+        inflated_args: args,
+        scrubbed_tokens: input,
+    })
 }
 
 #[cfg(test)]
