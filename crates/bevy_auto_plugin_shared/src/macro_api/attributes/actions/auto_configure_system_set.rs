@@ -161,8 +161,7 @@ impl ToTokensWithAppParam for QConfigureSystemSet {
         let input_ts = self.args.input_item.to_token_stream();
         check_strip_helpers(input_ts.clone(), &mut self.args.args.base)?;
         let (args, input_ts) =
-            inflate_args_with_plugin_from_input(self.args.args.base.clone(), input_ts)?
-                .into_tuple();
+            inflate_args_from_input(self.args.args.base.clone(), input_ts)?.into_tuple();
         self.args.args.base = args;
         self.args.input_item = InputItem::Tokens(input_ts);
         Ok(())
@@ -171,16 +170,15 @@ impl ToTokensWithAppParam for QConfigureSystemSet {
         let args = self.args.args.base.clone();
         // checks if we need to inflate args
         let inflated_args = if args.inner.is_none() {
-            let (inflated_args, _) = match inflate_args_with_plugin_from_input(
-                args.clone(),
-                self.args.input_item.to_token_stream(),
-            ) {
-                Ok(res) => res.into_tuple(),
-                Err(err) => {
-                    tokens.extend(err.to_compile_error());
-                    return;
-                }
-            };
+            let (inflated_args, _) =
+                match inflate_args_from_input(args.clone(), self.args.input_item.to_token_stream())
+                {
+                    Ok(res) => res.into_tuple(),
+                    Err(err) => {
+                        tokens.extend(err.to_compile_error());
+                        return;
+                    }
+                };
             inflated_args
         } else {
             args
@@ -232,7 +230,7 @@ pub fn args_from_attr_input(
 ) -> syn::Result<ConfigureSystemSetArgs> {
     let mut args = syn::parse2::<ConfigureSystemSetArgs>(attr)?;
     check_strip_helpers(input.clone(), &mut args)?;
-    let output = inflate_args_with_plugin_from_input(args, input.clone())?;
+    let output = inflate_args_from_input(args, input.clone())?;
     *input = output.scrubbed_tokens;
     Ok(output.inflated_args)
 }
@@ -249,7 +247,7 @@ impl InflateArgsOutput {
     }
 }
 
-pub fn inflate_args_with_plugin_from_input(
+pub fn inflate_args_from_input(
     mut args: ConfigureSystemSetArgs,
     // this is the only way we can strip out non-derive based attribute helpers
     mut input: TokenStream,
