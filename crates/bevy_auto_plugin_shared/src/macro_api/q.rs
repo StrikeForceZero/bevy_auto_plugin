@@ -32,7 +32,6 @@ where
     T: ItemAttributeInput,
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        // TODO: this mutates item which is already emitted
         ToTokensWithAppParam::to_tokens(self, tokens, &self.app_param);
     }
 }
