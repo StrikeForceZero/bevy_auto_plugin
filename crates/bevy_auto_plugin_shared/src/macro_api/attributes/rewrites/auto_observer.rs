@@ -25,9 +25,9 @@ impl<'a> From<&'a ObserverArgs> for AddObserverArgs {
 
 pub type IaObserver =
     ItemAttribute<Composed<ObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type RewriteQObserver = RewriteQ<IaObserver>;
+pub type RewriteQObserver = AttrExpansionEmitter<IaObserver>;
 
-impl RewriteQToExpandAttr for RewriteQObserver {
+impl AttrExpansionEmitterToExpandAttr for RewriteQObserver {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         expand_attrs
             .attrs

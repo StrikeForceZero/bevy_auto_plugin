@@ -37,9 +37,9 @@ impl<'a> From<&'a ComponentArgs> for NameArgs {
 
 pub type IaComponent =
     ItemAttribute<Composed<ComponentArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type RewriteQComponent = RewriteQ<IaComponent>;
+pub type RewriteQComponent = AttrExpansionEmitter<IaComponent>;
 
-impl RewriteQToExpandAttr for RewriteQComponent {
+impl AttrExpansionEmitterToExpandAttr for RewriteQComponent {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         if self.args.args.base.derive.present {
             expand_attrs

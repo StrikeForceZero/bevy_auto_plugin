@@ -51,8 +51,8 @@ impl<'a> From<&'a EventArgs> for RegisterTypeArgs {
 
 pub type IaEvent =
     ItemAttribute<Composed<EventArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type RewriteQEvent = RewriteQ<IaEvent>;
-impl RewriteQToExpandAttr for RewriteQEvent {
+pub type RewriteQEvent = AttrExpansionEmitter<IaEvent>;
+impl AttrExpansionEmitterToExpandAttr for RewriteQEvent {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         if self.args.args.base.derive.present {
             if matches!(self.args.args.base.target, EventTarget::Global) {
