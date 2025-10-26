@@ -71,26 +71,19 @@ fn list_has_key(ml: &syn::MetaList, key: &str) -> bool {
 }
 
 macro_rules! gen_auto_attribute_outers {
-    // Each item:  fn_name => ArgsTy [using <expr>]
-    ( $( $fn:ident => $args:ty $(: parser = $parser:expr)? ),+ $(,)? ) => {
-        $(
-            gen_auto_attribute_outers!(@one $fn, $args $(, $parser)?);
-        )+
+    ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
+         $(
+            #[inline]
+            pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
+                action::proc_attribute_outer::<$args>(attr, input)
+            }
+         )+
     };
 
-    // No parser
     (@one $fn:ident, $args:ty) => {
         #[inline]
         pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
             action::proc_attribute_outer::<$args>(attr, input)
-        }
-    };
-
-    // With parser
-    (@one $fn:ident, $args:ty, $parser:expr) => {
-        #[inline]
-        pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-            proc_attribute_with_parser_outer::<$args>(attr, input, $parser)
         }
     };
 }
