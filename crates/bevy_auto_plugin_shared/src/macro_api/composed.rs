@@ -1,6 +1,6 @@
 use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
 use crate::macro_api::context::Context;
-use crate::macro_api::macro_paths::MacroPathProvider;
+use crate::macro_api::context::macro_paths::MacroPathProvider;
 use crate::macro_api::mixins::Mixin;
 use crate::macro_api::mixins::generics::HasGenerics;
 use crate::macro_api::mixins::nothing::Nothing;
