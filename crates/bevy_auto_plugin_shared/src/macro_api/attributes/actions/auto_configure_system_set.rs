@@ -1,8 +1,8 @@
 use crate::macro_api::prelude::*;
 use crate::macro_api::schedule_config::{ScheduleConfigArgs, ScheduleWithScheduleConfigArgs};
-use crate::syntax::analysis::item::resolve_ident_from_struct_or_enum;
 use crate::syntax::ast::flag::Flag;
-use crate::syntax::parse::item::ts_item_has_attr;
+use crate::syntax::extensions::item::ItemAttrsExt;
+use crate::syntax::parse::item::item_has_attr;
 use crate::syntax::parse::scrub_helpers::{AttrSite, scrub_helpers_and_ident_with_filter};
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
@@ -158,12 +158,14 @@ impl ToTokensWithAppParam for QConfigureSystemSet {
     //  but then that makes no-op default impl look weird. Would we return ItemInput regardless?
     //  or maybe we require a &mut TokenStream to be passed in and we mutate it
     fn scrub_item(&mut self) -> syn::Result<()> {
-        let input_ts = self.args.input_item.to_token_stream();
-        check_strip_helpers(input_ts.clone(), &mut self.args.args.base)?;
-        let (args, input_ts) =
-            inflate_args_from_input(self.args.args.base.clone(), input_ts)?.into_tuple();
-        self.args.args.base = args;
-        self.args.input_item = InputItem::Tokens(input_ts);
+        let input_item = &mut self.args.input_item;
+        let args = &mut self.args.args.base;
+        let item = input_item.ensure_ast()?;
+        check_strip_helpers(item, args)?;
+        let input = input_item.to_token_stream();
+        let res = inflate_args_from_input(args.clone(), input)?;
+        *args = res.inflated_args;
+        *input_item = InputItem::Tokens(res.scrubbed_tokens);
         Ok(())
     }
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
@@ -198,7 +200,7 @@ impl ToTokensWithAppParam for QConfigureSystemSet {
 impl ToTokens for QQConfigureSystemSet {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
-        // TODO: scrub input
+        todo!("not implemented");
         // TODO: cleanup
         args.extend(
             self.args
@@ -215,8 +217,8 @@ impl ToTokens for QQConfigureSystemSet {
 }
 
 /// HACK - if the item doesn't have anymore `auto_configure_system_set` - set a flag to strip out the helper attributes
-fn check_strip_helpers(input: TokenStream, args: &mut ConfigureSystemSetArgs) -> syn::Result<()> {
-    if !ts_item_has_attr(input, &parse_quote!(auto_configure_system_set))? {
+fn check_strip_helpers(item: &Item, args: &mut ConfigureSystemSetArgs) -> syn::Result<()> {
+    if !item_has_attr(item, &parse_quote!(auto_configure_system_set))? {
         args._strip_helpers = true;
     }
     Ok(())
@@ -225,14 +227,12 @@ fn check_strip_helpers(input: TokenStream, args: &mut ConfigureSystemSetArgs) ->
 #[cfg(test)]
 pub fn args_from_attr_input(
     attr: TokenStream,
-    // this is the only way we can strip out non-derive based attribute helpers
-    input: &mut TokenStream,
-) -> syn::Result<ConfigureSystemSetArgs> {
+    input: TokenStream,
+) -> syn::Result<InflateArgsOutput> {
     let mut args = syn::parse2::<ConfigureSystemSetArgs>(attr)?;
-    check_strip_helpers(input.clone(), &mut args)?;
-    let output = inflate_args_from_input(args, input.clone())?;
-    *input = output.scrubbed_tokens;
-    Ok(output.inflated_args)
+    let mut input_item = InputItem::Tokens(input);
+    check_strip_helpers(input_item.ensure_ast()?, &mut args)?;
+    inflate_args_from_input(args, input_item.to_token_stream())
 }
 
 #[derive(Debug)]
@@ -249,22 +249,22 @@ impl InflateArgsOutput {
 
 pub fn inflate_args_from_input(
     mut args: ConfigureSystemSetArgs,
-    // this is the only way we can strip out non-derive based attribute helpers
-    mut input: TokenStream,
+    input: TokenStream,
 ) -> syn::Result<InflateArgsOutput> {
     fn resolve_ident(item: &Item) -> syn::Result<&Ident> {
-        // TODO: remove and use ident from higher level
-        resolve_ident_from_struct_or_enum(item)
-            .map_err(|err| syn::Error::new(item.span(), format!("failed to resolve ident: {err}")))
+        // TODO: remove and use ident from higher level?
+        item.ident()
     }
 
     fn is_allowed_helper(site: &AttrSite, attr: &Attribute) -> bool {
         is_config_helper(attr) && matches!(site, AttrSite::Variant { .. })
     }
 
+    let mut scrubbed_tokens = input.clone();
+
     // 2) Scrub helpers from the item and resolve ident
     let scrub = scrub_helpers_and_ident_with_filter(
-        input.clone(),
+        input,
         is_allowed_helper,
         is_config_helper,
         resolve_ident,
@@ -273,11 +273,11 @@ pub fn inflate_args_from_input(
     // 3)
     if args._strip_helpers {
         // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
-        scrub.write_back(&mut input)?;
+        scrub.write_back(&mut scrubbed_tokens)?;
     } else {
         // Check if we have errors to print and if so, strip helpers from the item
         // Otherwise, maintain helpers for the next attribute to process
-        scrub.write_if_errors_with_scrubbed_item(&mut input)?;
+        scrub.write_if_errors_with_scrubbed_item(&mut scrubbed_tokens)?;
     }
 
     // 4) If it's a struct, there are no entries to compute
@@ -285,7 +285,7 @@ pub fn inflate_args_from_input(
         Item::Struct(_) => {
             return Ok(InflateArgsOutput {
                 inflated_args: args,
-                scrubbed_tokens: input,
+                scrubbed_tokens,
             });
         }
         Item::Enum(ref en) => en,
@@ -428,7 +428,7 @@ pub fn inflate_args_from_input(
     args.inner = Some(ConfigureSystemSetArgsInner { entries });
     Ok(InflateArgsOutput {
         inflated_args: args,
-        scrubbed_tokens: input,
+        scrubbed_tokens,
     })
 }
 
@@ -440,24 +440,12 @@ mod tests {
 
     fn ident_and_args_from_attr_input(
         attr: TokenStream,
-        mut input: TokenStream,
+        input: TokenStream,
     ) -> Result<(Ident, ConfigureSystemSetArgs), syn::Error> {
-        let item = parse2::<Item>(input.clone())?;
-        let ident = resolve_ident_from_struct_or_enum(&item).map_err(|err| {
-            syn::Error::new(item.span(), format!("failed to resolve ident: {err}"))
-        })?;
-        args_from_attr_input(attr, &mut input).map(|args| (ident.clone(), args))
-    }
-
-    fn ident_and_args_from_attr_mut_input(
-        attr: TokenStream,
-        input: &mut TokenStream,
-    ) -> Result<(Ident, ConfigureSystemSetArgs), syn::Error> {
-        let item = parse2::<Item>(input.clone())?;
-        let ident = resolve_ident_from_struct_or_enum(&item).map_err(|err| {
-            syn::Error::new(item.span(), format!("failed to resolve ident: {err}"))
-        })?;
-        args_from_attr_input(attr, input).map(|args| (ident.clone(), args))
+        let mut input_item = InputItem::Tokens(input);
+        let ident = input_item.ident()?.clone();
+        let inflated_args = args_from_attr_input(attr, input_item.to_token_stream())?.inflated_args;
+        Ok((ident, inflated_args))
     }
 
     mod test_struct {
@@ -612,7 +600,7 @@ mod tests {
 
         #[xtest]
         fn test_helper() -> syn::Result<()> {
-            let (_ident, args) = ident_and_args_from_attr_input(
+            let inflated_args = args_from_attr_input(
                 quote! {
                     group = A,
                     schedule = Update,
@@ -625,9 +613,10 @@ mod tests {
                         B,
                     }
                 },
-            )?;
+            )?
+            .inflated_args;
             assert_eq!(
-                args,
+                inflated_args,
                 ConfigureSystemSetArgs {
                     schedule_config: ScheduleWithScheduleConfigArgs {
                         schedule: parse_quote!(Update),
@@ -663,8 +652,12 @@ mod tests {
         }
 
         #[xtest]
-        fn test_helper_removed_from_ts() {
-            let mut input = quote! {
+        fn test_helper_removed_from_ts() -> syn::Result<()> {
+            let attr = quote! {
+                group = A,
+                schedule = Update,
+            };
+            let input = quote! {
                 enum Foo {
                     #[auto_configure_system_set_config(group = A)]
                     A,
@@ -672,15 +665,9 @@ mod tests {
                     B,
                 }
             };
-            let _ = ident_and_args_from_attr_mut_input(
-                quote! {
-                    group = A,
-                    schedule = Update,
-                },
-                &mut input,
-            );
+            let scrubbed_input = args_from_attr_input(attr, input)?.scrubbed_tokens;
             assert_eq!(
-                input.to_string(),
+                scrubbed_input.to_string(),
                 quote! {
                     enum Foo {
                         A,
@@ -689,21 +676,21 @@ mod tests {
                 }
                 .to_string()
             );
+            Ok(())
         }
 
         #[xtest]
         fn test_conflict_outer() {
-            let mut input = quote! {
-                enum Foo {
-                    A,
-                }
-            };
-            let res = ident_and_args_from_attr_mut_input(
+            let res = ident_and_args_from_attr_input(
                 quote! {
                     schedule = Update,
                     chain, chain_ignore_deferred
                 },
-                &mut input,
+                quote! {
+                    enum Foo {
+                        A,
+                    }
+                },
             )
             .map_err(|e| e.to_string());
 
@@ -712,17 +699,16 @@ mod tests {
 
         #[xtest]
         fn test_conflict_entries() {
-            let mut input = quote! {
-                enum Foo {
-                    #[auto_configure_system_set_config(chain, chain_ignore_deferred)]
-                    A,
-                }
-            };
-            let res = ident_and_args_from_attr_mut_input(
+            let res = ident_and_args_from_attr_input(
                 quote! {
                     schedule = Update,
                 },
-                &mut input,
+                quote! {
+                    enum Foo {
+                        #[auto_configure_system_set_config(chain, chain_ignore_deferred)]
+                        A,
+                    }
+                },
             )
             .map_err(|e| e.to_string());
 

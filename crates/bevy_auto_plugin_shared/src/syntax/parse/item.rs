@@ -1,14 +1,8 @@
 use crate::syntax::extensions::item::ItemAttrsExt;
 use crate::syntax::extensions::path::PathExt;
-use proc_macro2::TokenStream;
-use syn::{Attribute, Item, parse2};
+use syn::{Attribute, Item};
 
-pub fn ts_item_has_attr(input: TokenStream, path: &syn::Path) -> syn::Result<bool> {
-    let item = parse2::<Item>(input)?;
-    item_has_attr(item, path)
-}
-
-pub fn item_has_attr(item: Item, path: &syn::Path) -> syn::Result<bool> {
+pub fn item_has_attr(item: &Item, path: &syn::Path) -> syn::Result<bool> {
     Ok(has_attr(item.attrs().unwrap_or_default(), path))
 }
 
