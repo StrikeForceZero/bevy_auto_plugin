@@ -1,10 +1,8 @@
-mod app_mutation_emitter;
-mod attr_emitter;
-mod attr_expansion_emitter;
 mod attributes;
 mod composed;
 mod context;
 mod derives;
+mod emitters;
 mod input_item;
 mod macro_paths;
 mod mixins;
@@ -12,9 +10,9 @@ mod schedule_config;
 
 pub(crate) mod prelude {
     use super::*;
-    pub use app_mutation_emitter::*;
-    pub use attr_emitter::*;
-    pub use attr_expansion_emitter::*;
+    pub use crate::macro_api::emitters::app_mutation::*;
+    pub use crate::macro_api::emitters::attr::*;
+    pub use crate::macro_api::emitters::attr_expansion::*;
     pub use attributes::prelude::*;
     pub use composed::*;
     pub use context::*;

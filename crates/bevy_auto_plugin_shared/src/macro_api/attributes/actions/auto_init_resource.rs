@@ -1,4 +1,4 @@
-use crate::macro_api::app_mutation_emitter::{AppMutationEmitter, EmitAppMutationTokens};
+use crate::macro_api::emitters::app_mutation::{AppMutationEmitter, EmitAppMutationTokens};
 use crate::macro_api::prelude::*;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
