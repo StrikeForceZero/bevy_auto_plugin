@@ -70,7 +70,7 @@ fn list_has_key(ml: &syn::MetaList, key: &str) -> bool {
     }
 }
 
-macro_rules! gen_auto_attribute_outers {
+macro_rules! gen_action_outers {
     ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
          $(
             #[inline]
@@ -88,7 +88,7 @@ macro_rules! gen_auto_attribute_outers {
     };
 }
 
-macro_rules! gen_auto_outers {
+macro_rules! gen_rewrite_outers {
     ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
         $(
             #[inline]
@@ -99,7 +99,7 @@ macro_rules! gen_auto_outers {
     };
 }
 
-gen_auto_attribute_outers! {
+gen_action_outers! {
     auto_run_on_build          => IaRunOnBuild,
     auto_register_type         => IaRegisterType,
     auto_add_message           => IaAddMessage,
@@ -115,7 +115,7 @@ gen_auto_attribute_outers! {
     auto_configure_system_set  => IaConfigureSystemSet,
 }
 
-gen_auto_outers! {
+gen_rewrite_outers! {
     auto_component => IaComponent,
     auto_resource  => IaResource,
     auto_system    => IaSystem,
