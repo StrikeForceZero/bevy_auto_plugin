@@ -162,14 +162,10 @@ impl ToTokensWithAppParam for QConfigureSystemSet {
         Ok(())
     }
     fn to_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        // TODO: HACK - probably shouldn't be scrubbing here
-        let mut this = self.clone();
-        this.scrub_item().unwrap();
-
-        let generics = this.args.args.generics();
-        for concrete_path in this.args.concrete_paths() {
+        let generics = self.args.args.generics();
+        for concrete_path in self.args.concrete_paths() {
             tokens.extend(output(
-                &this.args.args.base,
+                &self.args.args.base,
                 app_param,
                 &concrete_path,
                 !generics.is_empty(),

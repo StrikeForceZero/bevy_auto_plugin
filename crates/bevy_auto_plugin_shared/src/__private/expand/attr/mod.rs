@@ -54,12 +54,10 @@ where
         input
     );
     let body_fn = body(|body| quote! { #body });
-    let q = Q::from_args(args);
-    // TODO: hack for auto_configure_system_set
+    let mut q = Q::from_args(args);
     let scrubbed_input = {
-        let mut scrubbed = q.clone();
-        ok_or_emit_with!(scrubbed.scrub_item(), scrubbed.args.input_item());
-        scrubbed.args.input_item().to_token_stream()
+        ok_or_emit_with!(q.scrub_item(), q.args.input_item());
+        q.args.input_item().to_token_stream()
     };
     let after_item_tokens = ok_or_emit_with!(body_fn(q), scrubbed_input);
     quote! {
