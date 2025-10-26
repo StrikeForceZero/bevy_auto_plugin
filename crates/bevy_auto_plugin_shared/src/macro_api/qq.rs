@@ -22,7 +22,7 @@ impl<T, P, G, R> QQ<ItemAttribute<Composed<T, P, G>, R>>
 where
     T: MacroPathProvider,
 {
-    pub(crate) fn wrap(&self, args: &TokenStream) -> TokenStream {
+    pub(crate) fn wrap_as_attr(&self, args: &TokenStream) -> TokenStream {
         let macro_path = T::macro_path(self.args.context());
         quote! { #[#macro_path( #args )] }
     }
