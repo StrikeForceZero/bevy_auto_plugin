@@ -19,7 +19,7 @@ pub type IaInsertResource = ItemAttribute<
     AllowStructOrEnum,
 >;
 pub type QInsertResource = AppMutationEmitter<IaInsertResource>;
-pub type QQInsertResource = QQ<IaInsertResource>;
+pub type QQInsertResource = AttrEmitter<IaInsertResource>;
 
 impl EmitAppMutationTokens for QInsertResource {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {

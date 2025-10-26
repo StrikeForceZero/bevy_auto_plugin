@@ -14,7 +14,7 @@ impl AttributeIdent for AddObserverArgs {
 pub type IaAddObserver =
     ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
 pub type QAddObserver = AppMutationEmitter<IaAddObserver>;
-pub type QQAddObserver = QQ<IaAddObserver>;
+pub type QQAddObserver = AttrEmitter<IaAddObserver>;
 
 impl EmitAppMutationTokens for QAddObserver {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {

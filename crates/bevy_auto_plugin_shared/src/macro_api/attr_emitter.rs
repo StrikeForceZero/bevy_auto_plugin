@@ -8,17 +8,17 @@ use syn::spanned::Spanned;
 
 /// for codegen re-emitting macro args
 #[derive(Debug, Clone)]
-pub(crate) struct QQ<T> {
+pub(crate) struct AttrEmitter<T> {
     pub(crate) args: T,
 }
 
-impl<T> QQ<T> {
-    pub(crate) fn from_args(args: T) -> QQ<T> {
-        QQ::<T> { args }
+impl<T> AttrEmitter<T> {
+    pub(crate) fn from_args(args: T) -> AttrEmitter<T> {
+        AttrEmitter::<T> { args }
     }
 }
 
-impl<T, P, G, R> QQ<ItemAttribute<Composed<T, P, G>, R>>
+impl<T, P, G, R> AttrEmitter<ItemAttribute<Composed<T, P, G>, R>>
 where
     T: MacroPathProvider,
 {
@@ -32,22 +32,22 @@ where
     }
 }
 
-pub trait QQToExpandAttr {
+pub trait AttrEmitterToExpandAttr {
     fn to_expand_attr(&self, expand_attrs: &mut ExpandAttrs);
 }
 
-impl<T> ToTokens for QQ<T>
+impl<T> ToTokens for AttrEmitter<T>
 where
-    Self: QQToExpandAttr,
+    Self: AttrEmitterToExpandAttr,
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut expand_attr = ExpandAttrs::default();
-        QQToExpandAttr::to_expand_attr(self, &mut expand_attr);
+        AttrEmitterToExpandAttr::to_expand_attr(self, &mut expand_attr);
         expand_attr.to_tokens(tokens);
     }
 }
 
-impl<T> QQ<T>
+impl<T> AttrEmitter<T>
 where
     T: MacroPathProvider + ItemAttributeInput + ItemAttributeContext,
     Self: ToTokens,

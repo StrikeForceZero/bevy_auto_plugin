@@ -96,7 +96,7 @@ pub type IaConfigureSystemSet = ItemAttribute<
     AllowStructOrEnum,
 >;
 pub type QConfigureSystemSet = AppMutationEmitter<IaConfigureSystemSet>;
-pub type QQConfigureSystemSet = QQ<IaConfigureSystemSet>;
+pub type QQConfigureSystemSet = AttrEmitter<IaConfigureSystemSet>;
 
 fn output(
     args: &ConfigureSystemSetArgs,

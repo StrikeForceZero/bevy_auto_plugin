@@ -16,7 +16,7 @@ pub type IaRegisterStateType = ItemAttribute<
     AllowStructOrEnum,
 >;
 pub type QRegisterStateType = AppMutationEmitter<IaRegisterStateType>;
-pub type QQRegisterStateType = QQ<IaRegisterStateType>;
+pub type QQRegisterStateType = AttrEmitter<IaRegisterStateType>;
 
 impl EmitAppMutationTokens for QRegisterStateType {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {

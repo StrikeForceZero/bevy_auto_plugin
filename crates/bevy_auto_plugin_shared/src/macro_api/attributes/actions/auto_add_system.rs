@@ -18,7 +18,7 @@ impl AttributeIdent for AddSystemArgs {
 pub type IaAddSystem =
     ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
 pub type QAddSystem = AppMutationEmitter<IaAddSystem>;
-pub type QQAddSystem = QQ<IaAddSystem>;
+pub type QQAddSystem = AttrEmitter<IaAddSystem>;
 
 impl EmitAppMutationTokens for QAddSystem {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {

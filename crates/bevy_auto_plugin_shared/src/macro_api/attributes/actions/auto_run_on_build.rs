@@ -14,7 +14,7 @@ impl AttributeIdent for RunOnBuildArgs {
 pub type IaRunOnBuild =
     ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
 pub type QRunOnBuild = AppMutationEmitter<IaRunOnBuild>;
-pub type QQRunOnBuild = QQ<IaRunOnBuild>;
+pub type QQRunOnBuild = AttrEmitter<IaRunOnBuild>;
 
 impl EmitAppMutationTokens for QRunOnBuild {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {

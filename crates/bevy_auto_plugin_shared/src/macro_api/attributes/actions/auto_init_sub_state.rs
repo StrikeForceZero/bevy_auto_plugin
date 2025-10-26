@@ -14,7 +14,7 @@ impl AttributeIdent for InitSubStateArgs {
 pub type IaInitSubState =
     ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
 pub type QInitSubState = AppMutationEmitter<IaInitSubState>;
-pub type QQInitSubState = QQ<IaInitSubState>;
+pub type QQInitSubState = AttrEmitter<IaInitSubState>;
 
 impl EmitAppMutationTokens for QInitSubState {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {

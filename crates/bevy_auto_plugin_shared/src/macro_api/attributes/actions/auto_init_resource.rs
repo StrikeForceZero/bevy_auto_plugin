@@ -17,7 +17,7 @@ pub type IaInitResource = ItemAttribute<
     AllowStructOrEnum,
 >;
 pub type QInitResource = AppMutationEmitter<IaInitResource>;
-pub type QQInitResource = QQ<IaInitResource>;
+pub type QQInitResource = AttrEmitter<IaInitResource>;
 
 impl EmitAppMutationTokens for QInitResource {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {

@@ -17,7 +17,7 @@ impl AttributeIdent for NameArgs {
 pub type IaName =
     ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
 pub type QName = AppMutationEmitter<IaName>;
-pub type QQName = QQ<IaName>;
+pub type QQName = AttrEmitter<IaName>;
 
 impl EmitAppMutationTokens for QName {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {

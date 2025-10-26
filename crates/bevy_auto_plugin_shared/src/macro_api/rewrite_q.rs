@@ -40,7 +40,7 @@ where
 
 impl<TFrom, TTo, P, GFrom, GTo, RFrom, RTo>
     From<RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>>
-    for QQ<ItemAttribute<Composed<TTo, P, GTo>, RTo>>
+    for AttrEmitter<ItemAttribute<Composed<TTo, P, GTo>, RTo>>
 where
     TTo: From<TFrom>,
     GTo: From<GFrom>,
@@ -75,7 +75,7 @@ where
 
 impl<TFrom, TTo, P, GFrom, GTo, RFrom, RTo>
     From<&RewriteQ<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>>
-    for QQ<ItemAttribute<Composed<TTo, P, GTo>, RTo>>
+    for AttrEmitter<ItemAttribute<Composed<TTo, P, GTo>, RTo>>
 where
     TTo: From<TFrom>,
     GTo: From<GFrom>,

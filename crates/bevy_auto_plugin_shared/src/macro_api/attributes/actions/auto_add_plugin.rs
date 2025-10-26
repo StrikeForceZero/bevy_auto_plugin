@@ -18,7 +18,7 @@ impl AttributeIdent for AddPluginArgs {
 pub type IaAddPlugin =
     ItemAttribute<Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
 pub type QAddPlugin = AppMutationEmitter<IaAddPlugin>;
-pub type QQAddPlugin = QQ<IaAddPlugin>;
+pub type QQAddPlugin = AttrEmitter<IaAddPlugin>;
 
 impl EmitAppMutationTokens for QAddPlugin {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {

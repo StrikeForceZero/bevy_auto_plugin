@@ -14,7 +14,7 @@ impl AttributeIdent for AddMessageArgs {
 pub type IaAddMessage =
     ItemAttribute<Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
 pub type QAddMessage = AppMutationEmitter<IaAddMessage>;
-pub type QQAddMessage = QQ<IaAddMessage>;
+pub type QQAddMessage = AttrEmitter<IaAddMessage>;
 
 impl EmitAppMutationTokens for QAddMessage {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
