@@ -1,3 +1,4 @@
+use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::macro_api::prelude::*;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident};
@@ -16,6 +17,37 @@ impl<T> AppMutationEmitter<T> {
             args,
             app_param: format_ident!("app"),
         }
+    }
+    pub fn wrap_body(
+        &mut self,
+        body: impl Fn(TokenStream) -> TokenStream,
+    ) -> syn::Result<TokenStream>
+    where
+        T: ItemAttributeArgs
+            + ItemAttributeParse
+            + ItemAttributeInput
+            + ItemAttributeTarget
+            + ItemAttributeContext
+            + ItemAttributeUniqueIdent
+            + ItemAttributePlugin,
+        AppMutationEmitter<T>: ToTokens,
+    {
+        let ident = self.args.target().to_token_stream();
+        let app_param = &self.app_param;
+        let unique_ident = self.args.get_unique_ident();
+        let plugin = self.args.plugin().clone();
+        let body = body(self.to_token_stream());
+        let expr: syn::ExprClosure = syn::parse_quote!(|#app_param| {
+            #body
+        });
+        // required for generics
+        let unique_ident = format_ident!("{unique_ident}");
+        let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
+        assert!(
+            !output.is_empty(),
+            "No plugin entry points were generated for ident: {ident}"
+        );
+        Ok(output)
     }
 }
 

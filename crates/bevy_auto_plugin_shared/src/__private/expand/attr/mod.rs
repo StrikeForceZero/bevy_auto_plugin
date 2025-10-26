@@ -1,44 +1,10 @@
-use crate::__private::auto_plugin_registry::_plugin_entry_block;
 use crate::macro_api::prelude::*;
 use crate::util::macros::ok_or_emit_with;
 use proc_macro2::TokenStream as MacroStream;
-use quote::{ToTokens, format_ident, quote};
+use quote::{ToTokens, quote};
 
 pub mod auto_bind_plugin;
 pub mod auto_plugin;
-
-fn body<T>(
-    body: impl Fn(MacroStream) -> MacroStream,
-) -> impl Fn(AppMutationEmitter<T>) -> syn::Result<MacroStream>
-where
-    T: ItemAttributeArgs
-        + ItemAttributeParse
-        + ItemAttributeInput
-        + ItemAttributeTarget
-        + ItemAttributeContext
-        + ItemAttributeUniqueIdent
-        + ItemAttributePlugin,
-    AppMutationEmitter<T>: ToTokens,
-{
-    move |params| -> syn::Result<MacroStream> {
-        let ident = params.args.target().to_token_stream();
-        let app_param = &params.app_param;
-        let unique_ident = params.args.get_unique_ident();
-        let plugin = params.args.plugin().clone();
-        let body = body(params.to_token_stream());
-        let expr: syn::ExprClosure = syn::parse_quote!(|#app_param| {
-            #body
-        });
-        // required for generics
-        let unique_ident = format_ident!("{unique_ident}");
-        let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
-        assert!(
-            !output.is_empty(),
-            "No plugin entry points were generated for ident: {ident}"
-        );
-        Ok(output)
-    }
-}
 
 fn proc_attribute_outer<T>(attr: MacroStream, input: MacroStream) -> MacroStream
 where
@@ -55,13 +21,12 @@ where
         T::from_attr_input_with_context(attr, input.clone(), Context::default()),
         input
     );
-    let body_fn = body(|body| quote! { #body });
     let mut q = AppMutationEmitter::from_args(args);
     let scrubbed_input = {
         ok_or_emit_with!(q.scrub_item(), q.args.input_item());
         q.args.input_item().to_token_stream()
     };
-    let after_item_tokens = ok_or_emit_with!(body_fn(q), scrubbed_input);
+    let after_item_tokens = ok_or_emit_with!(q.wrap_body(|body| quote! { #body }), scrubbed_input);
     quote! {
         #scrubbed_input
         #after_item_tokens
