@@ -36,7 +36,7 @@ struct MySet;
 
 # Example Enum 
 
-See [auto_configure_system_set_config](./auto_configure_system_set_config.md) for details.
+See [auto_configure_system_set_config](auto_configure_system_set_config.md) for details.
 
 ```rust
 use bevy::prelude::*;
