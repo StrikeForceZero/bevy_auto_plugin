@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 
 /// for codegen rewriting attrs
 #[derive(Debug, Clone)]
-pub(crate) struct AttrExpansionEmitter<T> {
+pub struct AttrExpansionEmitter<T> {
     pub(crate) args: T,
 }
 
