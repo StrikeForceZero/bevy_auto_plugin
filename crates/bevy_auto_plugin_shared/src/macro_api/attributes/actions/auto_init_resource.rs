@@ -16,10 +16,10 @@ pub type IaInitResource = ItemAttribute<
     Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QInitResource = AppMutationEmitter<IaInitResource>;
-pub type QQInitResource = AttrEmitter<IaInitResource>;
+pub type InitResourceAppMutEmitter = AppMutationEmitter<IaInitResource>;
+pub type InitResourceAttrEmitter = AttrEmitter<IaInitResource>;
 
-impl EmitAppMutationTokens for QInitResource {
+impl EmitAppMutationTokens for InitResourceAppMutEmitter {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -29,7 +29,7 @@ impl EmitAppMutationTokens for QInitResource {
     }
 }
 
-impl ToTokens for QQInitResource {
+impl ToTokens for InitResourceAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

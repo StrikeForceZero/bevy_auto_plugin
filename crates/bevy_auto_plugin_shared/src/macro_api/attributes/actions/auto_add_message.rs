@@ -13,10 +13,10 @@ impl AttributeIdent for AddMessageArgs {
 
 pub type IaAddMessage =
     ItemAttribute<Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QAddMessage = AppMutationEmitter<IaAddMessage>;
-pub type QQAddMessage = AttrEmitter<IaAddMessage>;
+pub type AddMessageAppMutEmitter = AppMutationEmitter<IaAddMessage>;
+pub type AddMessageAttrEmitter = AttrEmitter<IaAddMessage>;
 
-impl EmitAppMutationTokens for QAddMessage {
+impl EmitAppMutationTokens for AddMessageAppMutEmitter {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -26,7 +26,7 @@ impl EmitAppMutationTokens for QAddMessage {
     }
 }
 
-impl ToTokens for QQAddMessage {
+impl ToTokens for AddMessageAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

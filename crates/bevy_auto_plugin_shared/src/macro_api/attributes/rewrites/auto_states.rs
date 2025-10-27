@@ -32,8 +32,8 @@ impl<'a> From<&'a StatesArgs> for InitStateArgs {
 }
 pub type IaState =
     ItemAttribute<Composed<StatesArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
-pub type RewriteQState = AttrExpansionEmitter<IaState>;
-impl AttrExpansionEmitterToExpandAttr for RewriteQState {
+pub type StateAttrExpandEmitter = AttrExpansionEmitter<IaState>;
+impl AttrExpansionEmitterToExpandAttr for StateAttrExpandEmitter {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         if self.args.args.base.derive.present {
             expand_attrs.append(tokens::derive_states(&self.args.args.base.derive.items));

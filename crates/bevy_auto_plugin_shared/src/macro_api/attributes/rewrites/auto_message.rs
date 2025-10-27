@@ -32,9 +32,9 @@ impl<'a> From<&'a MessageArgs> for AddMessageArgs {
 
 pub type IaMessage =
     ItemAttribute<Composed<MessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type RewriteQMessage = AttrExpansionEmitter<IaMessage>;
+pub type MessageAttrExpandEmitter = AttrExpansionEmitter<IaMessage>;
 
-impl AttrExpansionEmitterToExpandAttr for RewriteQMessage {
+impl AttrExpansionEmitterToExpandAttr for MessageAttrExpandEmitter {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         if self.args.args.base.derive.present {
             expand_attrs

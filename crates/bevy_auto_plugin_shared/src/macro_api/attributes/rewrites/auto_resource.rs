@@ -34,8 +34,8 @@ impl<'a> From<&'a ResourceArgs> for InitResourceArgs {
 
 pub type IaResource =
     ItemAttribute<Composed<ResourceArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type RewriteQResource = AttrExpansionEmitter<IaResource>;
-impl AttrExpansionEmitterToExpandAttr for RewriteQResource {
+pub type ResourceAttrExpandEmitter = AttrExpansionEmitter<IaResource>;
+impl AttrExpansionEmitterToExpandAttr for ResourceAttrExpandEmitter {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         if self.args.args.base.derive.present {
             expand_attrs

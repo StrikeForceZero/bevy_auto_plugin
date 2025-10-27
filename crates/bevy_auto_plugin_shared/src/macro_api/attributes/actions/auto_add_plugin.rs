@@ -17,10 +17,10 @@ impl AttributeIdent for AddPluginArgs {
 
 pub type IaAddPlugin =
     ItemAttribute<Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
-pub type QAddPlugin = AppMutationEmitter<IaAddPlugin>;
-pub type QQAddPlugin = AttrEmitter<IaAddPlugin>;
+pub type AddPluginAppMutEmitter = AppMutationEmitter<IaAddPlugin>;
+pub type AddPluginAttrEmitter = AttrEmitter<IaAddPlugin>;
 
-impl EmitAppMutationTokens for QAddPlugin {
+impl EmitAppMutationTokens for AddPluginAppMutEmitter {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             if let Some(expr) = &self.args.args.base.init.expr {
@@ -40,7 +40,7 @@ impl EmitAppMutationTokens for QAddPlugin {
     }
 }
 
-impl ToTokens for QQAddPlugin {
+impl ToTokens for AddPluginAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

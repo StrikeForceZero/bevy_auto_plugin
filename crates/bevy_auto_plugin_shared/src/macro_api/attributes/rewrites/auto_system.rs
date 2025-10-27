@@ -30,9 +30,9 @@ impl<'a> From<&'a SystemArgs> for AddSystemArgs {
 
 pub type IaSystem =
     ItemAttribute<Composed<SystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type RewriteQSystem = AttrExpansionEmitter<IaSystem>;
+pub type SystemAttrExpandEmitter = AttrExpansionEmitter<IaSystem>;
 
-impl AttrExpansionEmitterToExpandAttr for RewriteQSystem {
+impl AttrExpansionEmitterToExpandAttr for SystemAttrExpandEmitter {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         expand_attrs
             .attrs

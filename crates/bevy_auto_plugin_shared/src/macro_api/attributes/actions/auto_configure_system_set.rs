@@ -94,8 +94,8 @@ pub type IaConfigureSystemSet = ItemAttribute<
     Composed<ConfigureSystemSetArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type QConfigureSystemSet = AppMutationEmitter<IaConfigureSystemSet>;
-pub type QQConfigureSystemSet = AttrEmitter<IaConfigureSystemSet>;
+pub type ConfigureSystemSetAppMutEmitter = AppMutationEmitter<IaConfigureSystemSet>;
+pub type ConfigureSystemSetAttrEmitter = AttrEmitter<IaConfigureSystemSet>;
 
 fn output(
     args: &ConfigureSystemSetArgs,
@@ -152,7 +152,7 @@ fn output(
     tokens
 }
 
-impl EmitAppMutationTokens for QConfigureSystemSet {
+impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
     fn item_post_process(&mut self) -> syn::Result<()> {
         let input_item = &mut self.args.input_item;
         let args = &mut self.args.args.base;
@@ -194,7 +194,7 @@ impl EmitAppMutationTokens for QConfigureSystemSet {
     }
 }
 
-impl ToTokens for QQConfigureSystemSet {
+impl ToTokens for ConfigureSystemSetAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
         todo!("not implemented");

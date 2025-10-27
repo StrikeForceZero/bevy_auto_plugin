@@ -13,10 +13,10 @@ impl AttributeIdent for InitStateArgs {
 
 pub type IaInitState =
     ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
-pub type QInitState = AppMutationEmitter<IaInitState>;
-pub type QQInitState = AttrEmitter<IaInitState>;
+pub type InitStateAppMutEmitter = AppMutationEmitter<IaInitState>;
+pub type InitStateAttrEmitter = AttrEmitter<IaInitState>;
 
-impl EmitAppMutationTokens for QInitState {
+impl EmitAppMutationTokens for InitStateAppMutEmitter {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let target = &self.args.target;
         tokens.extend(quote! {
@@ -25,7 +25,7 @@ impl EmitAppMutationTokens for QInitState {
     }
 }
 
-impl ToTokens for QQInitState {
+impl ToTokens for InitStateAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

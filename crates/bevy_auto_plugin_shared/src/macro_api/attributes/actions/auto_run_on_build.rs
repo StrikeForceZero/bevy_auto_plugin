@@ -13,10 +13,10 @@ impl AttributeIdent for RunOnBuildArgs {
 
 pub type IaRunOnBuild =
     ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
-pub type QRunOnBuild = AppMutationEmitter<IaRunOnBuild>;
-pub type QQRunOnBuild = AttrEmitter<IaRunOnBuild>;
+pub type RunOnBuildAppMutEmitter = AppMutationEmitter<IaRunOnBuild>;
+pub type RunOnBuildAttrEmitter = AttrEmitter<IaRunOnBuild>;
 
-impl EmitAppMutationTokens for QRunOnBuild {
+impl EmitAppMutationTokens for RunOnBuildAppMutEmitter {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
@@ -26,7 +26,7 @@ impl EmitAppMutationTokens for QRunOnBuild {
     }
 }
 
-impl ToTokens for QQRunOnBuild {
+impl ToTokens for RunOnBuildAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

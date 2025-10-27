@@ -158,24 +158,24 @@ pub fn use_bevy_state_app_ext_states() -> syn::ItemUse {
     parse_quote! { use #root::app::AppExtStates as _; }
 }
 
-pub fn auto_register_type(args: QQRegisterType) -> TokenStream {
+pub fn auto_register_type(args: RegisterTypeAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
-pub fn auto_name(args: QQName) -> TokenStream {
+pub fn auto_name(args: NameAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
-pub fn auto_init_resource(args: QQInitResource) -> TokenStream {
+pub fn auto_init_resource(args: InitResourceAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
-pub fn auto_init_states(args: QQInitState) -> TokenStream {
+pub fn auto_init_states(args: InitStateAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
-pub fn auto_add_systems(args: QQAddSystem) -> TokenStream {
+pub fn auto_add_systems(args: AddSystemAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
-pub fn auto_add_observer(args: QQAddObserver) -> TokenStream {
+pub fn auto_add_observer(args: AddObserverAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
-pub fn auto_add_message(args: QQAddMessage) -> TokenStream {
+pub fn auto_add_message(args: AddMessageAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
