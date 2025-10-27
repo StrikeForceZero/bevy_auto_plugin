@@ -1,4 +1,4 @@
-error: Attribute macro is not allowed on Fn: Expected Struct or Enum
+error: Only allowed on Struct Or Enum items
  --> tests/e2e/ui/auto_register_type_wrong_item.rs:7:1
   |
 7 | #[auto_register_type(plugin = TestPlugin)]

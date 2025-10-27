@@ -3,6 +3,10 @@ use crate::{
     syntax::validated::non_empty_path::NonEmptyPath,
     util::macros::impl_from_default,
 };
+use darling::{
+    FromMeta,
+    ast::NestedMeta,
+};
 use proc_macro2::{
     Ident,
     Span,
@@ -16,9 +20,10 @@ use std::{
 use syn::{
     Item,
     Path,
-    parse::Parse,
+    Token,
+    parse::Parser,
     parse_quote,
-    parse2,
+    punctuated::Punctuated,
 };
 
 mod actions;
@@ -258,7 +263,7 @@ pub trait ItemAttributeParse {
 
 impl<T, Resolver> ItemAttributeParse for ItemAttribute<T, Resolver>
 where
-    T: Parse,
+    T: FromMeta,
     Resolver: IdentPathResolver,
 {
     fn from_attr_input_with_context(
@@ -272,7 +277,7 @@ where
 
 impl<T, Resolver> ItemAttribute<T, Resolver>
 where
-    T: Parse,
+    T: FromMeta,
     Resolver: IdentPathResolver,
 {
     pub fn from_attr_input(
@@ -286,7 +291,20 @@ where
             // call-site because we want to highlight the attribute
             return Err(syn::Error::new(Span::call_site(), Resolver::NOT_ALLOWED_MESSAGE));
         };
-        Ok(Self { args: parse2::<T>(attr)?, context, input_item, target, _resolver: PhantomData })
+        // Parse the attribute’s inner tokens as: Meta, Meta, ...
+        let metas: Punctuated<NestedMeta, Token![,]> =
+            Punctuated::<NestedMeta, Token![,]>::parse_terminated.parse2(attr)?;
+
+        // darling expects a slice of `Meta`
+        let metas_vec: Vec<NestedMeta> = metas.into_iter().collect();
+
+        Ok(Self {
+            args: T::from_list(&metas_vec)?,
+            context,
+            input_item,
+            target,
+            _resolver: PhantomData,
+        })
     }
 }
 
