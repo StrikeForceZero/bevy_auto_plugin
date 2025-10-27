@@ -9,7 +9,6 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
 use syn::{Attribute, Item, Path, parse_quote};
-
 const CONFIG_ATTR_NAME: &str = "auto_configure_system_set_config";
 const CHAIN_CONFLICT_ERR: &str = "`chain` and `chain_ignore_deferred` are mutually exclusive";
 
@@ -154,34 +153,32 @@ fn output(
 }
 
 impl EmitAppMutationTokens for QConfigureSystemSet {
-    // TODO: it would prob make more sense to return the token stream instead of inserting back into args
-    //  but then that makes no-op default impl look weird. Would we return ItemInput regardless?
-    //  or maybe we require a &mut TokenStream to be passed in and we mutate it
-    fn scrub_item(&mut self) -> syn::Result<()> {
+    fn item_post_process(&mut self) -> syn::Result<()> {
         let input_item = &mut self.args.input_item;
         let args = &mut self.args.args.base;
         let item = input_item.ensure_ast()?;
         check_strip_helpers(item, args)?;
-        let input = input_item.to_token_stream();
-        let res = inflate_args_from_input(args.clone(), input)?;
-        *args = res.inflated_args;
-        *input_item = InputItem::Tokens(res.scrubbed_tokens);
+        if args.inner.is_none() {
+            let input = input_item.to_token_stream();
+            let res = inflate_args_from_input(args.clone(), input)?;
+            *args = res.inflated_args;
+            *input_item = InputItem::Tokens(res.scrubbed_tokens);
+        }
         Ok(())
     }
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = self.args.args.base.clone();
         // checks if we need to inflate args
         let inflated_args = if args.inner.is_none() {
-            let (inflated_args, _) =
-                match inflate_args_from_input(args.clone(), self.args.input_item.to_token_stream())
-                {
-                    Ok(res) => res.into_tuple(),
-                    Err(err) => {
-                        tokens.extend(err.to_compile_error());
-                        return;
-                    }
-                };
-            inflated_args
+            let args = args.clone();
+            let input = self.args.input_item.to_token_stream();
+            match inflate_args_from_input(args, input) {
+                Ok(res) => res.inflated_args,
+                Err(err) => {
+                    tokens.extend(err.to_compile_error());
+                    return;
+                }
+            }
         } else {
             args
         };

@@ -18,14 +18,20 @@ where
         T::from_attr_input_with_context(attr, input.clone(), Context::default()),
         input
     );
-    let mut q = AppMutationEmitter::from_args(args);
-    let scrubbed_input = {
-        ok_or_emit_with!(q.scrub_item(), q.args.input_item());
-        q.args.input_item().to_token_stream()
+    let mut app_mut_emitter = AppMutationEmitter::from_args(args);
+    let processed_item = {
+        ok_or_emit_with!(
+            app_mut_emitter.item_post_process(),
+            app_mut_emitter.args.input_item()
+        );
+        app_mut_emitter.args.input_item().to_token_stream()
     };
-    let after_item_tokens = ok_or_emit_with!(q.wrap_body(|body| quote! { #body }), scrubbed_input);
+    let after_item_tokens = ok_or_emit_with!(
+        app_mut_emitter.wrap_body(|body| quote! { #body }),
+        processed_item
+    );
     quote! {
-        #scrubbed_input
+        #processed_item
         #after_item_tokens
     }
 }

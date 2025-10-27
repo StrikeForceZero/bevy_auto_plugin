@@ -52,7 +52,8 @@ impl<T> AppMutationEmitter<T> {
 }
 
 pub trait EmitAppMutationTokens {
-    fn scrub_item(&mut self) -> syn::Result<()> {
+    // TODO: this should be its own thing but it might overcomplicate things
+    fn item_post_process(&mut self) -> syn::Result<()> {
         Ok(())
     }
     fn to_app_mutation_token_stream(&self, app_param: &syn::Ident) -> TokenStream {
