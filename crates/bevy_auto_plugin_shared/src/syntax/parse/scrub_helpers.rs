@@ -448,7 +448,6 @@ pub fn parse_removed_as<T: FromMeta>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::syntax::analysis::item::resolve_ident_from_struct_or_enum;
     use crate::syntax::extensions::path::PathExt;
     use internal_test_proc_macro::xtest;
     use quote::{ToTokens, quote};
@@ -541,9 +540,7 @@ mod tests {
         }
 
         fn resolve_ident(item: &Item) -> syn::Result<&Ident> {
-            resolve_ident_from_struct_or_enum(item).map_err(|err| {
-                syn::Error::new(item.span(), format!("failed to resolve ident: {err}"))
-            })
+            item.ident()
         }
 
         #[xtest]
