@@ -33,7 +33,7 @@ where
     T1: Default + Send + Sync + 'static,
     T2: Default + Send + Sync + 'static,
 {
-    #[auto_plugin(app_param=non_default_app_param_name)]
+    #[auto_plugin]
     fn build(&self, non_default_app_param_name: &mut App) {
         non_default_app_param_name.insert_resource(MyResourceBuild(1u8, true));
     }

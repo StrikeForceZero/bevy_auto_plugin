@@ -40,7 +40,19 @@ pub struct AutoPluginFnArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub plugin: Option<Path>,
+    #[darling(and_then = app_param_check)]
     pub app_param: Option<Ident>,
+}
+
+fn app_param_check(app_param: Option<Ident>) -> darling::Result<Option<Ident>> {
+    if let Some(app_param) = app_param {
+        Err(darling::error::Error::custom(
+            "manually specifying `app_param` is no longer needed - remove `app_param = ...`",
+        )
+        .with_span(&app_param.span()))
+    } else {
+        Ok(app_param)
+    }
 }
 
 pub fn resolve_app_param_name<'a>(
