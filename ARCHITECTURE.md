@@ -36,6 +36,9 @@ Where:
 | `G` | Generics handling: `WithZeroGenerics`, `WithZeroOrSingleGenerics`, or `WithZeroOrManyGenerics` |
 | `R` | Resolver restricting usage: `AllowAny`, `AllowFn`, or `AllowStructOrEnum` |
 
+notes:
+- `Composed` can probably be merged into `ItemAttribute` but it's currently left open if we decide to add macros that aren't attached to the usual items (unlikely).
+
 Actions can implement traits for one or both of the following wrapper types:
 
 #### [`AppMutationEmitter<T>`](crates/bevy_auto_plugin_shared/src/macro_api/emitters/app_mutation.rs)
