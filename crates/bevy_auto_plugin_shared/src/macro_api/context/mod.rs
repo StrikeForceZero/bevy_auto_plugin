@@ -1,8 +1,13 @@
 use macro_paths::MacroPaths;
 
-pub mod macro_paths;
+mod macro_paths;
 
 #[derive(Debug, Clone, Default, PartialEq, Hash)]
 pub struct Context {
     pub macros: MacroPaths,
+}
+
+pub mod prelude {
+    pub use super::Context;
+    pub use super::macro_paths::*;
 }
