@@ -197,8 +197,6 @@ impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
 impl ToTokens for ConfigureSystemSetAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
-        todo!("not implemented");
-        // TODO: cleanup
         args.extend(
             self.args
                 .args
@@ -210,6 +208,8 @@ impl ToTokens for ConfigureSystemSetAttrEmitter {
             #(#args),*
         });
         *tokens = self.wrap_as_attr(tokens);
+        todo!("not implemented");
+        // TODO: would need to modify item to inject helper attributes
     }
 }
 
