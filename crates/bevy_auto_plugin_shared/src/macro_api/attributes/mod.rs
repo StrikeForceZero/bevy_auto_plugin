@@ -5,6 +5,7 @@ use crate::{
 };
 use proc_macro2::{
     Ident,
+    Span,
     TokenStream,
 };
 use quote::format_ident;
@@ -18,7 +19,6 @@ use syn::{
     parse::Parse,
     parse_quote,
     parse2,
-    spanned::Spanned,
 };
 
 mod actions;
@@ -283,7 +283,8 @@ where
         let mut input_item = InputItem::Tokens(input);
         let item = input_item.ensure_ast()?;
         let Some(target) = Resolver::resolve_ident_path(item) else {
-            return Err(syn::Error::new(input_item.span(), Resolver::NOT_ALLOWED_MESSAGE));
+            // call-site because we want to highlight the attribute
+            return Err(syn::Error::new(Span::call_site(), Resolver::NOT_ALLOWED_MESSAGE));
         };
         Ok(Self { args: parse2::<T>(attr)?, context, input_item, target, _resolver: PhantomData })
     }
