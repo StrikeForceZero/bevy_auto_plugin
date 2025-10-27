@@ -56,7 +56,10 @@ impl From<TypeList> for TokenStream {
 }
 
 fn failed_err(e: syn::Error, span: &proc_macro2::Span) -> Error {
-    Error::multiple(vec![Error::custom("failed to parse TypeList").with_span(span), Error::from(e)])
+    Error::multiple(vec![
+        Error::custom("failed to parse TypeList").with_span(span),
+        Error::from(e),
+    ])
 }
 
 impl FromMeta for TypeList {
