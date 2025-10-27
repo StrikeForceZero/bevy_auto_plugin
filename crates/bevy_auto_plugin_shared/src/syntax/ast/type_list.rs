@@ -2,7 +2,10 @@ use darling::{
     Error,
     FromMeta,
 };
-use proc_macro2::TokenStream;
+use proc_macro2::{
+    TokenStream,
+    TokenTree,
+};
 use quote::{
     ToTokens,
     quote,
@@ -55,11 +58,36 @@ impl From<TypeList> for TokenStream {
     }
 }
 
-fn failed_err(e: syn::Error, span: &proc_macro2::Span) -> Error {
+fn failed_err_literal(e: syn::Error, span: &proc_macro2::Span) -> Error {
     Error::multiple(vec![
-        Error::custom("failed to parse TypeList").with_span(span),
+        Error::custom(
+            "Failed to parse TypeList: expected a list of *types*, but found literal value(s). \
+                 Use types like `Foo`, `Vec<T>`, `Option<Bar>`; not `1`, `true`, or string literals."
+        ).with_span(span),
         Error::from(e),
     ])
+}
+
+fn failed_err(e: syn::Error, span: &proc_macro2::Span) -> Error {
+    Error::multiple(vec![
+        Error::custom("Failed to parse TypeList").with_span(span),
+        Error::from(e),
+    ])
+}
+
+/// Inspect `TokenStream` for `Literal`
+fn contains_literal(ts: &TokenStream) -> bool {
+    ts.clone().into_iter().any(|tt| matches!(tt, TokenTree::Literal(_)))
+}
+
+/// Inspect `ParseStream` for `Literal`
+fn fork_has_literal(input: syn::parse::ParseStream) -> bool {
+    let f = input.fork();
+    let ts: TokenStream = match f.parse() {
+        Ok(ts) => ts,
+        Err(_) => return false,
+    };
+    ts.into_iter().any(|tt| matches!(tt, TokenTree::Literal(_)))
 }
 
 impl FromMeta for TypeList {
@@ -67,9 +95,13 @@ impl FromMeta for TypeList {
         let list = meta.require_list()?;
         // Parse its tokens as `T, T, ...` where each `T` is a syn::Type
         let parser = Punctuated::<Type, Token![,]>::parse_terminated;
-        let elems = parser
-            .parse2(list.tokens.clone())
-            .map_err(|e| failed_err(e, &list.tokens.to_token_stream().span()))?;
+        let elems = parser.parse2(list.tokens.clone()).map_err(|e| {
+            if contains_literal(&list.tokens) {
+                failed_err_literal(e, &list.tokens.span())
+            } else {
+                failed_err(e, &list.tokens.span())
+            }
+        })?;
         Ok(TypeList(elems.into_iter().collect()))
     }
 }
@@ -82,7 +114,13 @@ impl syn::parse::Parse for TypeList {
             punctuated::Punctuated,
         };
         let elems = Punctuated::<Type, Token![,]>::parse_terminated(input)
-            .map_err(|e| failed_err(e, &input.span()))?
+            .map_err(|e| {
+                if fork_has_literal(input) {
+                    failed_err_literal(e, &input.span())
+                } else {
+                    failed_err(e, &input.span())
+                }
+            })?
             .into_iter()
             .collect();
         Ok(TypeList(elems))
@@ -97,15 +135,40 @@ mod tests {
         Meta,
         Type,
         parse_quote,
+        parse2,
     };
 
     #[derive(Debug, FromMeta)]
+    #[darling(derive_syn_parse)]
     pub struct FooAttr {
         pub types: TypeList,
     }
 
     #[xtest]
     fn parse_types() {
+        let types = quote! { u32, i32, FooBar<u32>, [u8; 4] };
+        let meta: Meta = parse_quote!(types(#types));
+        let attr: FooAttr = parse2(meta.to_token_stream()).unwrap();
+
+        assert_eq!(attr.types.0.len(), 4);
+
+        // The third element should be `Foo<u32>` with generics preserved.
+        match &attr.types.0[2] {
+            Type::Path(tp) => {
+                let seg = tp.path.segments.last().unwrap();
+                assert_eq!(seg.ident, "FooBar");
+                assert!(matches!(seg.arguments, syn::PathArguments::AngleBracketed(_)));
+            }
+            _ => panic!("expected Type::Path for element 2"),
+        }
+
+        let type_list = &attr.types;
+        let tokens = quote! { #type_list };
+        assert_eq!(tokens.to_string(), types.to_string());
+    }
+
+    #[xtest]
+    fn from_meta_types() {
         let types = quote! { u32, i32, FooBar<u32>, [u8; 4] };
         let meta: Meta = parse_quote!(foo(types(#types)));
         let attr: FooAttr = FooAttr::from_meta(&meta).unwrap();
