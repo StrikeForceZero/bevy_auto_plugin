@@ -2,7 +2,6 @@ use bevy_auto_plugin_shared::__private::expand;
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;
 
-#[allow(dead_code)]
 /// thin adapter converting between the compiler-level and proc_macro2 streams
 fn handle_attribute<F: Fn(MacroStream, MacroStream) -> MacroStream>(
     handler: F,
