@@ -1,3 +1,50 @@
+//! # Bevy Auto Plugin
+//! [GitHub repository](https://github.com/strikeforcezero/bevy_auto_plugin)
+//!
+//! ## Getting Started:
+//!
+//! ### Plugin
+//!
+//! There are three distinct ways to make a bindable plugin:
+//!
+//! ```rust
+//! use bevy::prelude::*;
+//! use bevy_auto_plugin::prelude::*;
+//!
+//! #[derive(AutoPlugin)]
+//! #[auto_plugin(impl_plugin_trait)]
+//! struct MyPlugin;
+//! ```
+//!
+//! ```rust
+//! use bevy::prelude::*;
+//! use bevy_auto_plugin::prelude::*;
+//!
+//! #[derive(AutoPlugin)]
+//! struct MyPlugin;
+//!
+//! impl Plugin for MyPlugin {
+//!     #[auto_plugin]
+//!     fn build(&self, app: &mut App) {
+//!         //
+//!     }
+//! }
+//! ```
+//!
+//! ```rust
+//! use bevy::prelude::*;
+//! use bevy_auto_plugin::prelude::*;
+//!
+//! #[derive(AutoPlugin)]
+//! struct MyPlugin;
+//!
+//! #[auto_plugin(plugin = MyPlugin)]
+//! fn plugin(app: &mut App) {
+//!     //
+//! }
+//! ```
+
+/// Private Re-exports
 #[doc(hidden)]
 pub mod __private {
     pub use bevy_auto_plugin_shared as shared;
