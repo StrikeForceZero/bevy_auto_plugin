@@ -5,7 +5,7 @@ use quote::{ToTokens, format_ident};
 
 /// for codegen attaching to bevy app
 #[derive(Debug, Clone)]
-pub(crate) struct AppMutationEmitter<T> {
+pub struct AppMutationEmitter<T> {
     pub(crate) args: T,
     // TODO: maybe app params should just be part of another wrapper struct?
     pub(crate) app_param: syn::Ident,
