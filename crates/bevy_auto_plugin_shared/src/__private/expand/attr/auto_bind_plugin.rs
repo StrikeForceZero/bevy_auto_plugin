@@ -1,5 +1,4 @@
 use crate::{
-    __private::expand::attr,
     macro_api::prelude::*,
     syntax::extensions::item::ItemAttrsExt,
     util::macros::compile_error_with,
@@ -25,7 +24,7 @@ pub fn auto_bind_plugin_inner(
     let item = item_attribute.input_item.ensure_ast_mut()?;
     let mut attrs = item.take_attrs().map_err(|err| syn::Error::new(item.span(), err))?;
 
-    attr::attrs_inject_plugin_param(&mut attrs, plugin_path);
+    attrs_inject_plugin_param(&mut attrs, plugin_path);
 
     let Ok(_) = item.put_attrs(attrs) else { unreachable!() };
 
@@ -64,5 +63,67 @@ mod tests {
             }
             .to_string()
         );
+    }
+}
+
+pub fn attrs_inject_plugin_param(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {
+    use syn::Meta;
+
+    for attr in attrs {
+        let last = attr.path().segments.last().map(|s| s.ident.to_string()).unwrap_or_default();
+
+        if !last.starts_with("auto_") {
+            continue;
+        }
+
+        let already_has_plugin = match &attr.meta {
+            Meta::List(ml) => list_has_key(ml, "plugin"),
+            Meta::Path(_) => false,
+            Meta::NameValue(_) => true,
+        };
+
+        if already_has_plugin {
+            continue;
+        }
+
+        attr_inject_plugin_param(attr, plugin);
+    }
+}
+
+fn attr_inject_plugin_param(attr: &mut syn::Attribute, plugin: &syn::Path) {
+    use syn::{
+        Meta,
+        parse_quote,
+    };
+    match &attr.meta {
+        Meta::Path(path) => *attr = parse_quote!( #[#path(plugin = #plugin)] ),
+        Meta::List(ml) => {
+            let path = &ml.path;
+            let inner = &ml.tokens;
+            if inner.is_empty() {
+                *attr = parse_quote!( #[#path(plugin = #plugin)] )
+            } else {
+                *attr = parse_quote!( #[#path(plugin = #plugin, #inner)] )
+            }
+        }
+        _ => {}
+    }
+}
+
+fn list_has_key(ml: &syn::MetaList, key: &str) -> bool {
+    use syn::{
+        Meta,
+        Token,
+        parse::Parser,
+        punctuated::Punctuated,
+    };
+    let parser = Punctuated::<Meta, Token![,]>::parse_terminated;
+    match parser.parse2(ml.tokens.clone()) {
+        Ok(list) => list.iter().any(|m| match m {
+            Meta::NameValue(nv) => nv.path.is_ident(key),
+            Meta::List(ml2) => ml2.path.is_ident(key),
+            Meta::Path(p) => p.is_ident(key),
+        }),
+        Err(_) => false,
     }
 }
