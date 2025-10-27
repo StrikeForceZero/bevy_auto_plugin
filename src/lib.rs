@@ -43,6 +43,69 @@
 //!     //
 //! }
 //! ```
+//!
+//! ### Using Attributes
+//! When `Plugin::build` is called on `MyPlugin` (i.e., `app.add_plugins(MyPlugin)`), the code for each attribute will be executed.
+//!
+//! You can use the `auto_*` attributes in several different ways:
+//!
+//! ```rust
+//! use bevy::prelude::*;
+//! use bevy_auto_plugin::prelude::*;
+//!
+//! #[derive(AutoPlugin)]
+//! #[auto_plugin(impl_plugin_trait)]
+//! struct MyPlugin;
+//!
+//! #[auto_component(
+//!     plugin = MyPlugin,
+//!     derive(Debug, Default),
+//!     reflect(Debug, Default),
+//!     register,
+//!     auto_name,
+//! )]
+//! struct FooComponent;
+//! ```
+//!
+//! which gets rewritten into:
+//! ```rust
+//! use bevy::prelude::*;
+//! use bevy_auto_plugin::prelude::*;
+//!
+//! #[derive(AutoPlugin)]
+//! #[auto_plugin(impl_plugin_trait)]
+//! struct MyPlugin;
+//!
+//! #[derive(Component, Reflect, Debug, Default)]
+//! #[reflect(Component, Debug, Default)]
+//! #[auto_name(plugin = MyPlugin)]
+//! #[auto_register_type(plugin = MyPlugin)]
+//! struct FooComponent;
+//! ```
+//!
+//! or maybe you want a template:
+//! ```rust
+//! use bevy::prelude::*;
+//! use bevy_auto_plugin::prelude::*;
+//! use meta_merge::*;
+//!
+//! #[derive(AutoPlugin)]
+//! #[auto_plugin(impl_plugin_trait)]
+//! struct MyPlugin;
+//!
+//! #[export(copy(prepend))]
+//! #[derive(Component, Reflect, Debug, Default)]
+//! #[reflect(Component, Debug, Default)]
+//! #[auto_name(plugin = MyPlugin)]
+//! #[auto_register_type(plugin = MyPlugin)]
+//! struct DefaultComponentTemplate;
+//!
+//! #[apply(CopyDefaultComponentTemplate!)]
+//! struct FooComponent;
+//!
+//! #[apply(CopyDefaultComponentTemplate!)]
+//! struct BarComponent;
+//! ```
 
 /// Private Re-exports
 #[doc(hidden)]
