@@ -17,6 +17,7 @@ pub(crate) mod prelude {
     pub use composed::*;
     pub use context::*;
     pub use derives::prelude::*;
+    pub use emitters::prelude::*;
     pub use input_item::*;
     pub use mixins::prelude::*;
 }
