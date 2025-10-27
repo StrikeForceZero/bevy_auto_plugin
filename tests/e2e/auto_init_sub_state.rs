@@ -1,7 +1,9 @@
 use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
-use bevy_state::app::StatesPlugin;
-use bevy_state::prelude::*;
+use bevy_state::{
+    app::StatesPlugin,
+    prelude::*,
+};
 use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin)]
@@ -59,48 +61,23 @@ fn test_update_state() {
 
     app.update();
 
-    assert_eq!(
-        app.world()
-            .get_resource::<State<IsPaused>>()
-            .map(|state| state.get()),
-        None,
-    );
+    assert_eq!(app.world().get_resource::<State<IsPaused>>().map(|state| state.get()), None,);
 
-    app.world_mut()
-        .resource_mut::<NextState<AppState>>()
-        .into_inner()
-        .set(AppState::InGame);
+    app.world_mut().resource_mut::<NextState<AppState>>().into_inner().set(AppState::InGame);
 
     app.update();
 
-    assert_eq!(
-        app.world().resource::<State<IsPaused>>().get(),
-        &IsPaused::Running,
-    );
+    assert_eq!(app.world().resource::<State<IsPaused>>().get(), &IsPaused::Running,);
 
-    app.world_mut()
-        .resource_mut::<NextState<IsPaused>>()
-        .into_inner()
-        .set(IsPaused::Paused);
+    app.world_mut().resource_mut::<NextState<IsPaused>>().into_inner().set(IsPaused::Paused);
 
     app.update();
 
-    assert_eq!(
-        app.world().resource::<State<IsPaused>>().get(),
-        &IsPaused::Paused,
-    );
+    assert_eq!(app.world().resource::<State<IsPaused>>().get(), &IsPaused::Paused,);
 
-    app.world_mut()
-        .resource_mut::<NextState<AppState>>()
-        .into_inner()
-        .set(AppState::Menu);
+    app.world_mut().resource_mut::<NextState<AppState>>().into_inner().set(AppState::Menu);
 
     app.update();
 
-    assert_eq!(
-        app.world()
-            .get_resource::<State<IsPaused>>()
-            .map(|state| state.get()),
-        None,
-    );
+    assert_eq!(app.world().get_resource::<State<IsPaused>>().map(|state| state.get()), None,);
 }

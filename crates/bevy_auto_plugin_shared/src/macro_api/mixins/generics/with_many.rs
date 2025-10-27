@@ -1,9 +1,16 @@
-use crate::macro_api::mixins::HasKeys;
-use crate::macro_api::mixins::generics::HasGenerics;
-use crate::syntax::ast::type_list::TypeList;
+use crate::{
+    macro_api::mixins::{
+        HasKeys,
+        generics::HasGenerics,
+    },
+    syntax::ast::type_list::TypeList,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(Debug, Clone, Default, FromMeta, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
@@ -46,9 +53,7 @@ mod tests {
     #[xtest]
     fn test_to_tokens_zero() {
         assert_eq!(
-            WithZeroOrManyGenerics { generics: vec![] }
-                .to_token_stream()
-                .to_string(),
+            WithZeroOrManyGenerics { generics: vec![] }.to_token_stream().to_string(),
             quote!().to_string()
         );
     }
@@ -57,7 +62,7 @@ mod tests {
     fn test_to_tokens_single() {
         assert_eq!(
             WithZeroOrManyGenerics {
-                generics: vec![TypeList(vec![parse_quote!(bool), parse_quote!(u32)])],
+                generics: vec![TypeList(vec![parse_quote!(bool), parse_quote!(u32)])]
             }
             .to_token_stream()
             .to_string(),

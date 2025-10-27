@@ -1,7 +1,9 @@
-use crate::__private::expand::attr;
-use crate::macro_api::prelude::*;
-use crate::syntax::extensions::item::ItemAttrsExt;
-use crate::util::macros::compile_error_with;
+use crate::{
+    __private::expand::attr,
+    macro_api::prelude::*,
+    syntax::extensions::item::ItemAttrsExt,
+    util::macros::compile_error_with,
+};
 use proc_macro2::TokenStream as MacroStream;
 use quote::ToTokens;
 use syn::spanned::Spanned;
@@ -21,15 +23,11 @@ pub fn auto_bind_plugin_inner(
 
     let plugin_path = item_attribute.args.plugin();
     let item = item_attribute.input_item.ensure_ast_mut()?;
-    let mut attrs = item
-        .take_attrs()
-        .map_err(|err| syn::Error::new(item.span(), err))?;
+    let mut attrs = item.take_attrs().map_err(|err| syn::Error::new(item.span(), err))?;
 
     attr::attrs_inject_plugin_param(&mut attrs, plugin_path);
 
-    let Ok(_) = item.put_attrs(attrs) else {
-        unreachable!()
-    };
+    let Ok(_) = item.put_attrs(attrs) else { unreachable!() };
 
     Ok(item.to_token_stream())
 }

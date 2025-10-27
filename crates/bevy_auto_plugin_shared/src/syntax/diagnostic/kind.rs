@@ -1,4 +1,8 @@
-use syn::{Item, Pat, Type};
+use syn::{
+    Item,
+    Pat,
+    Type,
+};
 
 #[allow(dead_code)]
 pub fn pat_kind(pat: &Pat) -> &'static str {

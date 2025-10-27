@@ -1,5 +1,7 @@
-use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::context::Context;
+use crate::macro_api::{
+    attributes::prelude::*,
+    context::Context,
+};
 use syn::parse_quote;
 
 #[derive(Debug, Clone, PartialEq, Hash)]

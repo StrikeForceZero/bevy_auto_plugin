@@ -10,12 +10,7 @@ pub fn attrs_inject_plugin_param(attrs: &mut Vec<syn::Attribute>, plugin: &syn::
     use syn::Meta;
 
     for attr in attrs {
-        let last = attr
-            .path()
-            .segments
-            .last()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default();
+        let last = attr.path().segments.last().map(|s| s.ident.to_string()).unwrap_or_default();
 
         if !last.starts_with("auto_") {
             continue;
@@ -36,8 +31,10 @@ pub fn attrs_inject_plugin_param(attrs: &mut Vec<syn::Attribute>, plugin: &syn::
 }
 
 fn attr_inject_plugin_param(attr: &mut syn::Attribute, plugin: &syn::Path) {
-    use syn::Meta;
-    use syn::parse_quote;
+    use syn::{
+        Meta,
+        parse_quote,
+    };
     match &attr.meta {
         Meta::Path(path) => *attr = parse_quote!( #[#path(plugin = #plugin)] ),
         Meta::List(ml) => {
@@ -54,10 +51,12 @@ fn attr_inject_plugin_param(attr: &mut syn::Attribute, plugin: &syn::Path) {
 }
 
 fn list_has_key(ml: &syn::MetaList, key: &str) -> bool {
-    use syn::Meta;
-    use syn::Token;
-    use syn::parse::Parser;
-    use syn::punctuated::Punctuated;
+    use syn::{
+        Meta,
+        Token,
+        parse::Parser,
+        punctuated::Punctuated,
+    };
     let parser = Punctuated::<Meta, Token![,]>::parse_terminated;
     match parser.parse2(ml.tokens.clone()) {
         Ok(list) => list.iter().any(|m| match m {

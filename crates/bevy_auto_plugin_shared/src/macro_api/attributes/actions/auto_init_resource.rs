@@ -1,8 +1,16 @@
-use crate::macro_api::emitters::app_mutation::{AppMutationEmitter, EmitAppMutationTokens};
-use crate::macro_api::prelude::*;
+use crate::macro_api::{
+    emitters::app_mutation::{
+        AppMutationEmitter,
+        EmitAppMutationTokens,
+    },
+    prelude::*,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]

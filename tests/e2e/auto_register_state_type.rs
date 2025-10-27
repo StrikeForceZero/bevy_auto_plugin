@@ -2,8 +2,10 @@ use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_reflect::prelude::*;
-use bevy_state::app::StatesPlugin;
-use bevy_state::prelude::*;
+use bevy_state::{
+    app::StatesPlugin,
+    prelude::*,
+};
 use internal_test_proc_macro::xtest;
 use internal_test_util::type_id_of;
 

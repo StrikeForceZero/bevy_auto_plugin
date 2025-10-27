@@ -1,8 +1,13 @@
-use crate::macro_api::prelude::*;
-use crate::macro_api::schedule_config::ScheduleWithScheduleConfigArgs;
+use crate::macro_api::{
+    prelude::*,
+    schedule_config::ScheduleWithScheduleConfigArgs,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
@@ -36,13 +41,7 @@ impl ToTokens for AddSystemAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
         // TODO: cleanup
-        args.extend(
-            self.args
-                .args
-                .base
-                .schedule_config
-                .to_inner_arg_tokens_vec(),
-        );
+        args.extend(self.args.args.base.schedule_config.to_inner_arg_tokens_vec());
         tokens.extend(quote! {
             #(#args),*
         });

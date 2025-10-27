@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 
 use quote::ToTokens;
-use syn::{Attribute, Item};
+use syn::{
+    Attribute,
+    Item,
+};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -16,8 +19,7 @@ pub trait ItemAttrsExt {
     where
         Self: ToTokens,
     {
-        self.get_ident()
-            .ok_or_else(|| syn::Error::new_spanned(self, "Item does not have ident"))
+        self.get_ident().ok_or_else(|| syn::Error::new_spanned(self, "Item does not have ident"))
     }
     fn clone_attrs(&self) -> Option<Vec<Attribute>>;
     fn attrs(&self) -> Option<&[Attribute]>;

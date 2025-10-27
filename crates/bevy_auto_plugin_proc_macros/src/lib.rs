@@ -171,9 +171,5 @@ pub fn auto_run_on_build(attr: CompilerStream, input: CompilerStream) -> Compile
 #[doc = include_str!("../docs/proc_attributes/auto_bind_plugin.md")]
 #[proc_macro_attribute]
 pub fn auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(
-        expand::attr::auto_bind_plugin::auto_bind_plugin_outer,
-        attr,
-        input,
-    )
+    handle_attribute(expand::attr::auto_bind_plugin::auto_bind_plugin_outer, attr, input)
 }

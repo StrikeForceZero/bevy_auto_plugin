@@ -22,12 +22,7 @@ fn test_observer(
     added_foo_q: Query<Ref<FooComponent>, Added<FooComponent>>,
     mut foo_component_added: ResMut<FooComponentState>,
 ) {
-    assert!(
-        added_foo_q
-            .get(add.event().entity)
-            .expect("FooComponent not spawned")
-            .is_added()
-    );
+    assert!(added_foo_q.get(add.event().entity).expect("FooComponent not spawned").is_added());
     foo_component_added.is_added = true;
 }
 
@@ -41,18 +36,12 @@ fn app() -> App {
 fn test_auto_add_observer() {
     let mut app = app();
     assert!(
-        !app.world()
-            .get_resource::<FooComponentState>()
-            .unwrap()
-            .is_added,
+        !app.world().get_resource::<FooComponentState>().unwrap().is_added,
         "FooComponent should not be added yet"
     );
     app.world_mut().spawn(FooComponent);
     assert!(
-        app.world()
-            .get_resource::<FooComponentState>()
-            .unwrap()
-            .is_added,
+        app.world().get_resource::<FooComponentState>().unwrap().is_added,
         "FooComponent should be added"
     );
 }

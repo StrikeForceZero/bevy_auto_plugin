@@ -4,7 +4,10 @@ use bevy::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_state::app::StatesPlugin;
 use internal_test_proc_macro::xtest;
-use internal_test_util::{create_minimal_app, type_id_of};
+use internal_test_util::{
+    create_minimal_app,
+    type_id_of,
+};
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -25,10 +28,7 @@ fn test_auto_register_type_foo_component() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
-    assert!(
-        type_registry.contains(type_id_of::<FooComponent>()),
-        "did not auto register type"
-    );
+    assert!(type_registry.contains(type_id_of::<FooComponent>()), "did not auto register type");
 }
 
 #[xtest]
@@ -40,9 +40,5 @@ fn test_auto_name_foo_component() {
         .query_filtered::<&Name, With<FooComponent>>()
         .single(app.world())
         .expect("failed to query FooComponent");
-    assert_eq!(
-        name,
-        &Name::new("FooComponent"),
-        "did not auto name FooComponent"
-    );
+    assert_eq!(name, &Name::new("FooComponent"), "did not auto name FooComponent");
 }

@@ -1,8 +1,13 @@
 use crate::syntax::extensions::item::ItemAttrsExt;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
-use syn::parse2;
-use syn::spanned::Spanned;
+use quote::{
+    ToTokens,
+    quote,
+};
+use syn::{
+    parse2,
+    spanned::Spanned,
+};
 
 #[derive(Debug, Clone)]
 pub enum InputItem {

@@ -1,7 +1,9 @@
 use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
-use bevy_state::app::StatesPlugin;
-use bevy_state::prelude::*;
+use bevy_state::{
+    app::StatesPlugin,
+    prelude::*,
+};
 use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin)]
@@ -27,12 +29,6 @@ fn app() -> App {
 #[xtest]
 fn test_auto_init_state() {
     let app = app();
-    assert!(
-        app.world().get_resource::<State<Test>>().is_some(),
-        "did not auto init state"
-    );
-    assert!(
-        app.world().get_resource::<NextState<Test>>().is_some(),
-        "did not auto init state"
-    );
+    assert!(app.world().get_resource::<State<Test>>().is_some(), "did not auto init state");
+    assert!(app.world().get_resource::<NextState<Test>>().is_some(), "did not auto init state");
 }

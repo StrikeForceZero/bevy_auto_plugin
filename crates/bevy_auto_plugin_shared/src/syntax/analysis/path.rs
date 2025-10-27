@@ -1,6 +1,10 @@
 use crate::syntax::ast::type_list::TypeList;
 use quote::ToTokens;
-use syn::{Path, PathArguments, parse2};
+use syn::{
+    Path,
+    PathArguments,
+    parse2,
+};
 
 pub fn generics_from_path(path: &Path) -> syn::Result<TypeList> {
     let mut generics = TypeList::empty();

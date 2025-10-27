@@ -1,12 +1,26 @@
-use crate::macro_api::mixins::HasKeys;
-use crate::macro_api::prelude::{WithZeroOrManyGenerics, WithZeroOrOneGenerics};
-use crate::util::macros::impl_from_default;
-use darling::FromMeta;
-use darling::ast::NestedMeta;
+use crate::{
+    macro_api::{
+        mixins::HasKeys,
+        prelude::{
+            WithZeroOrManyGenerics,
+            WithZeroOrOneGenerics,
+        },
+    },
+    util::macros::impl_from_default,
+};
+use darling::{
+    FromMeta,
+    ast::NestedMeta,
+};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::parse::{Parse, ParseStream};
-use syn::spanned::Spanned;
+use syn::{
+    parse::{
+        Parse,
+        ParseStream,
+    },
+    spanned::Spanned,
+};
 
 #[derive(Debug, Clone, Default, PartialEq, Hash)]
 pub struct WithNoGenerics {}

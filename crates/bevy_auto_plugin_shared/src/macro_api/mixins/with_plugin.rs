@@ -1,7 +1,10 @@
 use crate::macro_api::mixins::HasKeys;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(Debug, Clone, FromMeta, PartialEq, Hash)]
 #[darling(derive_syn_parse)]

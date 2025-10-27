@@ -1,7 +1,12 @@
-use crate::__private::auto_plugin_registry::_plugin_entry_block;
-use crate::macro_api::prelude::*;
+use crate::{
+    __private::auto_plugin_registry::_plugin_entry_block,
+    macro_api::prelude::*,
+};
 use proc_macro2::TokenStream;
-use quote::{ToTokens, format_ident};
+use quote::{
+    ToTokens,
+    format_ident,
+};
 
 /// for codegen attaching to bevy app
 #[derive(Debug, Clone)]
@@ -13,10 +18,7 @@ pub struct AppMutationEmitter<T> {
 
 impl<T> AppMutationEmitter<T> {
     pub fn from_args(args: T) -> AppMutationEmitter<T> {
-        AppMutationEmitter::<T> {
-            args,
-            app_param: format_ident!("app"),
-        }
+        AppMutationEmitter::<T> { args, app_param: format_ident!("app") }
     }
     pub fn wrap_body(
         &mut self,
@@ -43,10 +45,7 @@ impl<T> AppMutationEmitter<T> {
         // required for generics
         let unique_ident = format_ident!("{unique_ident}");
         let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
-        assert!(
-            !output.is_empty(),
-            "No plugin entry points were generated for ident: {ident}"
-        );
+        assert!(!output.is_empty(), "No plugin entry points were generated for ident: {ident}");
         Ok(output)
     }
 }

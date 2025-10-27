@@ -1,4 +1,7 @@
-use darling::{FromField, FromVariant};
+use darling::{
+    FromField,
+    FromVariant,
+};
 use proc_macro2::Ident;
 use syn::Type;
 
@@ -19,7 +22,6 @@ pub struct VariantData {
 }
 
 pub mod prelude {
-    
-    
+
     pub use super::auto_plugin::*;
 }

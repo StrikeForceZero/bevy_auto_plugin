@@ -21,9 +21,5 @@ fn app() -> App {
 #[xtest]
 fn test_auto_insert_resource() {
     let app = app();
-    assert_eq!(
-        app.world().get_resource::<Test>(),
-        Some(&Test(1)),
-        "did not auto insert resource"
-    );
+    assert_eq!(app.world().get_resource::<Test>(), Some(&Test(1)), "did not auto insert resource");
 }

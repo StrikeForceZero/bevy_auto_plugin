@@ -1,8 +1,15 @@
-use crate::codegen::{ExpandAttrs, tokens};
-use crate::macro_api::prelude::*;
-use crate::syntax::ast::flag_or_list::FlagOrList;
-use crate::syntax::validated::non_empty_path::NonEmptyPath;
-use crate::util::macros::impl_from_default;
+use crate::{
+    codegen::{
+        ExpandAttrs,
+        tokens,
+    },
+    macro_api::prelude::*,
+    syntax::{
+        ast::flag_or_list::FlagOrList,
+        validated::non_empty_path::NonEmptyPath,
+    },
+    util::macros::impl_from_default,
+};
 use darling::FromMeta;
 use proc_macro2::Ident;
 use syn::parse_quote;
@@ -38,9 +45,7 @@ pub type ResourceAttrExpandEmitter = AttrExpansionEmitter<IaResource>;
 impl AttrExpansionEmitterToExpandAttr for ResourceAttrExpandEmitter {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         if self.args.args.base.derive.present {
-            expand_attrs
-                .attrs
-                .push(tokens::derive_resource(&self.args.args.base.derive.items));
+            expand_attrs.attrs.push(tokens::derive_resource(&self.args.args.base.derive.items));
         }
         if self.args.args.base.reflect.present {
             if self.args.args.base.derive.present {
@@ -52,14 +57,10 @@ impl AttrExpansionEmitterToExpandAttr for ResourceAttrExpandEmitter {
             expand_attrs.append(tokens::reflect(items))
         }
         if self.args.args.base.register {
-            expand_attrs
-                .attrs
-                .push(tokens::auto_register_type(self.into()));
+            expand_attrs.attrs.push(tokens::auto_register_type(self.into()));
         }
         if self.args.args.base.init {
-            expand_attrs
-                .attrs
-                .push(tokens::auto_init_resource(self.into()));
+            expand_attrs.attrs.push(tokens::auto_init_resource(self.into()));
         }
     }
 }

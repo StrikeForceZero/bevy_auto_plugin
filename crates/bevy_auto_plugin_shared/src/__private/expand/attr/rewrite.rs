@@ -1,5 +1,7 @@
-use crate::macro_api::prelude::*;
-use crate::util::macros::ok_or_emit_with;
+use crate::{
+    macro_api::prelude::*,
+    util::macros::ok_or_emit_with,
+};
 use proc_macro2::TokenStream as MacroStream;
 use quote::ToTokens;
 

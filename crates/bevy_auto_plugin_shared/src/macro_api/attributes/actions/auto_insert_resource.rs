@@ -1,8 +1,13 @@
-use crate::macro_api::prelude::*;
-use crate::syntax::ast::any_expr::AnyExprCallClosureMacroPath;
+use crate::{
+    macro_api::prelude::*,
+    syntax::ast::any_expr::AnyExprCallClosureMacroPath,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]

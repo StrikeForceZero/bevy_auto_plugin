@@ -1,6 +1,11 @@
-use crate::codegen::{ExpandAttrs, tokens};
-use crate::macro_api::prelude::*;
-use crate::util::macros::impl_from_default;
+use crate::{
+    codegen::{
+        ExpandAttrs,
+        tokens,
+    },
+    macro_api::prelude::*,
+    util::macros::impl_from_default,
+};
 use darling::FromMeta;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
@@ -29,9 +34,7 @@ pub type ObserverAttrExpandEmitter = AttrExpansionEmitter<IaObserver>;
 
 impl AttrExpansionEmitterToExpandAttr for ObserverAttrExpandEmitter {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
-        expand_attrs
-            .attrs
-            .push(tokens::auto_add_observer(self.into()));
+        expand_attrs.attrs.push(tokens::auto_add_observer(self.into()));
     }
 }
 

@@ -1,11 +1,24 @@
-use crate::codegen::{ExpandAttrs, tokens};
-use crate::macro_api::prelude::*;
-use crate::syntax::ast::flag_or_list::FlagOrList;
-use crate::syntax::validated::non_empty_path::NonEmptyPath;
-use crate::util::macros::impl_from_default;
+use crate::{
+    codegen::{
+        ExpandAttrs,
+        tokens,
+    },
+    macro_api::prelude::*,
+    syntax::{
+        ast::flag_or_list::FlagOrList,
+        validated::non_empty_path::NonEmptyPath,
+    },
+    util::macros::impl_from_default,
+};
 use darling::FromMeta;
-use proc_macro2::{Ident, TokenStream};
-use quote::{ToTokens, quote};
+use proc_macro2::{
+    Ident,
+    TokenStream,
+};
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(FromMeta, Default, Debug, Copy, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -56,14 +69,12 @@ impl AttrExpansionEmitterToExpandAttr for EventAttrExpandEmitter {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         if self.args.args.base.derive.present {
             if matches!(self.args.args.base.target, EventTarget::Global) {
-                expand_attrs
-                    .attrs
-                    .push(tokens::derive_event(&self.args.args.base.derive.items));
+                expand_attrs.attrs.push(tokens::derive_event(&self.args.args.base.derive.items));
             }
             if matches!(self.args.args.base.target, EventTarget::Entity) {
-                expand_attrs.attrs.push(tokens::derive_entity_event(
-                    &self.args.args.base.derive.items,
-                ));
+                expand_attrs
+                    .attrs
+                    .push(tokens::derive_entity_event(&self.args.args.base.derive.items));
             }
         }
         if self.args.args.base.reflect.present {
@@ -73,9 +84,7 @@ impl AttrExpansionEmitterToExpandAttr for EventAttrExpandEmitter {
             expand_attrs.append(tokens::reflect(&self.args.args.base.reflect.items))
         }
         if self.args.args.base.register {
-            expand_attrs
-                .attrs
-                .push(tokens::auto_register_type(self.into()));
+            expand_attrs.attrs.push(tokens::auto_register_type(self.into()));
         }
     }
 }

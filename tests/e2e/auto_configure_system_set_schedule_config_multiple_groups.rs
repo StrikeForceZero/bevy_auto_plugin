@@ -1,4 +1,8 @@
-use bevy::prelude::{Fixed, Time, Virtual};
+use bevy::prelude::{
+    Fixed,
+    Time,
+    Virtual,
+};
 use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_ecs::prelude::*;

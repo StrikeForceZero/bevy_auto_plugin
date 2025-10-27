@@ -1,9 +1,17 @@
-use darling::{FromMeta, Result};
+use darling::{
+    FromMeta,
+    Result,
+};
 use proc_macro2::Span;
 use smart_default::SmartDefault;
-use std::hash::{Hash, Hasher};
-use syn::Meta;
-use syn::spanned::Spanned;
+use std::hash::{
+    Hash,
+    Hasher,
+};
+use syn::{
+    Meta,
+    spanned::Spanned,
+};
 
 /// Wrapper type for darling::util::Flag that implements PartialEq and Hash
 ///
@@ -41,11 +49,7 @@ impl FromMeta for Flag {
     fn from_meta(meta: &Meta) -> Result<Self> {
         Ok(match meta {
             Meta::NameValue(nv) => {
-                if let syn::Expr::Lit(syn::ExprLit {
-                    lit: syn::Lit::Bool(b),
-                    ..
-                }) = &nv.value
-                {
+                if let syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Bool(b), .. }) = &nv.value {
                     Self::from_bool(b.value)?
                 } else {
                     return Err(darling::Error::unknown_value("expected boolean literal")
@@ -71,11 +75,7 @@ impl From<Flag> for bool {
 
 impl From<bool> for Flag {
     fn from(v: bool) -> Self {
-        if v {
-            Self::present()
-        } else {
-            Self(darling::util::Flag::from(false))
-        }
+        if v { Self::present() } else { Self(darling::util::Flag::from(false)) }
     }
 }
 
@@ -93,27 +93,17 @@ mod tests {
     #[xtest]
     #[should_panic = "Unexpected type `lit`"]
     fn test_from_meta_flag_list_single() {
-        Flag::from_meta(&parse_quote!(this_flag("foo")))
-            .map_err(|e| e.to_string())
-            .unwrap();
+        Flag::from_meta(&parse_quote!(this_flag("foo"))).map_err(|e| e.to_string()).unwrap();
     }
     #[xtest]
     #[should_panic = "Multiple errors: (Unexpected type `lit`, Unexpected type `lit`)"]
     fn test_from_meta_flag_list_multiple() {
-        Flag::from_meta(&parse_quote!(this_flag("foo", "bar")))
-            .map_err(|e| e.to_string())
-            .unwrap();
+        Flag::from_meta(&parse_quote!(this_flag("foo", "bar"))).map_err(|e| e.to_string()).unwrap();
     }
     #[xtest]
     fn test_from_meta_flag_nv() -> syn::Result<()> {
-        assert_eq!(
-            Flag::from_meta(&parse_quote!(this_flag = true))?,
-            Flag::present()
-        );
-        assert_eq!(
-            Flag::from_meta(&parse_quote!(this_flag = false))?,
-            Flag::from(false)
-        );
+        assert_eq!(Flag::from_meta(&parse_quote!(this_flag = true))?, Flag::present());
+        assert_eq!(Flag::from_meta(&parse_quote!(this_flag = false))?, Flag::from(false));
         Ok(())
     }
 }

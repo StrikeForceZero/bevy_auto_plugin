@@ -30,9 +30,5 @@ fn app() -> App {
 #[xtest]
 fn test_auto_add_plugin_with_init() {
     let app = app();
-    assert_eq!(
-        app.world().get_resource::<Test>(),
-        Some(&Test(1)),
-        "did not auto add plugin"
-    );
+    assert_eq!(app.world().get_resource::<Test>(), Some(&Test(1)), "did not auto add plugin");
 }

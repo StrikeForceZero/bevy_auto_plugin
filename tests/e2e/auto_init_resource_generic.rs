@@ -20,8 +20,5 @@ fn app() -> App {
 #[xtest]
 fn test_auto_init_resource_generic() {
     let app = app();
-    assert!(
-        app.world().get_resource::<Test<bool>>().is_some(),
-        "did not auto init resource"
-    );
+    assert!(app.world().get_resource::<Test<bool>>().is_some(), "did not auto init resource");
 }

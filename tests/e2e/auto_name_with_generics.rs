@@ -1,7 +1,9 @@
 use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
-use bevy_ecs::name::Name;
-use bevy_ecs::prelude::*;
+use bevy_ecs::{
+    name::Name,
+    prelude::*,
+};
 use internal_test_proc_macro::xtest;
 
 #[derive(AutoPlugin)]
@@ -23,8 +25,5 @@ fn test_auto_name() {
     let mut app = app();
     let entity = app.world_mut().spawn(Test(true)).id();
     app.update();
-    assert_eq!(
-        app.world().entity(entity).get::<Name>(),
-        Some(&Name::new("Test<bool>"))
-    );
+    assert_eq!(app.world().entity(entity).get::<Name>(), Some(&Name::new("Test<bool>")));
 }

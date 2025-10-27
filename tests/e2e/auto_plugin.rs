@@ -5,7 +5,11 @@ use bevy_auto_plugin::prelude::*;
 use bevy_ecs::entity::EntityHashMap;
 use bevy_state::app::StatesPlugin;
 use internal_test_proc_macro::xtest;
-use internal_test_util::{create_minimal_app, type_id_of, vec_spread};
+use internal_test_util::{
+    create_minimal_app,
+    type_id_of,
+    vec_spread,
+};
 use std::ops::Deref;
 
 #[derive(AutoPlugin)]
@@ -97,12 +101,7 @@ fn foo_observer(
     added_foo_q: Query<Ref<FooComponent>, Added<FooComponent>>,
     mut foo_component_added: ResMut<FooComponentState>,
 ) {
-    assert!(
-        added_foo_q
-            .get(add.event().entity)
-            .expect("FooComponent not spawned")
-            .is_added()
-    );
+    assert!(added_foo_q.get(add.event().entity).expect("FooComponent not spawned").is_added());
     foo_component_added.is_added = true;
 }
 
@@ -121,10 +120,7 @@ fn test_auto_register_type_foo_component() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
-    assert!(
-        type_registry.contains(type_id_of::<FooComponent>()),
-        "did not auto register type"
-    );
+    assert!(type_registry.contains(type_id_of::<FooComponent>()), "did not auto register type");
 }
 
 #[xtest]
@@ -136,11 +132,7 @@ fn test_auto_name_foo_component() {
         .query_filtered::<&Name, With<FooComponent>>()
         .single(app.world())
         .expect("failed to query FooComponent");
-    assert_eq!(
-        name,
-        &Name::new("FooComponent"),
-        "did not auto name FooComponent"
-    );
+    assert_eq!(name, &Name::new("FooComponent"), "did not auto name FooComponent");
 }
 
 #[xtest]
@@ -172,11 +164,7 @@ fn test_auto_add_system_foo_system() {
         "did not auto init resource"
     );
     app.update();
-    assert_eq!(
-        app.world().get_resource::<FooRes>(),
-        Some(&FooRes(2)),
-        "did not register system"
-    );
+    assert_eq!(app.world().get_resource::<FooRes>(), Some(&FooRes(2)), "did not register system");
 }
 
 #[xtest]
@@ -232,20 +220,14 @@ fn test_auto_event_foo_entity_event() {
     }
 
     for e in entities {
-        app.world_mut()
-            .entity_mut(e)
-            .trigger(|entity| FooEntityEvent { entity, value: 1 });
+        app.world_mut().entity_mut(e).trigger(|entity| FooEntityEvent { entity, value: 1 });
     }
 
     for e in entities {
-        app.world_mut()
-            .entity_mut(e)
-            .trigger(|entity| FooEntityEvent { entity, value: 2 });
+        app.world_mut().entity_mut(e).trigger(|entity| FooEntityEvent { entity, value: 2 });
     }
 
-    app.world_mut()
-        .entity_mut(c)
-        .trigger(|entity| FooEntityEvent { entity, value: 1 });
+    app.world_mut().entity_mut(c).trigger(|entity| FooEntityEvent { entity, value: 1 });
 
     for e in entities {
         let &v = app.world_mut().resource::<Counter>().0.get(&e).unwrap();
@@ -258,10 +240,7 @@ fn test_auto_register_state_type_foo_state() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
-    assert!(
-        type_registry.contains(type_id_of::<State<FooState>>()),
-        "did not auto register type"
-    );
+    assert!(type_registry.contains(type_id_of::<State<FooState>>()), "did not auto register type");
     assert!(
         type_registry.contains(type_id_of::<NextState<FooState>>()),
         "did not auto register type"
@@ -272,9 +251,7 @@ fn test_auto_register_state_type_foo_state() {
 fn test_auto_init_state_type_foo_state() {
     let app = app();
     assert_eq!(
-        app.world()
-            .get_resource::<State<FooState>>()
-            .map(Deref::deref),
+        app.world().get_resource::<State<FooState>>().map(Deref::deref),
         Some(&FooState::Start),
         "did not auto init state"
     );
@@ -284,18 +261,12 @@ fn test_auto_init_state_type_foo_state() {
 fn test_auto_add_observer_foo_observer() {
     let mut app = app();
     assert!(
-        !app.world()
-            .get_resource::<FooComponentState>()
-            .unwrap()
-            .is_added,
+        !app.world().get_resource::<FooComponentState>().unwrap().is_added,
         "FooComponent should not be added yet"
     );
     app.world_mut().spawn(FooComponent);
     assert!(
-        app.world()
-            .get_resource::<FooComponentState>()
-            .unwrap()
-            .is_added,
+        app.world().get_resource::<FooComponentState>().unwrap().is_added,
         "FooComponent should be added"
     );
 }

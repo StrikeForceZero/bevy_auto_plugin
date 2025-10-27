@@ -12,8 +12,12 @@ pub fn is_fn_param_mutable_reference(
     messages: FnParamMutabilityCheckErrMessages,
 ) -> syn::Result<()> {
     use crate::syntax::analysis::ty_classify;
-    use syn::spanned::Spanned;
-    use syn::{Error, FnArg, Pat};
+    use syn::{
+        Error,
+        FnArg,
+        Pat,
+        spanned::Spanned,
+    };
     for arg in &item.sig.inputs {
         if let FnArg::Typed(pat_type) = arg {
             let Pat::Ident(pat_ident) = &*pat_type.pat else {
@@ -28,10 +32,7 @@ pub fn is_fn_param_mutable_reference(
             return Ok(());
         }
     }
-    Err(Error::new(
-        item.sig.inputs.span(),
-        messages.not_found_message,
-    ))
+    Err(Error::new(item.sig.inputs.span(), messages.not_found_message))
 }
 
 pub fn require_fn_param_mutable_reference(

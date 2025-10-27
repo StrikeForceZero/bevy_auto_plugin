@@ -3,7 +3,9 @@ pub mod attr;
 pub mod attr_expansion;
 
 pub mod prelude {
-    pub use super::app_mutation::*;
-    pub use super::attr::*;
-    pub use super::attr_expansion::*;
+    pub use super::{
+        app_mutation::*,
+        attr::*,
+        attr_expansion::*,
+    };
 }

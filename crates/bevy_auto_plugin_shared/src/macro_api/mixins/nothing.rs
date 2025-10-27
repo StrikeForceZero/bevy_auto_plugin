@@ -1,6 +1,10 @@
-use crate::macro_api::mixins::HasKeys;
-use crate::macro_api::mixins::generics::HasGenerics;
-use crate::syntax::ast::type_list::TypeList;
+use crate::{
+    macro_api::mixins::{
+        HasKeys,
+        generics::HasGenerics,
+    },
+    syntax::ast::type_list::TypeList,
+};
 use darling::FromMeta;
 
 #[derive(Debug, Clone, FromMeta)]

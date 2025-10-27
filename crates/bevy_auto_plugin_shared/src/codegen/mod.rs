@@ -1,7 +1,10 @@
 pub mod tokens;
 
 use proc_macro2::TokenStream as MacroStream;
-use quote::{ToTokens, quote};
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct ExpandAttrs {

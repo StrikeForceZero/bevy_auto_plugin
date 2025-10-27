@@ -1,5 +1,7 @@
-use crate::codegen::ExpandAttrs;
-use crate::macro_api::prelude::*;
+use crate::{
+    codegen::ExpandAttrs,
+    macro_api::prelude::*,
+};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::marker::PhantomData;
@@ -15,9 +17,7 @@ where
     T: ItemAttributeParse,
 {
     pub fn from_item_attribute(item_attribute: T) -> AttrExpansionEmitter<T> {
-        AttrExpansionEmitter::<T> {
-            args: item_attribute,
-        }
+        AttrExpansionEmitter::<T> { args: item_attribute }
     }
 }
 
@@ -47,13 +47,7 @@ where
     RTo: From<RFrom>,
 {
     fn from(value: AttrExpansionEmitter<ItemAttribute<Composed<TFrom, P, GFrom>, RFrom>>) -> Self {
-        let ItemAttribute {
-            args,
-            context,
-            input_item,
-            target,
-            _resolver,
-        } = value.args;
+        let ItemAttribute { args, context, input_item, target, _resolver } = value.args;
 
         let mapped = Composed {
             base: args.base.into(),         // TTo: From<TFrom>

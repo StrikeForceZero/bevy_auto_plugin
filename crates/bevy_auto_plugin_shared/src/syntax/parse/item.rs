@@ -1,15 +1,18 @@
-use crate::syntax::extensions::item::ItemAttrsExt;
-use crate::syntax::extensions::path::PathExt;
-use syn::{Attribute, Item};
+use crate::syntax::extensions::{
+    item::ItemAttrsExt,
+    path::PathExt,
+};
+use syn::{
+    Attribute,
+    Item,
+};
 
 pub fn item_has_attr(item: &Item, path: &syn::Path) -> syn::Result<bool> {
     Ok(has_attr(item.attrs().unwrap_or_default(), path))
 }
 
 pub fn has_attr(attrs: &[Attribute], path: &syn::Path) -> bool {
-    attrs
-        .iter()
-        .any(|attr| attr.path().is_similar_path_or_ident(path))
+    attrs.iter().any(|attr| attr.path().is_similar_path_or_ident(path))
 }
 
 #[cfg(test)]

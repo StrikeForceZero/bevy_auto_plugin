@@ -151,8 +151,14 @@ pub(crate) use {
 #[cfg(test)]
 mod tests {
     use internal_test_proc_macro::xtest;
-    use proc_macro2::{Span, TokenStream};
-    use quote::{ToTokens, quote};
+    use proc_macro2::{
+        Span,
+        TokenStream,
+    };
+    use quote::{
+        ToTokens,
+        quote,
+    };
 
     #[xtest]
     fn test_bevy_crate_path() {
@@ -171,10 +177,7 @@ mod tests {
         fn process(ts: syn::Result<TokenStream>) -> TokenStream {
             ok_or_emit!(ts)
         }
-        assert_eq!(
-            process(Ok(quote! { foo_bar })).to_string(),
-            quote! { foo_bar }.to_string()
-        );
+        assert_eq!(process(Ok(quote! { foo_bar })).to_string(), quote! { foo_bar }.to_string());
     }
 
     #[test]

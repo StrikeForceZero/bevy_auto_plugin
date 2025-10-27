@@ -24,8 +24,5 @@ fn test_auto_plugin_param() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
-    assert!(
-        type_registry.contains(type_id_of::<Test>()),
-        "did not auto register type"
-    );
+    assert!(type_registry.contains(type_id_of::<Test>()), "did not auto register type");
 }

@@ -1,14 +1,39 @@
-use crate::macro_api::prelude::*;
-use crate::macro_api::schedule_config::{ScheduleConfigArgs, ScheduleWithScheduleConfigArgs};
-use crate::syntax::ast::flag::Flag;
-use crate::syntax::extensions::item::ItemAttrsExt;
-use crate::syntax::parse::item::item_has_attr;
-use crate::syntax::parse::scrub_helpers::{AttrSite, scrub_helpers_and_ident_with_filter};
+use crate::{
+    macro_api::{
+        prelude::*,
+        schedule_config::{
+            ScheduleConfigArgs,
+            ScheduleWithScheduleConfigArgs,
+        },
+    },
+    syntax::{
+        ast::flag::Flag,
+        extensions::item::ItemAttrsExt,
+        parse::{
+            item::item_has_attr,
+            scrub_helpers::{
+                AttrSite,
+                scrub_helpers_and_ident_with_filter,
+            },
+        },
+    },
+};
 use darling::FromMeta;
-use proc_macro2::{Ident, TokenStream};
-use quote::{ToTokens, quote};
-use syn::spanned::Spanned;
-use syn::{Attribute, Item, Path, parse_quote};
+use proc_macro2::{
+    Ident,
+    TokenStream,
+};
+use quote::{
+    ToTokens,
+    quote,
+};
+use syn::{
+    Attribute,
+    Item,
+    Path,
+    parse_quote,
+    spanned::Spanned,
+};
 const CONFIG_ATTR_NAME: &str = "auto_configure_system_set_config";
 const CHAIN_CONFLICT_ERR: &str = "`chain` and `chain_ignore_deferred` are mutually exclusive";
 
@@ -184,12 +209,7 @@ impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
         };
         let generics = self.args.args.generics();
         for concrete_path in self.args.concrete_paths() {
-            tokens.extend(output(
-                &inflated_args,
-                app_param,
-                &concrete_path,
-                !generics.is_empty(),
-            ));
+            tokens.extend(output(&inflated_args, app_param, &concrete_path, !generics.is_empty()));
         }
     }
 }
@@ -197,13 +217,7 @@ impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
 impl ToTokens for ConfigureSystemSetAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
-        args.extend(
-            self.args
-                .args
-                .base
-                .schedule_config
-                .to_inner_arg_tokens_vec(),
-        );
+        args.extend(self.args.args.base.schedule_config.to_inner_arg_tokens_vec());
         tokens.extend(quote! {
             #(#args),*
         });
@@ -274,10 +288,7 @@ pub fn inflate_args_from_input(
     // 4) If it's a struct, there are no entries to compute
     let data_enum = match scrub.item {
         Item::Struct(_) => {
-            return Ok(InflateArgsOutput {
-                inflated_args: args,
-                scrubbed_tokens,
-            });
+            return Ok(InflateArgsOutput { inflated_args: args, scrubbed_tokens });
         }
         Item::Enum(ref en) => en,
         _ => unreachable!("resolve_ident_from_struct_or_enum guarantees struct|enum"),
@@ -306,9 +317,7 @@ pub fn inflate_args_from_input(
     // Treat a second helper on the same (variant, group or None) as a hard error.
     for (observed_index, site) in scrub.all_with_removed_attrs().into_iter().enumerate() {
         if let AttrSite::Variant { variant } = &site.site {
-            observed_order_by_variant
-                .entry(variant.clone())
-                .or_insert(observed_index);
+            observed_order_by_variant.entry(variant.clone()).or_insert(observed_index);
 
             for attr in &site.attrs {
                 // Only care about our helper
@@ -320,11 +329,8 @@ pub fn inflate_args_from_input(
 
                 // If order wasn't provided on the helper, set it to the first observed index for this variant
                 if entry.order.is_none() {
-                    entry.order = Some(
-                        *observed_order_by_variant
-                            .get(variant)
-                            .unwrap_or(&observed_index),
-                    );
+                    entry.order =
+                        Some(*observed_order_by_variant.get(variant).unwrap_or(&observed_index));
                 }
 
                 let bucket = variants_cfg.entry(variant.clone()).or_default();
@@ -367,9 +373,8 @@ pub fn inflate_args_from_input(
 
         let prev_observed_len = observed_order_by_variant.len();
         // Find observed order for this variant (if we never saw the site, use sequential fallback)
-        let observed = *observed_order_by_variant
-            .entry(v_ident.clone())
-            .or_insert_with(|| prev_observed_len);
+        let observed =
+            *observed_order_by_variant.entry(v_ident.clone()).or_insert_with(|| prev_observed_len);
 
         let chosen_entry = (|| {
             let bucket = variants_cfg.get(&v_ident);
@@ -417,17 +422,18 @@ pub fn inflate_args_from_input(
 
     // 8) Store into args and return
     args.inner = Some(ConfigureSystemSetArgsInner { entries });
-    Ok(InflateArgsOutput {
-        inflated_args: args,
-        scrubbed_tokens,
-    })
+    Ok(InflateArgsOutput { inflated_args: args, scrubbed_tokens })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use internal_test_proc_macro::xtest;
-    use syn::{Path, parse_quote, parse2};
+    use syn::{
+        Path,
+        parse_quote,
+        parse2,
+    };
 
     fn ident_and_args_from_attr_input(
         attr: TokenStream,
@@ -462,12 +468,7 @@ mod tests {
         fn test_to_tokens_single() -> syn::Result<()> {
             let args = parse2::<ConfigureSystemSetArgs>(quote!(schedule = Update))?;
             let app_param = parse_quote!(app);
-            let tokens = output(
-                &args,
-                &app_param,
-                &parse_quote!(FooTarget::<u8, bool>),
-                true,
-            );
+            let tokens = output(&args, &app_param, &parse_quote!(FooTarget::<u8, bool>), true);
             assert_eq!(
                 tokens.to_string(),
                 quote! {
@@ -482,12 +483,7 @@ mod tests {
         fn test_to_tokens_multiple() -> syn::Result<()> {
             let args = parse2::<ConfigureSystemSetArgs>(quote!(schedule = Update))?;
             let app_param = parse_quote!(app);
-            let tokens = output(
-                &args,
-                &app_param,
-                &parse_quote!(FooTarget::<u8, bool>),
-                true,
-            );
+            let tokens = output(&args, &app_param, &parse_quote!(FooTarget::<u8, bool>), true);
             assert_eq!(
                 tokens.to_string(),
                 quote! {
@@ -495,12 +491,7 @@ mod tests {
                 }
                 .to_string()
             );
-            let tokens = output(
-                &args,
-                &app_param,
-                &parse_quote!(FooTarget::<bool, bool>),
-                true,
-            );
+            let tokens = output(&args, &app_param, &parse_quote!(FooTarget::<bool, bool>), true);
             assert_eq!(
                 tokens.to_string(),
                 quote! {

@@ -1,14 +1,28 @@
-use crate::macro_api::prelude::*;
-use crate::syntax::ast::type_list::TypeList;
-use darling::FromMeta;
-use darling::ast::NestedMeta;
+use crate::{
+    macro_api::prelude::*,
+    syntax::ast::type_list::TypeList,
+};
+use darling::{
+    FromMeta,
+    ast::NestedMeta,
+};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use std::collections::HashSet;
-use std::hash::{Hash, Hasher};
-use syn::parse::{Parse, ParseStream};
-use syn::parse_quote;
-use syn::punctuated::Punctuated;
+use std::{
+    collections::HashSet,
+    hash::{
+        Hash,
+        Hasher,
+    },
+};
+use syn::{
+    parse::{
+        Parse,
+        ParseStream,
+    },
+    parse_quote,
+    punctuated::Punctuated,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Composed<CBase, MPlugin = Nothing, MGenerics = Nothing> {
@@ -82,11 +96,7 @@ where
         let plugin = MPlugin::from_list(&plugin_bucket)?;
         let generics = MGenerics::from_list(&generics_bucket)?;
 
-        Ok(Self {
-            base,
-            plugin,
-            generics,
-        })
+        Ok(Self { base, plugin, generics })
     }
 }
 
@@ -139,11 +149,7 @@ where
         if self.generics.generics().is_empty() {
             vec![target.clone()]
         } else {
-            self.generics
-                .generics()
-                .iter()
-                .map(|g| parse_quote!(#target :: < #g >))
-                .collect()
+            self.generics.generics().iter().map(|g| parse_quote!(#target :: < #g >)).collect()
         }
     }
 }

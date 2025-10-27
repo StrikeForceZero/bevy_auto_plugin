@@ -1,37 +1,55 @@
-use crate::macro_api::prelude::*;
-use crate::syntax::validated::non_empty_path::NonEmptyPath;
-use crate::util::macros::impl_from_default;
-use proc_macro2::{Ident, TokenStream};
+use crate::{
+    macro_api::prelude::*,
+    syntax::validated::non_empty_path::NonEmptyPath,
+    util::macros::impl_from_default,
+};
+use proc_macro2::{
+    Ident,
+    TokenStream,
+};
 use quote::format_ident;
-use std::hash::Hash;
-use std::marker::PhantomData;
-use syn::parse::Parse;
-use syn::spanned::Spanned;
-use syn::{Item, Path, parse_quote, parse2};
+use std::{
+    hash::Hash,
+    marker::PhantomData,
+};
+use syn::{
+    Item,
+    Path,
+    parse::Parse,
+    parse_quote,
+    parse2,
+    spanned::Spanned,
+};
 
 mod actions;
 mod auto_plugin;
 mod rewrites;
 
 pub mod prelude {
-    pub use super::AllowAny;
-    pub use super::AllowFn;
-    pub use super::AllowStructOrEnum;
-    pub use super::AttributeIdent;
-    pub use super::GenericsCap;
-    pub use super::ItemAttribute;
-    pub use super::ItemAttributeArgs;
-    pub use super::ItemAttributeContext;
-    pub use super::ItemAttributeInput;
-    pub use super::ItemAttributeParse;
-    pub use super::ItemAttributePlugin;
-    pub use super::ItemAttributeTarget;
-    pub use super::ItemAttributeUniqueIdent;
-    pub use super::auto_plugin::{
-        AutoPluginFnArgs, AutoPluginStructOrEnumArgs, resolve_app_param_name,
+    pub use super::{
+        AllowAny,
+        AllowFn,
+        AllowStructOrEnum,
+        AttributeIdent,
+        GenericsCap,
+        ItemAttribute,
+        ItemAttributeArgs,
+        ItemAttributeContext,
+        ItemAttributeInput,
+        ItemAttributeParse,
+        ItemAttributePlugin,
+        ItemAttributeTarget,
+        ItemAttributeUniqueIdent,
+        auto_plugin::{
+            AutoPluginFnArgs,
+            AutoPluginStructOrEnumArgs,
+            resolve_app_param_name,
+        },
     };
-    pub use crate::macro_api::attributes::actions::prelude::*;
-    pub use crate::macro_api::attributes::rewrites::prelude::*;
+    pub use crate::macro_api::attributes::{
+        actions::prelude::*,
+        rewrites::prelude::*,
+    };
 }
 
 pub trait AttributeIdent {
@@ -143,7 +161,10 @@ impl<T, R> ItemAttribute<T, R> {
     where
         T: Hash,
     {
-        use std::hash::{Hash, Hasher};
+        use std::hash::{
+            Hash,
+            Hasher,
+        };
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         ident.hash(&mut hasher);
         self.args.hash(&mut hasher);
@@ -262,18 +283,9 @@ where
         let mut input_item = InputItem::Tokens(input);
         let item = input_item.ensure_ast()?;
         let Some(target) = Resolver::resolve_ident_path(item) else {
-            return Err(syn::Error::new(
-                input_item.span(),
-                Resolver::NOT_ALLOWED_MESSAGE,
-            ));
+            return Err(syn::Error::new(input_item.span(), Resolver::NOT_ALLOWED_MESSAGE));
         };
-        Ok(Self {
-            args: parse2::<T>(attr)?,
-            context,
-            input_item,
-            target,
-            _resolver: PhantomData,
-        })
+        Ok(Self { args: parse2::<T>(attr)?, context, input_item, target, _resolver: PhantomData })
     }
 }
 
@@ -286,12 +298,7 @@ where
         if self.args.generics.generics().is_empty() {
             vec![target.clone()]
         } else {
-            self.args
-                .generics
-                .generics()
-                .iter()
-                .map(|g| syn::parse_quote!(#target::<#g>))
-                .collect()
+            self.args.generics.generics().iter().map(|g| syn::parse_quote!(#target::<#g>)).collect()
         }
     }
 }

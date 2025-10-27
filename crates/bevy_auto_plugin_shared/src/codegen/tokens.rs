@@ -1,8 +1,16 @@
-use crate::codegen::ExpandAttrs;
-use crate::macro_api::prelude::*;
-use crate::syntax::validated::non_empty_path::NonEmptyPath;
-use proc_macro2::{Ident, TokenStream};
-use quote::{ToTokens, quote};
+use crate::{
+    codegen::ExpandAttrs,
+    macro_api::prelude::*,
+    syntax::validated::non_empty_path::NonEmptyPath,
+};
+use proc_macro2::{
+    Ident,
+    TokenStream,
+};
+use quote::{
+    ToTokens,
+    quote,
+};
 use syn::parse_quote;
 
 pub fn reflect<'a>(idents: impl IntoIterator<Item = &'a Ident>) -> ExpandAttrs {
@@ -81,49 +89,27 @@ pub fn derive_component<'a>(
     extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
 ) -> TokenStream {
     derive_from(
-        [
-            vec![&derive_component_path()],
-            extra_items.into_iter().collect::<Vec<_>>(),
-        ]
-        .concat(),
+        [vec![&derive_component_path()], extra_items.into_iter().collect::<Vec<_>>()].concat(),
     )
 }
 pub fn derive_resource<'a>(extra_items: impl IntoIterator<Item = &'a NonEmptyPath>) -> TokenStream {
     derive_from(
-        [
-            vec![&derive_resource_path()],
-            extra_items.into_iter().collect::<Vec<_>>(),
-        ]
-        .concat(),
+        [vec![&derive_resource_path()], extra_items.into_iter().collect::<Vec<_>>()].concat(),
     )
 }
 pub fn derive_event<'a>(extra_items: impl IntoIterator<Item = &'a NonEmptyPath>) -> TokenStream {
-    derive_from(
-        [
-            vec![&derive_event_path()],
-            extra_items.into_iter().collect::<Vec<_>>(),
-        ]
-        .concat(),
-    )
+    derive_from([vec![&derive_event_path()], extra_items.into_iter().collect::<Vec<_>>()].concat())
 }
 pub fn derive_entity_event<'a>(
     extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
 ) -> TokenStream {
     derive_from(
-        [
-            vec![&derive_entity_event_path()],
-            extra_items.into_iter().collect::<Vec<_>>(),
-        ]
-        .concat(),
+        [vec![&derive_entity_event_path()], extra_items.into_iter().collect::<Vec<_>>()].concat(),
     )
 }
 pub fn derive_message<'a>(extra_items: impl IntoIterator<Item = &'a NonEmptyPath>) -> TokenStream {
     derive_from(
-        [
-            vec![&derive_message_path()],
-            extra_items.into_iter().collect::<Vec<_>>(),
-        ]
-        .concat(),
+        [vec![&derive_message_path()], extra_items.into_iter().collect::<Vec<_>>()].concat(),
     )
 }
 pub fn derive_states<'a>(extra_items: impl IntoIterator<Item = &'a NonEmptyPath>) -> ExpandAttrs {

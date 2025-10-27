@@ -3,8 +3,10 @@ use proc_macro2::TokenStream as MacroStream;
 use syn::spanned::Spanned;
 
 pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
-    use crate::macro_api::prelude::*;
-    use crate::syntax::extensions::generics;
+    use crate::{
+        macro_api::prelude::*,
+        syntax::extensions::generics,
+    };
     use darling::FromDeriveInput;
     use quote::quote;
     use syn::DeriveInput;
@@ -22,11 +24,7 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
     let mut compile_warnings = quote! {};
 
     #[allow(deprecated)]
-    if params
-        .auto_plugin
-        .impl_generic_auto_plugin_trait
-        .is_present()
-    {
+    if params.auto_plugin.impl_generic_auto_plugin_trait.is_present() {
         compile_warnings.extend(
             syn::Error::new(
                 params.auto_plugin.impl_generic_auto_plugin_trait.span(),

@@ -3,10 +3,16 @@ use bevy_auto_plugin::prelude::*;
 use bevy_ecs::entity::EntityHashMap;
 use bevy_state::app::StatesPlugin;
 use internal_test_proc_macro::xtest;
-use internal_test_util::{create_minimal_app, type_id_of, vec_spread};
-use std::fmt::Debug;
-use std::hash::Hash;
-use std::ops::AddAssign;
+use internal_test_util::{
+    create_minimal_app,
+    type_id_of,
+    vec_spread,
+};
+use std::{
+    fmt::Debug,
+    hash::Hash,
+    ops::AddAssign,
+};
 
 #[derive(AutoPlugin, Default)]
 #[auto_plugin(impl_plugin_trait)]
@@ -83,12 +89,7 @@ fn foo_observer<T1, T2>(
     T1: Debug + Default + Copy + Clone + PartialEq + Eq + Hash + Send + Sync + 'static,
     T2: Debug + Default + Copy + Clone + PartialEq + Eq + Hash + Send + Sync + 'static,
 {
-    assert!(
-        added_foo_q
-            .get(add.event().entity)
-            .expect("FooComponent not spawned")
-            .is_added()
-    );
+    assert!(added_foo_q.get(add.event().entity).expect("FooComponent not spawned").is_added());
     foo_component_added.is_added = true;
 }
 
@@ -149,11 +150,7 @@ fn test_auto_name_foo_component() {
         .query_filtered::<&Name, With<FooComponent<u8, bool>>>()
         .single(app.world())
         .expect("failed to query FooComponent");
-    assert_eq!(
-        name,
-        &Name::new("FooComponent<u8, bool>"),
-        "did not auto name FooComponent"
-    );
+    assert_eq!(name, &Name::new("FooComponent<u8, bool>"), "did not auto name FooComponent");
 }
 
 #[xtest]
@@ -196,9 +193,7 @@ fn test_auto_add_system_foo_system() {
 fn test_auto_add_message_foo_event() {
     let mut app = app();
     assert!(
-        app.world_mut()
-            .write_message(FooMessage(1u8, false))
-            .is_some(),
+        app.world_mut().write_message(FooMessage(1u8, false)).is_some(),
         "did not add message type FooMessage"
     );
 }
@@ -212,12 +207,10 @@ fn test_auto_event_foo_global_event() {
 
     app.insert_resource(Counter(0));
 
-    app.add_observer(
-        |on: On<FooGlobalEvent<u8, bool>>, mut counter: ResMut<Counter>| {
-            counter.0 += 1;
-            assert_eq!(counter.0, on.event().0);
-        },
-    );
+    app.add_observer(|on: On<FooGlobalEvent<u8, bool>>, mut counter: ResMut<Counter>| {
+        counter.0 += 1;
+        assert_eq!(counter.0, on.event().0);
+    });
 
     app.world_mut().trigger(FooGlobalEvent(1, false));
     app.world_mut().trigger(FooGlobalEvent(2, false));
@@ -252,32 +245,26 @@ fn test_auto_event_foo_entity_event() {
     }
 
     for e in entities {
-        app.world_mut()
-            .entity_mut(e)
-            .trigger(|entity| FooEntityEvent {
-                entity,
-                value1: 1,
-                value2: false,
-            });
-    }
-
-    for e in entities {
-        app.world_mut()
-            .entity_mut(e)
-            .trigger(|entity| FooEntityEvent {
-                entity,
-                value1: 2,
-                value2: false,
-            });
-    }
-
-    app.world_mut()
-        .entity_mut(c)
-        .trigger(|entity| FooEntityEvent {
+        app.world_mut().entity_mut(e).trigger(|entity| FooEntityEvent {
             entity,
             value1: 1,
             value2: false,
         });
+    }
+
+    for e in entities {
+        app.world_mut().entity_mut(e).trigger(|entity| FooEntityEvent {
+            entity,
+            value1: 2,
+            value2: false,
+        });
+    }
+
+    app.world_mut().entity_mut(c).trigger(|entity| FooEntityEvent {
+        entity,
+        value1: 1,
+        value2: false,
+    });
 
     for e in entities {
         let &v = app.world_mut().resource::<Counter>().0.get(&e).unwrap();
@@ -289,18 +276,12 @@ fn test_auto_event_foo_entity_event() {
 fn test_auto_add_observer_foo_observer() {
     let mut app = app();
     assert!(
-        !app.world()
-            .get_resource::<FooComponentState>()
-            .unwrap()
-            .is_added,
+        !app.world().get_resource::<FooComponentState>().unwrap().is_added,
         "FooComponent should not be added yet"
     );
     app.world_mut().spawn(FooComponent::<u8, bool>::default());
     assert!(
-        app.world()
-            .get_resource::<FooComponentState>()
-            .unwrap()
-            .is_added,
+        app.world().get_resource::<FooComponentState>().unwrap().is_added,
         "FooComponent should be added"
     );
 }
@@ -314,10 +295,7 @@ where
 #[xtest]
 fn test_auto_component_auto_name_regression_test() {
     let mut app = app();
-    let a = app
-        .world_mut()
-        .spawn(FooAutoNameComponent::<u8, bool>::default())
-        .id();
+    let a = app.world_mut().spawn(FooAutoNameComponent::<u8, bool>::default()).id();
     let name = app
         .world_mut()
         .query::<&Name>()

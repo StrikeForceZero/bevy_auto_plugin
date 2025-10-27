@@ -1,8 +1,13 @@
-use crate::macro_api::prelude::*;
-use crate::syntax::extensions::lit::LitExt;
+use crate::{
+    macro_api::prelude::*,
+    syntax::extensions::lit::LitExt,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -23,21 +28,17 @@ impl EmitAppMutationTokens for NameAppMutEmitter {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args.base;
         for concrete_path in self.args.concrete_paths() {
-            let name = args
-                .name
-                .as_ref()
-                .map(|name| name.unquoted_string())
-                .unwrap_or_else(|| {
-                    // TODO: move to util fn
-                    quote!(#concrete_path)
-                        .to_string()
-                        .replace(" :: < ", "<")
-                        .replace(" < ", "<")
-                        .replace(" >", ">")
-                        .replace(" ,", ",")
-                    // TODO: offer option to only remove all spaces?
-                    //  .replace(" ", "")
-                });
+            let name = args.name.as_ref().map(|name| name.unquoted_string()).unwrap_or_else(|| {
+                // TODO: move to util fn
+                quote!(#concrete_path)
+                    .to_string()
+                    .replace(" :: < ", "<")
+                    .replace(" < ", "<")
+                    .replace(" >", ">")
+                    .replace(" ,", ",")
+                // TODO: offer option to only remove all spaces?
+                //  .replace(" ", "")
+            });
             let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
             tokens.extend(quote! {
                 #app_param.register_required_components_with::<#concrete_path, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new(#name));

@@ -29,14 +29,8 @@ struct FooResource(usize);
 
 #[auto_run_on_build(plugin = Test, generics(Foo), generics(Bar))]
 fn run_this<T: Thing + 'static>(app: &mut App) {
-    let value = app
-        .world_mut()
-        .get_resource::<FooResource>()
-        .copied()
-        .unwrap_or_default()
-        .0;
-    app.world_mut()
-        .insert_resource(FooResource(value + T::AMOUNT));
+    let value = app.world_mut().get_resource::<FooResource>().copied().unwrap_or_default().0;
+    app.world_mut().insert_resource(FooResource(value + T::AMOUNT));
 }
 
 fn foo<T: Thing>(mut res: ResMut<FooResource>) {

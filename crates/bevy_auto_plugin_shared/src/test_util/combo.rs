@@ -61,9 +61,5 @@ where
     }
 
     // filter out empty sets
-    combos
-        .into_iter()
-        .filter(|c| !c.is_empty())
-        .map(|g| vec_spread![with.clone(), ..g,])
-        .collect()
+    combos.into_iter().filter(|c| !c.is_empty()).map(|g| vec_spread![with.clone(), ..g,]).collect()
 }

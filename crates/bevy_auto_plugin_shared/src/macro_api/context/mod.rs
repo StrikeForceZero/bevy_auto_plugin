@@ -8,6 +8,8 @@ pub struct Context {
 }
 
 pub mod prelude {
-    pub use super::Context;
-    pub use super::macro_paths::*;
+    pub use super::{
+        Context,
+        macro_paths::*,
+    };
 }

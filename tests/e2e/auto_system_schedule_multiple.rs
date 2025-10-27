@@ -76,17 +76,11 @@ mod test {
 
         assert_eq!(app.world().get_resource::<OtherCounter>().unwrap().0, 0);
 
-        assert_eq!(
-            app.world().get_resource::<Counter>().unwrap().get(),
-            (0, None)
-        );
+        assert_eq!(app.world().get_resource::<Counter>().unwrap().get(), (0, None));
 
         app.update();
 
-        assert_eq!(
-            app.world().get_resource::<Counter>().unwrap().get(),
-            (3, Some("system_c"))
-        );
+        assert_eq!(app.world().get_resource::<Counter>().unwrap().get(), (3, Some("system_c")));
 
         assert_eq!(app.world().get_resource::<OtherCounter>().unwrap().0, 0);
     }

@@ -10,10 +10,7 @@ impl Plugin for TestPlugin {
     #[auto_plugin]
     fn build(&self, app: &mut App) {
         app.init_resource::<Test>();
-        app.configure_sets(
-            Update,
-            (TestSet::First, TestSet::Second, TestSet::Third).chain(),
-        );
+        app.configure_sets(Update, (TestSet::First, TestSet::Second, TestSet::Third).chain());
     }
 }
 

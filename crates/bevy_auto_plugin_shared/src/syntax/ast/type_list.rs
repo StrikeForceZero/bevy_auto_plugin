@@ -1,9 +1,20 @@
-use darling::{Error, FromMeta};
+use darling::{
+    Error,
+    FromMeta,
+};
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
-use syn::parse::Parser;
-use syn::spanned::Spanned;
-use syn::{Meta, Token, Type, punctuated::Punctuated};
+use quote::{
+    ToTokens,
+    quote,
+};
+use syn::{
+    Meta,
+    Token,
+    Type,
+    parse::Parser,
+    punctuated::Punctuated,
+    spanned::Spanned,
+};
 
 #[derive(Debug, Clone, Default, PartialEq, Hash)]
 pub struct TypeList(pub Vec<Type>);
@@ -45,10 +56,7 @@ impl From<TypeList> for TokenStream {
 }
 
 fn failed_err(e: syn::Error, span: &proc_macro2::Span) -> Error {
-    Error::multiple(vec![
-        Error::custom("failed to parse TypeList").with_span(span),
-        Error::from(e),
-    ])
+    Error::multiple(vec![Error::custom("failed to parse TypeList").with_span(span), Error::from(e)])
 }
 
 impl FromMeta for TypeList {
@@ -65,7 +73,11 @@ impl FromMeta for TypeList {
 
 impl syn::parse::Parse for TypeList {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        use syn::{Token, Type, punctuated::Punctuated};
+        use syn::{
+            Token,
+            Type,
+            punctuated::Punctuated,
+        };
         let elems = Punctuated::<Type, Token![,]>::parse_terminated(input)
             .map_err(|e| failed_err(e, &input.span()))?
             .into_iter()
@@ -78,7 +90,11 @@ impl syn::parse::Parse for TypeList {
 mod tests {
     use super::*;
     use internal_test_proc_macro::xtest;
-    use syn::{Meta, Type, parse_quote};
+    use syn::{
+        Meta,
+        Type,
+        parse_quote,
+    };
 
     #[derive(Debug, FromMeta)]
     pub struct FooAttr {
@@ -98,10 +114,7 @@ mod tests {
             Type::Path(tp) => {
                 let seg = tp.path.segments.last().unwrap();
                 assert_eq!(seg.ident, "FooBar");
-                assert!(matches!(
-                    seg.arguments,
-                    syn::PathArguments::AngleBracketed(_)
-                ));
+                assert!(matches!(seg.arguments, syn::PathArguments::AngleBracketed(_)));
             }
             _ => panic!("expected Type::Path for element 2"),
         }

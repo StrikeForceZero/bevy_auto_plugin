@@ -1,10 +1,19 @@
-use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
-use crate::syntax::ast::type_list::TypeList;
-use darling::FromMeta;
-use darling::util::Flag;
+use crate::syntax::{
+    analysis::fn_param::require_fn_param_mutable_reference,
+    ast::type_list::TypeList,
+};
+use darling::{
+    FromMeta,
+    util::Flag,
+};
 use proc_macro2::Ident;
-use syn::spanned::Spanned;
-use syn::{FnArg, ItemFn, Pat, Path};
+use syn::{
+    FnArg,
+    ItemFn,
+    Pat,
+    Path,
+    spanned::Spanned,
+};
 
 #[derive(FromMeta, Debug, Default, Clone)]
 #[darling(derive_syn_parse, default)]
@@ -39,11 +48,7 @@ pub fn resolve_app_param_name<'a>(
     app_param_name: Option<&'a Ident>,
 ) -> syn::Result<&'a Ident> {
     // Helper: pick a useful Span for errors
-    let err_span = || {
-        app_param_name
-            .map(Ident::span)
-            .unwrap_or_else(|| input.sig.span())
-    };
+    let err_span = || app_param_name.map(Ident::span).unwrap_or_else(|| input.sig.span());
 
     // Helper: try to get &Ident from a typed arg
     fn ident_from_typed_arg(arg: &FnArg) -> Option<&Ident> {
@@ -56,19 +61,10 @@ pub fn resolve_app_param_name<'a>(
         }
     }
 
-    let has_self = input
-        .sig
-        .inputs
-        .iter()
-        .any(|a| matches!(a, FnArg::Receiver(_)));
+    let has_self = input.sig.inputs.iter().any(|a| matches!(a, FnArg::Receiver(_)));
 
     // collect all named params
-    let named = input
-        .sig
-        .inputs
-        .iter()
-        .filter_map(ident_from_typed_arg)
-        .collect::<Vec<_>>();
+    let named = input.sig.inputs.iter().filter_map(ident_from_typed_arg).collect::<Vec<_>>();
 
     // If user explicitly provided a name, validate it exists and return it
     if let Some(given) = app_param_name.as_ref() {
@@ -117,7 +113,10 @@ pub fn resolve_app_param_name<'a>(
 mod tests {
     use crate::macro_api::attributes::auto_plugin::resolve_app_param_name;
     use internal_test_proc_macro::xtest;
-    use proc_macro2::{Ident, Span};
+    use proc_macro2::{
+        Ident,
+        Span,
+    };
 
     #[xtest]
     #[should_panic = "auto_plugin provided app_param: `bar` but it was not found in the function signature"]

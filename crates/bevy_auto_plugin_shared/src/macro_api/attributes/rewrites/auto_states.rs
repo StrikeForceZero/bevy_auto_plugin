@@ -1,8 +1,15 @@
-use crate::codegen::{ExpandAttrs, tokens};
-use crate::macro_api::prelude::*;
-use crate::syntax::ast::flag_or_list::FlagOrList;
-use crate::syntax::validated::non_empty_path::NonEmptyPath;
-use crate::util::macros::impl_from_default;
+use crate::{
+    codegen::{
+        ExpandAttrs,
+        tokens,
+    },
+    macro_api::prelude::*,
+    syntax::{
+        ast::flag_or_list::FlagOrList,
+        validated::non_empty_path::NonEmptyPath,
+    },
+    util::macros::impl_from_default,
+};
 use darling::FromMeta;
 use proc_macro2::Ident;
 
@@ -45,14 +52,10 @@ impl AttrExpansionEmitterToExpandAttr for StateAttrExpandEmitter {
             expand_attrs.append(tokens::reflect(&self.args.args.base.reflect.items))
         }
         if self.args.args.base.register {
-            expand_attrs
-                .attrs
-                .push(tokens::auto_register_type(self.into()));
+            expand_attrs.attrs.push(tokens::auto_register_type(self.into()));
         }
         if self.args.args.base.init {
-            expand_attrs
-                .attrs
-                .push(tokens::auto_init_states(self.into()));
+            expand_attrs.attrs.push(tokens::auto_init_states(self.into()));
         }
     }
 }

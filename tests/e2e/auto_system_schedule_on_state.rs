@@ -51,9 +51,7 @@ mod test {
         app.update();
         assert_eq!(app.world().get_resource::<Counter>().unwrap().0, 0);
 
-        app.world_mut()
-            .resource_mut::<NextState<TestState>>()
-            .set(TestState::Run);
+        app.world_mut().resource_mut::<NextState<TestState>>().set(TestState::Run);
         app.update();
 
         assert_eq!(app.world().get_resource::<Counter>().unwrap().0, 1);

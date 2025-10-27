@@ -25,8 +25,5 @@ fn app() -> App {
 #[xtest]
 fn test_auto_add_plugin() {
     let app = app();
-    assert!(
-        app.world().get_resource::<Test>().is_some(),
-        "did not auto add plugin"
-    );
+    assert!(app.world().get_resource::<Test>().is_some(), "did not auto add plugin");
 }

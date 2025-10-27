@@ -1,7 +1,15 @@
-use darling::{Error, FromMeta, Result};
+use darling::{
+    Error,
+    FromMeta,
+    Result,
+};
 use smart_default::SmartDefault;
-use syn::spanned::Spanned;
-use syn::{Expr, Lit, Meta};
+use syn::{
+    Expr,
+    Lit,
+    Meta,
+    spanned::Spanned,
+};
 
 #[derive(Debug, SmartDefault, Clone, PartialEq, Hash)]
 pub struct FlagOrLit {
@@ -34,20 +42,14 @@ impl FromMeta for FlagOrLit {
     fn from_meta(meta: &Meta) -> Result<Self> {
         match meta {
             // `#[this_flag]`
-            Meta::Path(_) => Ok(FlagOrLit {
-                present: true,
-                lit: None,
-            }),
+            Meta::Path(_) => Ok(FlagOrLit { present: true, lit: None }),
 
             // `#[this_flag(A, B)]`
             Meta::List(list) => Err(Error::unsupported_format("list").with_span(list)),
 
             // Not supported: `#[this_flag = ...]`
             Meta::NameValue(nv) => match &nv.value {
-                Expr::Lit(lit) => Ok(FlagOrLit {
-                    present: true,
-                    lit: Some(lit.lit.clone()),
-                }),
+                Expr::Lit(lit) => Ok(FlagOrLit { present: true, lit: Some(lit.lit.clone()) }),
                 other => Err(Error::unexpected_expr_type(other).with_span(&other.span())),
             },
         }
@@ -65,10 +67,7 @@ mod tests {
     fn test_from_meta_flag_present() -> syn::Result<()> {
         assert_eq!(
             FlagOrLit::from_meta(&parse_quote!(this_flag))?,
-            FlagOrLit {
-                present: true,
-                lit: None,
-            }
+            FlagOrLit { present: true, lit: None }
         );
         Ok(())
     }
@@ -76,43 +75,30 @@ mod tests {
     fn test_from_meta_flag_set() -> syn::Result<()> {
         assert_eq!(
             FlagOrLit::from_meta(&parse_quote!(this_flag = "foo"))?,
-            FlagOrLit {
-                present: true,
-                lit: Some(parse_quote!("foo")),
-            }
+            FlagOrLit { present: true, lit: Some(parse_quote!("foo")) }
         );
         Ok(())
     }
     #[xtest]
     fn test_flag_or_lit_to_outer_tokens_not_present() {
         assert_eq!(
-            FlagOrLit::default()
-                .to_outer_tokens("this_flag")
-                .to_string(),
+            FlagOrLit::default().to_outer_tokens("this_flag").to_string(),
             quote! {}.to_string()
         )
     }
     #[xtest]
     fn test_flag_or_lit_to_outer_tokens_present() {
         assert_eq!(
-            FlagOrLit {
-                present: true,
-                lit: None,
-            }
-            .to_outer_tokens("this_flag")
-            .to_string(),
+            FlagOrLit { present: true, lit: None }.to_outer_tokens("this_flag").to_string(),
             quote! { this_flag }.to_string()
         )
     }
     #[xtest]
     fn test_flag_or_lit_to_outer_tokens_set() {
         assert_eq!(
-            FlagOrLit {
-                present: true,
-                lit: Some(parse_quote!("foo"))
-            }
-            .to_outer_tokens("this_flag")
-            .to_string(),
+            FlagOrLit { present: true, lit: Some(parse_quote!("foo")) }
+                .to_outer_tokens("this_flag")
+                .to_string(),
             quote! { this_flag = "foo" }.to_string()
         )
     }

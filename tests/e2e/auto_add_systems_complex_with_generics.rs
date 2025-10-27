@@ -2,8 +2,13 @@ use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
 use bevy_ecs::prelude::*;
 use internal_test_proc_macro::xtest;
-use std::fmt::Debug;
-use std::ops::{Add, AddAssign};
+use std::{
+    fmt::Debug,
+    ops::{
+        Add,
+        AddAssign,
+    },
+};
 
 trait One {
     const ONE: Self;

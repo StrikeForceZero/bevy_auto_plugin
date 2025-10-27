@@ -1,5 +1,7 @@
-use crate::syntax::analysis::path;
-use crate::syntax::ast::type_list::TypeList;
+use crate::syntax::{
+    analysis::path,
+    ast::type_list::TypeList,
+};
 use syn::Path;
 
 pub trait PathExt {

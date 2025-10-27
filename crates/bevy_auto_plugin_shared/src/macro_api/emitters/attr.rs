@@ -1,10 +1,17 @@
-use crate::codegen::ExpandAttrs;
-use crate::macro_api::prelude::*;
-use crate::syntax::extensions::item::ItemAttrsExt;
+use crate::{
+    codegen::ExpandAttrs,
+    macro_api::prelude::*,
+    syntax::extensions::item::ItemAttrsExt,
+};
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
-use syn::parse_quote;
-use syn::spanned::Spanned;
+use quote::{
+    ToTokens,
+    quote,
+};
+use syn::{
+    parse_quote,
+    spanned::Spanned,
+};
 
 /// for codegen re-emitting macro args
 #[derive(Debug, Clone)]
@@ -59,9 +66,7 @@ where
         let macro_path = T::macro_path(self.args.context()).clone();
         self.args.input_item_mut().map_ast(|item| {
             // insert attribute tokens
-            let mut attrs = item
-                .take_attrs()
-                .map_err(|err| syn::Error::new(item.span(), err))?;
+            let mut attrs = item.take_attrs().map_err(|err| syn::Error::new(item.span(), err))?;
             attrs.insert(0, parse_quote!(#[#macro_path(#args)]));
             item.put_attrs(attrs).unwrap(); // infallible
             Ok(())
