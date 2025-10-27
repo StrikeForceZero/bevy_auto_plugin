@@ -238,12 +238,6 @@ pub struct InflateArgsOutput {
     inflated_args: ConfigureSystemSetArgs,
 }
 
-impl InflateArgsOutput {
-    pub fn into_tuple(self) -> (ConfigureSystemSetArgs, TokenStream) {
-        (self.inflated_args, self.scrubbed_tokens)
-    }
-}
-
 pub fn inflate_args_from_input(
     mut args: ConfigureSystemSetArgs,
     input: TokenStream,
