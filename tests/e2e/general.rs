@@ -37,7 +37,7 @@ struct FooDefaultRes(usize);
 #[reflect(Resource)]
 #[auto_register_type(plugin = Test)]
 #[auto_init_resource(plugin = Test)]
-#[auto_insert_resource(plugin = Test, resource(FooRes(1)))]
+#[auto_insert_resource(plugin = Test, init(FooRes(1)))]
 struct FooRes(usize);
 
 #[auto_resource(plugin = Test, derive, register, reflect, init)]

@@ -8,7 +8,7 @@ use internal_test_proc_macro::xtest;
 struct TestPlugin;
 
 #[auto_init_resource(plugin = TestPlugin, generics(usize, bool))]
-#[auto_insert_resource(plugin = TestPlugin, generics(usize, bool), resource(Test(1, true)))]
+#[auto_insert_resource(plugin = TestPlugin, generics(usize, bool), init(Test(1, true)))]
 #[derive(Resource, Debug, Default, PartialEq)]
 struct Test<T1, T2>(T1, T2);
 

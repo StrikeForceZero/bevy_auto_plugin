@@ -15,7 +15,7 @@ where
 
 #[derive(Resource, Default, PartialEq, Debug)]
 #[auto_init_resource(plugin = MyPlugin::<u8, bool>, generics(u8, bool))]
-#[auto_insert_resource(plugin = MyPlugin::<u8, bool>, generics(u8, bool), resource(MyResourceAuto(1, true)))]
+#[auto_insert_resource(plugin = MyPlugin::<u8, bool>, generics(u8, bool), init(MyResourceAuto(1, true)))]
 pub struct MyResourceAuto<T1, T2>(T1, T2)
 where
     T1: Default + Send + Sync + 'static,

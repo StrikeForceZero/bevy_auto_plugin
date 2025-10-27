@@ -8,7 +8,7 @@ use internal_test_proc_macro::xtest;
 struct TestPlugin;
 
 #[auto_init_resource(plugin = TestPlugin)]
-#[auto_insert_resource(plugin = TestPlugin, resource(Test(1)))]
+#[auto_insert_resource(plugin = TestPlugin, init(Test(1)))]
 #[derive(Resource, Debug, Default, PartialEq)]
 struct Test(usize);
 

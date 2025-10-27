@@ -11,7 +11,7 @@ pub struct MyPlugin;
 
 #[derive(Resource, Default, PartialEq, Debug)]
 #[auto_init_resource(plugin = MyPlugin)]
-#[auto_insert_resource(plugin = MyPlugin, resource(MyResourceAuto(1)))]
+#[auto_insert_resource(plugin = MyPlugin, init(MyResourceAuto(1)))]
 pub struct MyResourceAuto(usize);
 
 #[derive(Resource, Default, PartialEq, Debug)]

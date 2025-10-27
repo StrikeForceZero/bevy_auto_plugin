@@ -8,11 +8,37 @@ use quote::{
     ToTokens,
     quote,
 };
+use syn::spanned::Spanned;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
-#[darling(derive_syn_parse)]
+#[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct InsertResourceArgs {
-    pub resource: AnyExprCallClosureMacroPath,
+    // TODO: after removing resource, remove _resolved, make init required
+    pub resource: Option<AnyExprCallClosureMacroPath>,
+    pub init: Option<AnyExprCallClosureMacroPath>,
+    #[darling(skip)]
+    _resolved: Option<AnyExprCallClosureMacroPath>,
+}
+
+impl InsertResourceArgs {
+    fn validate(self) -> darling::Result<Self> {
+        Ok(Self { _resolved: Some(Self::resolve_resource(&self)?.clone()), ..self })
+    }
+    fn resolve_resource(&self) -> darling::Result<&AnyExprCallClosureMacroPath> {
+        if let Some(resolved) = self._resolved.as_ref() {
+            Ok(resolved)
+        } else {
+            let deprecated = |msg| darling::Error::custom(msg).with_span(&self.resource.span());
+            match (self.resource.as_ref(), self.init.as_ref()) {
+                (Some(_), Some(_)) => {
+                    Err(deprecated("resource and init are mutually exclusive, use init instead"))
+                }
+                (None, None) => Err(darling::Error::missing_field("init")),
+                (Some(_), None) => Err(deprecated("resource is deprecated, use init instead")),
+                (None, Some(res)) => Ok(res),
+            }
+        }
+    }
 }
 
 impl AttributeIdent for InsertResourceArgs {
@@ -28,7 +54,14 @@ pub type InsertResourceAttrEmitter = AttrEmitter<IaInsertResource>;
 
 impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        let resource = &self.args.args.base.resource;
+        let resource = match self.args.args.base.resolve_resource() {
+            Ok(resource) => resource,
+            Err(err) => {
+                let err = syn::Error::from(err);
+                tokens.extend(err.to_compile_error());
+                return;
+            }
+        };
         for concrete_path in self.args.concrete_paths() {
             tokens.extend(quote! {
                 #app_param.insert_resource({ let resource: #concrete_path = #resource; resource});

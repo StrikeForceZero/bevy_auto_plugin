@@ -18,7 +18,7 @@ struct MyPlugin;
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
 #[auto_register_type(plugin = MyPlugin)]
-#[auto_insert_resource(plugin = MyPlugin, resource(FooResource(42)))]
+#[auto_insert_resource(plugin = MyPlugin, init(FooResource(42)))]
 struct FooResource(usize);
 ```
 
@@ -34,6 +34,6 @@ struct MyPlugin;
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
 #[auto_register_type(plugin = MyPlugin, generics(usize))]
-#[auto_insert_resource(plugin = MyPlugin, resource(FooResourceWithGeneric(42)), generics(usize))]
+#[auto_insert_resource(plugin = MyPlugin, init(FooResourceWithGeneric(42)), generics(usize))]
 struct FooResourceWithGeneric<T>(T);
 ```

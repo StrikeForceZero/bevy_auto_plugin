@@ -31,7 +31,7 @@ where
 #[reflect(Resource)]
 #[auto_register_type(plugin = Test::<u8, bool>, generics(u8, bool))]
 #[auto_init_resource(plugin = Test::<u8, bool>, generics(u8, bool))]
-#[auto_insert_resource(plugin = Test::<u8, bool>, generics(u8, bool), resource(FooRes(1, true)))]
+#[auto_insert_resource(plugin = Test::<u8, bool>, generics(u8, bool), init(FooRes(1, true)))]
 struct FooRes<T1, T2>(T1, T2)
 where
     T1: Default + Send + Sync + 'static,
