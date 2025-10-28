@@ -376,35 +376,34 @@ pub fn inflate_args_from_input(
         let observed =
             *observed_order_by_variant.entry(v_ident.clone()).or_insert_with(|| prev_observed_len);
 
-        let chosen_entry = (|| {
+        let chosen_entry = {
             let bucket = variants_cfg.get(&v_ident);
 
             // prefer explicit group match
             if let (Some(g), Some(b)) = (&outer_group, bucket)
                 && let Some(found) = b.per_group.get(g)
             {
-                return Some(found.clone());
+                found.clone()
             }
-
             // else use the default helper but override its group to the outer group
-            if let Some(b) = bucket
+            else if let Some(b) = bucket
                 && let Some(mut def) = b.default.clone()
             {
                 def.group = outer_group.clone();
                 if def.order.is_none() {
                     def.order = Some(observed);
                 }
-                return Some(def);
+                def
             }
-
             // else synthesize a default entry
-            Some(ConfigureSystemSetArgsInnerEntry {
-                group: outer_group.clone(),
-                order: Some(observed),
-                ..Default::default()
-            })
-        })()
-        .expect("infallible");
+            else {
+                ConfigureSystemSetArgsInnerEntry {
+                    group: outer_group.clone(),
+                    order: Some(observed),
+                    ..Default::default()
+                }
+            }
+        };
 
         entries.push((v_ident, chosen_entry));
     }
