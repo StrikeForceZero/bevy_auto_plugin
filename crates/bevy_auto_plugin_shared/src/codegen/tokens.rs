@@ -21,9 +21,6 @@ pub fn reflect<'a>(idents: impl IntoIterator<Item = &'a Ident>) -> ExpandAttrs {
         .filter_map(|ident| {
             Some(match ident.to_string().as_str() {
                 // Make the helper available for #[reflect(Component)]
-                // TODO: we could eliminate the need for globs if we pass the ident in
-                //  then we can do `ReflectComponent as ReflectComponent$ident`
-                //  #[reflect(Component$ident)]
                 "Component" => crate::__private::paths::reflect::reflect_component_use_tokens(),
                 // Make the helper available for #[reflect(Resource)]
                 "Resource" => crate::__private::paths::reflect::reflect_resource_use_tokens(),
