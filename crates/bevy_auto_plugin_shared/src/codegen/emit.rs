@@ -30,14 +30,12 @@ impl EmitBuilder {
     }
 
     /// Push the current tokens as a checkpoint.
-    #[must_use]
     pub(crate) fn push_checkpoint(&mut self) -> &mut Self {
         self.checkpoints.push(self.tokens.clone());
         self
     }
 
     /// Restore to the last checkpoint. No-op if empty.
-    #[must_use]
     pub(crate) fn restore(&mut self) -> &mut Self {
         if let Some(cp) = self.checkpoints.last() {
             self.tokens = cp.clone();
@@ -46,7 +44,6 @@ impl EmitBuilder {
     }
 
     /// Restore to the last checkpoint and **pop** it. No-op if empty.
-    #[must_use]
     pub(crate) fn pop_restore(&mut self) -> &mut Self {
         if let Some(cp) = self.checkpoints.pop() {
             self.tokens = cp;
@@ -55,7 +52,6 @@ impl EmitBuilder {
     }
 
     /// Discard the last checkpoint (keep current tokens). No-op if empty.
-    #[must_use]
     pub(crate) fn discard_checkpoint(&mut self) -> &mut Self {
         self.checkpoints.pop();
         self
@@ -77,7 +73,6 @@ impl EmitBuilder {
     }
 
     /// Try a phase with automatic checkpointing.
-    #[must_use]
     pub(crate) fn try_phase<E>(&mut self, f: impl FnOnce(&mut Self) -> Result<(), E>) -> &mut Self
     where
         EmitError: From<E>,
@@ -88,12 +83,17 @@ impl EmitBuilder {
         }
     }
 
+    #[must_use]
     pub(crate) fn take_tokens(&mut self) -> TokenStream {
         std::mem::take(&mut self.tokens)
     }
 
     pub(crate) fn tokens(&self) -> &TokenStream {
         &self.tokens
+    }
+
+    pub(crate) fn tokens_mut(&mut self) -> &mut TokenStream {
+        &mut self.tokens
     }
 }
 
@@ -249,22 +249,22 @@ mod tests {
         assert_ts_eq!(&b, quote! { base });
 
         // push + modify + restore (non-pop) should revert to base but leave checkpoint on stack
-        let _ = b.push_checkpoint().extend(quote! { X }).restore();
+        b.push_checkpoint().extend(quote! { X }).restore();
         assert_ts_eq!(&b, quote! { base });
 
         // modify again then pop_restore should also revert to base *and* pop the checkpoint
-        let _ = b.extend(quote! { TEMP }).pop_restore();
+        b.extend(quote! { TEMP }).pop_restore();
         assert_ts_eq!(&b, quote! { base });
 
         // push + modify + discard should keep the modified result
-        let _ = b.push_checkpoint().extend(quote! { KEEP }).discard_checkpoint();
+        b.push_checkpoint().extend(quote! { KEEP }).discard_checkpoint();
         assert_ts_eq!(&b, quote! { base KEEP });
     }
 
     #[xtest]
     fn try_phase_ok_keeps_changes() {
         let mut b = EmitBuilder::from_checkpoint(quote! { init });
-        let _ = b.try_phase(|b| {
+        b.try_phase(|b| {
             // phase mutates tokens
             b.extend(quote! { ok1 ok2 });
             Ok::<_, syn::Error>(())
@@ -275,7 +275,7 @@ mod tests {
     #[xtest]
     fn try_phase_err_restores_checkpoint() {
         let mut b = EmitBuilder::from_checkpoint(quote! { start });
-        let _ = b.try_phase(|b| {
+        b.try_phase(|b| {
             // mutate then fail; should revert to checkpoint
             b.extend(quote! { broken });
             Err::<(), _>(syn::Error::new(proc_macro2::Span::call_site(), "boom"))
@@ -414,7 +414,7 @@ mod tests {
         // If no checkpoints exist, restore/discard/pop_restore are no-ops
         let mut b = EmitBuilder::new();
         b.extend(quote! { X });
-        let _ = b.restore().discard_checkpoint().pop_restore();
+        b.restore().discard_checkpoint().pop_restore();
         assert_ts_eq!(b, quote! { X });
     }
 }
