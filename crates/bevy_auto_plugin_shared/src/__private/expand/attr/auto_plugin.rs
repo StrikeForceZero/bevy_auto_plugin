@@ -37,9 +37,7 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
         .collect::<Vec<_>>();
     let self_arg = self_args.first();
 
-    // TODO: use helper
-    let app_param_ident =
-        ok_or_emit_with!(resolve_app_param_name(&item, params.app_param.as_ref()), og_input);
+    let app_param_ident = ok_or_emit_with!(resolve_app_param_name(&item), og_input);
 
     if let Err(err) = require_fn_param_mutable_reference(&item, app_param_ident, "bevy app") {
         return compile_error_with!(err, og_input);
