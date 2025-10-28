@@ -278,11 +278,11 @@ pub fn inflate_args_from_input(
     // 3)
     if args._strip_helpers {
         // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
-        scrub.write_back(&mut scrubbed_tokens)?;
+        scrub.replace_token_stream(&mut scrubbed_tokens)?;
     } else {
         // Check if we have errors to print and if so, strip helpers from the item
         // Otherwise, maintain helpers for the next attribute to process
-        scrub.write_if_errors_with_scrubbed_item(&mut scrubbed_tokens)?;
+        scrub.prepend_errors(&mut scrubbed_tokens)?;
     }
 
     // 4) If it's a struct, there are no entries to compute

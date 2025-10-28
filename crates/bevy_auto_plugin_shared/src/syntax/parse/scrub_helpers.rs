@@ -140,6 +140,7 @@ pub struct ScrubOutcome {
 }
 
 impl ScrubOutcome {
+    /// Returns all observed attrs and call sites regardless if they were removed or not
     pub fn all_with_removed_attrs(&self) -> Vec<SiteAttrs> {
         let mut out = Vec::with_capacity(self.observed.len());
         for group in self.observed.iter() {
@@ -154,40 +155,46 @@ impl ScrubOutcome {
         }
         out
     }
-    // TODO: Better name?
+    /// It will only mutate the TokenStream if there are errors by prepending them
+    pub fn prepend_errors(&self, token_stream: &mut TokenStream) -> syn::Result<()> {
+        ts_prepend_errors(
+            token_stream,
+            self.item.span(),
+            self.errors.clone(),
+            "failed to scrub helpers",
+        )
+    }
+    /// Replaces the token stream with the scrubbed item.
     /// If there are errors, it will write them above the scrubbed item.
-    /// Otherwise, will NOT write the scrubbed item back into the TokenStream
-    pub fn write_if_errors_with_scrubbed_item(
-        &self,
-        token_stream: &mut TokenStream,
-    ) -> syn::Result<()> {
-        write_back(token_stream, self.item.span(), self.errors.clone(), "failed to scrub helpers")
-    }
-    pub fn write_back(&self, token_stream: &mut TokenStream) -> syn::Result<()> {
-        write_back_item(token_stream, &self.item, self.errors.clone(), "failed to scrub helpers")
+    pub fn replace_token_stream(&self, token_stream: &mut TokenStream) -> syn::Result<()> {
+        replace_ts_with_item_and_errors(
+            token_stream,
+            &self.item,
+            self.errors.clone(),
+            "failed to scrub helpers",
+        )
     }
 }
 
-pub fn write_back_item(
-    token_stream: &mut TokenStream,
-    item: &Item,
-    errors: Vec<syn::Error>,
-    message: &str,
-) -> syn::Result<()> {
-    *token_stream = quote! {
-        #item
-    };
-
-    write_back(token_stream, item.span(), errors, message)
-}
-
-pub fn write_back(
+/// Writes errors to the token stream if they exist, otherwise doesn't modify the token stream.
+///
+/// # Arguments
+///
+/// * `token_stream` - The token stream to potentially write errors into
+/// * `span` - The span location for error reporting
+/// * `errors` - Collection of errors to potentially write
+/// * `message` - Error message to include
+///
+/// # Returns
+///
+/// A Result indicating success or failure of the operation
+pub fn ts_prepend_errors(
     token_stream: &mut TokenStream,
     span: proc_macro2::Span,
     errors: Vec<syn::Error>,
     message: &str,
 ) -> syn::Result<()> {
-    // inject any errors as compile_error! right here.
+    // inject any errors as compile_error right here.
     if !errors.is_empty() {
         let err_ts = errors.iter().map(syn::Error::to_compile_error);
         *token_stream = quote! {
@@ -200,6 +207,31 @@ pub fn write_back(
     }
 
     Ok(())
+}
+
+/// Replaces the `TokenStream` in place with the item tokens and prepends any errors.
+///
+/// # Arguments
+///
+/// * `token_stream` - The token stream to output to
+/// * `item` - The item to render
+/// * `errors` - Collection of errors to potentially write
+/// * `message` - Error message to include
+///
+/// # Returns
+///
+/// A Result indicating success or failure of the operation
+pub fn replace_ts_with_item_and_errors(
+    token_stream: &mut TokenStream,
+    item: &Item,
+    errors: Vec<syn::Error>,
+    message: &str,
+) -> syn::Result<()> {
+    *token_stream = quote! {
+        #item
+    };
+
+    ts_prepend_errors(token_stream, item.span(), errors, message)
 }
 
 #[derive(Debug, Default)]
