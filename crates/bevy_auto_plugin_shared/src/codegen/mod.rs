@@ -1,3 +1,4 @@
+pub mod emit;
 pub mod tokens;
 
 use proc_macro2::TokenStream as MacroStream;
