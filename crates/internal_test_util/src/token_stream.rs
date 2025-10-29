@@ -7,6 +7,11 @@ use std::fmt::{
     Formatter,
 };
 
+#[inline]
+pub fn token_string(ts: impl ToTokens) -> String {
+    ts.to_token_stream().to_string()
+}
+
 pub struct Ts(TokenStream);
 
 impl Debug for Ts {
