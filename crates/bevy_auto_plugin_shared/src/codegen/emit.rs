@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 
@@ -58,29 +60,27 @@ impl EmitBuilder {
     }
 
     /// Finish successfully.
-    pub(crate) fn into_ok<T>(self, value: T) -> EmitResult<T> {
-        EmitResult::Ok { tokens: self.tokens, value }
+    pub(crate) fn into_ok<T, E>(self, value: T) -> EmitResult<T, E> {
+        Ok((self.tokens, value))
     }
 
     /// Finish with an error; emits the **last checkpoint** if any, else current tokens.
-    pub(crate) fn into_err<T, E>(self, err: E) -> EmitResult<T>
-    where
-        EmitError: From<E>,
-    {
+    pub(crate) fn into_err<T, E>(self, err: E) -> EmitResult<T, E> {
         let fallback =
             if let Some(cp) = self.checkpoints.last() { cp.clone() } else { self.tokens.clone() };
-        EmitResult::Err { tokens: fallback, error: err.into() }
+        Err((fallback, err))
     }
 
     /// Try a phase with automatic checkpointing.
-    pub(crate) fn try_phase<E>(&mut self, f: impl FnOnce(&mut Self) -> Result<(), E>) -> &mut Self
-    where
-        EmitError: From<E>,
-    {
+    pub(crate) fn try_phase<E>(&mut self, f: impl FnOnce(&mut Self) -> Result<(), E>) -> &mut Self {
         match f(self.push_checkpoint()) {
             Ok(()) => self.discard_checkpoint(),
-            Err(_e) => self.pop_restore(),
+            Err(_) => self.pop_restore(),
         }
+    }
+
+    pub(crate) fn into_tokens(self) -> TokenStream {
+        self.tokens
     }
 
     #[must_use]
@@ -115,109 +115,120 @@ impl ToTokens for EmitBuilder {
     }
 }
 
-#[derive(Debug, Clone, thiserror::Error)]
-pub(crate) enum EmitError {
-    #[error("{0}")]
-    Syn(#[from] syn::Error),
-    #[error("{0}")]
-    Darling(#[from] darling::Error),
-}
+pub type EmitResult<T, E> = Result<(TokenStream, T), (TokenStream, E)>;
 
-impl From<EmitError> for syn::Error {
-    fn from(e: EmitError) -> Self {
-        match e {
-            EmitError::Syn(s) => s,
-            EmitError::Darling(d) => d.into(),
-        }
-    }
-}
-impl From<EmitError> for darling::Error {
-    fn from(e: EmitError) -> Self {
-        match e {
-            EmitError::Syn(s) => s.into(),
-            EmitError::Darling(d) => d,
+pub struct Ctx<T>(pub TokenStream, pub T);
+
+impl<T> Ctx<T> {
+    pub fn and_then<U, E>(
+        self,
+        f: impl FnOnce(&TokenStream, T) -> Result<U, E>,
+    ) -> EmitResult<U, E> {
+        let Ctx(ts, v) = self;
+        match f(&ts, v) {
+            Ok(u) => Ok((ts, u)),
+            Err(e) => Err((ts, e)),
         }
     }
 }
 
-#[derive(Debug, Clone)]
-pub(crate) enum EmitResult<T> {
-    Ok { tokens: TokenStream, value: T },
-    Err { tokens: TokenStream, error: EmitError },
+impl Ctx<()> {
+    pub fn start(ts: TokenStream) -> Ctx<()> {
+        Ctx(ts, ())
+    }
 }
 
-impl<T> EmitResult<T> {
-    pub fn ok(tokens: TokenStream, value: T) -> Self {
-        Self::Ok { tokens, value }
-    }
-    pub fn err(tokens: TokenStream, error: impl Into<EmitError>) -> Self {
-        Self::Err { tokens, error: error.into() }
-    }
+pub trait WithTs {
+    type Output;
+    fn with_ts(self, ts: TokenStream) -> Self::Output;
+}
 
-    pub fn is_ok(&self) -> bool {
-        matches!(self, Self::Ok { .. })
+impl<T, E> WithTs for Result<T, E> {
+    type Output = EmitResult<T, E>;
+    #[inline]
+    fn with_ts(self, ts: TokenStream) -> Self::Output {
+        self.map(|v| (ts.clone(), v)).map_err(|e| (ts.clone(), e))
     }
-    pub fn is_err(&self) -> bool {
-        !self.is_ok()
-    }
+}
 
-    pub fn map<U>(self, f: impl FnOnce(T) -> U) -> EmitResult<U> {
+pub trait WithTsError {
+    type Output;
+    fn with_ts_on_err(self, ts: TokenStream) -> Self::Output;
+}
+
+impl<T, E> WithTsError for Result<T, E> {
+    type Output = Result<T, (TokenStream, E)>;
+    #[inline]
+    fn with_ts_on_err(self, ts: TokenStream) -> Self::Output {
+        self.map_err(|e| (ts.clone(), e))
+    }
+}
+
+pub trait EmitResultExt<T, E> {
+    fn split(self) -> (TokenStream, Result<T, E>);
+    fn join((ts, res): (TokenStream, Result<T, E>)) -> EmitResult<T, E> {
+        res.with_ts(ts)
+    }
+    fn into_tokens(self) -> TokenStream;
+    fn tokens(&self) -> &TokenStream;
+    fn map_inner<U>(self, f: impl FnOnce(T) -> U) -> EmitResult<U, E>;
+    fn map_inner_err<U>(self, f: impl FnOnce(E) -> U) -> EmitResult<T, U>;
+    fn strip_err_tokens(self) -> Result<(TokenStream, T), E>;
+    fn strip_ok_tokens(self) -> Result<T, (TokenStream, E)>;
+}
+
+impl<T, E> EmitResultExt<T, E> for EmitResult<T, E> {
+    #[inline]
+    fn split(self) -> (TokenStream, Result<T, E>) {
         match self {
-            Self::Ok { tokens, value } => EmitResult::Ok { tokens, value: f(value) },
-            Self::Err { tokens, error } => EmitResult::Err { tokens, error },
+            Ok((ts, v)) => (ts, Ok(v)),
+            Err((ts, e)) => (ts, Err(e)),
         }
     }
-    pub fn map_err(self, f: impl FnOnce(EmitError) -> EmitError) -> Self {
+
+    #[inline]
+    fn into_tokens(self) -> TokenStream {
         match self {
-            Self::Err { tokens, error } => Self::Err { tokens, error: f(error) },
-            ok => ok,
+            Ok((ts, _)) => ts,
+            Err((ts, _)) => ts,
         }
     }
 
-    /// Split into tokens and a plain `Result<T, EmitError>`.
-    pub fn split(self) -> (TokenStream, Result<T, EmitError>) {
+    #[inline]
+    fn tokens(&self) -> &TokenStream {
         match self {
-            Self::Ok { tokens, value } => (tokens, Ok(value)),
-            Self::Err { tokens, error } => (tokens, Err(error)),
+            Ok((ts, _)) => ts,
+            Err((ts, _)) => ts,
         }
+    }
+
+    #[inline]
+    fn map_inner<U>(self, f: impl FnOnce(T) -> U) -> EmitResult<U, E> {
+        self.and_then(|(ts, v)| Ok(f(v)).with_ts(ts))
+    }
+
+    #[inline]
+    fn map_inner_err<U>(self, f: impl FnOnce(E) -> U) -> EmitResult<T, U> {
+        self.or_else(|(ts, e)| Err(f(e)).with_ts(ts))
+    }
+
+    #[inline]
+    fn strip_err_tokens(self) -> Result<(TokenStream, T), E> {
+        self.map_err(|(_, e)| e)
+    }
+
+    #[inline]
+    fn strip_ok_tokens(self) -> Result<T, (TokenStream, E)> {
+        self.map(|(_, v)| v)
     }
 }
 
-impl<T> From<EmitResult<T>> for syn::Result<T> {
-    fn from(v: EmitResult<T>) -> Self {
-        match v {
-            EmitResult::Ok { value, .. } => Ok(value),
-            EmitResult::Err { error, .. } => Err(error.into()),
-        }
-    }
-}
-impl<T> From<EmitResult<T>> for darling::Result<T> {
-    fn from(v: EmitResult<T>) -> Self {
-        match v {
-            EmitResult::Ok { value, .. } => Ok(value),
-            EmitResult::Err { error, .. } => Err(error.into()),
-        }
-    }
-}
-impl<T> ToTokens for EmitResult<T> {
-    fn to_tokens(&self, out: &mut TokenStream) {
-        let ts = match self {
-            EmitResult::Ok { tokens, .. } | EmitResult::Err { tokens, .. } => tokens,
-        };
-        out.extend(ts.clone());
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct FatalEmit {
-    pub tokens: TokenStream,
-    pub error: EmitError,
-}
-impl<T> From<EmitResult<T>> for Result<T, FatalEmit> {
-    fn from(v: EmitResult<T>) -> Self {
-        match v {
-            EmitResult::Ok { value, .. } => Ok(value),
-            EmitResult::Err { tokens, error } => Err(FatalEmit { tokens, error }),
+pub type CtxOnly = Ctx<()>;
+impl<T, E> From<EmitResult<T, E>> for CtxOnly {
+    fn from(value: EmitResult<T, E>) -> Self {
+        match value {
+            Ok((ts, _)) => Ctx(ts, ()),
+            Err((ts, _)) => Ctx(ts, ()),
         }
     }
 }
@@ -291,9 +302,9 @@ mod tests {
             b.extend(quote! { work });
             b
         };
-        let ok: EmitResult<i32> = b1.into_ok(42);
+        let ok: EmitResult<i32, ()> = b1.into_ok(42);
         match ok {
-            EmitResult::Ok { tokens, value } => {
+            Ok((tokens, value)) => {
                 assert_eq!(value, 42);
                 assert_ts_eq!(&tokens, quote! { cp work });
             }
@@ -306,11 +317,11 @@ mod tests {
             b.extend(quote! { work });
             b
         };
-        let err: EmitResult<()> =
+        let err: EmitResult<(), _> =
             b2.into_err(syn::Error::new(proc_macro2::Span::call_site(), "nope"));
         match err {
-            EmitResult::Err { tokens, error } => {
-                let _: syn::Error = error.clone().into(); // convertible
+            Err((tokens, error)) => {
+                let _: syn::Error = error.clone().into();
                 assert_ts_eq!(&tokens, quote! { cp });
             }
             _ => panic!("expected Err"),
@@ -318,28 +329,10 @@ mod tests {
     }
 
     #[xtest]
-    fn result_conversions_to_syn_and_darling() {
-        // Ok path -> Ok(_)
-        let ok: EmitResult<&'static str> = EmitResult::ok(quote! { t }, "v");
-        let syn_ok: syn::Result<_> = ok.clone().into();
-        let dar_ok: darling::Result<_> = ok.into();
-        assert!(syn_ok.is_ok());
-        assert!(dar_ok.is_ok());
-
-        // Err path -> Err(_)
-        let e = syn::Error::new(proc_macro2::Span::call_site(), "bad");
-        let err: EmitResult<()> = EmitResult::err(quote! { t }, e);
-        let syn_err: syn::Result<()> = err.clone().into();
-        let dar_err: darling::Result<()> = err.into();
-        assert!(syn_err.is_err());
-        assert!(dar_err.is_err());
-    }
-
-    #[xtest]
     fn result_split_and_map() {
         // split ok
         {
-            let ok: EmitResult<i32> = EmitResult::ok(quote! { T }, 5);
+            let ok: EmitResult<i32, ()> = Ok((quote! { T }, 5));
             let (ts, res) = ok.split();
             assert_ts_eq!(&ts, quote! { T });
             assert_eq!(res.unwrap(), 5);
@@ -347,8 +340,8 @@ mod tests {
 
         // map
         {
-            let ok: EmitResult<&'static str> = EmitResult::ok(quote! { U }, "abc");
-            let mapped = ok.map(|s| s.len());
+            let ok: EmitResult<&'static str, ()> = Ok((quote! { U }, "abc"));
+            let mapped = ok.map(|(ts, s)| (ts, s.len()));
             let (ts, res) = mapped.split();
             assert_ts_eq!(ts, quote! { U });
             assert_eq!(res.unwrap(), 3);
@@ -356,10 +349,8 @@ mod tests {
 
         // split err
         {
-            let err: EmitResult<()> = EmitResult::err(
-                quote! { E },
-                syn::Error::new(proc_macro2::Span::call_site(), "nope"),
-            );
+            let err: EmitResult<(), _> =
+                Err((quote! { E }, syn::Error::new(proc_macro2::Span::call_site(), "nope")));
             let (ts, res) = err.split();
             assert_ts_eq!(&ts, quote! { E });
             assert!(res.is_err());
@@ -376,39 +367,14 @@ mod tests {
         assert_ts_eq!(&out, quote! { a b c });
 
         // EmitResult Ok → ToTokens
-        let ok: EmitResult<()> = EmitResult::ok(quote! { OKTOK }, ());
-        let mut out_ok = TokenStream::new();
-        ok.to_tokens(&mut out_ok);
-        assert_ts_eq!(&out_ok, quote! { OKTOK });
+        let ok: EmitResult<(), ()> = Ok((quote! { OKTOK }, ()));
+        assert_ts_eq!(ok.tokens(), quote! { OKTOK });
 
         // EmitResult Err → ToTokens
-        let err: EmitResult<()> = EmitResult::err(
-            quote! { ERRTOK },
-            syn::Error::new(proc_macro2::Span::call_site(), "x"),
-        );
-        let mut out_err = TokenStream::new();
-        err.to_tokens(&mut out_err);
-        assert_ts_eq!(&out_err, quote! { ERRTOK });
+        let err: EmitResult<(), _> =
+            Err((quote! { ERRTOK }, syn::Error::new(proc_macro2::Span::call_site(), "x")));
+        assert_ts_eq!(err.into_tokens(), quote! { ERRTOK });
     }
-
-    #[xtest]
-    fn fatal_emit_conversion() {
-        // Ok path -> Ok
-        let ok: EmitResult<i32> = EmitResult::ok(quote! { TT }, 9);
-        let ok_conv: Result<i32, FatalEmit> = ok.into();
-        assert_eq!(ok_conv.unwrap(), 9);
-
-        // Err path -> Err(FatalEmit)
-        let err: EmitResult<()> =
-            EmitResult::err(quote! { FOO }, darling::Error::unknown_field("bar"));
-        let err_conv: Result<(), FatalEmit> = err.into();
-        let fe = err_conv.expect_err("should be error");
-        assert_ts_eq!(&fe.tokens, quote! { FOO });
-        // also check error converts both ways
-        let _syn_err: syn::Error = fe.error.clone().into();
-        let _dar_err: darling::Error = fe.error.clone().into();
-    }
-
     #[xtest]
     fn restore_noop_when_empty() {
         // If no checkpoints exist, restore/discard/pop_restore are no-ops
