@@ -1,5 +1,6 @@
 use crate::{
     codegen::emit::{
+        EmitBuilder,
         EmitResult,
         EmitResultExt,
         WithTs,
@@ -266,33 +267,41 @@ pub fn inflate_args_from_input(
         is_config_helper(attr) && matches!(site, AttrSite::Variant { .. })
     }
 
-    let mut scrubbed_tokens = input.clone();
+    let mut b = EmitBuilder::from_checkpoint(input);
 
+    // TODO: maybe we need a code path that doesn't strip - only analyze?
     // 2) Scrub helpers from the item and resolve ident
-    let (input, scrub) = scrub_helpers_and_ident_with_filter(
-        input,
+    let scrub = scrub_helpers_and_ident_with_filter(
+        b.to_token_stream(),
         is_allowed_helper,
         is_config_helper,
         resolve_ident,
-    )?;
+    )
+    // TODO: this feels bad - see `ScrubOutcome#ident` todo
+    .strip_ok_tokens()?;
 
     // 3)
-    if args._strip_helpers {
-        // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
-        scrub.replace_token_stream(&mut scrubbed_tokens).with_ts(input.clone())?;
-    } else {
-        // Check if we have errors to print and if so, strip helpers from the item
-        // Otherwise, maintain helpers for the next attribute to process
-        scrub.prepend_errors(&mut scrubbed_tokens).with_ts(input.clone())?;
-    }
+    b.try_unit(|b| {
+        if args._strip_helpers {
+            // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
+            scrub.replace_token_stream(b)
+        } else {
+            // Check if we have errors to print and if so, strip helpers from the item
+            // Otherwise, maintain helpers for the next attribute to process
+            scrub.prepend_errors(b)
+        }
+    })?;
 
     // 4) If it's a struct, there are no entries to compute
     let data_enum = match scrub.item {
         Item::Struct(_) => {
-            return Ok(args).with_ts(scrubbed_tokens);
+            return b.into_ok(args);
         }
         Item::Enum(ref en) => en,
-        _ => unreachable!("resolve_ident_from_struct_or_enum guarantees struct|enum"),
+        _ => {
+            let err = syn::Error::new(scrub.item.span(), "Only struct or enum supported");
+            return b.into_err(err);
+        }
     };
 
     // 5) Collect per-variant configs:
@@ -314,56 +323,55 @@ pub fn inflate_args_from_input(
     // Track the FIRST observed index we see for that variant.
     let mut observed_order_by_variant: HashMap<Ident, usize> = HashMap::new();
 
-    // Parse all removed helper attrs (last-one-wins per key), but error on duplicates for the SAME key.
-    // Treat a second helper on the same (variant, group or None) as a hard error.
-    for (observed_index, site) in scrub.all_with_removed_attrs().into_iter().enumerate() {
-        if let AttrSite::Variant { variant } = &site.site {
-            observed_order_by_variant.entry(variant.clone()).or_insert(observed_index);
+    b.try_unit(|_| {
+        // Parse all removed helper attrs (last-one-wins per key), but error on duplicates for the SAME key.
+        // Treat a second helper on the same (variant, group or None) as a hard error.
+        for (observed_index, site) in scrub.all_with_removed_attrs().into_iter().enumerate() {
+            if let AttrSite::Variant { variant } = &site.site {
+                observed_order_by_variant.entry(variant.clone()).or_insert(observed_index);
 
-            for attr in &site.attrs {
-                // Only care about our helper
-                if !is_config_helper(attr) {
-                    continue;
-                }
-
-                let mut entry = ConfigureSystemSetArgsInnerEntry::from_meta(&attr.meta)
-                    .map_err(syn::Error::from)
-                    .with_ts(scrubbed_tokens.clone())
-                    .strip_ok_tokens()?;
-
-                // If order wasn't provided on the helper, set it to the first observed index for this variant
-                if entry.order.is_none() {
-                    entry.order =
-                        Some(*observed_order_by_variant.get(variant).unwrap_or(&observed_index));
-                }
-
-                let bucket = variants_cfg.entry(variant.clone()).or_default();
-                match &entry.group {
-                    Some(g) => {
-                        if bucket.per_group.contains_key(g) {
-                            return Err(syn::Error::new(
-                                attr.span(),
-                                format!("duplicate helper for variant `{variant}` and group `{g}`",),
-                            )).with_ts(scrubbed_tokens.clone());
-                        }
-                        bucket.per_group.insert(g.clone(), entry);
+                for attr in &site.attrs {
+                    // Only care about our helper
+                    if !is_config_helper(attr) {
+                        continue;
                     }
-                    None => {
-                        if bucket.default.is_some() {
-                            return Err(syn::Error::new(
-                                attr.span(),
-                                format!(
-                                    "duplicate default (no-group) helper for variant `{variant}`",
-                                ),
-                            ))
-                            .with_ts(scrubbed_tokens.clone());
+
+                    let mut entry = ConfigureSystemSetArgsInnerEntry::from_meta(&attr.meta)?;
+
+                    // If order wasn't provided on the helper, set it to the first observed index for this variant
+                    if entry.order.is_none() {
+                        entry.order =
+                            Some(*observed_order_by_variant.get(variant).unwrap_or(&observed_index));
+                    }
+
+                    let bucket = variants_cfg.entry(variant.clone()).or_default();
+                    match &entry.group {
+                        Some(g) => {
+                            if bucket.per_group.contains_key(g) {
+                                return Err(syn::Error::new(
+                                    attr.span(),
+                                    format!("duplicate helper for variant `{variant}` and group `{g}`", ),
+                                ));
+                            }
+                            bucket.per_group.insert(g.clone(), entry);
                         }
-                        bucket.default = Some(entry);
+                        None => {
+                            if bucket.default.is_some() {
+                                return Err(syn::Error::new(
+                                    attr.span(),
+                                    format!(
+                                        "duplicate default (no-group) helper for variant `{variant}`",
+                                    ),
+                                ));
+                            }
+                            bucket.default = Some(entry);
+                        }
                     }
                 }
             }
         }
-    }
+        Ok(())
+    })?;
 
     // 6) Walk the enum variants and assemble entries using fallback rules:
     //    chosen = per_group[outer_group]
@@ -426,7 +434,7 @@ pub fn inflate_args_from_input(
 
     // 8) Store into args and return
     args.inner = Some(ConfigureSystemSetArgsInner { entries });
-    Ok(args).with_ts(scrubbed_tokens)
+    Ok(args).with_ts(b.into_tokens())
 }
 
 #[cfg(test)]
@@ -510,6 +518,10 @@ mod tests {
 
     mod test_enum {
         use super::*;
+        use internal_test_util::{
+            assert_ts_eq,
+            token_stream::token_string,
+        };
         use quote::quote;
 
         #[xtest]
@@ -700,6 +712,26 @@ mod tests {
             .map_err(|e| e.to_string());
 
             assert_eq!(res, Err(CHAIN_CONFLICT_ERR.into()));
+        }
+
+        #[xtest]
+        fn test_dont_strip_helpers_early() -> Result<(), (String, syn::Error)> {
+            let attr = quote! { group = A, schedule = Update };
+            let input = quote! {
+                #[auto_configure_system_set(group = B, schedule = FixedUpdate)]
+                enum Foo {
+                    #[auto_configure_system_set_config(group = A, config(run_if = always))]
+                    #[auto_configure_system_set_config(group = B, config(run_if = never))]
+                    A,
+                }
+            };
+            let (tokens, args) =
+                args_from_attr_input(attr, input.clone()).map_err_tokens(token_string)?;
+
+            assert!(!args._strip_helpers);
+            assert_ts_eq!(tokens, input);
+
+            Ok(())
         }
     }
 }
