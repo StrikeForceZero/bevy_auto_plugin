@@ -25,7 +25,13 @@ where
     );
     let mut app_mut_emitter = AppMutationEmitter::from_args(args);
     let processed_item = {
-        ok_or_emit_with!(app_mut_emitter.item_post_process(), app_mut_emitter.args.input_item());
+        if let Err((tokens, err)) = app_mut_emitter.item_post_process() {
+            let err = err.to_compile_error();
+            return quote! {
+                #err
+                #tokens
+            };
+        }
         app_mut_emitter.args.input_item().to_token_stream()
     };
     let after_item_tokens =

@@ -1,4 +1,9 @@
 use crate::{
+    codegen::emit::{
+        EmitResult,
+        EmitResultExt,
+        WithTs,
+    },
     macro_api::{
         prelude::*,
         schedule_config::{
@@ -34,6 +39,7 @@ use syn::{
     parse_quote,
     spanned::Spanned,
 };
+
 const CONFIG_ATTR_NAME: &str = "auto_configure_system_set_config";
 const CHAIN_CONFLICT_ERR: &str = "`chain` and `chain_ignore_deferred` are mutually exclusive";
 
@@ -178,16 +184,16 @@ fn output(
 }
 
 impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
-    fn item_post_process(&mut self) -> syn::Result<()> {
+    fn item_post_process(&mut self) -> Result<(), (TokenStream, syn::Error)> {
         let input_item = &mut self.args.input_item;
         let args = &mut self.args.args.base;
-        let item = input_item.ensure_ast()?;
-        check_strip_helpers(item, args)?;
+        let input = input_item.to_token_stream();
+        let (input, item) = input_item.ensure_ast().with_ts(input)?;
+        check_strip_helpers(item, args).with_ts(input.clone())?;
         if args.inner.is_none() {
-            let input = input_item.to_token_stream();
-            let res = inflate_args_from_input(args.clone(), input)?;
-            *args = res.inflated_args;
-            *input_item = InputItem::Tokens(res.scrubbed_tokens);
+            let (input, inflated_args) = inflate_args_from_input(args.clone(), input)?;
+            *args = inflated_args;
+            *input_item = InputItem::Tokens(input);
         }
         Ok(())
     }
@@ -198,8 +204,8 @@ impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
             let args = args.clone();
             let input = self.args.input_item.to_token_stream();
             match inflate_args_from_input(args, input) {
-                Ok(res) => res.inflated_args,
-                Err(err) => {
+                Ok((_, args)) => args,
+                Err((_, err)) => {
                     tokens.extend(err.to_compile_error());
                     return;
                 }
@@ -239,23 +245,18 @@ fn check_strip_helpers(item: &Item, args: &mut ConfigureSystemSetArgs) -> syn::R
 pub fn args_from_attr_input(
     attr: TokenStream,
     input: TokenStream,
-) -> syn::Result<InflateArgsOutput> {
-    let mut args = syn::parse2::<ConfigureSystemSetArgs>(attr)?;
-    let mut input_item = InputItem::Tokens(input);
-    check_strip_helpers(input_item.ensure_ast()?, &mut args)?;
+) -> EmitResult<ConfigureSystemSetArgs, syn::Error> {
+    let (input, mut args) = syn::parse2::<ConfigureSystemSetArgs>(attr).with_ts(input.clone())?;
+    let mut input_item = InputItem::Tokens(input.clone());
+    let (input, item) = input_item.ensure_ast().with_ts(input)?;
+    check_strip_helpers(item, &mut args).with_ts(input)?;
     inflate_args_from_input(args, input_item.to_token_stream())
-}
-
-#[derive(Debug)]
-pub struct InflateArgsOutput {
-    scrubbed_tokens: TokenStream,
-    inflated_args: ConfigureSystemSetArgs,
 }
 
 pub fn inflate_args_from_input(
     mut args: ConfigureSystemSetArgs,
     input: TokenStream,
-) -> syn::Result<InflateArgsOutput> {
+) -> EmitResult<ConfigureSystemSetArgs, syn::Error> {
     fn resolve_ident(item: &Item) -> syn::Result<&Ident> {
         // TODO: remove and use ident from higher level?
         item.ident()
@@ -268,7 +269,7 @@ pub fn inflate_args_from_input(
     let mut scrubbed_tokens = input.clone();
 
     // 2) Scrub helpers from the item and resolve ident
-    let scrub = scrub_helpers_and_ident_with_filter(
+    let (input, scrub) = scrub_helpers_and_ident_with_filter(
         input,
         is_allowed_helper,
         is_config_helper,
@@ -278,17 +279,17 @@ pub fn inflate_args_from_input(
     // 3)
     if args._strip_helpers {
         // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
-        scrub.replace_token_stream(&mut scrubbed_tokens)?;
+        scrub.replace_token_stream(&mut scrubbed_tokens).with_ts(input.clone())?;
     } else {
         // Check if we have errors to print and if so, strip helpers from the item
         // Otherwise, maintain helpers for the next attribute to process
-        scrub.prepend_errors(&mut scrubbed_tokens)?;
+        scrub.prepend_errors(&mut scrubbed_tokens).with_ts(input.clone())?;
     }
 
     // 4) If it's a struct, there are no entries to compute
     let data_enum = match scrub.item {
         Item::Struct(_) => {
-            return Ok(InflateArgsOutput { inflated_args: args, scrubbed_tokens });
+            return Ok(args).with_ts(scrubbed_tokens);
         }
         Item::Enum(ref en) => en,
         _ => unreachable!("resolve_ident_from_struct_or_enum guarantees struct|enum"),
@@ -325,7 +326,10 @@ pub fn inflate_args_from_input(
                     continue;
                 }
 
-                let mut entry = ConfigureSystemSetArgsInnerEntry::from_meta(&attr.meta)?;
+                let mut entry = ConfigureSystemSetArgsInnerEntry::from_meta(&attr.meta)
+                    .map_err(syn::Error::from)
+                    .with_ts(scrubbed_tokens.clone())
+                    .strip_ok_tokens()?;
 
                 // If order wasn't provided on the helper, set it to the first observed index for this variant
                 if entry.order.is_none() {
@@ -340,7 +344,7 @@ pub fn inflate_args_from_input(
                             return Err(syn::Error::new(
                                 attr.span(),
                                 format!("duplicate helper for variant `{variant}` and group `{g}`",),
-                            ));
+                            )).with_ts(scrubbed_tokens.clone());
                         }
                         bucket.per_group.insert(g.clone(), entry);
                     }
@@ -351,7 +355,8 @@ pub fn inflate_args_from_input(
                                 format!(
                                     "duplicate default (no-group) helper for variant `{variant}`",
                                 ),
-                            ));
+                            ))
+                            .with_ts(scrubbed_tokens.clone());
                         }
                         bucket.default = Some(entry);
                     }
@@ -421,12 +426,13 @@ pub fn inflate_args_from_input(
 
     // 8) Store into args and return
     args.inner = Some(ConfigureSystemSetArgsInner { entries });
-    Ok(InflateArgsOutput { inflated_args: args, scrubbed_tokens })
+    Ok(args).with_ts(scrubbed_tokens)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::codegen::emit::EmitResultExt;
     use internal_test_proc_macro::xtest;
     use syn::{
         Path,
@@ -438,9 +444,9 @@ mod tests {
         attr: TokenStream,
         input: TokenStream,
     ) -> Result<(Ident, ConfigureSystemSetArgs), syn::Error> {
-        let mut input_item = InputItem::Tokens(input);
+        let mut input_item = InputItem::Tokens(input.clone());
         let ident = input_item.ident()?.clone();
-        let inflated_args = args_from_attr_input(attr, input_item.to_token_stream())?.inflated_args;
+        let (_, inflated_args) = args_from_attr_input(attr, input.clone()).strip_err_tokens()?;
         Ok((ident, inflated_args))
     }
 
@@ -581,7 +587,7 @@ mod tests {
 
         #[xtest]
         fn test_helper() -> syn::Result<()> {
-            let inflated_args = args_from_attr_input(
+            let (_, inflated_args) = args_from_attr_input(
                 quote! {
                     group = A,
                     schedule = Update,
@@ -594,8 +600,8 @@ mod tests {
                         B,
                     }
                 },
-            )?
-            .inflated_args;
+            )
+            .strip_err_tokens()?;
             assert_eq!(
                 inflated_args,
                 ConfigureSystemSetArgs {
@@ -646,7 +652,7 @@ mod tests {
                     B,
                 }
             };
-            let scrubbed_input = args_from_attr_input(attr, input)?.scrubbed_tokens;
+            let (scrubbed_input, _) = args_from_attr_input(attr, input).strip_err_tokens()?;
             assert_eq!(
                 scrubbed_input.to_string(),
                 quote! {

@@ -1,5 +1,11 @@
 #![allow(dead_code)]
-use crate::syntax::extensions::item::ItemAttrsExt;
+use crate::{
+    codegen::emit::{
+        EmitResult,
+        WithTsError,
+    },
+    syntax::extensions::item::ItemAttrsExt,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::{
@@ -173,6 +179,19 @@ impl ScrubOutcome {
             self.errors.clone(),
             "failed to scrub helpers",
         )
+    }
+}
+
+impl ToTokens for ScrubOutcome {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.item.to_tokens(tokens);
+    }
+}
+
+impl From<ScrubOutcome> for EmitResult<ScrubOutcome, syn::Error> {
+    fn from(value: ScrubOutcome) -> Self {
+        // TODO: do we return Err if errors are present?
+        Ok((value.item.to_token_stream(), value))
     }
 }
 
@@ -394,18 +413,18 @@ pub fn scrub_helpers_and_ident(
     input: proc_macro2::TokenStream,
     is_helper: fn(&Attribute) -> bool,
     resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-) -> syn::Result<ScrubOutcome> {
+) -> EmitResult<ScrubOutcome, syn::Error> {
     scrub_helpers_and_ident_with_filter(input, |_, _| true, is_helper, resolve_ident)
 }
 
 pub fn scrub_helpers_and_ident_with_filter(
-    input: proc_macro2::TokenStream,
+    input: TokenStream,
     is_site_allowed: fn(&AttrSite, &Attribute) -> bool,
     is_helper: fn(&Attribute) -> bool,
     resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-) -> syn::Result<ScrubOutcome> {
-    let mut item: Item = syn::parse2(input)?;
-    let ident = resolve_ident(&item)?.clone();
+) -> EmitResult<ScrubOutcome, syn::Error> {
+    let mut item = syn::parse2::<Item>(input.clone()).with_ts_on_err(input.clone())?;
+    let ident = resolve_ident(&item).cloned().with_ts_on_err(input.clone())?;
 
     let mut scrubber = Scrubber { is_helper, out: ScrubberOut::default(), errors: vec![] };
     scrubber.visit_item_mut(&mut item);
@@ -429,13 +448,25 @@ pub fn scrub_helpers_and_ident_with_filter(
         }
     }
 
-    Ok(ScrubOutcome {
+    // TODO: check for errors?
+    // check for errors
+    // if let Some(err) = scrubber.errors.pop() {
+    //     let err = scrubber.errors.into_iter().fold(err, |mut acc, err| {
+    //         acc.combine(err);
+    //         acc
+    //     });
+    //     return Err((item.to_token_stream(), err));
+    // }
+
+    let scrub = ScrubOutcome {
         item,
         ident,
         observed: scrubber.out.observed,
         removed: scrubber.out.removed,
         errors: scrubber.errors,
-    })
+    };
+
+    scrub.into()
 }
 
 // Parse removed helpers into `T`
@@ -511,6 +542,7 @@ mod tests {
 
     mod scrub_helpers_and_ident {
         use super::*;
+        use crate::codegen::emit::EmitResultExt;
         #[inline]
         fn assert_no_errors(scrub_outcome: &ScrubOutcome) {
             assert_eq!(
@@ -551,7 +583,8 @@ mod tests {
                     z: i32,
                 }
             };
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let (_input, scrub_outcome) =
+                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
@@ -593,7 +626,8 @@ mod tests {
                     C,
                 }
             };
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let (_input, scrub_outcome) =
+                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
@@ -642,7 +676,8 @@ mod tests {
                     Y,
                 }
             };
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let (_input, scrub_outcome) =
+                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
@@ -684,7 +719,8 @@ mod tests {
                     C,
                 }
             };
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let (_input, scrub_outcome) =
+                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
@@ -732,7 +768,8 @@ mod tests {
                 }
             };
 
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let (_input, scrub_outcome) =
+                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
 
             let got = SiteAttrsVec::from_vec(scrub_outcome.all_with_removed_attrs());
             let expected = SiteAttrsVec::from_vec(vec![
