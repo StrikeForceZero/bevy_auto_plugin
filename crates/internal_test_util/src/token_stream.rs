@@ -2,9 +2,18 @@
 
 use proc_macro2::TokenStream;
 use quote::ToTokens;
+use std::fmt::{
+    Debug,
+    Formatter,
+};
 
-#[derive(Debug)]
 pub struct Ts(TokenStream);
+
+impl Debug for Ts {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0.to_string())
+    }
+}
 
 impl PartialEq for Ts {
     fn eq(&self, other: &Self) -> bool {
