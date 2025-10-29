@@ -79,6 +79,40 @@ impl EmitBuilder {
         }
     }
 
+    #[inline]
+    pub fn ok<T, E>(&self, v: T) -> EmitResult<T, E> {
+        Ok((self.tokens.clone(), v))
+    }
+    #[inline]
+    pub fn err<T, E>(&self, e: E) -> EmitResult<T, E> {
+        Err((self.tokens.clone(), e))
+    }
+
+    /// Same as `try_phase` but returns `EmitResult` for easy `?` usage
+    pub(crate) fn try_do<T, E>(
+        &mut self,
+        f: impl FnOnce(&mut Self) -> Result<T, E>,
+    ) -> EmitResult<T, E> {
+        self.push_checkpoint();
+        match f(self) {
+            Ok(v) => {
+                self.discard_checkpoint();
+                self.ok(v)
+            }
+            Err(e) => {
+                self.pop_restore();
+                self.err(e)
+            }
+        }
+    }
+
+    pub(crate) fn try_unit<E>(
+        &mut self,
+        f: impl FnOnce(&mut Self) -> Result<(), E>,
+    ) -> Result<(), (TokenStream, E)> {
+        self.try_do(f).strip_ok_tokens()
+    }
+
     pub(crate) fn into_tokens(self) -> TokenStream {
         self.tokens
     }
