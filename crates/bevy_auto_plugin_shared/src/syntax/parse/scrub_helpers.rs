@@ -133,6 +133,8 @@ impl SiteAttrsVec {
 }
 
 pub struct ScrubOutcome {
+    // TODO: probably should be inside the EmitResult instead of here.
+    //  But EmitResult should allow for `syn::Item` or `InputItem` as well as `TokenStream` to make sense
     /// scrubbed item (no helpers remain)
     pub item: Item,
     /// struct/enum ident
