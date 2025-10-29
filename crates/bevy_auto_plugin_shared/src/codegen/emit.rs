@@ -207,6 +207,10 @@ pub trait EmitResultExt<T, E> {
     fn tokens(&self) -> &TokenStream;
     fn map_inner<U>(self, f: impl FnOnce(T) -> U) -> EmitResult<U, E>;
     fn map_inner_err<U>(self, f: impl FnOnce(E) -> U) -> EmitResult<T, U>;
+    fn map_err_tokens<U>(
+        self,
+        f: impl FnOnce(TokenStream) -> U,
+    ) -> Result<(TokenStream, T), (U, E)>;
     fn strip_err_tokens(self) -> Result<(TokenStream, T), E>;
     fn strip_ok_tokens(self) -> Result<T, (TokenStream, E)>;
 }
@@ -244,6 +248,14 @@ impl<T, E> EmitResultExt<T, E> for EmitResult<T, E> {
     #[inline]
     fn map_inner_err<U>(self, f: impl FnOnce(E) -> U) -> EmitResult<T, U> {
         self.or_else(|(ts, e)| Err(f(e)).with_ts(ts))
+    }
+
+    #[inline]
+    fn map_err_tokens<U>(
+        self,
+        f: impl FnOnce(TokenStream) -> U,
+    ) -> Result<(TokenStream, T), (U, E)> {
+        self.map_err(|(ts, e)| (f(ts), e))
     }
 
     #[inline]
