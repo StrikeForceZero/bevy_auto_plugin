@@ -155,8 +155,10 @@ impl ToTokens for EmitBuilder {
     }
 }
 
-pub type EmitResult<T, E> = Result<(TokenStream, T), (TokenStream, E)>;
-pub type EmitErrOnlyResult<T, E> = Result<T, (TokenStream, E)>;
+pub type WithTokens<T> = (TokenStream, T);
+pub type EmitResult<T, E> = Result<WithTokens<T>, WithTokens<E>>;
+pub type EmitOkOnlyResult<T, E> = Result<WithTokens<T>, E>;
+pub type EmitErrOnlyResult<T, E> = Result<T, WithTokens<E>>;
 
 pub struct Ctx<T>(pub TokenStream, pub T);
 
@@ -214,12 +216,9 @@ pub trait EmitResultExt<T, E> {
     fn tokens(&self) -> &TokenStream;
     fn map_inner<U>(self, f: impl FnOnce(T) -> U) -> EmitResult<U, E>;
     fn map_inner_err<U>(self, f: impl FnOnce(E) -> U) -> EmitResult<T, U>;
-    fn map_err_tokens<U>(
-        self,
-        f: impl FnOnce(TokenStream) -> U,
-    ) -> Result<(TokenStream, T), (U, E)>;
-    fn strip_err_tokens(self) -> Result<(TokenStream, T), E>;
-    fn strip_ok_tokens(self) -> Result<T, (TokenStream, E)>;
+    fn map_err_tokens<U>(self, f: impl FnOnce(TokenStream) -> U) -> Result<WithTokens<T>, (U, E)>;
+    fn strip_err_tokens(self) -> EmitOkOnlyResult<T, E>;
+    fn strip_ok_tokens(self) -> EmitErrOnlyResult<T, E>;
 }
 
 impl<T, E> EmitResultExt<T, E> for EmitResult<T, E> {
@@ -266,12 +265,12 @@ impl<T, E> EmitResultExt<T, E> for EmitResult<T, E> {
     }
 
     #[inline]
-    fn strip_err_tokens(self) -> Result<(TokenStream, T), E> {
+    fn strip_err_tokens(self) -> EmitOkOnlyResult<T, E> {
         self.map_err(|(_, e)| e)
     }
 
     #[inline]
-    fn strip_ok_tokens(self) -> Result<T, (TokenStream, E)> {
+    fn strip_ok_tokens(self) -> EmitErrOnlyResult<T, E> {
         self.map(|(_, v)| v)
     }
 }
