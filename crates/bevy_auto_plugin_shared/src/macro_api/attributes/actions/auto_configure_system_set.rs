@@ -19,6 +19,7 @@ use crate::{
             item::item_has_attr,
             scrub_helpers::{
                 AttrSite,
+                ScrubOutcome,
                 scrub_helpers_and_ident_with_filter,
             },
         },
@@ -269,28 +270,34 @@ pub fn inflate_args_from_input(
 
     let mut b = EmitBuilder::from_checkpoint(input);
 
-    // TODO: maybe we need a code path that doesn't strip - only analyze?
     // 2) Scrub helpers from the item and resolve ident
-    let scrub = scrub_helpers_and_ident_with_filter(
-        b.to_token_stream(),
-        is_allowed_helper,
-        is_config_helper,
-        resolve_ident,
-    )
-    // TODO: this feels bad - see `ScrubOutcome#ident` todo
-    .strip_ok_tokens()?;
+    let scrub = b
+        .try_do(|b| {
+            // TODO: maybe we need a code path that doesn't strip - only analyze?
+            let scrub = scrub_helpers_and_ident_with_filter(
+                b.to_token_stream(),
+                is_allowed_helper,
+                is_config_helper,
+                resolve_ident,
+            )
+            // TODO: this feels bad - see `ScrubOutcome#ident` todo
+            .strip_ok_tokens()?;
 
-    // 3)
-    b.try_unit(|b| {
-        if args._strip_helpers {
-            // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
-            scrub.replace_token_stream(b)
-        } else {
-            // Check if we have errors to print and if so, strip helpers from the item
-            // Otherwise, maintain helpers for the next attribute to process
-            scrub.prepend_errors(b)
-        }
-    })?;
+            // 3) Determine if we are writing the scrubbed item back to *input* or just errors (if any)
+            b.try_unit(|b| {
+                if args._strip_helpers {
+                    // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
+                    scrub.replace_token_stream(b)
+                } else {
+                    // Check if we have errors to print and if so, strip helpers from the item
+                    // Otherwise, maintain helpers for the next attribute to process
+                    scrub.prepend_errors(b)
+                }
+            })?;
+
+            Ok(scrub)
+        })
+        .strip_ok_tokens()?;
 
     // 4) If it's a struct, there are no entries to compute
     let data_enum = match scrub.item {
