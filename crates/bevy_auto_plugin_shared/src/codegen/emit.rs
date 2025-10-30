@@ -156,6 +156,7 @@ impl ToTokens for EmitBuilder {
 }
 
 pub type EmitResult<T, E> = Result<(TokenStream, T), (TokenStream, E)>;
+pub type EmitErrOnlyResult<T, E> = Result<T, (TokenStream, E)>;
 
 pub struct Ctx<T>(pub TokenStream, pub T);
 

@@ -1,6 +1,7 @@
 use crate::{
     codegen::emit::{
         EmitBuilder,
+        EmitErrOnlyResult,
         EmitResult,
         EmitResultExt,
         WithTs,
@@ -34,6 +35,7 @@ use quote::{
     ToTokens,
     quote,
 };
+use std::collections::HashMap;
 use syn::{
     Attribute,
     Item,
@@ -255,10 +257,54 @@ pub fn args_from_attr_input(
     inflate_args_from_input(args, input_item.to_token_stream())
 }
 
+/// Type alias for the per-variant configuration data structure
+type VariantConfigMap = HashMap<Ident, PerVariant>;
+
+/// Type alias for tracking observed order of variants
+type ObservedOrderMap = HashMap<Ident, usize>;
+
+/// Holds configuration data for a specific enum variant
+#[derive(Default)]
+struct PerVariant {
+    /// Default configuration (when group == None)
+    default: Option<ConfigureSystemSetArgsInnerEntry>,
+    /// Group-specific configurations (when group == Some(g))
+    per_group: HashMap<Ident, ConfigureSystemSetArgsInnerEntry>,
+}
+
+/// Processes an input TokenStream and constructs ConfigureSystemSetArgs
 pub fn inflate_args_from_input(
     mut args: ConfigureSystemSetArgs,
     input: TokenStream,
 ) -> EmitResult<ConfigureSystemSetArgs, syn::Error> {
+    let mut builder = EmitBuilder::from_checkpoint(input);
+
+    // Process the input and scrub helper attributes
+    let scrubbed_item = process_helper_attributes(&mut builder, args._strip_helpers)?;
+
+    // Handle based on item type
+    match &scrubbed_item.item {
+        Item::Struct(_) => {
+            return builder.into_ok(args);
+        }
+        Item::Enum(item_enum) => {
+            // Process enum variants to populate args
+            process_enum_variants(&mut builder, &mut args, item_enum, &scrubbed_item)?;
+        }
+        _ => {
+            let err = syn::Error::new(scrubbed_item.item.span(), "Only struct or enum supported");
+            return builder.into_err(err);
+        }
+    }
+
+    Ok(args).with_ts(builder.into_tokens())
+}
+
+/// Scrubs helper attributes from input and prepares for processing
+fn process_helper_attributes(
+    builder: &mut EmitBuilder,
+    strip_helpers: bool,
+) -> Result<ScrubOutcome, (TokenStream, syn::Error)> {
     fn resolve_ident(item: &Item) -> syn::Result<&Ident> {
         // TODO: remove and use ident from higher level?
         item.ident()
@@ -268,180 +314,207 @@ pub fn inflate_args_from_input(
         is_config_helper(attr) && matches!(site, AttrSite::Variant { .. })
     }
 
-    let mut b = EmitBuilder::from_checkpoint(input);
+    // TODO: maybe we need a code path that doesn't strip - only analyze?
+    let scrub = scrub_helpers_and_ident_with_filter(
+        builder.to_token_stream(),
+        is_allowed_helper,
+        is_config_helper,
+        resolve_ident,
+    )
+    // TODO: this feels bad - see `ScrubOutcome#ident` todo
+    .strip_ok_tokens()?;
 
-    // 2) Scrub helpers from the item and resolve ident
-    let scrub = b
-        .try_do(|b| {
-            // TODO: maybe we need a code path that doesn't strip - only analyze?
-            let scrub = scrub_helpers_and_ident_with_filter(
-                b.to_token_stream(),
-                is_allowed_helper,
-                is_config_helper,
-                resolve_ident,
-            )
-            // TODO: this feels bad - see `ScrubOutcome#ident` todo
-            .strip_ok_tokens()?;
-
-            // 3) Determine if we are writing the scrubbed item back to *input* or just errors (if any)
-            b.try_unit(|b| {
-                if args._strip_helpers {
-                    // Always write back the scrubbed item to *input* so helpers never re-trigger and IDE has something to work with
-                    scrub.replace_token_stream(b)
-                } else {
-                    // Check if we have errors to print and if so, strip helpers from the item
-                    // Otherwise, maintain helpers for the next attribute to process
-                    scrub.prepend_errors(b)
-                }
-            })?;
-
-            Ok(scrub)
-        })
-        .strip_ok_tokens()?;
-
-    // 4) If it's a struct, there are no entries to compute
-    let data_enum = match scrub.item {
-        Item::Struct(_) => {
-            return b.into_ok(args);
+    builder.try_unit(|b| {
+        if strip_helpers {
+            // Always write back scrubbed item to prevent helpers from re-triggering
+            scrub.replace_token_stream(b)
+        } else {
+            // Only prepend errors if any, otherwise keep helpers for next attribute
+            scrub.prepend_errors(b)
         }
-        Item::Enum(ref en) => en,
-        _ => {
-            let err = syn::Error::new(scrub.item.span(), "Only struct or enum supported");
-            return b.into_err(err);
-        }
-    };
+    })?;
 
-    // 5) Collect per-variant configs:
-    //    - per-group configs: HashMap<Ident, Entry>
-    //    - default (no-group) config: Option<Entry>
-    use std::collections::HashMap;
+    Ok(scrub)
+}
 
-    #[derive(Default)]
-    struct PerVariant {
-        /// group == None
-        default: Option<ConfigureSystemSetArgsInnerEntry>,
-        /// group == Some(g)
-        per_group: HashMap<Ident, ConfigureSystemSetArgsInnerEntry>,
-    }
+/// Processes enum variants to extract and organize configuration entries
+fn process_enum_variants(
+    builder: &mut EmitBuilder,
+    args: &mut ConfigureSystemSetArgs,
+    item_enum: &syn::ItemEnum,
+    scrubbed_item: &ScrubOutcome,
+) -> EmitErrOnlyResult<(), syn::Error> {
+    // Parse and collect configuration data from variant attributes
+    let (variant_configs, observed_order) = collect_variant_configs(builder, scrubbed_item)?;
 
-    let mut variants_cfg: HashMap<Ident, PerVariant> = HashMap::new();
+    // Create entries based on variant configs and apply fallback rules
+    let entries = create_variant_entries(item_enum, &variant_configs, &observed_order, &args.group);
 
-    // Require an observed order per variant, based on site enumeration position.
-    // Track the FIRST observed index we see for that variant.
-    let mut observed_order_by_variant: HashMap<Ident, usize> = HashMap::new();
+    // Store processed entries in args
+    args.inner = Some(ConfigureSystemSetArgsInner { entries });
+    Ok(())
+}
 
-    b.try_unit(|_| {
-        // Parse all removed helper attrs (last-one-wins per key), but error on duplicates for the SAME key.
-        // Treat a second helper on the same (variant, group or None) as a hard error.
-        for (observed_index, site) in scrub.all_with_removed_attrs().into_iter().enumerate() {
+/// Collects configuration data from variant attributes
+fn collect_variant_configs(
+    builder: &mut EmitBuilder,
+    scrubbed_item: &ScrubOutcome,
+) -> EmitErrOnlyResult<(VariantConfigMap, ObservedOrderMap), syn::Error> {
+    let mut variants_cfg: VariantConfigMap = HashMap::new();
+    let mut observed_order_by_variant: ObservedOrderMap = HashMap::new();
+
+    builder.try_unit(|_| {
+        for (observed_index, site) in scrubbed_item.all_with_removed_attrs().into_iter().enumerate()
+        {
             if let AttrSite::Variant { variant } = &site.site {
                 observed_order_by_variant.entry(variant.clone()).or_insert(observed_index);
-
-                for attr in &site.attrs {
-                    // Only care about our helper
-                    if !is_config_helper(attr) {
-                        continue;
-                    }
-
-                    let mut entry = ConfigureSystemSetArgsInnerEntry::from_meta(&attr.meta)?;
-
-                    // If order wasn't provided on the helper, set it to the first observed index for this variant
-                    if entry.order.is_none() {
-                        entry.order =
-                            Some(*observed_order_by_variant.get(variant).unwrap_or(&observed_index));
-                    }
-
-                    let bucket = variants_cfg.entry(variant.clone()).or_default();
-                    match &entry.group {
-                        Some(g) => {
-                            if bucket.per_group.contains_key(g) {
-                                return Err(syn::Error::new(
-                                    attr.span(),
-                                    format!("duplicate helper for variant `{variant}` and group `{g}`", ),
-                                ));
-                            }
-                            bucket.per_group.insert(g.clone(), entry);
-                        }
-                        None => {
-                            if bucket.default.is_some() {
-                                return Err(syn::Error::new(
-                                    attr.span(),
-                                    format!(
-                                        "duplicate default (no-group) helper for variant `{variant}`",
-                                    ),
-                                ));
-                            }
-                            bucket.default = Some(entry);
-                        }
-                    }
-                }
+                process_variant_attributes(
+                    variant,
+                    &site.attrs,
+                    observed_index,
+                    &mut variants_cfg,
+                )?;
             }
         }
         Ok(())
     })?;
 
-    // 6) Walk the enum variants and assemble entries using fallback rules:
-    //    chosen = per_group[outer_group]
-    //           || (default with group overwritten to outer_group)
-    //           || synthesized default (group = outer_group, order = observed)
-    let outer_group = args.group.clone();
-    let mut entries: ConfigureSystemSetArgsInnerEntries =
-        Vec::with_capacity(data_enum.variants.len());
+    Ok((variants_cfg, observed_order_by_variant))
+}
 
-    for v in &data_enum.variants {
-        let v_ident = v.ident.clone();
+/// Processes attributes for a specific variant
+fn process_variant_attributes(
+    variant: &Ident,
+    attrs: &[Attribute],
+    observed_index: usize,
+    variants_cfg: &mut VariantConfigMap,
+) -> syn::Result<()> {
+    for attr in attrs {
+        // Skip non-config helpers
+        if !is_config_helper(attr) {
+            continue;
+        }
 
-        let prev_observed_len = observed_order_by_variant.len();
-        // Find observed order for this variant (if we never saw the site, use sequential fallback)
-        let observed =
-            *observed_order_by_variant.entry(v_ident.clone()).or_insert_with(|| prev_observed_len);
+        // Parse entry from attribute metadata
+        let mut entry = ConfigureSystemSetArgsInnerEntry::from_meta(&attr.meta)?;
 
-        let chosen_entry = {
-            let bucket = variants_cfg.get(&v_ident);
+        // Set default order if not specified
+        if entry.order.is_none() {
+            entry.order = Some(observed_index);
+        }
 
-            // prefer explicit group match
-            if let (Some(g), Some(b)) = (&outer_group, bucket)
-                && let Some(found) = b.per_group.get(g)
-            {
-                found.clone()
-            }
-            // else use the default helper but override its group to the outer group
-            else if let Some(b) = bucket
-                && let Some(mut def) = b.default.clone()
-            {
-                def.group = outer_group.clone();
-                if def.order.is_none() {
-                    def.order = Some(observed);
+        let bucket = variants_cfg.entry(variant.clone()).or_default();
+
+        // Store entry based on group
+        match &entry.group {
+            Some(g) => {
+                if bucket.per_group.contains_key(g) {
+                    return Err(syn::Error::new(
+                        attr.span(),
+                        format!("duplicate helper for variant `{variant}` and group `{g}`"),
+                    ));
                 }
-                def
+                bucket.per_group.insert(g.clone(), entry);
             }
-            // else synthesize a default entry
-            else {
-                ConfigureSystemSetArgsInnerEntry {
-                    group: outer_group.clone(),
-                    order: Some(observed),
-                    ..Default::default()
+            None => {
+                if bucket.default.is_some() {
+                    return Err(syn::Error::new(
+                        attr.span(),
+                        format!("duplicate default (no-group) helper for variant `{variant}`"),
+                    ));
                 }
+                bucket.default = Some(entry);
             }
-        };
-
-        entries.push((v_ident, chosen_entry));
+        }
     }
 
-    // 7) Sort & filter
-    entries.sort_by_key(|(_, e)| e.order.unwrap_or_default());
-    entries.retain(|(_, e)| {
-        // same group as outer group
-        match (&e.group, &outer_group) {
+    Ok(())
+}
+
+/// Creates entries for each variant based on configs and fallback rules
+fn create_variant_entries(
+    item_enum: &syn::ItemEnum,
+    variants_cfg: &VariantConfigMap,
+    observed_order: &ObservedOrderMap,
+    outer_group: &Option<Ident>,
+) -> ConfigureSystemSetArgsInnerEntries {
+    let mut entries = Vec::with_capacity(item_enum.variants.len());
+    let mut next_fallback_index = observed_order.len();
+
+    for variant in &item_enum.variants {
+        let variant_ident = variant.ident.clone();
+
+        // Find or create observed order for this variant
+        let observed_index = observed_order.get(&variant_ident).copied().unwrap_or_else(|| {
+            let idx = next_fallback_index;
+            next_fallback_index += 1;
+            idx
+        });
+
+        // Apply fallback rules to select entry
+        let entry =
+            select_entry_with_fallback(&variant_ident, variants_cfg, observed_index, outer_group);
+
+        entries.push((variant_ident, entry));
+    }
+
+    // Sort by order and filter by group
+    sort_and_filter_entries(entries, outer_group)
+}
+
+/// Selects the appropriate entry for a variant based on fallback rules
+fn select_entry_with_fallback(
+    variant_ident: &Ident,
+    variants_cfg: &VariantConfigMap,
+    observed_index: usize,
+    outer_group: &Option<Ident>,
+) -> ConfigureSystemSetArgsInnerEntry {
+    let bucket = variants_cfg.get(variant_ident);
+
+    // First try: explicit group match
+    if let (Some(g), Some(b)) = (outer_group, bucket) {
+        if let Some(found) = b.per_group.get(g) {
+            return found.clone();
+        }
+    }
+
+    // Second try: default entry with group override
+    if let Some(b) = bucket {
+        if let Some(mut default_entry) = b.default.clone() {
+            default_entry.group = outer_group.clone();
+            if default_entry.order.is_none() {
+                default_entry.order = Some(observed_index);
+            }
+            return default_entry;
+        }
+    }
+
+    // Fallback: synthesize default entry
+    ConfigureSystemSetArgsInnerEntry {
+        group: outer_group.clone(),
+        order: Some(observed_index),
+        ..Default::default()
+    }
+}
+
+/// Sorts entries by order and filters by group
+fn sort_and_filter_entries(
+    mut entries: ConfigureSystemSetArgsInnerEntries,
+    outer_group: &Option<Ident>,
+) -> ConfigureSystemSetArgsInnerEntries {
+    // Sort by order
+    entries.sort_by_key(|(_, entry)| entry.order.unwrap_or_default());
+
+    // Filter by group
+    entries.retain(|(_, entry)| {
+        match (&entry.group, outer_group) {
             (Some(g), Some(og)) => g == og,
             // If either side is None, keep it (acts as "applies to any")
             _ => true,
         }
     });
 
-    // 8) Store into args and return
-    args.inner = Some(ConfigureSystemSetArgsInner { entries });
-    Ok(args).with_ts(b.into_tokens())
+    entries
 }
 
 #[cfg(test)]
