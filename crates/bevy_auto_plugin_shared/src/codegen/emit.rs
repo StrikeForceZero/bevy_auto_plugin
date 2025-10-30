@@ -72,10 +72,16 @@ impl EmitBuilder {
     }
 
     /// Try a phase with automatic checkpointing.
-    pub(crate) fn try_phase<E>(&mut self, f: impl FnOnce(&mut Self) -> Result<(), E>) -> &mut Self {
+    pub(crate) fn try_phase<E>(
+        &mut self,
+        f: impl FnOnce(&mut Self) -> Result<(), E>,
+    ) -> Result<&mut Self, (TokenStream, E)> {
         match f(self.push_checkpoint()) {
-            Ok(()) => self.discard_checkpoint(),
-            Err(_) => self.pop_restore(),
+            Ok(()) => Ok(self.discard_checkpoint()),
+            Err(e) => {
+                self.pop_restore();
+                Err((self.to_token_stream(), e))
+            }
         }
     }
 
@@ -91,7 +97,7 @@ impl EmitBuilder {
     /// Same as `try_phase` but returns `EmitResult` for easy `?` usage
     pub(crate) fn try_do<T, E>(
         &mut self,
-        f: impl FnOnce(&mut Self) -> Result<T, E>,
+        f: impl FnOnce(&mut Self) -> Result<T, (TokenStream, E)>,
     ) -> EmitResult<T, E> {
         self.push_checkpoint();
         match f(self) {
@@ -99,7 +105,7 @@ impl EmitBuilder {
                 self.discard_checkpoint();
                 self.ok(v)
             }
-            Err(e) => {
+            Err((_, e)) => {
                 self.pop_restore();
                 self.err(e)
             }
@@ -110,7 +116,7 @@ impl EmitBuilder {
         &mut self,
         f: impl FnOnce(&mut Self) -> Result<(), E>,
     ) -> Result<(), (TokenStream, E)> {
-        self.try_do(f).strip_ok_tokens()
+        self.try_do(|b| f(b).map_err(|e| (b.to_token_stream(), e))).strip_ok_tokens()
     }
 
     pub(crate) fn into_tokens(self) -> TokenStream {
@@ -321,7 +327,7 @@ mod tests {
     #[xtest]
     fn try_phase_ok_keeps_changes() {
         let mut b = EmitBuilder::from_checkpoint(quote! { init });
-        b.try_phase(|b| {
+        let _ = b.try_phase(|b| {
             // phase mutates tokens
             b.extend(quote! { ok1 ok2 });
             Ok::<_, syn::Error>(())
@@ -332,7 +338,7 @@ mod tests {
     #[xtest]
     fn try_phase_err_restores_checkpoint() {
         let mut b = EmitBuilder::from_checkpoint(quote! { start });
-        b.try_phase(|b| {
+        let _ = b.try_phase(|b| {
             // mutate then fail; should revert to checkpoint
             b.extend(quote! { broken });
             Err::<(), _>(syn::Error::new(proc_macro2::Span::call_site(), "boom"))
