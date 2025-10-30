@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 use crate::{
     codegen::emit::{
+        EmitErrOnlyResult,
         EmitResult,
         WithTsError,
     },
+    macro_api::prelude::InputItem,
     syntax::extensions::item::ItemAttrsExt,
 };
 use darling::FromMeta;
@@ -133,10 +135,10 @@ impl SiteAttrsVec {
 }
 
 pub struct ScrubOutcome {
-    // TODO: probably should be inside the EmitResult instead of here.
-    //  But EmitResult should allow for `syn::Item` or `InputItem` as well as `TokenStream` to make sense
+    /// original item (with helpers intact)
+    pub original_item: Item,
     /// scrubbed item (no helpers remain)
-    pub item: Item,
+    pub scrubbed_item: Item,
     /// struct/enum ident
     pub ident: Ident,
     /// attrs kept per site (non-helpers or empty)
@@ -163,96 +165,58 @@ impl ScrubOutcome {
         }
         out
     }
-    /// It will only mutate the TokenStream if there are errors by prepending them
-    pub fn prepend_errors(&self, token_stream: &mut TokenStream) -> syn::Result<()> {
-        ts_prepend_errors(
-            token_stream,
-            self.item.span(),
-            self.errors.clone(),
-            "failed to scrub helpers",
-        )
+    pub fn to_original_item_tokens(&self) -> TokenStream {
+        ts_item_errors(&self.original_item, self.errors.clone())
     }
-    /// Replaces the token stream with the scrubbed item.
-    /// If there are errors, it will write them above the scrubbed item.
-    pub fn replace_token_stream(&self, token_stream: &mut TokenStream) -> syn::Result<()> {
-        replace_ts_with_item_and_errors(
-            token_stream,
-            &self.item,
-            self.errors.clone(),
-            "failed to scrub helpers",
-        )
+    pub fn to_scrubbed_item_tokens(&self) -> TokenStream {
+        ts_item_errors(&self.scrubbed_item, self.errors.clone())
     }
 }
 
 impl ToTokens for ScrubOutcome {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        self.item.to_tokens(tokens);
+        self.scrubbed_item.to_tokens(tokens);
     }
 }
 
-impl From<ScrubOutcome> for EmitResult<ScrubOutcome, syn::Error> {
+impl From<ScrubOutcome> for EmitErrOnlyResult<TokenStream, ScrubOutcome, syn::Error> {
     fn from(value: ScrubOutcome) -> Self {
-        // TODO: do we return Err if errors are present?
-        Ok((value.item.to_token_stream(), value))
+        if value.errors.is_empty() {
+            Ok(value)
+        } else {
+            Err((
+                value.original_item.to_token_stream(),
+                value.errors.into_iter().fold(
+                    syn::Error::new(value.original_item.span(), "Failed to scrub helpers"),
+                    |mut acc, err| {
+                        acc.combine(err);
+                        acc
+                    },
+                ),
+            ))
+        }
     }
 }
 
-/// Writes errors to the token stream if they exist, otherwise doesn't modify the token stream.
-///
-/// # Arguments
-///
-/// * `token_stream` - The token stream to potentially write errors into
-/// * `span` - The span location for error reporting
-/// * `errors` - Collection of errors to potentially write
-/// * `message` - Error message to include
-///
-/// # Returns
-///
-/// A Result indicating success or failure of the operation
-pub fn ts_prepend_errors(
-    token_stream: &mut TokenStream,
-    span: proc_macro2::Span,
-    errors: Vec<syn::Error>,
-    message: &str,
-) -> syn::Result<()> {
-    // inject any errors as compile_error right here.
-    if !errors.is_empty() {
+/// Returns `TokenStream` with errors (if any)
+pub fn ts_errors(errors: Vec<syn::Error>) -> TokenStream {
+    if errors.is_empty() {
+        TokenStream::new()
+    } else {
         let err_ts = errors.iter().map(syn::Error::to_compile_error);
-        *token_stream = quote! {
+        quote! {
             #( #err_ts )*
-            #token_stream
-        };
-        let mut err = syn::Error::new(span, message);
-        err.extend(errors.clone());
-        return Err(err);
+        }
     }
-
-    Ok(())
 }
 
-/// Replaces the `TokenStream` in place with the item tokens and prepends any errors.
-///
-/// # Arguments
-///
-/// * `token_stream` - The token stream to output to
-/// * `item` - The item to render
-/// * `errors` - Collection of errors to potentially write
-/// * `message` - Error message to include
-///
-/// # Returns
-///
-/// A Result indicating success or failure of the operation
-pub fn replace_ts_with_item_and_errors(
-    token_stream: &mut TokenStream,
-    item: &Item,
-    errors: Vec<syn::Error>,
-    message: &str,
-) -> syn::Result<()> {
-    *token_stream = quote! {
+/// Returns `TokenStream` with errors (if any) and the given `item`
+pub fn ts_item_errors(item: &Item, errors: Vec<syn::Error>) -> TokenStream {
+    let errors = ts_errors(errors);
+    quote! {
+        #errors
         #item
-    };
-
-    ts_prepend_errors(token_stream, item.span(), errors, message)
+    }
 }
 
 #[derive(Debug, Default)]
@@ -411,25 +375,27 @@ impl VisitMut for Scrubber {
     }
 }
 
-pub fn scrub_helpers_and_ident(
-    input: proc_macro2::TokenStream,
+pub fn scrub_helpers(
+    input_item: impl AsRef<InputItem>,
     is_helper: fn(&Attribute) -> bool,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-) -> EmitResult<ScrubOutcome, syn::Error> {
-    scrub_helpers_and_ident_with_filter(input, |_, _| true, is_helper, resolve_ident)
+) -> Result<ScrubOutcome, syn::Error> {
+    scrub_helpers_with_filter(input_item, |_, _| true, is_helper)
 }
 
-pub fn scrub_helpers_and_ident_with_filter(
-    input: TokenStream,
+pub fn scrub_helpers_with_filter(
+    input_item: impl AsRef<InputItem>,
     is_site_allowed: fn(&AttrSite, &Attribute) -> bool,
     is_helper: fn(&Attribute) -> bool,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-) -> EmitResult<ScrubOutcome, syn::Error> {
-    let mut item = syn::parse2::<Item>(input.clone()).with_ts_on_err(input.clone())?;
-    let ident = resolve_ident(&item).cloned().with_ts_on_err(input.clone())?;
+) -> Result<ScrubOutcome, syn::Error> {
+    let mut input_item = input_item.as_ref().clone();
+    let ident = input_item.ident()?.clone();
+    let original_item = input_item.ensure_ast()?.clone();
+    let mut scrubbed_item = original_item.clone();
+
+    // Must be infallible beyond this point to ensure `ScrubOutcome` is valid
 
     let mut scrubber = Scrubber { is_helper, out: ScrubberOut::default(), errors: vec![] };
-    scrubber.visit_item_mut(&mut item);
+    scrubber.visit_item_mut(&mut scrubbed_item);
 
     // validate “removed” helpers against the site filter
     for group in &scrubber.out.removed.0 {
@@ -450,25 +416,14 @@ pub fn scrub_helpers_and_ident_with_filter(
         }
     }
 
-    // TODO: check for errors?
-    // check for errors
-    // if let Some(err) = scrubber.errors.pop() {
-    //     let err = scrubber.errors.into_iter().fold(err, |mut acc, err| {
-    //         acc.combine(err);
-    //         acc
-    //     });
-    //     return Err((item.to_token_stream(), err));
-    // }
-
-    let scrub = ScrubOutcome {
-        item,
+    Ok(ScrubOutcome {
+        original_item,
+        scrubbed_item,
         ident,
         observed: scrubber.out.observed,
         removed: scrubber.out.removed,
         errors: scrubber.errors,
-    };
-
-    scrub.into()
+    })
 }
 
 // Parse removed helpers into `T`
@@ -545,6 +500,7 @@ mod tests {
     mod scrub_helpers_and_ident {
         use super::*;
         use crate::codegen::emit::EmitResultExt;
+        use internal_test_util::assert_ts_eq;
         #[inline]
         fn assert_no_errors(scrub_outcome: &ScrubOutcome) {
             assert_eq!(
@@ -560,7 +516,7 @@ mod tests {
 
         #[inline]
         fn assert_no_helpers_remain_on_item(scrub_outcome: &ScrubOutcome) {
-            let ts = scrub_outcome.item.to_token_stream().to_string();
+            let ts = scrub_outcome.scrubbed_item.to_token_stream().to_string();
             assert!(!ts.contains("::helper"), "item still has helper attributes: {}", ts);
         }
 
@@ -585,8 +541,8 @@ mod tests {
                     z: i32,
                 }
             };
-            let (_input, scrub_outcome) =
-                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
@@ -628,8 +584,8 @@ mod tests {
                     C,
                 }
             };
-            let (_input, scrub_outcome) =
-                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
@@ -678,14 +634,14 @@ mod tests {
                     Y,
                 }
             };
-            let (_input, scrub_outcome) =
-                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
-            let item = scrub_outcome.item;
-            assert_eq!(
-                item.to_token_stream().to_string(),
+            let item = scrub_outcome.scrubbed_item;
+            assert_ts_eq!(
+                item.to_token_stream(),
                 quote! {
                     #[non_helper]
                     enum Foo {
@@ -698,8 +654,7 @@ mod tests {
                         X,
                         Y,
                     }
-                }
-                .to_string(),
+                },
             );
             Ok(())
         }
@@ -721,8 +676,8 @@ mod tests {
                     C,
                 }
             };
-            let (_input, scrub_outcome) =
-                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
@@ -770,8 +725,8 @@ mod tests {
                 }
             };
 
-            let (_input, scrub_outcome) =
-                scrub_helpers_and_ident(input, is_helper, resolve_ident).strip_err_tokens()?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
 
             let got = SiteAttrsVec::from_vec(scrub_outcome.all_with_removed_attrs());
             let expected = SiteAttrsVec::from_vec(vec![
