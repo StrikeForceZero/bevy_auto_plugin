@@ -1,5 +1,7 @@
-use internal_test_util::ui_tests;
-use internal_test_util::ui_util::UiTest;
+use internal_test_util::{
+    ui_tests,
+    ui_util::UiTest,
+};
 
 struct UiTests;
 

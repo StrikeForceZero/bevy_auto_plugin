@@ -1,9 +1,13 @@
 use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::parse::Parser;
-use syn::spanned::Spanned;
-use syn::{Expr, Token, punctuated::Punctuated};
+use syn::{
+    Expr,
+    Token,
+    parse::Parser,
+    punctuated::Punctuated,
+    spanned::Spanned,
+};
 
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum ExprPathOrCall {
@@ -56,9 +60,7 @@ impl FromMeta for ExprPathOrCall {
             syn::Meta::List(list) => {
                 // Parse exactly one Expr from the list's tokens.
                 let parser = Punctuated::<Expr, Token![,]>::parse_terminated;
-                let elems = parser
-                    .parse2(list.tokens.clone())
-                    .map_err(darling::Error::from)?;
+                let elems = parser.parse2(list.tokens.clone()).map_err(darling::Error::from)?;
                 let mut it = elems.into_iter();
                 let expr = it.next().ok_or_else(|| {
                     darling::Error::too_few_items(1).with_span(&list.tokens.span())
@@ -76,10 +78,10 @@ impl FromMeta for ExprPathOrCall {
             }
 
             // Bare flag like `item` is not accepted.
-            syn::Meta::Path(_) => Err(darling::Error::custom(
-                "expected `item = <expr>` or `item(<expr>)`",
-            )
-            .with_span(&meta.span())),
+            syn::Meta::Path(_) => {
+                Err(darling::Error::custom("expected `item = <expr>` or `item(<expr>)`")
+                    .with_span(&meta.span()))
+            }
         }
     }
 }
@@ -89,14 +91,10 @@ impl syn::parse::Parse for ExprPathOrCall {
         let elems = Punctuated::<Expr, Token![,]>::parse_terminated(input)?;
         let mut elems = elems.into_iter();
         let Some(elem) = elems.next() else {
-            return Err(darling::Error::too_few_items(1)
-                .with_span(&input.span())
-                .into());
+            return Err(darling::Error::too_few_items(1).with_span(&input.span()).into());
         };
         if let Some(elem) = elems.next() {
-            return Err(darling::Error::too_many_items(1)
-                .with_span(&elem.span())
-                .into());
+            return Err(darling::Error::too_many_items(1).with_span(&elem.span()).into());
         }
         Ok(match elem {
             Expr::Call(call) => ExprPathOrCall::Call(call),
@@ -112,7 +110,10 @@ impl syn::parse::Parse for ExprPathOrCall {
 mod tests {
     use super::*;
     use internal_test_proc_macro::xtest;
-    use syn::{Meta, parse_quote};
+    use syn::{
+        Meta,
+        parse_quote,
+    };
 
     #[derive(Debug)]
     #[allow(dead_code)]

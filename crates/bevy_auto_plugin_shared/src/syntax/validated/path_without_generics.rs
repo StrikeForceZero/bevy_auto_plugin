@@ -1,10 +1,17 @@
 use crate::syntax::extensions::path::PathExt;
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::{
+    Ident,
+    TokenStream,
+};
 use quote::ToTokens;
-use syn::parse::Parse;
-use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
-use syn::{Path, PathArguments, PathSegment};
+use syn::{
+    Path,
+    PathArguments,
+    PathSegment,
+    parse::Parse,
+    punctuated::Punctuated,
+    spanned::Spanned,
+};
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -24,10 +31,7 @@ impl From<TryFromPathWithoutGenericsError> for syn::Error {
             TryFromPathWithoutGenericsError::HasGenerics(path) => path,
             TryFromPathWithoutGenericsError::InvalidPath(err) => return err,
         };
-        syn::Error::new(
-            path.span(),
-            TryFromPathWithoutGenericsError::HasGenerics(path).to_string(),
-        )
+        syn::Error::new(path.span(), TryFromPathWithoutGenericsError::HasGenerics(path).to_string())
     }
 }
 
@@ -71,10 +75,7 @@ pub fn ident_to_path_without_generics(ident: Ident) -> PathWithoutGenerics {
         leading_colon: None,
         segments: {
             let mut segments = Punctuated::new();
-            segments.push(PathSegment {
-                ident,
-                arguments: PathArguments::None,
-            });
+            segments.push(PathSegment { ident, arguments: PathArguments::None });
             segments
         },
     })

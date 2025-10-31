@@ -1,5 +1,12 @@
 use crate::syntax::extensions::path::PathExt;
-use syn::{Lifetime, Path, TraitBound, TraitBoundModifier, TypeParamBound, parse_quote};
+use syn::{
+    Lifetime,
+    Path,
+    TraitBound,
+    TraitBoundModifier,
+    TypeParamBound,
+    parse_quote,
+};
 
 /// Injects `Send + Sync + 'static` constraints to any generics that don't have them
 pub fn inject_send_sync_static(generics: &mut syn::Generics) {
@@ -61,7 +68,10 @@ pub fn inject_send_sync_static(generics: &mut syn::Generics) {
 mod tests {
     use super::*;
     use internal_test_proc_macro::xtest;
-    use quote::{ToTokens, quote};
+    use quote::{
+        ToTokens,
+        quote,
+    };
     use syn::parse_quote;
 
     #[xtest]

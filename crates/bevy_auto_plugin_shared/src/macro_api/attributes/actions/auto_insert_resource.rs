@@ -1,102 +1,83 @@
-use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
-use crate::macro_api::attributes::prelude::GenericsArgs;
-use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
-use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
-use crate::syntax::ast::any_expr::AnyExprCallClosureMacroPath;
-use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::validated::concrete_path::ConcreteTargetPath;
+use crate::{
+    macro_api::prelude::*,
+    syntax::ast::any_expr::AnyExprCallClosureMacroPath,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::Item;
+use quote::{
+    ToTokens,
+    quote,
+};
+use syn::spanned::Spanned;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
-#[darling(derive_syn_parse)]
+#[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct InsertResourceArgs {
-    #[darling(default)]
-    pub generics: Option<TypeList>,
-    pub resource: AnyExprCallClosureMacroPath,
+    // TODO: after removing resource, remove _resolved, make init required
+    pub resource: Option<AnyExprCallClosureMacroPath>,
+    pub init: Option<AnyExprCallClosureMacroPath>,
+    #[darling(skip)]
+    _resolved: Option<AnyExprCallClosureMacroPath>,
+}
+
+impl InsertResourceArgs {
+    fn validate(self) -> darling::Result<Self> {
+        Ok(Self { _resolved: Some(Self::resolve_resource(&self)?.clone()), ..self })
+    }
+    fn resolve_resource(&self) -> darling::Result<&AnyExprCallClosureMacroPath> {
+        if let Some(resolved) = self._resolved.as_ref() {
+            Ok(resolved)
+        } else {
+            let deprecated = |msg| darling::Error::custom(msg).with_span(&self.resource.span());
+            match (self.resource.as_ref(), self.init.as_ref()) {
+                (Some(_), Some(_)) => {
+                    Err(deprecated("resource and init are mutually exclusive, use init instead"))
+                }
+                (None, None) => Err(darling::Error::missing_field("init")),
+                (Some(_), None) => Err(deprecated("resource is deprecated, use init instead")),
+                (None, Some(res)) => Ok(res),
+            }
+        }
+    }
 }
 
 impl AttributeIdent for InsertResourceArgs {
     const IDENT: &'static str = "auto_insert_resource";
 }
 
-impl ItemAttributeArgs for InsertResourceArgs {
-    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
-        resolve_ident_from_struct_or_enum(item)
+pub type IaInsertResource = ItemAttribute<
+    Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>,
+    AllowStructOrEnum,
+>;
+pub type InsertResourceAppMutEmitter = AppMutationEmitter<IaInsertResource>;
+pub type InsertResourceAttrEmitter = AttrEmitter<IaInsertResource>;
+
+impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+        let resource = match self.args.args.base.resolve_resource() {
+            Ok(resource) => resource,
+            Err(err) => {
+                let err = syn::Error::from(err);
+                tokens.extend(err.to_compile_error());
+                return;
+            }
+        };
+        for concrete_path in self.args.concrete_paths() {
+            tokens.extend(quote! {
+                #app_param.insert_resource({ let resource: #concrete_path = #resource; resource});
+            });
+        }
     }
 }
 
-impl GenericsArgs for InsertResourceArgs {
-    fn type_lists(&self) -> &[TypeList] {
-        self.generics.as_slice()
-    }
-}
-
-impl ToTokensWithConcreteTargetPath for InsertResourceArgs {
-    fn to_tokens_with_concrete_target_path(
-        &self,
-        tokens: &mut TokenStream,
-        target: &ConcreteTargetPath,
-    ) {
-        let resource = &self.resource;
+impl ToTokens for InsertResourceAttrEmitter {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = self.args.args.extra_args();
+        let resource = &self.args.args.base.resource;
+        args.push(quote! { resource = #resource });
         tokens.extend(quote! {
-            .insert_resource::< #target >(#resource)
-        })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::codegen::with_target_path::WithTargetPath;
-    use internal_test_proc_macro::xtest;
-    use syn::{Path, parse_quote, parse2};
-
-    #[xtest]
-    fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<InsertResourceArgs>(quote!(resource(FooTarget)))?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .insert_resource :: < FooTarget > (FooTarget)
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_to_tokens_single() -> syn::Result<()> {
-        let args =
-            parse2::<InsertResourceArgs>(quote!(generics(u8, bool), resource(FooTarget(1, true))))?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .insert_resource :: < FooTarget<u8, bool> > (FooTarget(1, true))
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    #[should_panic(expected = "Duplicate field `generics`")]
-    fn test_to_tokens_multiple() {
-        parse2::<InsertResourceArgs>(quote!(
-            generics(u8, bool),
-            generics(bool, bool),
-            resource(FooTarget(1, true))
-        ))
-        .unwrap();
+            #(#args),*
+        });
+        *tokens = self.wrap_as_attr(tokens);
     }
 }

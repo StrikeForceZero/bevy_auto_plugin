@@ -1,8 +1,11 @@
-use darling::{FromField, FromVariant};
+use darling::{
+    FromField,
+    FromVariant,
+};
 use proc_macro2::Ident;
 use syn::Type;
 
-pub mod auto_plugin;
+mod auto_plugin;
 
 #[allow(dead_code)]
 #[derive(Debug, FromField)]
@@ -16,4 +19,9 @@ pub struct FieldData {
 pub struct VariantData {
     pub ident: Ident,
     pub fields: darling::ast::Fields<FieldData>,
+}
+
+pub mod prelude {
+
+    pub use super::auto_plugin::*;
 }

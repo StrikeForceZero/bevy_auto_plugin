@@ -1,21 +1,17 @@
-use crate::codegen::tokens::ArgsBackToTokens;
-use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
-use crate::macro_api::attributes::prelude::GenericsArgs;
-use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
-use crate::macro_api::schedule_config::ScheduleWithScheduleConfigArgs;
-use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_fn};
-use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::validated::concrete_path::ConcreteTargetPath;
+use crate::macro_api::{
+    prelude::*,
+    schedule_config::ScheduleWithScheduleConfigArgs,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
-use syn::Item;
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct AddSystemArgs {
-    #[darling(multiple)]
-    pub generics: Vec<TypeList>,
     #[darling(flatten)]
     pub schedule_config: ScheduleWithScheduleConfigArgs,
 }
@@ -24,40 +20,31 @@ impl AttributeIdent for AddSystemArgs {
     const IDENT: &'static str = "auto_add_system";
 }
 
-impl ItemAttributeArgs for AddSystemArgs {
-    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
-        resolve_ident_from_fn(item)
-    }
-}
+pub type IaAddSystem =
+    ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+pub type AddSystemAppMutEmitter = AppMutationEmitter<IaAddSystem>;
+pub type AddSystemAttrEmitter = AttrEmitter<IaAddSystem>;
 
-impl GenericsArgs for AddSystemArgs {
-    const TURBOFISH: bool = true;
-    fn type_lists(&self) -> &[TypeList] {
-        &self.generics
-    }
-}
-
-impl ToTokensWithConcreteTargetPath for AddSystemArgs {
-    fn to_tokens_with_concrete_target_path(
-        &self,
-        tokens: &mut TokenStream,
-        target: &ConcreteTargetPath,
-    ) {
-        let schedule = &self.schedule_config.schedule;
-        let config_tokens = self.schedule_config.config.to_token_stream();
-        tokens.extend(quote! {
-            .add_systems(#schedule, #target #config_tokens)
-        })
-    }
-}
-
-impl ArgsBackToTokens for AddSystemArgs {
-    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        let mut args = vec![];
-        if !self.generics().is_empty() {
-            args.extend(self.generics().to_attribute_arg_vec_tokens());
+impl EmitAppMutationTokens for AddSystemAppMutEmitter {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+        let schedule = &self.args.args.base.schedule_config.schedule;
+        let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();
+        for concrete_path in self.args.concrete_paths() {
+            tokens.extend(quote! {
+                #app_param . add_systems(#schedule, #concrete_path #config_tokens);
+            });
         }
-        args.extend(self.schedule_config.to_inner_arg_tokens_vec());
-        tokens.extend(quote! { #(#args),* });
+    }
+}
+
+impl ToTokens for AddSystemAttrEmitter {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = self.args.args.extra_args();
+        // TODO: cleanup
+        args.extend(self.args.args.base.schedule_config.to_inner_arg_tokens_vec());
+        tokens.extend(quote! {
+            #(#args),*
+        });
+        *tokens = self.wrap_as_attr(tokens);
     }
 }

@@ -1,44 +1,58 @@
-use proc_macro2::Ident;
-use syn::Item;
-use syn::spanned::Spanned;
-use thiserror::Error;
+use crate::syntax::extensions::{
+    item::ItemAttrsExt,
+    path::PathExt,
+};
+use syn::{
+    Attribute,
+    Item,
+};
 
-#[derive(Error, Debug, PartialEq, Copy, Clone)]
-pub enum ResolveIdentFromItemError<'a> {
-    #[error("Expected function")]
-    NotFn(&'a Item),
-    #[error("Expected Struct or Enum")]
-    NotStructOrEnum(&'a Item),
+pub fn item_has_attr(item: &Item, path: &syn::Path) -> bool {
+    has_attr(item.attrs().unwrap_or_default(), path)
 }
 
-impl ResolveIdentFromItemError<'_> {
-    pub fn span(&self) -> proc_macro2::Span {
-        match self {
-            Self::NotFn(item) => item.span(),
-            Self::NotStructOrEnum(item) => item.span(),
-        }
+pub fn has_attr(attrs: &[Attribute], path: &syn::Path) -> bool {
+    attrs.iter().any(|attr| attr.path().is_similar_path_or_ident(path))
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::syntax::analysis::item::has_attr;
+    use internal_test_proc_macro::xtest;
+    use syn::parse_quote;
+
+    #[xtest]
+    fn test_negative_has_attr_empty() {
+        let target_path = parse_quote!(a);
+        assert!(!has_attr(&[], &target_path));
     }
-}
 
-impl From<ResolveIdentFromItemError<'_>> for syn::Error {
-    fn from(value: ResolveIdentFromItemError) -> Self {
-        Self::new(value.span(), value.to_string())
+    #[xtest]
+    fn test_negative_has_attr() {
+        let target_path = parse_quote!(a);
+        let input: Vec<_> = parse_quote! {
+            #[foo]
+        };
+        assert!(!has_attr(&input, &target_path));
     }
-}
 
-pub type IdentFromItemResult<'a> = Result<&'a Ident, ResolveIdentFromItemError<'a>>;
-
-pub fn resolve_ident_from_fn(item: &Item) -> IdentFromItemResult<'_> {
-    match item {
-        Item::Fn(f) => Ok(&f.sig.ident),
-        _ => Err(ResolveIdentFromItemError::NotFn(item)),
+    #[xtest]
+    fn test_positive_has_attr_single() {
+        let target_path = parse_quote!(a);
+        let input: Vec<_> = parse_quote! {
+            #[#target_path]
+        };
+        assert!(has_attr(&input, &target_path));
     }
-}
 
-pub fn resolve_ident_from_struct_or_enum(item: &Item) -> IdentFromItemResult<'_> {
-    match item {
-        Item::Struct(s) => Ok(&s.ident),
-        Item::Enum(e) => Ok(&e.ident),
-        _ => Err(ResolveIdentFromItemError::NotStructOrEnum(item)),
+    #[xtest]
+    fn test_positive_has_attr_multiple() {
+        let target_path = parse_quote!(a);
+        let input: Vec<_> = parse_quote! {
+            #[A]
+            #[#target_path]
+            #[B]
+        };
+        assert!(has_attr(&input, &target_path));
     }
 }

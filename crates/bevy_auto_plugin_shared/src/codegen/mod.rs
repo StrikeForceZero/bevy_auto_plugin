@@ -1,8 +1,11 @@
+pub mod emit;
 pub mod tokens;
-pub mod with_target_path;
 
 use proc_macro2::TokenStream as MacroStream;
-use quote::{ToTokens, quote};
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct ExpandAttrs {
@@ -17,22 +20,6 @@ impl PartialEq for ExpandAttrs {
 }
 
 impl ExpandAttrs {
-    pub fn to_use_attr_ts_tuple(&self) -> (MacroStream, MacroStream) {
-        let use_items = &self.use_items;
-        let attrs = &self.attrs;
-        (
-            quote! {
-                #(#use_items)*
-            },
-            quote! {
-                #(#attrs)*
-            },
-        )
-    }
-    pub fn with(mut self, other: Self) -> Self {
-        self.append(other);
-        self
-    }
     pub fn append(&mut self, other: Self) {
         self.attrs.extend(other.attrs);
         self.use_items.extend(other.use_items);

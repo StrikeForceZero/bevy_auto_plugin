@@ -1,7 +1,18 @@
-pub mod auto_component;
-pub mod auto_event;
-pub mod auto_message;
-pub mod auto_observer;
-pub mod auto_resource;
-pub mod auto_states;
-pub mod auto_system;
+mod auto_component;
+mod auto_event;
+mod auto_message;
+mod auto_observer;
+mod auto_resource;
+mod auto_states;
+mod auto_system;
+
+pub mod prelude {
+    pub use super::*;
+    pub use auto_component::*;
+    pub use auto_event::*;
+    pub use auto_message::*;
+    pub use auto_observer::*;
+    pub use auto_resource::*;
+    pub use auto_states::*;
+    pub use auto_system::*;
+}

@@ -1,6 +1,10 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Attribute, ItemFn, parse_macro_input};
+use syn::{
+    Attribute,
+    ItemFn,
+    parse_macro_input,
+};
 
 /// #[xtest] => #[wasm_bindgen_test] on wasm32, else #[xtest]
 #[proc_macro_attribute]
