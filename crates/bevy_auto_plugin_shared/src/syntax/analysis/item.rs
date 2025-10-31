@@ -7,8 +7,8 @@ use syn::{
     Item,
 };
 
-pub fn item_has_attr(item: &Item, path: &syn::Path) -> syn::Result<bool> {
-    Ok(has_attr(item.attrs().unwrap_or_default(), path))
+pub fn item_has_attr(item: &Item, path: &syn::Path) -> bool {
+    has_attr(item.attrs().unwrap_or_default(), path)
 }
 
 pub fn has_attr(attrs: &[Attribute], path: &syn::Path) -> bool {

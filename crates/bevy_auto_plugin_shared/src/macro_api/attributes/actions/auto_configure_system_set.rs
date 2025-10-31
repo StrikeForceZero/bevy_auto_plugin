@@ -1,10 +1,8 @@
 use crate::{
     codegen::emit::{
-        EmitBuilder,
-        EmitErrOnlyResult,
+        Ctx,
         EmitResult,
         EmitResultExt,
-        WithTs,
     },
     macro_api::{
         prelude::*,
@@ -14,21 +12,19 @@ use crate::{
         },
     },
     syntax::{
+        analysis::item::item_has_attr,
         ast::flag::Flag,
-        extensions::item::ItemAttrsExt,
-        parse::{
-            item::item_has_attr,
-            scrub_helpers::{
-                AttrSite,
-                ScrubOutcome,
-                scrub_helpers_and_ident_with_filter,
-            },
+        parse::scrub_helpers::{
+            AttrSite,
+            ScrubOutcome,
+            scrub_helpers_with_filter,
         },
     },
 };
 use darling::FromMeta;
 use proc_macro2::{
     Ident,
+    Span,
     TokenStream,
 };
 use quote::{
@@ -104,9 +100,6 @@ pub struct ConfigureSystemSetArgs {
     #[darling(skip)]
     /// Some when enum, None when struct
     pub inner: Option<ConfigureSystemSetArgsInner>,
-    #[darling(skip, default)]
-    /// internal - used to track if this is the last attribute in the item to strip helpers
-    pub _strip_helpers: bool,
 }
 
 impl ConfigureSystemSetArgs {
@@ -188,16 +181,14 @@ fn output(
 }
 
 impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
-    fn item_post_process(&mut self) -> Result<(), (TokenStream, syn::Error)> {
+    fn post_process_inner_item(&mut self) -> Result<(), (InputItem, syn::Error)> {
         let input_item = &mut self.args.input_item;
         let args = &mut self.args.args.base;
-        let input = input_item.to_token_stream();
-        let (input, item) = input_item.ensure_ast().with_ts(input)?;
-        check_strip_helpers(item, args).with_ts(input.clone())?;
         if args.inner.is_none() {
-            let (input, inflated_args) = inflate_args_from_input(args.clone(), input)?;
+            let (maybe_scrubbed_input_item, inflated_args) =
+                inflate_args_from_input_item(args.clone(), input_item)?;
             *args = inflated_args;
-            *input_item = InputItem::Tokens(input);
+            *input_item = maybe_scrubbed_input_item;
         }
         Ok(())
     }
@@ -206,8 +197,8 @@ impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
         // checks if we need to inflate args
         let inflated_args = if args.inner.is_none() {
             let args = args.clone();
-            let input = self.args.input_item.to_token_stream();
-            match inflate_args_from_input(args, input) {
+            let input_item = &self.args.input_item;
+            match inflate_args_from_input_item(args, input_item) {
                 Ok((_, args)) => args,
                 Err((_, err)) => {
                     tokens.extend(err.to_compile_error());
@@ -237,24 +228,20 @@ impl ToTokens for ConfigureSystemSetAttrEmitter {
     }
 }
 
-/// HACK - if the item doesn't have anymore `auto_configure_system_set` - set a flag to strip out the helper attributes
-fn check_strip_helpers(item: &Item, args: &mut ConfigureSystemSetArgs) -> syn::Result<()> {
-    if !item_has_attr(item, &parse_quote!(auto_configure_system_set))? {
-        args._strip_helpers = true;
-    }
-    Ok(())
+fn check_strip_helpers(item: &Item) -> bool {
+    !item_has_attr(item, &parse_quote!(auto_configure_system_set))
 }
 
 #[cfg(test)]
 pub fn args_from_attr_input(
     attr: TokenStream,
     input: TokenStream,
-) -> EmitResult<ConfigureSystemSetArgs, syn::Error> {
-    let (input, mut args) = syn::parse2::<ConfigureSystemSetArgs>(attr).with_ts(input.clone())?;
-    let mut input_item = InputItem::Tokens(input.clone());
-    let (input, item) = input_item.ensure_ast().with_ts(input)?;
-    check_strip_helpers(item, &mut args).with_ts(input)?;
-    inflate_args_from_input(args, input_item.to_token_stream())
+) -> EmitResult<InputItem, ConfigureSystemSetArgs, syn::Error> {
+    let input_item =
+        InputItem::from_ts_validated(input.clone()).map_err(|e| (InputItem::Tokens(input), e))?;
+    let (input_item, args) =
+        Ctx::start(input_item).and_then(|_, _| syn::parse2::<ConfigureSystemSetArgs>(attr))?;
+    inflate_args_from_input_item(args, &input_item)
 }
 
 /// Type alias for the per-variant configuration data structure
@@ -273,111 +260,108 @@ struct PerVariant {
 }
 
 /// Processes an input TokenStream and constructs ConfigureSystemSetArgs
-pub fn inflate_args_from_input(
+pub fn inflate_args_from_input_item(
     mut args: ConfigureSystemSetArgs,
-    input: TokenStream,
-) -> EmitResult<ConfigureSystemSetArgs, syn::Error> {
-    let mut builder = EmitBuilder::from_checkpoint(input);
-
-    // Process the input and scrub helper attributes
-    let scrubbed_item = process_helper_attributes(&mut builder, args._strip_helpers)?;
-
-    // Handle based on item type
-    match &scrubbed_item.item {
-        Item::Struct(_) => {
-            return builder.into_ok(args);
-        }
-        Item::Enum(item_enum) => {
-            // Process enum variants to populate args
-            process_enum_variants(&mut builder, &mut args, item_enum, &scrubbed_item)?;
-        }
-        _ => {
-            let err = syn::Error::new(scrubbed_item.item.span(), "Only struct or enum supported");
-            return builder.into_err(err);
-        }
-    }
-
-    Ok(args).with_ts(builder.into_tokens())
+    input_item: &InputItem,
+) -> EmitResult<InputItem, ConfigureSystemSetArgs, syn::Error> {
+    Ctx::start(input_item.clone())
+        .and_then(|input_item, _| {
+            // Process the input helper attributes
+            process_helper_attributes(input_item)
+        })
+        .and_then_ctx_mut(|input_item, scrubbed_outcome| {
+            let should_strip_helpers = check_strip_helpers(&scrubbed_outcome.original_item);
+            let maybe_scrubbed_input_item_tokens = if should_strip_helpers {
+                scrubbed_outcome.to_scrubbed_item_tokens()
+            } else {
+                scrubbed_outcome.to_original_item_tokens()
+            };
+            *input_item = InputItem::Tokens(maybe_scrubbed_input_item_tokens);
+            // TODO: so this is kind of ugly. we check if we need to re-emit the scrubbed item.
+            //  but in doing so we are required to include any errors which breaks syn parsing.
+            //  and our context required `InputItem` instead of just a `TokenStream`.
+            //  so we check if the scrubbed item has errors and if so break out early.
+            match input_item.has_compiler_errors() {
+                Ok(has_compiler_errors) => {
+                    if has_compiler_errors {
+                        return Err(
+                            // TODO: we need a ui test to make sure the other errors are still emitted with their spans
+                            syn::Error::new(Span::call_site(), format!("invalid {CONFIG_ATTR_NAME}s:")),
+                        );
+                    }
+                }
+                Err(err) => {
+                    return Err(
+                        syn::Error::new(
+                            Span::call_site(),
+                            format!("bevy_auto_plugin bug - please open an issue with a reproduction case: {err:?}"),
+                        ),
+                    );
+                }
+            }
+            Ok(scrubbed_outcome)
+        })
+        .and_then_ctx(|_maybe_scrubbed_input_item, scrub_outcome| {
+            // Handle based on item type
+            match &scrub_outcome.original_item {
+                Item::Enum(item_enum) => {
+                    // Process enum variants for the specified group to populate args
+                    let inner = process_enum_variants_for_group(
+                        args.group.as_ref(),
+                        item_enum,
+                        &scrub_outcome,
+                    )?;
+                    args.inner = inner;
+                    Ok(args)
+                }
+                Item::Struct(_) => Ok(args),
+                _ => {
+                    let err = syn::Error::new(Span::call_site(), "Only struct or enum supported");
+                    Err(err)
+                }
+            }
+        })
 }
 
 /// Scrubs helper attributes from input and prepares for processing
 fn process_helper_attributes(
-    builder: &mut EmitBuilder,
-    strip_helpers: bool,
-) -> Result<ScrubOutcome, (TokenStream, syn::Error)> {
-    fn resolve_ident(item: &Item) -> syn::Result<&Ident> {
-        // TODO: remove and use ident from higher level?
-        item.ident()
-    }
-
+    input_item: impl AsRef<InputItem>,
+) -> Result<ScrubOutcome, syn::Error> {
     fn is_allowed_helper(site: &AttrSite, attr: &Attribute) -> bool {
         is_config_helper(attr) && matches!(site, AttrSite::Variant { .. })
     }
 
-    // TODO: maybe we need a code path that doesn't strip - only analyze?
-    let scrub = scrub_helpers_and_ident_with_filter(
-        builder.to_token_stream(),
-        is_allowed_helper,
-        is_config_helper,
-        resolve_ident,
-    )
-    // TODO: this feels bad - see `ScrubOutcome#ident` todo
-    .strip_ok_tokens()?;
-
-    builder.try_unit(|b| {
-        if strip_helpers {
-            // Always write back scrubbed item to prevent helpers from re-triggering
-            scrub.replace_token_stream(b)
-        } else {
-            // Only prepend errors if any, otherwise keep helpers for next attribute
-            scrub.prepend_errors(b)
-        }
-    })?;
-
-    Ok(scrub)
+    scrub_helpers_with_filter(input_item, is_allowed_helper, is_config_helper)
 }
 
 /// Processes enum variants to extract and organize configuration entries
-fn process_enum_variants(
-    builder: &mut EmitBuilder,
-    args: &mut ConfigureSystemSetArgs,
+fn process_enum_variants_for_group(
+    group: Option<&Ident>,
     item_enum: &syn::ItemEnum,
     scrubbed_item: &ScrubOutcome,
-) -> EmitErrOnlyResult<(), syn::Error> {
+) -> Result<Option<ConfigureSystemSetArgsInner>, syn::Error> {
     // Parse and collect configuration data from variant attributes
-    let (variant_configs, observed_order) = collect_variant_configs(builder, scrubbed_item)?;
+    let (variant_configs, observed_order) = collect_variant_configs(scrubbed_item)?;
 
     // Create entries based on variant configs and apply fallback rules
-    let entries = create_variant_entries(item_enum, &variant_configs, &observed_order, &args.group);
+    let entries = create_variant_entries(item_enum, &variant_configs, &observed_order, group);
 
-    // Store processed entries in args
-    args.inner = Some(ConfigureSystemSetArgsInner { entries });
-    Ok(())
+    Ok(Some(ConfigureSystemSetArgsInner { entries }))
 }
 
 /// Collects configuration data from variant attributes
 fn collect_variant_configs(
-    builder: &mut EmitBuilder,
     scrubbed_item: &ScrubOutcome,
-) -> EmitErrOnlyResult<(VariantConfigMap, ObservedOrderMap), syn::Error> {
+) -> Result<(VariantConfigMap, ObservedOrderMap), syn::Error> {
     let mut variants_cfg: VariantConfigMap = HashMap::new();
     let mut observed_order_by_variant: ObservedOrderMap = HashMap::new();
 
-    builder.try_unit(|_| {
-        for (observed_index, site) in scrubbed_item.all_with_removed_attrs().into_iter().enumerate()
-        {
-            if let AttrSite::Variant { variant } = &site.site {
-                observed_order_by_variant.entry(variant.clone()).or_insert(observed_index);
-                process_variant_attributes(
-                    variant,
-                    &site.attrs,
-                    observed_index,
-                    &mut variants_cfg,
-                )?;
-            }
+    for (observed_index, site) in scrubbed_item.all_with_removed_attrs().into_iter().enumerate() {
+        if let AttrSite::Variant { variant } = &site.site {
+            observed_order_by_variant.entry(variant.clone()).or_insert(observed_index);
+            process_variant_attributes(variant, &site.attrs, observed_index, &mut variants_cfg)?;
         }
-        Ok(())
-    })?;
+    }
 
     Ok((variants_cfg, observed_order_by_variant))
 }
@@ -436,7 +420,7 @@ fn create_variant_entries(
     item_enum: &syn::ItemEnum,
     variants_cfg: &VariantConfigMap,
     observed_order: &ObservedOrderMap,
-    outer_group: &Option<Ident>,
+    outer_group: Option<&Ident>,
 ) -> ConfigureSystemSetArgsInnerEntries {
     let mut entries = Vec::with_capacity(item_enum.variants.len());
     let mut next_fallback_index = observed_order.len();
@@ -467,7 +451,7 @@ fn select_entry_with_fallback(
     variant_ident: &Ident,
     variants_cfg: &VariantConfigMap,
     observed_index: usize,
-    outer_group: &Option<Ident>,
+    outer_group: Option<&Ident>,
 ) -> ConfigureSystemSetArgsInnerEntry {
     let bucket = variants_cfg.get(variant_ident);
 
@@ -481,7 +465,7 @@ fn select_entry_with_fallback(
     // Second try: default entry with group override
     if let Some(b) = bucket {
         if let Some(mut default_entry) = b.default.clone() {
-            default_entry.group = outer_group.clone();
+            default_entry.group = outer_group.cloned();
             if default_entry.order.is_none() {
                 default_entry.order = Some(observed_index);
             }
@@ -491,7 +475,7 @@ fn select_entry_with_fallback(
 
     // Fallback: synthesize default entry
     ConfigureSystemSetArgsInnerEntry {
-        group: outer_group.clone(),
+        group: outer_group.cloned(),
         order: Some(observed_index),
         ..Default::default()
     }
@@ -500,7 +484,7 @@ fn select_entry_with_fallback(
 /// Sorts entries by order and filters by group
 fn sort_and_filter_entries(
     mut entries: ConfigureSystemSetArgsInnerEntries,
-    outer_group: &Option<Ident>,
+    outer_group: Option<&Ident>,
 ) -> ConfigureSystemSetArgsInnerEntries {
     // Sort by order
     entries.sort_by_key(|(_, entry)| entry.order.unwrap_or_default());
@@ -534,7 +518,7 @@ mod tests {
     ) -> Result<(Ident, ConfigureSystemSetArgs), syn::Error> {
         let mut input_item = InputItem::Tokens(input.clone());
         let ident = input_item.ident()?.clone();
-        let (_, inflated_args) = args_from_attr_input(attr, input.clone()).strip_err_tokens()?;
+        let (_, inflated_args) = args_from_attr_input(attr, input.clone()).strip_err_context()?;
         Ok((ident, inflated_args))
     }
 
@@ -693,7 +677,7 @@ mod tests {
                     }
                 },
             )
-            .strip_err_tokens()?;
+            .strip_err_context()?;
             assert_eq!(
                 inflated_args,
                 ConfigureSystemSetArgs {
@@ -724,7 +708,6 @@ mod tests {
                     group: Some(parse_quote!(A)),
                     chain: Flag::from(false),
                     chain_ignore_deferred: Flag::from(false),
-                    _strip_helpers: true,
                 }
             );
             Ok(())
@@ -744,16 +727,15 @@ mod tests {
                     B,
                 }
             };
-            let (scrubbed_input, _) = args_from_attr_input(attr, input).strip_err_tokens()?;
-            assert_eq!(
-                scrubbed_input.to_string(),
+            let (scrubbed_input, _) = args_from_attr_input(attr, input).strip_err_context()?;
+            assert_ts_eq!(
+                scrubbed_input,
                 quote! {
                     enum Foo {
                         A,
                         B,
                     }
                 }
-                .to_string()
             );
             Ok(())
         }
@@ -805,10 +787,13 @@ mod tests {
                     A,
                 }
             };
-            let (tokens, args) =
-                args_from_attr_input(attr, input.clone()).map_err_tokens(token_string)?;
+            let mut input_item =
+                InputItem::from_ts_validated(input.clone()).expect("should be valid item");
+            let item = input_item.ensure_ast().expect("should be valid item ast");
+            assert!(!check_strip_helpers(item));
+            let (tokens, _) =
+                args_from_attr_input(attr, input.clone()).map_err_context(token_string)?;
 
-            assert!(!args._strip_helpers);
             assert_ts_eq!(tokens, input);
 
             Ok(())

@@ -1,10 +1,6 @@
 #![allow(dead_code)]
 use crate::{
-    codegen::emit::{
-        EmitErrOnlyResult,
-        EmitResult,
-        WithTsError,
-    },
+    codegen::emit::EmitErrOnlyResult,
     macro_api::prelude::InputItem,
     syntax::extensions::item::ItemAttrsExt,
 };
@@ -499,7 +495,6 @@ mod tests {
 
     mod scrub_helpers_and_ident {
         use super::*;
-        use crate::codegen::emit::EmitResultExt;
         use internal_test_util::assert_ts_eq;
         #[inline]
         fn assert_no_errors(scrub_outcome: &ScrubOutcome) {
@@ -654,7 +649,7 @@ mod tests {
                         X,
                         Y,
                     }
-                },
+                }
             );
             Ok(())
         }

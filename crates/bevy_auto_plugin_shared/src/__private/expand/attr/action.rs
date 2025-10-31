@@ -25,7 +25,7 @@ where
     );
     let mut app_mut_emitter = AppMutationEmitter::from_args(args);
     let processed_item = {
-        if let Err((tokens, err)) = app_mut_emitter.item_post_process() {
+        if let Err((tokens, err)) = app_mut_emitter.post_process_inner_item() {
             let err = err.to_compile_error();
             return quote! {
                 #err
