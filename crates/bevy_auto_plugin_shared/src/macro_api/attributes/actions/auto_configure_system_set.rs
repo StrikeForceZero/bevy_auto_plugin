@@ -456,21 +456,21 @@ fn select_entry_with_fallback(
     let bucket = variants_cfg.get(variant_ident);
 
     // First try: explicit group match
-    if let (Some(g), Some(b)) = (outer_group, bucket) {
-        if let Some(found) = b.per_group.get(g) {
-            return found.clone();
-        }
+    if let (Some(g), Some(b)) = (outer_group, bucket)
+        && let Some(found) = b.per_group.get(g)
+    {
+        return found.clone();
     }
 
     // Second try: default entry with group override
-    if let Some(b) = bucket {
-        if let Some(mut default_entry) = b.default.clone() {
-            default_entry.group = outer_group.cloned();
-            if default_entry.order.is_none() {
-                default_entry.order = Some(observed_index);
-            }
-            return default_entry;
+    if let Some(b) = bucket
+        && let Some(mut default_entry) = b.default.clone()
+    {
+        default_entry.group = outer_group.cloned();
+        if default_entry.order.is_none() {
+            default_entry.order = Some(observed_index);
         }
+        return default_entry;
     }
 
     // Fallback: synthesize default entry
