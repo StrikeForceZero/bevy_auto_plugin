@@ -1,4 +1,10 @@
-use crate::syntax::extensions::item::ItemAttrsExt;
+use crate::syntax::{
+    extensions::item::ItemAttrsExt,
+    parse::item::{
+        SingleItemWithErrorsCheckError,
+        expect_single_item_any_compile_errors,
+    },
+};
 use proc_macro2::TokenStream;
 use quote::{
     ToTokens,
@@ -15,6 +21,44 @@ pub enum InputItem {
     Item(Box<syn::Item>),
 }
 
+impl AsRef<Self> for InputItem {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+
+impl From<Box<syn::Item>> for InputItem {
+    fn from(boxed_item: Box<syn::Item>) -> Self {
+        Self::Item(boxed_item)
+    }
+}
+
+impl From<&syn::Item> for InputItem {
+    fn from(item: &syn::Item) -> Self {
+        Self::Item(Box::new(item.clone()))
+    }
+}
+
+impl From<syn::Item> for InputItem {
+    fn from(item: syn::Item) -> Self {
+        Self::Item(Box::new(item))
+    }
+}
+
+impl TryFrom<TokenStream> for InputItem {
+    type Error = syn::Error;
+    fn try_from(tokens: TokenStream) -> Result<Self, Self::Error> {
+        Self::from_ts_validated(tokens)
+    }
+}
+
+impl TryFrom<&TokenStream> for InputItem {
+    type Error = syn::Error;
+    fn try_from(tokens: &TokenStream) -> Result<Self, Self::Error> {
+        Self::from_ts_validated(tokens.clone())
+    }
+}
+
 impl PartialEq for InputItem {
     fn eq(&self, other: &Self) -> bool {
         let self_tokens = self.to_token_stream();
@@ -24,11 +68,27 @@ impl PartialEq for InputItem {
 }
 
 impl InputItem {
+    pub fn from_ts_validated(tokens: TokenStream) -> syn::Result<Self> {
+        let mut input_item = Self::Tokens(tokens);
+        input_item.ensure_ast()?;
+        Ok(input_item)
+    }
     fn _upgrade(&mut self) -> syn::Result<()> {
         if let Self::Tokens(tokens) = self {
             *self = Self::Item(parse2(tokens.clone())?);
         }
         Ok(())
+    }
+    pub fn has_compiler_errors(&self) -> Result<bool, SingleItemWithErrorsCheckError> {
+        match self {
+            InputItem::Tokens(tokens) => {
+                match expect_single_item_any_compile_errors(tokens.clone()) {
+                    Ok((_, compiler_errors)) => Ok(!compiler_errors.is_empty()),
+                    Err(e) => Err(e),
+                }
+            }
+            InputItem::Item(_) => Ok(false),
+        }
     }
     pub fn ensure_ast(&mut self) -> syn::Result<&syn::Item> {
         self._upgrade()?;
