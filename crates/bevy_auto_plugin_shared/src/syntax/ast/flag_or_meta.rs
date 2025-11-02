@@ -1,9 +1,21 @@
-use darling::{Error, FromMeta, Result};
-use proc_macro2::{Ident, TokenStream};
-use quote::{ToTokens, quote};
+use darling::{
+    Error,
+    FromMeta,
+    Result,
+};
+use proc_macro2::{
+    Ident,
+    TokenStream,
+};
+use quote::{
+    ToTokens,
+    quote,
+};
 use smart_default::SmartDefault;
-use syn::Meta;
-use syn::parse::Parse;
+use syn::{
+    Meta,
+    parse::Parse,
+};
 
 #[derive(Debug, SmartDefault, Clone, PartialEq, Hash)]
 pub struct FlagOrMeta<T>
@@ -43,19 +55,13 @@ where
     fn from_meta(meta: &Meta) -> Result<Self> {
         match meta {
             // `#[this_flag]`
-            Meta::Path(_) => Ok(FlagOrMeta {
-                present: true,
-                inner_meta: None,
-            }),
+            Meta::Path(_) => Ok(FlagOrMeta { present: true, inner_meta: None }),
 
             // `#[this_flag(A, B)]`
             Meta::List(_) => {
                 // (T::from_meta sees Meta::List and can do `list.tokens` parsing inside)
                 let t = T::from_meta(meta)?;
-                Ok(Self {
-                    present: true,
-                    inner_meta: Some(t),
-                })
+                Ok(Self { present: true, inner_meta: Some(t) })
             }
 
             // Not supported: `#[this_flag = ...]`
@@ -71,10 +77,7 @@ where
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         // #[flag] -> no tokens after the key
         if input.is_empty() {
-            return Ok(Self {
-                present: true,
-                inner_meta: None,
-            });
+            return Ok(Self { present: true, inner_meta: None });
         }
 
         // #[flag(...)] -> parenthesized payload parsed as T
@@ -86,10 +89,7 @@ where
             if !input.is_empty() {
                 return Err(input.error("unexpected tokens after parenthesized payload"));
             }
-            return Ok(Self {
-                present: true,
-                inner_meta: Some(inner),
-            });
+            return Ok(Self { present: true, inner_meta: Some(inner) });
         }
 
         Err(input.error("expected nothing or a parenthesized payload"))
@@ -124,9 +124,7 @@ mod tests {
     #[xtest]
     fn test_flag_or_list_to_outer_tokens_not_present() {
         assert_eq!(
-            FlagOrMeta::<Ident>::default()
-                .to_outer_tokens("this_flag")
-                .to_string(),
+            FlagOrMeta::<Ident>::default().to_outer_tokens("this_flag").to_string(),
             quote! {}.to_string()
         )
     }
@@ -134,12 +132,9 @@ mod tests {
     #[xtest]
     fn test_flag_or_list_to_outer_tokens_empty() {
         assert_eq!(
-            FlagOrMeta::<Ident> {
-                present: true,
-                inner_meta: None,
-            }
-            .to_outer_tokens("this_flag")
-            .to_string(),
+            FlagOrMeta::<Ident> { present: true, inner_meta: None }
+                .to_outer_tokens("this_flag")
+                .to_string(),
             quote! { this_flag }.to_string()
         )
     }
@@ -147,15 +142,9 @@ mod tests {
     #[xtest]
     fn test_flag_or_list_to_outer_tokens_single_item() {
         assert_eq!(
-            FlagOrMeta::<Test> {
-                present: true,
-                inner_meta: Some(Test {
-                    a: Some(1),
-                    b: None,
-                }),
-            }
-            .to_outer_tokens("this_flag")
-            .to_string(),
+            FlagOrMeta::<Test> { present: true, inner_meta: Some(Test { a: Some(1), b: None }) }
+                .to_outer_tokens("this_flag")
+                .to_string(),
             quote! { this_flag(a = 1u32) }.to_string()
         )
     }
@@ -163,15 +152,9 @@ mod tests {
     #[xtest]
     fn test_flag_or_list_to_outer_tokens_multiple_item() {
         assert_eq!(
-            FlagOrMeta::<Test> {
-                present: true,
-                inner_meta: Some(Test {
-                    a: Some(1),
-                    b: Some(2),
-                }),
-            }
-            .to_outer_tokens("this_flag")
-            .to_string(),
+            FlagOrMeta::<Test> { present: true, inner_meta: Some(Test { a: Some(1), b: Some(2) }) }
+                .to_outer_tokens("this_flag")
+                .to_string(),
             quote! { this_flag(a = 1u32, b = 2u32) }.to_string()
         )
     }
@@ -182,10 +165,7 @@ mod tests {
         let item = syn::parse2::<FlagOrMeta<Test>>(input).map_err(|e| e.to_string());
         let expected = Ok(FlagOrMeta::<Test> {
             present: true,
-            inner_meta: Some(Test {
-                a: Some(1),
-                b: Some(2),
-            }),
+            inner_meta: Some(Test { a: Some(1), b: Some(2) }),
         });
         assert_eq!(item, expected);
     }

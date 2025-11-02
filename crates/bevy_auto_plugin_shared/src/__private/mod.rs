@@ -1,4 +1,3 @@
-pub mod attribute;
 pub mod auto_plugin_registry;
 pub mod expand;
 

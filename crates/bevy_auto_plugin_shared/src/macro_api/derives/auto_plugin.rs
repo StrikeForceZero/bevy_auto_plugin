@@ -1,8 +1,17 @@
-use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::derives::{FieldData, VariantData};
+use crate::macro_api::{
+    attributes::prelude::*,
+    derives::{
+        FieldData,
+        VariantData,
+    },
+};
 use darling::FromDeriveInput;
 use proc_macro2::Ident;
-use syn::{Attribute, Generics, Visibility};
+use syn::{
+    Attribute,
+    Generics,
+    Visibility,
+};
 
 #[derive(FromDeriveInput, Debug)]
 #[darling(attributes(auto_plugin), forward_attrs, supports(struct_any, enum_any))]

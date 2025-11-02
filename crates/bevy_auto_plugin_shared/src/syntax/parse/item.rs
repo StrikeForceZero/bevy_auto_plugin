@@ -1,61 +1,65 @@
-use crate::syntax::extensions::item::ItemAttrsExt;
-use crate::syntax::extensions::path::PathExt;
 use proc_macro2::TokenStream;
-use syn::{Attribute, Item, parse2};
+use syn::{
+    File,
+    Item,
+    ItemMacro,
+    Macro,
+};
+use thiserror::Error;
 
-pub fn ts_item_has_attr(input: TokenStream, path: &syn::Path) -> syn::Result<bool> {
-    let item = parse2::<Item>(input)?;
-    item_has_attr(item, path)
+#[derive(Debug, Error)]
+pub enum SingleItemWithErrorsCheckError {
+    #[error("failed to parse token stream as a single item: {0}")]
+    ParseFailed(#[from] syn::Error),
+    #[error("token stream did not contain an item")]
+    NoRealItem,
+    #[error("token stream contained more than one item")]
+    MultipleRealItems,
 }
 
-pub fn item_has_attr(item: Item, path: &syn::Path) -> syn::Result<bool> {
-    Ok(has_attr(item.attrs().unwrap_or_default(), path))
+/// Returns the single Item (struct/enum/etc) if the token stream is:
+///     `Item` [+ zero or more `compile_error!` items]
+/// Fails otherwise.
+pub fn expect_single_item_any_compile_errors(
+    ts: TokenStream,
+) -> Result<(Item, Vec<ItemMacro>), SingleItemWithErrorsCheckError> {
+    let file: File = syn::parse2(ts).map_err(SingleItemWithErrorsCheckError::ParseFailed)?;
+
+    let mut compile_errors = vec![];
+    let mut found_item: Option<Item> = None;
+
+    for item in file.items.into_iter() {
+        if let Some(compiler_error) = as_compile_error_item(&item) {
+            compile_errors.push(compiler_error.clone());
+            continue;
+        }
+
+        // It's a "real" item
+        match &found_item {
+            None => {
+                // first real item we've seen — keep it
+                found_item = Some(item);
+            }
+            Some(_) => {
+                // second real item → reject
+                return Err(SingleItemWithErrorsCheckError::MultipleRealItems);
+            }
+        }
+    }
+
+    match found_item {
+        Some(item) => Ok((item, compile_errors)),
+        None => Err(SingleItemWithErrorsCheckError::NoRealItem),
+    }
 }
 
-pub fn has_attr(attrs: &[Attribute], path: &syn::Path) -> bool {
-    attrs
-        .iter()
-        .any(|attr| attr.path().is_similar_path_or_ident(path))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use internal_test_proc_macro::xtest;
-    use syn::parse_quote;
-
-    #[xtest]
-    fn test_negative_has_attr_empty() {
-        let target_path = parse_quote!(a);
-        assert!(!has_attr(&[], &target_path));
-    }
-
-    #[xtest]
-    fn test_negative_has_attr() {
-        let target_path = parse_quote!(a);
-        let input: Vec<_> = parse_quote! {
-            #[foo]
-        };
-        assert!(!has_attr(&input, &target_path));
-    }
-
-    #[xtest]
-    fn test_positive_has_attr_single() {
-        let target_path = parse_quote!(a);
-        let input: Vec<_> = parse_quote! {
-            #[#target_path]
-        };
-        assert!(has_attr(&input, &target_path));
-    }
-
-    #[xtest]
-    fn test_positive_has_attr_multiple() {
-        let target_path = parse_quote!(a);
-        let input: Vec<_> = parse_quote! {
-            #[A]
-            #[#target_path]
-            #[B]
-        };
-        assert!(has_attr(&input, &target_path));
+/// returns `Some(ItemMacro)` if `compile_error!(...)` ?
+fn as_compile_error_item(item: &Item) -> Option<&ItemMacro> {
+    match item {
+        Item::Macro(item_macro) => {
+            let ItemMacro { mac: Macro { path, .. }, .. } = item_macro;
+            if path.is_ident("compile_error") { Some(item_macro) } else { None }
+        }
+        _ => None,
     }
 }

@@ -1,21 +1,17 @@
-use crate::codegen::tokens::ArgsBackToTokens;
-use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
-use crate::macro_api::attributes::prelude::GenericsArgs;
-use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
-use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
-use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::extensions::lit::LitExt;
-use crate::syntax::validated::concrete_path::ConcreteTargetPath;
+use crate::{
+    macro_api::prelude::*,
+    syntax::extensions::lit::LitExt,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::Item;
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
 pub struct NameArgs {
-    #[darling(multiple)]
-    pub generics: Vec<TypeList>,
     pub name: Option<syn::Lit>,
 }
 
@@ -23,134 +19,43 @@ impl AttributeIdent for NameArgs {
     const IDENT: &'static str = "auto_name";
 }
 
-impl ItemAttributeArgs for NameArgs {
-    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
-        resolve_ident_from_struct_or_enum(item)
-    }
-}
+pub type IaName =
+    ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type NameAppMutEmitter = AppMutationEmitter<IaName>;
+pub type NameAttrEmitter = AttrEmitter<IaName>;
 
-impl GenericsArgs for NameArgs {
-    fn type_lists(&self) -> &[TypeList] {
-        &self.generics
-    }
-}
-
-impl ToTokensWithConcreteTargetPath for NameArgs {
-    fn to_tokens_with_concrete_target_path(
-        &self,
-        tokens: &mut TokenStream,
-        target: &ConcreteTargetPath,
-    ) {
-        let name = self
-            .name
-            .as_ref()
-            .map(|name| name.unquoted_string())
-            .unwrap_or_else(|| {
+impl EmitAppMutationTokens for NameAppMutEmitter {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+        let args = &self.args.args.base;
+        for concrete_path in self.args.concrete_paths() {
+            let name = args.name.as_ref().map(|name| name.unquoted_string()).unwrap_or_else(|| {
                 // TODO: move to util fn
-                quote!(#target)
+                quote!(#concrete_path)
                     .to_string()
+                    .replace(" :: < ", "<")
                     .replace(" < ", "<")
                     .replace(" >", ">")
                     .replace(" ,", ",")
                 // TODO: offer option to only remove all spaces?
                 //  .replace(" ", "")
             });
-        let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
+            let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
+            tokens.extend(quote! {
+                #app_param.register_required_components_with::<#concrete_path, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new(#name));
+            });
+        }
+    }
+}
+
+impl ToTokens for NameAttrEmitter {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let mut args = self.args.args.extra_args();
+        if let Some(name) = &self.args.args.base.name {
+            args.push(quote! { name = #name });
+        }
         tokens.extend(quote! {
-            .register_required_components_with::<#target, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new(#name))
-        })
-    }
-}
-
-impl ArgsBackToTokens for NameArgs {
-    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        tokens.extend(self.generics().to_attribute_arg_tokens());
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::codegen::with_target_path::WithTargetPath;
-    use internal_test_proc_macro::xtest;
-    use syn::{Path, parse_quote, parse2};
-
-    #[xtest]
-    fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<NameArgs>(quote!())?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .register_required_components_with::<FooTarget, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new("FooTarget"))
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_to_tokens_with_custom_name_no_generics() -> syn::Result<()> {
-        let args = parse2::<NameArgs>(quote!(name = "bar"))?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .register_required_components_with::<FooTarget, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new("bar"))
-            }
-                .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<NameArgs>(quote!(generics(u8, bool)))?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .register_required_components_with::<FooTarget<u8, bool>, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new("FooTarget<u8, bool>"))
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_to_tokens_multiple() -> syn::Result<()> {
-        let args = parse2::<NameArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let bevy_ecs = crate::__private::paths::ecs::ecs_root_path();
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .register_required_components_with::<FooTarget<u8, bool>, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new("FooTarget<u8, bool>"))
-            }
-            .to_string()
-        );
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .register_required_components_with::<FooTarget<bool, bool>, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new("FooTarget<bool, bool>"))
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
+            #(#args),*
+        });
+        *tokens = self.wrap_as_attr(tokens);
     }
 }

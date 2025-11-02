@@ -1,4 +1,7 @@
-use std::fmt::{Display, Formatter};
+use std::fmt::{
+    Display,
+    Formatter,
+};
 
 pub enum SubDir {
     Root,
@@ -44,9 +47,21 @@ pub trait UiTest {
 
 pub mod utils {
 
-    use std::fs::{DirEntry, File, read_dir};
-    use std::io::{Read, Result};
-    use std::path::{Path, PathBuf};
+    use std::{
+        fs::{
+            DirEntry,
+            File,
+            read_dir,
+        },
+        io::{
+            Read,
+            Result,
+        },
+        path::{
+            Path,
+            PathBuf,
+        },
+    };
 
     fn is_extension_factory(extension: Option<&str>) -> impl Fn(&DirEntry) -> bool {
         move |entry: &DirEntry| {
@@ -86,9 +101,7 @@ pub mod utils {
         path: impl AsRef<Path>,
         extension: Option<&str>,
     ) -> Result<Vec<PathBuf>> {
-        let rs_files = files_in_dir(path, extension)?
-            .map(|entry| entry.path())
-            .collect::<Vec<_>>();
+        let rs_files = files_in_dir(path, extension)?.map(|entry| entry.path()).collect::<Vec<_>>();
         Ok(rs_files)
     }
 
@@ -124,9 +137,11 @@ macro_rules! ui_tests {
         mod tests {
             use super::*;
             use internal_test_proc_macro::xtest;
-            use internal_test_util::ui_util::SubDir;
-            use internal_test_util::ui_util::UiTest;
-            use internal_test_util::ui_util::utils;
+            use internal_test_util::ui_util::{
+                SubDir,
+                UiTest,
+                utils,
+            };
             #[xtest]
             fn ui_tests() {
                 let t = trybuild::TestCases::new();

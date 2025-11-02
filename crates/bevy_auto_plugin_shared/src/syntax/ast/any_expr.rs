@@ -193,7 +193,10 @@ mod tests {
     use internal_test_proc_macro::xtest;
     use proc_macro2::TokenStream;
     use quote::quote;
-    use syn::{parse_quote, parse2};
+    use syn::{
+        parse_quote,
+        parse2,
+    };
 
     fn map_err_to_string<T, E: std::fmt::Display>(r: Result<T, E>) -> Result<T, &'static str> {
         r.map_err(|e| &*format!("{e}").leak())

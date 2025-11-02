@@ -1,4 +1,7 @@
-use rustc_version::{Channel, version_meta};
+use rustc_version::{
+    Channel,
+    version_meta,
+};
 
 fn main() {
     println!("cargo:rustc-check-cfg=cfg(nightly)");

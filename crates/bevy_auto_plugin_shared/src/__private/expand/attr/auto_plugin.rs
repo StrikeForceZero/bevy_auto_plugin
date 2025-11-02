@@ -1,14 +1,23 @@
-use crate::util::macros::{compile_error_with, ok_or_emit_with, parse_macro_input2_or_emit_with};
+use crate::util::macros::{
+    compile_error_with,
+    ok_or_emit_with,
+    parse_macro_input2_or_emit_with,
+};
 use proc_macro2::TokenStream as MacroStream;
 use syn::ItemFn;
 
 pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream {
-    use crate::macro_api::attributes::prelude::{AutoPluginFnArgs, resolve_app_param_name};
-    use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
+    use crate::{
+        macro_api::prelude::*,
+        syntax::analysis::fn_param::require_fn_param_mutable_reference,
+    };
     use proc_macro2::Ident;
     use quote::quote;
-    use syn::spanned::Spanned;
-    use syn::{FnArg, parse2};
+    use syn::{
+        FnArg,
+        parse2,
+        spanned::Spanned,
+    };
     let og_input = input.clone();
     let item = parse_macro_input2_or_emit_with!(input as ItemFn, og_input);
     let params = ok_or_emit_with!(parse2::<AutoPluginFnArgs>(attr), og_input);
@@ -28,11 +37,7 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
         .collect::<Vec<_>>();
     let self_arg = self_args.first();
 
-    // TODO: use helper
-    let app_param_ident = ok_or_emit_with!(
-        resolve_app_param_name(&item, params.app_param.as_ref()),
-        og_input
-    );
+    let app_param_ident = ok_or_emit_with!(resolve_app_param_name(&item), og_input);
 
     if let Err(err) = require_fn_param_mutable_reference(&item, app_param_ident, "bevy app") {
         return compile_error_with!(err, og_input);
