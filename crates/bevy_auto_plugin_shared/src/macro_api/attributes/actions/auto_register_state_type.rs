@@ -1,3 +1,4 @@
+use crate::codegen::tokens::ArgsBackToTokens;
 use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
 use crate::macro_api::attributes::prelude::GenericsArgs;
 use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
@@ -43,6 +44,12 @@ impl ToTokensWithConcreteTargetPath for RegisterStateTypeArgs {
             .register_type :: < #bevy_state::prelude::State< #target > >()
             .register_type :: < #bevy_state::prelude::NextState< #target > >()
         })
+    }
+}
+
+impl ArgsBackToTokens for RegisterStateTypeArgs {
+    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.generics().to_attribute_arg_tokens());
     }
 }
 

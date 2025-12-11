@@ -13,42 +13,42 @@ use quote::quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct StatesArgs {
+pub struct SubStatesArgs {
     pub derive: FlagOrList<NonEmptyPath>,
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
     pub init: bool,
 }
 
-impl GenericsArgs for StatesArgs {
+impl GenericsArgs for SubStatesArgs {
     fn type_lists(&self) -> &[TypeList] {
         &[]
     }
 }
 
-impl AttributeIdent for StatesArgs {
-    const IDENT: &'static str = "auto_states";
+impl AttributeIdent for SubStatesArgs {
+    const IDENT: &'static str = "auto_sub_states";
 }
 
-impl<'a> From<&'a StatesArgs> for RegisterTypeArgs {
-    fn from(_value: &'a StatesArgs) -> Self {
+impl<'a> From<&'a SubStatesArgs> for RegisterTypeArgs {
+    fn from(_value: &'a SubStatesArgs) -> Self {
         Self::default()
     }
 }
 
-impl<'a> From<&'a StatesArgs> for RegisterStateTypeArgs {
-    fn from(_value: &'a StatesArgs) -> Self {
+impl<'a> From<&'a SubStatesArgs> for RegisterStateTypeArgs {
+    fn from(_value: &'a SubStatesArgs) -> Self {
         Self::default()
     }
 }
 
-impl<'a> From<&'a StatesArgs> for InitStateArgs {
-    fn from(_value: &'a StatesArgs) -> Self {
+impl<'a> From<&'a SubStatesArgs> for InitSubStateArgs {
+    fn from(_value: &'a SubStatesArgs) -> Self {
         Self::default()
     }
 }
 
-impl ArgsBackToTokens for StatesArgs {
+impl ArgsBackToTokens for SubStatesArgs {
     fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
         let mut items = vec![];
         items.extend(self.generics().to_attribute_arg_vec_tokens());
@@ -68,7 +68,7 @@ impl ArgsBackToTokens for StatesArgs {
     }
 }
 
-impl RewriteAttribute for StatesArgs {
+impl RewriteAttribute for SubStatesArgs {
     fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
         let mut args = Vec::new();
         args.push(quote! { plugin = #plugin });
@@ -82,7 +82,7 @@ impl RewriteAttribute for StatesArgs {
         let mut expanded_attrs = ExpandAttrs::default();
 
         if self.derive.present {
-            expanded_attrs.append(tokens::derive_states(&self.derive.items));
+            expanded_attrs.append(tokens::derive_sub_states(&self.derive.items));
         }
         if self.reflect.present {
             if self.derive.present {
@@ -102,7 +102,7 @@ impl RewriteAttribute for StatesArgs {
         if self.init {
             expanded_attrs
                 .attrs
-                .push(tokens::auto_init_states(plugin.clone(), self.into()));
+                .push(tokens::auto_init_sub_states(plugin.clone(), self.into()));
         }
         expanded_attrs
     }
@@ -129,7 +129,7 @@ mod tests {
             vec![quote!(init)],
         ]) {
             println!("checking args: {}", quote! { #(#args),*});
-            assert_vec_args_expand!(plugin!(parse_quote!(Test)), StatesArgs, args);
+            assert_vec_args_expand!(plugin!(parse_quote!(Test)), SubStatesArgs, args);
         }
         Ok(())
     }
@@ -147,8 +147,8 @@ mod tests {
             register,
             init,
         )};
-        let args = WithPlugin::<StatesArgs>::from_nested_meta(&args)?;
-        let derive_attr = tokens::derive_states(&extras);
+        let args = WithPlugin::<SubStatesArgs>::from_nested_meta(&args)?;
+        let derive_attr = tokens::derive_sub_states(&extras);
         let derive_reflect_path = tokens::derive_reflect_path();
         let reflect_args = vec_spread![..extras,];
         let reflect_attr = tokens::reflect(reflect_args.iter().map(NonEmptyPath::last_ident));
@@ -170,7 +170,7 @@ mod tests {
                     quote! { #[reflect(#(#reflect_args),*)] },
                     tokens::auto_register_type(args.plugin(), (&args.inner).into()),
                     tokens::auto_register_state_type(args.plugin(), (&args.inner).into()),
-                    tokens::auto_init_states(args.plugin(), (&args.inner).into()),
+                    tokens::auto_init_sub_states(args.plugin(), (&args.inner).into()),
                 ]
             }
             .to_token_stream()
