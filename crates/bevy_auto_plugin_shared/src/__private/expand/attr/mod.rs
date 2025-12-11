@@ -366,22 +366,23 @@ gen_auto_attribute_outers! {
     auto_init_resource         => InitResourceArgs,
     auto_insert_resource       => InsertResourceArgs,
     auto_init_state            => InitStateArgs,
-    auto_init_sub_state       => InitSubStateArgs,
+    auto_init_sub_state        => InitSubStateArgs,
     auto_name                  => NameArgs,
     auto_register_state_type   => RegisterStateTypeArgs,
     auto_add_system            => AddSystemArgs,
     auto_add_observer          => AddObserverArgs,
     auto_add_plugin            => AddPluginArgs,
-    auto_configure_system_set => ConfigureSystemSetArgs:
+    auto_configure_system_set  => ConfigureSystemSetArgs:
         parser = ArgParser::Custom(CustomParser::AttrInput(configure_system_set_args_from_attr_input)),
 }
 
 gen_auto_outers! {
-    auto_component => ComponentArgs,
-    auto_resource  => ResourceArgs,
-    auto_system    => SystemArgs,
-    auto_event     => EventArgs,
-    auto_message   => MessageArgs,
-    auto_observer  => ObserverArgs,
-    auto_states    => StatesArgs,
+    auto_component  => ComponentArgs,
+    auto_resource   => ResourceArgs,
+    auto_system     => SystemArgs,
+    auto_event      => EventArgs,
+    auto_message    => MessageArgs,
+    auto_observer   => ObserverArgs,
+    auto_states     => StatesArgs,
+    auto_sub_states => SubStatesArgs,
 }

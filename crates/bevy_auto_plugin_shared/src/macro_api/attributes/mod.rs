@@ -39,6 +39,7 @@ pub mod prelude {
     pub use crate::macro_api::attributes::rewrites::auto_observer::ObserverArgs;
     pub use crate::macro_api::attributes::rewrites::auto_resource::ResourceArgs;
     pub use crate::macro_api::attributes::rewrites::auto_states::StatesArgs;
+    pub use crate::macro_api::attributes::rewrites::auto_sub_states::SubStatesArgs;
     pub use crate::macro_api::attributes::rewrites::auto_system::SystemArgs;
     pub use crate::macro_api::attributes::traits::prelude::*;
 }

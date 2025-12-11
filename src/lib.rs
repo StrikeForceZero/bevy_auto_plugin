@@ -63,6 +63,9 @@ pub mod prelude {
     pub use bevy_auto_plugin_proc_macros::auto_states;
 
     #[doc(inline)]
+    pub use bevy_auto_plugin_proc_macros::auto_sub_states;
+
+    #[doc(inline)]
     pub use bevy_auto_plugin_proc_macros::auto_system;
 
     #[doc(inline)]
