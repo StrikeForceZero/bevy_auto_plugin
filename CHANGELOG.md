@@ -129,3 +129,8 @@
 - Deprecated params `impl_generic_auto_plugin_trait`. Remove.
   - `AutoPlugin` is now always implemented when deriving `AutoPlugin`
 - All error paths *should* retain the original tokens from the input; mitigates the IDE from losing syntax highlighting.
+
+---
+### v0.8.1
+- Add `auto_sub_states`
+- `auto_states` now includes `auto_register_state_type`
