@@ -85,7 +85,6 @@ macro_rules! bevy_crate_path {
         use ::syn::parse2;
         use ::std::{concat, stringify};
         use ::syn::Path;
-        use $crate::util::macros::as_cargo_alias;
         #[allow(clippy::result_large_err)]
         let res: Result::<Path, String> = match crate_name(concat!("bevy_", stringify!($target_crate))) {
             Ok(FoundCrate::Itself) => Ok(parse2::<Path>(quote!(::bevy_$target_crate)).unwrap()),
@@ -135,7 +134,6 @@ pub(crate) use {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use internal_test_proc_macro::xtest;
     use proc_macro2::{Span, TokenStream};
     use quote::{ToTokens, quote};
