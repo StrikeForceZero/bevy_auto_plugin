@@ -69,7 +69,6 @@ macro_rules! vec_spread {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use internal_test_proc_macro::xtest;
     #[xtest]
     fn test_vec_spread() {
