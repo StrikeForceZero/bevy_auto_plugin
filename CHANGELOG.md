@@ -134,3 +134,7 @@
 ### v0.8.1
 - Add `auto_sub_states`
 - `auto_states` now includes `auto_register_state_type`
+
+---
+### v0.8.2
+- Fix link in `auto_add_plugin` doc attribute
