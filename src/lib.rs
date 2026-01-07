@@ -172,6 +172,9 @@ pub mod prelude {
     #[doc = include_str!("../docs/proc_attributes/rewrites/auto_states.md")]
     pub use bevy_auto_plugin_proc_macros::auto_states;
 
+    #[doc = include_str!("../docs/proc_attributes/rewrites/auto_sub_states.md")]
+    pub use bevy_auto_plugin_proc_macros::auto_sub_states;
+
     #[doc = include_str!("../docs/proc_attributes/rewrites/auto_system.md")]
     pub use bevy_auto_plugin_proc_macros::auto_system;
 

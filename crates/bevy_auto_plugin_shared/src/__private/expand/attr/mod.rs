@@ -52,4 +52,5 @@ gen_rewrite_outers! {
     auto_message   => IaMessage,
     auto_observer  => IaObserver,
     auto_states    => IaState,
+    auto_sub_states => IaSubState,
 }

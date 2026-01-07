@@ -82,6 +82,11 @@ pub fn derive_states_path() -> NonEmptyPath {
     parse_quote!(#states::state::States)
 }
 
+pub fn derive_sub_states_path() -> NonEmptyPath {
+    let states = crate::__private::paths::state::root_path();
+    parse_quote!(#states::state::SubStates)
+}
+
 pub fn derive_component<'a>(
     extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
 ) -> TokenStream {
@@ -151,6 +156,28 @@ pub fn derive_states<'a>(extra_items: impl IntoIterator<Item = &'a NonEmptyPath>
         )],
     }
 }
+pub fn derive_sub_states<'a>(
+    extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
+) -> ExpandAttrs {
+    ExpandAttrs {
+        use_items: vec![crate::__private::paths::state::derive_use_tokens()],
+        attrs: vec![derive_from(
+            [
+                vec![
+                    &derive_sub_states_path(),
+                    &parse_quote!(Debug),
+                    &parse_quote!(Default),
+                    &parse_quote!(Clone),
+                    &parse_quote!(PartialEq),
+                    &parse_quote!(Eq),
+                    &parse_quote!(Hash),
+                ],
+                extra_items.into_iter().collect::<Vec<_>>(),
+            ]
+            .concat(),
+        )],
+    }
+}
 pub fn derive_reflect() -> TokenStream {
     let derive_reflect_path = derive_reflect_path();
     quote! { #[derive(#derive_reflect_path)] }
@@ -166,6 +193,9 @@ pub fn use_bevy_state_app_ext_states() -> syn::ItemUse {
 pub fn auto_register_type(args: RegisterTypeAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
+pub fn auto_register_state_type(args: RegisterStateTypeAttrEmitter) -> TokenStream {
+    args.to_token_stream()
+}
 pub fn auto_name(args: NameAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
@@ -173,6 +203,9 @@ pub fn auto_init_resource(args: InitResourceAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
 pub fn auto_init_states(args: InitStateAttrEmitter) -> TokenStream {
+    args.to_token_stream()
+}
+pub fn auto_init_sub_states(args: InitSubStateAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
 pub fn auto_add_systems(args: AddSystemAttrEmitter) -> TokenStream {

@@ -126,6 +126,12 @@ pub fn auto_states(attr: CompilerStream, input: CompilerStream) -> CompilerStrea
     handle_attribute(expand::attr::auto_states, attr, input)
 }
 
+/// Automatically registers item as `SubStates` for the Bevy `App`.
+#[proc_macro_attribute]
+pub fn auto_sub_states(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_sub_states, attr, input)
+}
+
 /// Automatically adds the `fn` as a `System` for the Bevy `App`.
 #[proc_macro_attribute]
 pub fn auto_system(attr: CompilerStream, input: CompilerStream) -> CompilerStream {

@@ -15,41 +15,44 @@ use proc_macro2::Ident;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct StatesArgs {
+pub struct SubStatesArgs {
     pub derive: FlagOrList<NonEmptyPath>,
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
     pub init: bool,
 }
 
-impl AttributeIdent for StatesArgs {
-    const IDENT: &'static str = "auto_states";
+impl AttributeIdent for SubStatesArgs {
+    const IDENT: &'static str = "auto_sub_states";
 }
 
-impl<'a> From<&'a StatesArgs> for RegisterTypeArgs {
-    fn from(_value: &'a StatesArgs) -> Self {
+impl<'a> From<&'a SubStatesArgs> for RegisterTypeArgs {
+    fn from(_value: &'a SubStatesArgs) -> Self {
         Self::default()
     }
 }
 
-impl<'a> From<&'a StatesArgs> for RegisterStateTypeArgs {
-    fn from(_value: &'a StatesArgs) -> Self {
+impl<'a> From<&'a SubStatesArgs> for RegisterStateTypeArgs {
+    fn from(_value: &'a SubStatesArgs) -> Self {
         Self::default()
     }
 }
 
-impl<'a> From<&'a StatesArgs> for InitStateArgs {
-    fn from(_value: &'a StatesArgs) -> Self {
+impl<'a> From<&'a SubStatesArgs> for InitSubStateArgs {
+    fn from(_value: &'a SubStatesArgs) -> Self {
         Self::default()
     }
 }
-pub type IaState =
-    ItemAttribute<Composed<StatesArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
-pub type StateAttrExpandEmitter = AttrExpansionEmitter<IaState>;
-impl AttrExpansionEmitterToExpandAttr for StateAttrExpandEmitter {
+
+pub type IaSubState =
+    ItemAttribute<Composed<SubStatesArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
+
+pub type SubStateAttrExpandEmitter = AttrExpansionEmitter<IaSubState>;
+
+impl AttrExpansionEmitterToExpandAttr for SubStateAttrExpandEmitter {
     fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
         if self.args.args.base.derive.present {
-            expand_attrs.append(tokens::derive_states(&self.args.args.base.derive.items));
+            expand_attrs.append(tokens::derive_sub_states(&self.args.args.base.derive.items));
         }
         if self.args.args.base.reflect.present {
             if self.args.args.base.derive.present {
@@ -62,9 +65,9 @@ impl AttrExpansionEmitterToExpandAttr for StateAttrExpandEmitter {
             expand_attrs.attrs.push(tokens::auto_register_state_type(self.into()));
         }
         if self.args.args.base.init {
-            expand_attrs.attrs.push(tokens::auto_init_states(self.into()));
+            expand_attrs.attrs.push(tokens::auto_init_sub_states(self.into()));
         }
     }
 }
 
-impl_from_default!(StatesArgs => (RegisterTypeArgs, RegisterStateTypeArgs, InitStateArgs));
+impl_from_default!(SubStatesArgs => (RegisterTypeArgs, RegisterStateTypeArgs, InitSubStateArgs));
