@@ -30,6 +30,7 @@ fn after_system(mut counter: ResMut<SystemCounter>) {
     counter.0.push("after");
 }
 
+#[allow(clippy::extra_unused_type_parameters)]
 #[auto_system(plugin = Test, schedule = Update, generics(usize))]
 fn generic_system<T: Send + Sync + 'static>(mut counter: ResMut<SystemCounter>) {
     counter.0.push("generic");
