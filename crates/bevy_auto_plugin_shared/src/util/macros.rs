@@ -85,6 +85,9 @@ macro_rules! bevy_crate_path {
         use ::syn::parse2;
         use ::std::{concat, stringify};
         use ::syn::Path;
+        // unused import for tests
+        #[cfg(not(test))]
+        use $crate::util::macros::as_cargo_alias;
         #[allow(clippy::result_large_err)]
         let res: Result::<Path, String> = match crate_name(concat!("bevy_", stringify!($target_crate))) {
             Ok(FoundCrate::Itself) => Ok(parse2::<Path>(quote!(::bevy_$target_crate)).unwrap()),
@@ -120,6 +123,18 @@ macro_rules! bevy_crate_path {
     }};
 }
 
+macro_rules! impl_from_default {
+    ($from:ident => ($($to:ident),* $(,)?)) => {
+        $(
+            impl From<$from> for $to {
+                fn from(_: $from) -> Self {
+                    Self::default()
+                }
+            }
+        )*
+    };
+}
+
 #[allow(unused_imports)]
 #[rustfmt::skip]
 pub(crate) use {
@@ -130,13 +145,20 @@ pub(crate) use {
     parse_macro_input2_or_emit_with,
     as_cargo_alias,
     bevy_crate_path,
+    impl_from_default,
 };
 
 #[cfg(test)]
 mod tests {
     use internal_test_proc_macro::xtest;
-    use proc_macro2::{Span, TokenStream};
-    use quote::{ToTokens, quote};
+    use proc_macro2::{
+        Span,
+        TokenStream,
+    };
+    use quote::{
+        ToTokens,
+        quote,
+    };
 
     #[xtest]
     fn test_bevy_crate_path() {
@@ -155,10 +177,7 @@ mod tests {
         fn process(ts: syn::Result<TokenStream>) -> TokenStream {
             ok_or_emit!(ts)
         }
-        assert_eq!(
-            process(Ok(quote! { foo_bar })).to_string(),
-            quote! { foo_bar }.to_string()
-        );
+        assert_eq!(process(Ok(quote! { foo_bar })).to_string(), quote! { foo_bar }.to_string());
     }
 
     #[test]

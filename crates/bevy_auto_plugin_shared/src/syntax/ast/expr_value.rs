@@ -1,9 +1,17 @@
-use darling::{Error, FromMeta};
+use darling::{
+    Error,
+    FromMeta,
+};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::parse::Parser;
-use syn::spanned::Spanned;
-use syn::{Expr, Meta, Token, punctuated::Punctuated};
+use syn::{
+    Expr,
+    Meta,
+    Token,
+    parse::Parser,
+    punctuated::Punctuated,
+    spanned::Spanned,
+};
 
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct ExprValue(pub Expr);
@@ -43,9 +51,8 @@ impl FromMeta for ExprValue {
         let list = meta.require_list()?;
         // Parse its tokens as `T, T, ...` where each `T` is a syn::Type
         let parser = Punctuated::<Expr, Token![,]>::parse_terminated;
-        let elems = parser
-            .parse2(list.tokens.clone())
-            .map_err(|e| failed_err(e, &list.tokens.span()))?;
+        let elems =
+            parser.parse2(list.tokens.clone()).map_err(|e| failed_err(e, &list.tokens.span()))?;
         let mut elems = elems.into_iter();
         let Some(elem) = elems.next() else {
             return Err(Error::too_few_items(1).with_span(&meta.span()));
@@ -76,7 +83,10 @@ mod tests {
     use super::*;
     use internal_test_proc_macro::xtest;
     use quote::quote;
-    use syn::{Meta, parse_quote};
+    use syn::{
+        Meta,
+        parse_quote,
+    };
 
     #[derive(Debug)]
     #[allow(dead_code)]

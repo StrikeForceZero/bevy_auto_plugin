@@ -1,11 +1,19 @@
-use crate::macro_api::attributes::prelude::GenericsArgs;
-use crate::syntax::analysis::fn_param::require_fn_param_mutable_reference;
-use crate::syntax::ast::type_list::TypeList;
-use darling::FromMeta;
-use darling::util::Flag;
+use crate::syntax::{
+    analysis::fn_param::require_fn_param_mutable_reference,
+    ast::type_list::TypeList,
+};
+use darling::{
+    FromMeta,
+    util::Flag,
+};
 use proc_macro2::Ident;
-use syn::spanned::Spanned;
-use syn::{FnArg, ItemFn, Pat, Path};
+use syn::{
+    FnArg,
+    ItemFn,
+    Pat,
+    Path,
+    spanned::Spanned,
+};
 
 #[derive(FromMeta, Debug, Default, Clone)]
 #[darling(derive_syn_parse, default)]
@@ -26,42 +34,28 @@ pub struct AutoPluginStructOrEnumArgs {
     pub impl_generic_plugin_trait: Flag,
 }
 
-// TODO: remove?
-impl GenericsArgs for AutoPluginStructOrEnumArgs {
-    fn type_lists(&self) -> &[TypeList] {
-        #[allow(deprecated)]
-        &self.generics
-    }
-}
-
 #[derive(FromMeta, Debug, Default, Clone, PartialEq)]
 #[darling(derive_syn_parse, default)]
 pub struct AutoPluginFnArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub plugin: Option<Path>,
+    #[darling(and_then = app_param_check)]
     pub app_param: Option<Ident>,
 }
 
-// TODO: remove?
-impl GenericsArgs for AutoPluginFnArgs {
-    const TURBOFISH: bool = true;
-    fn type_lists(&self) -> &[TypeList] {
-        &self.generics
+fn app_param_check(app_param: Option<Ident>) -> darling::Result<Option<Ident>> {
+    if let Some(app_param) = app_param {
+        Err(darling::error::Error::custom(
+            "manually specifying `app_param` is no longer needed - remove `app_param = ...`",
+        )
+        .with_span(&app_param.span()))
+    } else {
+        Ok(app_param)
     }
 }
 
-pub fn resolve_app_param_name<'a>(
-    input: &'a ItemFn,
-    app_param_name: Option<&'a Ident>,
-) -> syn::Result<&'a Ident> {
-    // Helper: pick a useful Span for errors
-    let err_span = || {
-        app_param_name
-            .map(Ident::span)
-            .unwrap_or_else(|| input.sig.span())
-    };
-
+pub fn resolve_app_param_name(input: &ItemFn) -> syn::Result<&Ident> {
     // Helper: try to get &Ident from a typed arg
     fn ident_from_typed_arg(arg: &FnArg) -> Option<&Ident> {
         match arg {
@@ -73,44 +67,22 @@ pub fn resolve_app_param_name<'a>(
         }
     }
 
-    let has_self = input
-        .sig
-        .inputs
-        .iter()
-        .any(|a| matches!(a, FnArg::Receiver(_)));
+    let has_self = input.sig.inputs.iter().any(|a| matches!(a, FnArg::Receiver(_)));
 
     // collect all named params
-    let named = input
-        .sig
-        .inputs
-        .iter()
-        .filter_map(ident_from_typed_arg)
-        .collect::<Vec<_>>();
-
-    // If user explicitly provided a name, validate it exists and return it
-    if let Some(given) = app_param_name.as_ref() {
-        if let Some(found) = named.iter().copied().find(|id| id == given) {
-            return Ok(found);
-        }
-        return Err(syn::Error::new(
-            err_span(),
-            format!(
-                "auto_plugin provided app_param: `{given}` but it was not found in the function signature"
-            ),
-        ));
-    }
+    let named = input.sig.inputs.iter().filter_map(ident_from_typed_arg).collect::<Vec<_>>();
 
     // Otherwise infer. We need exactly one named param after any receiver(s).
     match named.as_slice() {
         [] => {
             if has_self {
                 Err(syn::Error::new(
-                    err_span(),
+                    input.sig.inputs.span(),
                     "auto_plugin requires a method taking at least one parameter in addition to `&self`",
                 ))
             } else {
                 Err(syn::Error::new(
-                    err_span(),
+                    input.sig.inputs.span(),
                     "auto_plugin requires a function taking at least one named parameter",
                 ))
             }
@@ -121,7 +93,7 @@ pub fn resolve_app_param_name<'a>(
             Ok(*only)
         }
         _more => Err(syn::Error::new(
-            err_span(),
+            input.sig.inputs.span(),
             "auto_plugin requires specifying the name of the `&mut bevy::app::App` parameter \
              when there’s more than one parameter, e.g.:
              #[auto_plugin(app_param=my_app)]
@@ -134,35 +106,13 @@ pub fn resolve_app_param_name<'a>(
 mod tests {
     use crate::macro_api::attributes::auto_plugin::resolve_app_param_name;
     use internal_test_proc_macro::xtest;
-    use proc_macro2::{Ident, Span};
-
-    #[xtest]
-    #[should_panic = "auto_plugin provided app_param: `bar` but it was not found in the function signature"]
-    fn test_resolve_app_param_name_wrong_specified() {
-        let item = syn::parse_quote! {
-            fn foo(&mut self, foo: &mut App) {}
-        };
-        let target_ident = Ident::new("bar", Span::call_site());
-        let ident = resolve_app_param_name(&item, Some(&target_ident)).unwrap();
-        assert_eq!(ident, "foo");
-    }
-
-    #[xtest]
-    fn test_resolve_app_param_name_specified() {
-        let item = syn::parse_quote! {
-            fn foo(&mut self, foo1: &mut App, foo2: &mut App, foo3: &mut App) {}
-        };
-        let target_ident = Ident::new("foo2", Span::call_site());
-        let ident = resolve_app_param_name(&item, Some(&target_ident)).unwrap();
-        assert_eq!(ident, "foo2");
-    }
 
     #[xtest]
     fn test_resolve_app_param_name_default() {
         let item = syn::parse_quote! {
             fn foo(&mut self, foo: &mut App) {}
         };
-        let ident = resolve_app_param_name(&item, None).unwrap();
+        let ident = resolve_app_param_name(&item).unwrap();
         assert_eq!(ident, "foo");
     }
 
@@ -172,7 +122,7 @@ mod tests {
         let item = syn::parse_quote! {
             fn foo() {}
         };
-        match resolve_app_param_name(&item, None) {
+        match resolve_app_param_name(&item) {
             Ok(_) => {}
             Err(err) => panic!("{err:?}"),
         }
@@ -184,7 +134,7 @@ mod tests {
         let item = syn::parse_quote! {
             fn foo(&mut self) {}
         };
-        match resolve_app_param_name(&item, None) {
+        match resolve_app_param_name(&item) {
             Ok(_) => {}
             Err(err) => panic!("{err:?}"),
         }
@@ -196,7 +146,7 @@ mod tests {
         let item = syn::parse_quote! {
             fn foo(&mut self, foo: &Bar) {}
         };
-        match resolve_app_param_name(&item, None) {
+        match resolve_app_param_name(&item) {
             Ok(_) => {}
             Err(err) => panic!("{err:?}"),
         }

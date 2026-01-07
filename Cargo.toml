@@ -6,7 +6,6 @@ repository = "https://github.com/StrikeForceZero/bevy_auto_plugin"
 license = "MIT OR Apache-2.0"
 description = "Procedural attribute macros for Bevy apps that reduce boilerplate by automatically registering components, resources, events, states, and systems in your plugin's build function."
 edition = "2024"
-rust-version = "1.88"
 publish = true
 
 [features]
@@ -79,6 +78,7 @@ log = { workspace = true }
 wasm-bindgen-test = { workspace = true }
 internal_test_util = { workspace = true }
 internal_test_proc_macro = { workspace = true }
+meta_merge = "0.1.1"
 
 [build-dependencies]
 rustc_version = "0.4"

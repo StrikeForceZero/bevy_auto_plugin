@@ -1,388 +1,56 @@
-use crate::__private::attribute::RewriteAttribute;
-use crate::__private::auto_plugin_registry::_plugin_entry_block;
-use crate::codegen::with_target_path::{ToTokensIterItem, WithTargetPath};
-use crate::macro_api::attributes::ItemAttributeArgs;
-use crate::macro_api::attributes::prelude::*;
-use crate::macro_api::with_plugin::{PluginBound, WithPlugin};
-use crate::syntax::diagnostic::kind::item_kind;
-use darling::FromMeta;
-use proc_macro2::{Ident, Span, TokenStream as MacroStream};
-use quote::{ToTokens, format_ident, quote};
-use syn::{Item, parse2};
-use thiserror::Error;
+use crate::macro_api::prelude::*;
+use proc_macro2::TokenStream as MacroStream;
 
+pub mod action;
 pub mod auto_bind_plugin;
 pub mod auto_plugin;
+pub mod rewrite;
 
-pub enum ArgParser<T> {
-    SynParse2,
-    Custom(CustomParser<T>),
-}
-
-impl<T: syn::parse::Parse> ArgParser<T> {
-    pub fn parse(&self, attr: MacroStream, input: &mut MacroStream) -> syn::Result<T> {
-        match self {
-            ArgParser::SynParse2 => parse2::<T>(attr),
-            ArgParser::Custom(custom) => custom.parse(attr, input),
-        }
-    }
-}
-
-pub enum CustomParser<T> {
-    AttrOnly(fn(MacroStream) -> syn::Result<T>),
-    AttrInput(fn(MacroStream, &mut MacroStream) -> syn::Result<T>),
-}
-
-impl<T: syn::parse::Parse> CustomParser<T> {
-    pub fn parse(&self, attr: MacroStream, input: &mut MacroStream) -> syn::Result<T> {
-        match self {
-            CustomParser::AttrOnly(f) => f(attr),
-            CustomParser::AttrInput(f) => f(attr, input),
-        }
-    }
-}
-
-fn body<T: PluginBound>(
-    body: impl Fn(MacroStream) -> MacroStream,
-) -> impl Fn(&Ident, T, &Item) -> syn::Result<MacroStream> {
-    move |ident, params, _item| {
-        let unique_ident = params.get_unique_ident(ident);
-        let plugin = params.plugin().clone();
-        let with_target_path = WithTargetPath::from((ident.into(), params));
-        let output = with_target_path
-            .to_tokens_iter_items()
-            .enumerate()
-            .map(
-                |(
-                    ix,
-                    ToTokensIterItem {
-                        required_uses,
-                        main_tokens: tokens,
-                    },
-                )| {
-                    let body = body(tokens);
-                    let expr: syn::ExprClosure = syn::parse_quote!(|app| {
-                        #(#required_uses)*
-                        #body
-                    });
-                    // required for generics
-                    let unique_ident = format_ident!("{unique_ident}_{ix}");
-                    let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
-                    Ok(output)
-                },
-            )
-            .collect::<syn::Result<MacroStream>>()?;
-        assert!(
-            !output.is_empty(),
-            "No plugin entry points were generated for ident: {ident}"
-        );
-        Ok(output)
-    }
-}
-
-#[derive(Error, Debug)]
-enum ProcAttributeError {
-    #[error("Failed to parse item: {0}")]
-    ParseItem(syn::Error),
-    #[error("Failed to resolve ident: {0}")]
-    ResolveIdent(syn::Error),
-    #[error("Failed to parse attr or input: {0}")]
-    ParseAttrOrInput(syn::Error),
-    #[error("Failed to generate body: {0}")]
-    GenerateBody(syn::Error),
-}
-
-impl ProcAttributeError {
-    fn err(&self) -> &syn::Error {
-        match self {
-            ProcAttributeError::ParseItem(err) => err,
-            ProcAttributeError::ResolveIdent(err) => err,
-            ProcAttributeError::ParseAttrOrInput(err) => err,
-            ProcAttributeError::GenerateBody(err) => err,
-        }
-    }
-}
-
-impl ToTokens for ProcAttributeError {
-    fn to_tokens(&self, tokens: &mut MacroStream) {
-        tokens.extend(self.err().to_compile_error());
-    }
-}
-
-fn proc_attribute_core<A, F>(
-    attr: impl Into<MacroStream>,
-    // this is the only way we can strip out non-derive based attribute helpers
-    input: &mut MacroStream,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-    parse_attr_input: ArgParser<A>,
-    body: F,
-) -> Result<MacroStream, ProcAttributeError>
-where
-    A: PluginBound,
-    F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
-{
-    let attr = attr.into();
-
-    // need to clone input so we can pass through input untouched for optimal IDE support
-    let item: Item = parse2(input.clone()).map_err(ProcAttributeError::ParseItem)?;
-
-    let ident = resolve_ident(&item)
-        .map_err(|err| {
-            let message = format!(
-                "Attribute macro is not allowed on {}: {err}",
-                item_kind(&item)
-            );
-            // make sure the call_site span is used instead so the user knows what attribute caused the error
-            syn::Error::new(Span::call_site(), message)
-        })
-        .map_err(ProcAttributeError::ResolveIdent)?;
-
-    let args = parse_attr_input
-        .parse(attr, input)
-        .map_err(ProcAttributeError::ParseAttrOrInput)?;
-
-    let output = body(ident, args, &item).map_err(ProcAttributeError::GenerateBody)?;
-
-    Ok(quote! {
-        #input
-        #output
-    })
-}
-
-fn proc_attribute_inner<A, F>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-    parse_attr_input: ArgParser<A>,
-    body: F,
-) -> MacroStream
-where
-    A: PluginBound,
-    F: FnOnce(&Ident, A, &Item) -> syn::Result<MacroStream>,
-{
-    let attr = attr.into();
-    let mut input = input.into();
-
-    match proc_attribute_core(attr, &mut input, resolve_ident, parse_attr_input, body) {
-        Ok(res) => res,
-        Err(err) => quote! {
-            #err
-            #input
-        },
-    }
-}
-
-/// Maps [`crate::syntax::analysis::item::IdentFromItemResult`] to [`syn::Result<&Ident>`]
-fn resolve_item_ident<T: PluginBound>(item: &Item) -> syn::Result<&Ident> {
-    T::Inner::resolve_item_ident(item).map_err(syn::Error::from)
-}
-
-pub fn proc_attribute_outer<T>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-) -> MacroStream
-where
-    T: PluginBound,
-{
-    proc_attribute_inner(
-        attr,
-        input,
-        resolve_item_ident::<T>,
-        ArgParser::<T>::SynParse2,
-        body(|input| quote! { app #input ; }),
-    )
-}
-
-pub fn proc_attribute_with_parser_outer<T>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-    parser: ArgParser<T>,
-) -> MacroStream
-where
-    T: PluginBound,
-{
-    proc_attribute_inner(
-        attr,
-        input,
-        resolve_item_ident::<T>,
-        parser,
-        body(|input| quote! { app #input ; }),
-    )
-}
-
-pub fn proc_attribute_outer_call_fn<T>(
-    attr: impl Into<MacroStream>,
-    input: impl Into<MacroStream>,
-) -> MacroStream
-where
-    T: PluginBound,
-{
-    proc_attribute_inner(
-        attr,
-        input,
-        resolve_item_ident::<T>,
-        ArgParser::<T>::SynParse2,
-        body(|input| quote! { #input(app) ; }),
-    )
-}
-
-fn proc_attribute_rewrite_inner<T: RewriteAttribute + FromMeta>(
-    attr: MacroStream,
-    input: MacroStream,
-) -> syn::Result<MacroStream> {
-    use crate::macro_api::with_plugin::WithPlugin;
-    let args = parse2::<WithPlugin<T>>(attr)?;
-    let args_ts = args.inner.expand_attrs(&args.plugin());
-    Ok(quote! {
-        #args_ts
-        #input
-    })
-}
-
-pub fn proc_attribute_rewrite_outer<T: RewriteAttribute + FromMeta>(
-    attr: MacroStream,
-    input: MacroStream,
-) -> MacroStream {
-    proc_attribute_rewrite_inner::<T>(attr, input).unwrap_or_else(|err| err.to_compile_error())
-}
-
-pub fn inject_plugin_arg_for_attributes(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {
-    use syn::Meta;
-
-    for attr in attrs {
-        let last = attr
-            .path()
-            .segments
-            .last()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default();
-
-        if !last.starts_with("auto_") {
-            continue;
-        }
-
-        let already_has_plugin = match &attr.meta {
-            Meta::List(ml) => list_has_key(ml, "plugin"),
-            Meta::Path(_) => false,
-            Meta::NameValue(_) => true,
-        };
-
-        if already_has_plugin {
-            continue;
-        }
-
-        inject_plugin_arg(attr, plugin);
-    }
-}
-
-fn inject_plugin_arg(attr: &mut syn::Attribute, plugin: &syn::Path) {
-    use syn::Meta;
-    use syn::parse_quote;
-    match &attr.meta {
-        Meta::Path(path) => *attr = parse_quote!( #[#path(plugin = #plugin)] ),
-        Meta::List(ml) => {
-            let path = &ml.path;
-            let inner = &ml.tokens;
-            if inner.is_empty() {
-                *attr = parse_quote!( #[#path(plugin = #plugin)] )
-            } else {
-                *attr = parse_quote!( #[#path(plugin = #plugin, #inner)] )
+macro_rules! gen_action_outers {
+    ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
+         $(
+            #[inline]
+            pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
+                action::proc_attribute_outer::<$args>(attr, input)
             }
-        }
-        _ => {}
-    }
+         )+
+    };
 }
 
-fn list_has_key(ml: &syn::MetaList, key: &str) -> bool {
-    use syn::Meta;
-    use syn::Token;
-    use syn::parse::Parser;
-    use syn::punctuated::Punctuated;
-    let parser = Punctuated::<Meta, Token![,]>::parse_terminated;
-    match parser.parse2(ml.tokens.clone()) {
-        Ok(list) => list.iter().any(|m| match m {
-            Meta::NameValue(nv) => nv.path.is_ident(key),
-            Meta::List(ml2) => ml2.path.is_ident(key),
-            Meta::Path(p) => p.is_ident(key),
-        }),
-        Err(_) => false,
-    }
-}
-
-macro_rules! gen_auto_attribute_outer_call_fns {
+macro_rules! gen_rewrite_outers {
     ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
         $(
             #[inline]
             pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-                proc_attribute_outer_call_fn::<WithPlugin<$args>>(attr, input)
+                rewrite::proc_attribute_rewrite_outer::<$args>(attr, input)
             }
         )+
     };
 }
 
-macro_rules! gen_auto_attribute_outers {
-    // Each item:  fn_name => ArgsTy [using <expr>]
-    ( $( $fn:ident => $args:ty $(: parser = $parser:expr)? ),+ $(,)? ) => {
-        $(
-            gen_auto_attribute_outers!(@one $fn, $args $(, $parser)?);
-        )+
-    };
-
-    // No parser
-    (@one $fn:ident, $args:ty) => {
-        #[inline]
-        pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-            proc_attribute_outer::<WithPlugin<$args>>(attr, input)
-        }
-    };
-
-    // With parser
-    (@one $fn:ident, $args:ty, $parser:expr) => {
-        #[inline]
-        pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-            proc_attribute_with_parser_outer::<WithPlugin<$args>>(attr, input, $parser)
-        }
-    };
+gen_action_outers! {
+    auto_run_on_build          => IaRunOnBuild,
+    auto_register_type         => IaRegisterType,
+    auto_add_message           => IaAddMessage,
+    auto_init_resource         => IaInitResource,
+    auto_insert_resource       => IaInsertResource,
+    auto_init_state            => IaInitState,
+    auto_init_sub_state        => IaInitSubState,
+    auto_name                  => IaName,
+    auto_register_state_type   => IaRegisterStateType,
+    auto_add_system            => IaAddSystem,
+    auto_add_observer          => IaAddObserver,
+    auto_add_plugin            => IaAddPlugin,
+    auto_configure_system_set  => IaConfigureSystemSet,
 }
 
-macro_rules! gen_auto_outers {
-    ( $( $fn:ident => $args:ty ),+ $(,)? ) => {
-        $(
-            #[inline]
-            pub fn $fn(attr: MacroStream, input: MacroStream) -> MacroStream {
-                proc_attribute_rewrite_outer::<$args>(attr, input)
-            }
-        )+
-    };
-}
-
-gen_auto_attribute_outer_call_fns! {
-    auto_run_on_build         => RunOnBuildArgs,
-}
-
-gen_auto_attribute_outers! {
-    auto_register_type         => RegisterTypeArgs,
-    auto_add_message           => AddMessageArgs,
-    auto_init_resource         => InitResourceArgs,
-    auto_insert_resource       => InsertResourceArgs,
-    auto_init_state            => InitStateArgs,
-    auto_init_sub_state        => InitSubStateArgs,
-    auto_name                  => NameArgs,
-    auto_register_state_type   => RegisterStateTypeArgs,
-    auto_add_system            => AddSystemArgs,
-    auto_add_observer          => AddObserverArgs,
-    auto_add_plugin            => AddPluginArgs,
-    auto_configure_system_set  => ConfigureSystemSetArgs:
-        parser = ArgParser::Custom(CustomParser::AttrInput(configure_system_set_args_from_attr_input)),
-}
-
-gen_auto_outers! {
-    auto_component  => ComponentArgs,
-    auto_resource   => ResourceArgs,
-    auto_system     => SystemArgs,
-    auto_event      => EventArgs,
-    auto_message    => MessageArgs,
-    auto_observer   => ObserverArgs,
-    auto_states     => StatesArgs,
-    auto_sub_states => SubStatesArgs,
+gen_rewrite_outers! {
+    auto_component => IaComponent,
+    auto_resource  => IaResource,
+    auto_system    => IaSystem,
+    auto_event     => IaEvent,
+    auto_message   => IaMessage,
+    auto_observer  => IaObserver,
+    auto_states    => IaState,
+    auto_sub_states => IaSubState,
 }

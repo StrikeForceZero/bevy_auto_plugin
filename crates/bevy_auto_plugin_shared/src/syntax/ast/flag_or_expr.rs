@@ -1,6 +1,13 @@
-use darling::{Error, FromMeta, Result};
+use darling::{
+    Error,
+    FromMeta,
+    Result,
+};
 use smart_default::SmartDefault;
-use syn::{Expr, Meta};
+use syn::{
+    Expr,
+    Meta,
+};
 
 #[derive(Debug, SmartDefault, Clone, PartialEq, Hash)]
 pub struct FlagOrExpr {
@@ -14,27 +21,18 @@ impl FromMeta for FlagOrExpr {
     fn from_meta(meta: &Meta) -> Result<Self> {
         match meta {
             // `#[this_flag]`
-            Meta::Path(_) => Ok(FlagOrExpr {
-                present: true,
-                expr: None,
-            }),
+            Meta::Path(_) => Ok(FlagOrExpr { present: true, expr: None }),
 
             // `#[this_flag(...)]`
             Meta::List(list) => {
                 let parsed: Expr = list.parse_args().map_err(|_| {
                     Error::unsupported_format("list with multiple parameters").with_span(list)
                 })?;
-                Ok(FlagOrExpr {
-                    present: true,
-                    expr: Some(parsed),
-                })
+                Ok(FlagOrExpr { present: true, expr: Some(parsed) })
             }
 
             // `#[this_flag = ...]`
-            Meta::NameValue(nv) => Ok(FlagOrExpr {
-                present: true,
-                expr: Some(nv.value.clone()),
-            }),
+            Meta::NameValue(nv) => Ok(FlagOrExpr { present: true, expr: Some(nv.value.clone()) }),
         }
     }
 }
@@ -49,10 +47,7 @@ mod tests {
     fn test_from_meta_flag_present() -> syn::Result<()> {
         assert_eq!(
             FlagOrExpr::from_meta(&parse_quote!(this_flag))?,
-            FlagOrExpr {
-                present: true,
-                expr: None,
-            }
+            FlagOrExpr { present: true, expr: None }
         );
         Ok(())
     }
@@ -60,10 +55,7 @@ mod tests {
     fn test_from_meta_flag_list_single() -> syn::Result<()> {
         assert_eq!(
             FlagOrExpr::from_meta(&parse_quote!(this_flag("foo")))?,
-            FlagOrExpr {
-                present: true,
-                expr: Some(parse_quote!("foo")),
-            }
+            FlagOrExpr { present: true, expr: Some(parse_quote!("foo")) }
         );
         Ok(())
     }
@@ -76,10 +68,7 @@ mod tests {
     fn test_from_meta_flag_nv() -> syn::Result<()> {
         assert_eq!(
             FlagOrExpr::from_meta(&parse_quote!(this_flag = "foo"))?,
-            FlagOrExpr {
-                present: true,
-                expr: Some(parse_quote!("foo")),
-            }
+            FlagOrExpr { present: true, expr: Some(parse_quote!("foo")) }
         );
         Ok(())
     }

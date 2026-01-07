@@ -1,9 +1,18 @@
 use darling::FromMeta;
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::{
+    Ident,
+    TokenStream,
+};
 use quote::ToTokens;
-use syn::parse::{Parse, ParseStream};
-use syn::spanned::Spanned;
-use syn::{Meta, Path};
+use syn::{
+    Meta,
+    Path,
+    parse::{
+        Parse,
+        ParseStream,
+    },
+    spanned::Spanned,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[repr(transparent)]
@@ -20,12 +29,7 @@ impl NonEmptyPath {
         Self(path)
     }
     pub fn into_last_ident(self) -> Ident {
-        self.0
-            .segments
-            .into_iter()
-            .last()
-            .expect("non-empty path")
-            .ident
+        self.0.segments.into_iter().last().expect("non-empty path").ident
     }
     pub fn last_ident(&self) -> &Ident {
         &self.0.segments.last().expect("non-empty path").ident
@@ -92,8 +96,12 @@ mod tests {
     use super::*;
     use internal_test_proc_macro::xtest;
     use quote::quote;
-    use syn::punctuated::Punctuated;
-    use syn::{PathSegment, Token, parse_quote};
+    use syn::{
+        PathSegment,
+        Token,
+        parse_quote,
+        punctuated::Punctuated,
+    };
 
     #[xtest]
     fn test_parse() {
@@ -114,22 +122,13 @@ mod tests {
     fn test_to_tokens() {
         let input_tokens = quote!(::this);
         let input: NonEmptyPath = parse_quote!(#input_tokens);
-        assert_eq!(
-            input.to_token_stream().to_string(),
-            input_tokens.to_string()
-        );
+        assert_eq!(input.to_token_stream().to_string(), input_tokens.to_string());
         let input_tokens = quote!(Foo);
         let input: NonEmptyPath = parse_quote!(#input_tokens);
-        assert_eq!(
-            input.to_token_stream().to_string(),
-            input_tokens.to_string()
-        );
+        assert_eq!(input.to_token_stream().to_string(), input_tokens.to_string());
         let input_tokens = quote!(this::Foo);
         let input: NonEmptyPath = parse_quote!(#input_tokens);
-        assert_eq!(
-            input.to_token_stream().to_string(),
-            input_tokens.to_string()
-        );
+        assert_eq!(input.to_token_stream().to_string(), input_tokens.to_string());
     }
 
     #[xtest]
@@ -137,7 +136,7 @@ mod tests {
         assert!(
             NonEmptyPath::new(Path {
                 leading_colon: None,
-                segments: Punctuated::<PathSegment, Token![::]>::new(),
+                segments: Punctuated::<PathSegment, Token![::]>::new()
             })
             .is_err()
         );

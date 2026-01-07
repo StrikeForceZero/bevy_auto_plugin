@@ -1,219 +1,72 @@
-use crate::__private::attribute::RewriteAttribute;
-use crate::codegen::tokens::ArgsBackToTokens;
-use crate::codegen::{ExpandAttrs, tokens};
-use crate::macro_api::attributes::AttributeIdent;
-use crate::macro_api::attributes::prelude::GenericsArgs;
-use crate::macro_api::attributes::prelude::*;
-use crate::syntax::ast::flag_or_list::FlagOrList;
-use crate::syntax::ast::flag_or_lit::FlagOrLit;
-use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::validated::non_empty_path::NonEmptyPath;
+use crate::{
+    codegen::{
+        ExpandAttrs,
+        tokens,
+    },
+    macro_api::prelude::*,
+    syntax::{
+        ast::{
+            flag_or_list::FlagOrList,
+            flag_or_lit::FlagOrLit,
+        },
+        validated::non_empty_path::NonEmptyPath,
+    },
+    util::macros::impl_from_default,
+};
 use darling::FromMeta;
-use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
-use quote::quote;
+use proc_macro2::Ident;
 use syn::parse_quote;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
 pub struct ComponentArgs {
-    #[darling(multiple)]
-    pub generics: Vec<TypeList>,
     pub derive: FlagOrList<NonEmptyPath>,
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
     pub auto_name: FlagOrLit,
 }
 
-impl GenericsArgs for ComponentArgs {
-    fn type_lists(&self) -> &[TypeList] {
-        &self.generics
-    }
-}
-
 impl AttributeIdent for ComponentArgs {
     const IDENT: &'static str = "auto_component";
 }
 
-impl<'a> From<&'a ComponentArgs> for RegisterTypeArgs {
-    fn from(value: &'a ComponentArgs) -> Self {
-        Self {
-            generics: value.generics.clone(),
-        }
+impl From<&ComponentArgs> for RegisterTypeArgs {
+    fn from(_: &ComponentArgs) -> Self {
+        Self {}
     }
 }
 
 impl<'a> From<&'a ComponentArgs> for NameArgs {
     fn from(value: &'a ComponentArgs) -> Self {
-        Self {
-            generics: value.generics.clone(),
-            name: value.auto_name.lit.clone(),
-        }
+        Self { name: value.auto_name.lit.clone() }
     }
 }
 
-impl ArgsBackToTokens for ComponentArgs {
-    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        let mut items = vec![];
-        items.extend(self.generics().to_attribute_arg_vec_tokens());
-        if self.derive.present {
-            items.push(self.derive.to_outer_tokens("derive"));
-        }
-        if self.reflect.present {
-            items.push(self.reflect.to_outer_tokens("reflect"));
-        }
-        if self.register {
-            items.push(quote!(register));
-        }
-        if self.auto_name.present {
-            items.push(self.auto_name.to_outer_tokens("auto_name"));
-        }
-        tokens.extend(quote! { #(#items),* });
-    }
-}
+pub type IaComponent =
+    ItemAttribute<Composed<ComponentArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type ComponentAttrExpandEmitter = AttrExpansionEmitter<IaComponent>;
 
-impl RewriteAttribute for ComponentArgs {
-    fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
-        let mut args = Vec::new();
-        args.push(quote! { plugin = #plugin });
-        if !self.generics().is_empty() {
-            args.extend(self.generics().to_attribute_arg_vec_tokens());
+impl AttrExpansionEmitterToExpandAttr for ComponentAttrExpandEmitter {
+    fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
+        if self.args.args.base.derive.present {
+            expand_attrs.attrs.push(tokens::derive_component(&self.args.args.base.derive.items));
         }
-        quote! { #(#args),* }
-    }
-
-    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
-        let mut expanded_attrs = ExpandAttrs::default();
-
-        if self.derive.present {
-            expanded_attrs
-                .attrs
-                .push(tokens::derive_component(&self.derive.items));
-        }
-        if self.reflect.present {
-            if self.derive.present {
-                expanded_attrs.attrs.push(tokens::derive_reflect());
+        if self.args.args.base.reflect.present {
+            if self.args.args.base.derive.present {
+                expand_attrs.attrs.push(tokens::derive_reflect());
             }
             let component_ident: Ident = parse_quote!(Component);
-            let items = std::iter::once(&component_ident).chain(self.reflect.items.iter());
-            expanded_attrs.append(tokens::reflect(items))
+            let items =
+                std::iter::once(&component_ident).chain(self.args.args.base.reflect.items.iter());
+            expand_attrs.append(tokens::reflect(items))
         }
-        if self.register {
-            expanded_attrs
-                .attrs
-                .push(tokens::auto_register_type(plugin.clone(), self.into()));
+        if self.args.args.base.register {
+            expand_attrs.attrs.push(tokens::auto_register_type(self.into()));
         }
-        if self.auto_name.present {
-            expanded_attrs
-                .attrs
-                .push(tokens::auto_name(plugin.clone(), self.into()));
+        if self.args.args.base.auto_name.present {
+            expand_attrs.attrs.push(tokens::auto_name(self.into()));
         }
-        expanded_attrs
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::macro_api::with_plugin::WithPlugin;
-    use crate::test_util::combo::combos_one_per_group_or_skip;
-    use crate::test_util::macros::*;
-    use darling::ast::NestedMeta;
-    use internal_test_proc_macro::xtest;
-    use internal_test_util::{extract_punctuated_paths, vec_spread};
-    use quote::ToTokens;
-    use syn::parse_quote;
-
-    #[xtest]
-    fn test_expand_back_into_args() -> syn::Result<()> {
-        for args in combos_one_per_group_or_skip(&[
-            vec![quote!(derive), quote!(derive(Debug, Default))],
-            vec![quote!(reflect), quote!(reflect(Debug, Default))],
-            vec![quote!(register)],
-            vec![quote!(auto_name), quote!(auto_name = "foobar")],
-        ]) {
-            println!("checking args: {}", quote! { #(#args),*});
-            assert_vec_args_expand!(plugin!(parse_quote!(Test)), ComponentArgs, args);
-        }
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_expand_attrs_global() -> syn::Result<()> {
-        let extras = extract_punctuated_paths(parse_quote!(Debug, Default))
-            .into_iter()
-            .map(NonEmptyPath::try_from)
-            .collect::<syn::Result<Vec<_>>>()?;
-        let args: NestedMeta = parse_quote! {_(
-            plugin = Test,
-            derive(#(#extras),*),
-            reflect(#(#extras),*),
-            register,
-            auto_name,
-        )};
-        let args = WithPlugin::<ComponentArgs>::from_nested_meta(&args)?;
-        let derive_args = vec_spread![tokens::derive_component_path(), ..extras.clone(),];
-        let derive_reflect_path = tokens::derive_reflect_path();
-        let reflect_args = vec_spread![parse_quote!(Component), ..extras,];
-        let reflect_attr = tokens::reflect(reflect_args.iter().map(NonEmptyPath::last_ident));
-        assert_eq!(
-            args.inner
-                .expand_attrs(&args.plugin())
-                .to_token_stream()
-                .to_string(),
-            ExpandAttrs {
-                use_items: reflect_attr.use_items,
-                attrs: vec![
-                    quote! { #[derive(#(#derive_args),*)] },
-                    // TODO: merge these derives
-                    quote! { #[derive(#derive_reflect_path)] },
-                    quote! { #[reflect(#(#reflect_args),*)] },
-                    tokens::auto_register_type(args.plugin(), (&args.inner).into()),
-                    tokens::auto_name(args.plugin(), (&args.inner).into()),
-                ]
-            }
-            .to_token_stream()
-            .to_string()
-        );
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_expand_attrs_global_with_custom_name() -> syn::Result<()> {
-        let extras = extract_punctuated_paths(parse_quote!(Debug, Default))
-            .into_iter()
-            .map(NonEmptyPath::try_from)
-            .collect::<syn::Result<Vec<_>>>()?;
-        let args: NestedMeta = parse_quote! {_(
-            plugin = Test,
-            derive(#(#extras),*),
-            reflect(#(#extras),*),
-            register,
-            auto_name = "foobar",
-        )};
-        let args = WithPlugin::<ComponentArgs>::from_nested_meta(&args)?;
-        let derive_args = vec_spread![tokens::derive_component_path(), ..extras.clone(),];
-        let derive_reflect_path = tokens::derive_reflect_path();
-        let reflect_args = vec_spread![parse_quote!(Component), ..extras,];
-        let reflect_attr = tokens::reflect(reflect_args.iter().map(NonEmptyPath::last_ident));
-        assert_eq!(
-            args.inner
-                .expand_attrs(&args.plugin())
-                .to_token_stream()
-                .to_string(),
-            ExpandAttrs {
-                use_items: reflect_attr.use_items,
-                attrs: vec![
-                    quote! { #[derive(#(#derive_args),*)] },
-                    // TODO: merge these derives
-                    quote! { #[derive(#derive_reflect_path)] },
-                    quote! { #[reflect(#(#reflect_args),*)] },
-                    tokens::auto_register_type(args.plugin(), (&args.inner).into()),
-                    tokens::auto_name(args.plugin(), (&args.inner).into()),
-                ]
-            }
-            .to_token_stream()
-            .to_string()
-        );
-        Ok(())
-    }
-}
+impl_from_default!(ComponentArgs => (RegisterTypeArgs, NameArgs));

@@ -1,11 +1,23 @@
 #![allow(dead_code)]
-use crate::syntax::extensions::item::ItemAttrsExt;
+use crate::{
+    codegen::emit::EmitErrOnlyResult,
+    macro_api::prelude::InputItem,
+    syntax::extensions::item::ItemAttrsExt,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
-use syn::spanned::Spanned;
-use syn::visit_mut::VisitMut;
-use syn::{Attribute, Ident, Item, Meta};
+use quote::{
+    ToTokens,
+    quote,
+};
+use syn::{
+    Attribute,
+    Ident,
+    Item,
+    Meta,
+    spanned::Spanned,
+    visit_mut::VisitMut,
+};
 
 /// Where an attribute was attached.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -119,8 +131,10 @@ impl SiteAttrsVec {
 }
 
 pub struct ScrubOutcome {
+    /// original item (with helpers intact)
+    pub original_item: Item,
     /// scrubbed item (no helpers remain)
-    pub item: Item,
+    pub scrubbed_item: Item,
     /// struct/enum ident
     pub ident: Ident,
     /// attrs kept per site (non-helpers or empty)
@@ -132,82 +146,73 @@ pub struct ScrubOutcome {
 }
 
 impl ScrubOutcome {
+    /// Returns all observed attrs and call sites regardless if they were removed or not
     pub fn all_with_removed_attrs(&self) -> Vec<SiteAttrs> {
         let mut out = Vec::with_capacity(self.observed.len());
         for group in self.observed.iter() {
             let mut attrs = vec![];
             // linear search is fine here, since we expect the number of groups to be small
-            if let Some(removed_attrs) = self
-                .removed
-                .iter()
-                .find(|g| g.site == group.site)
-                .map(|g| g.attrs.clone())
+            if let Some(removed_attrs) =
+                self.removed.iter().find(|g| g.site == group.site).map(|g| g.attrs.clone())
             {
                 attrs.extend(removed_attrs);
             }
-            out.push(SiteAttrs {
-                site: group.site.clone(),
-                attrs,
-            });
+            out.push(SiteAttrs { site: group.site.clone(), attrs });
         }
         out
     }
-    // TODO: Better name?
-    /// If there are errors, it will write them above the scrubbed item.
-    /// Otherwise, will NOT write the scrubbed item back into the TokenStream
-    pub fn write_if_errors_with_scrubbed_item(
-        &self,
-        token_stream: &mut TokenStream,
-    ) -> syn::Result<()> {
-        write_back(
-            token_stream,
-            self.item.span(),
-            self.errors.clone(),
-            "failed to scrub helpers",
-        )
+    pub fn to_original_item_tokens(&self) -> TokenStream {
+        ts_item_errors(&self.original_item, self.errors.clone())
     }
-    pub fn write_back(&self, token_stream: &mut TokenStream) -> syn::Result<()> {
-        write_back_item(
-            token_stream,
-            &self.item,
-            self.errors.clone(),
-            "failed to scrub helpers",
-        )
+    pub fn to_scrubbed_item_tokens(&self) -> TokenStream {
+        ts_item_errors(&self.scrubbed_item, self.errors.clone())
     }
 }
 
-pub fn write_back_item(
-    token_stream: &mut TokenStream,
-    item: &Item,
-    errors: Vec<syn::Error>,
-    message: &str,
-) -> syn::Result<()> {
-    *token_stream = quote! {
-        #item
-    };
-
-    write_back(token_stream, item.span(), errors, message)
+impl ToTokens for ScrubOutcome {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.scrubbed_item.to_tokens(tokens);
+    }
 }
 
-pub fn write_back(
-    token_stream: &mut TokenStream,
-    span: proc_macro2::Span,
-    errors: Vec<syn::Error>,
-    message: &str,
-) -> syn::Result<()> {
-    // inject any errors as compile_error! right here.
-    if !errors.is_empty() {
+impl From<ScrubOutcome> for EmitErrOnlyResult<TokenStream, ScrubOutcome, syn::Error> {
+    fn from(value: ScrubOutcome) -> Self {
+        if value.errors.is_empty() {
+            Ok(value)
+        } else {
+            Err((
+                value.original_item.to_token_stream(),
+                value.errors.into_iter().fold(
+                    syn::Error::new(value.original_item.span(), "Failed to scrub helpers"),
+                    |mut acc, err| {
+                        acc.combine(err);
+                        acc
+                    },
+                ),
+            ))
+        }
+    }
+}
+
+/// Returns `TokenStream` with errors (if any)
+pub fn ts_errors(errors: Vec<syn::Error>) -> TokenStream {
+    if errors.is_empty() {
+        TokenStream::new()
+    } else {
         let err_ts = errors.iter().map(syn::Error::to_compile_error);
-        *token_stream = quote! {
+        quote! {
             #( #err_ts )*
-            #token_stream
-        };
-        let mut err = syn::Error::new(span, message);
-        err.extend(errors.clone());
-        return Err(err);
+        }
     }
+}
 
-    Ok(())
+/// Returns `TokenStream` with errors (if any) and the given `item`
+pub fn ts_item_errors(item: &Item, errors: Vec<syn::Error>) -> TokenStream {
+    let errors = ts_errors(errors);
+    quote! {
+        #errors
+        #item
+    }
 }
 
 #[derive(Debug, Default)]
@@ -246,10 +251,8 @@ impl Scrubber {
         let mut attrs = match it.take_attrs() {
             Ok(attrs) => attrs,
             Err(err) => {
-                self.errors.push(syn::Error::new(
-                    it.span(),
-                    format!("Failed to parse attrs: {err}"),
-                ));
+                self.errors
+                    .push(syn::Error::new(it.span(), format!("Failed to parse attrs: {err}")));
                 return Vec::new();
             }
         };
@@ -278,12 +281,9 @@ impl VisitMut for Scrubber {
                     let field_ident = field.ident.clone().expect("named struct field");
                     let KeepSplit { keep, removed } = self.drain_split(&mut field.attrs);
                     field.attrs = keep.clone();
-                    self.out.observed.push(
-                        AttrSite::StructFieldNamed {
-                            field: field_ident.clone(),
-                        },
-                        keep,
-                    );
+                    self.out
+                        .observed
+                        .push(AttrSite::StructFieldNamed { field: field_ident.clone() }, keep);
                     if !removed.is_empty() {
                         self.out
                             .removed
@@ -295,13 +295,9 @@ impl VisitMut for Scrubber {
                 for (index, field) in fields_unnamed.unnamed.iter_mut().enumerate() {
                     let KeepSplit { keep, removed } = self.drain_split(&mut field.attrs);
                     field.attrs = keep.clone();
-                    self.out
-                        .observed
-                        .push(AttrSite::StructFieldUnnamed { index }, keep);
+                    self.out.observed.push(AttrSite::StructFieldUnnamed { index }, keep);
                     if !removed.is_empty() {
-                        self.out
-                            .removed
-                            .push(AttrSite::StructFieldUnnamed { index }, removed);
+                        self.out.removed.push(AttrSite::StructFieldUnnamed { index }, removed);
                     }
                 }
             }
@@ -317,19 +313,11 @@ impl VisitMut for Scrubber {
             // variant-level
             let KeepSplit { keep, removed } = self.drain_split(&mut variant.attrs);
             variant.attrs = keep.clone();
-            self.out.observed.push(
-                AttrSite::Variant {
-                    variant: variant_ident.clone(),
-                },
-                keep,
-            );
+            self.out.observed.push(AttrSite::Variant { variant: variant_ident.clone() }, keep);
             if !removed.is_empty() {
-                self.out.removed.push(
-                    AttrSite::Variant {
-                        variant: variant_ident.clone(),
-                    },
-                    removed,
-                );
+                self.out
+                    .removed
+                    .push(AttrSite::Variant { variant: variant_ident.clone() }, removed);
             }
 
             // fields
@@ -362,10 +350,7 @@ impl VisitMut for Scrubber {
                         let KeepSplit { keep, removed } = self.drain_split(&mut field.attrs);
                         field.attrs = keep.clone();
                         self.out.observed.push(
-                            AttrSite::VariantFieldUnnamed {
-                                variant: variant_ident.clone(),
-                                index,
-                            },
+                            AttrSite::VariantFieldUnnamed { variant: variant_ident.clone(), index },
                             keep,
                         );
                         if !removed.is_empty() {
@@ -386,29 +371,27 @@ impl VisitMut for Scrubber {
     }
 }
 
-pub fn scrub_helpers_and_ident(
-    input: proc_macro2::TokenStream,
+pub fn scrub_helpers(
+    input_item: impl AsRef<InputItem>,
     is_helper: fn(&Attribute) -> bool,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-) -> syn::Result<ScrubOutcome> {
-    scrub_helpers_and_ident_with_filter(input, |_, _| true, is_helper, resolve_ident)
+) -> Result<ScrubOutcome, syn::Error> {
+    scrub_helpers_with_filter(input_item, |_, _| true, is_helper)
 }
 
-pub fn scrub_helpers_and_ident_with_filter(
-    input: proc_macro2::TokenStream,
+pub fn scrub_helpers_with_filter(
+    input_item: impl AsRef<InputItem>,
     is_site_allowed: fn(&AttrSite, &Attribute) -> bool,
     is_helper: fn(&Attribute) -> bool,
-    resolve_ident: fn(&Item) -> syn::Result<&Ident>,
-) -> syn::Result<ScrubOutcome> {
-    let mut item: Item = syn::parse2(input)?;
-    let ident = resolve_ident(&item)?.clone();
+) -> Result<ScrubOutcome, syn::Error> {
+    let mut input_item = input_item.as_ref().clone();
+    let ident = input_item.ident()?.clone();
+    let original_item = input_item.ensure_ast()?.clone();
+    let mut scrubbed_item = original_item.clone();
 
-    let mut scrubber = Scrubber {
-        is_helper,
-        out: ScrubberOut::default(),
-        errors: vec![],
-    };
-    scrubber.visit_item_mut(&mut item);
+    // Must be infallible beyond this point to ensure `ScrubOutcome` is valid
+
+    let mut scrubber = Scrubber { is_helper, out: ScrubberOut::default(), errors: vec![] };
+    scrubber.visit_item_mut(&mut scrubbed_item);
 
     // validate “removed” helpers against the site filter
     for group in &scrubber.out.removed.0 {
@@ -430,7 +413,8 @@ pub fn scrub_helpers_and_ident_with_filter(
     }
 
     Ok(ScrubOutcome {
-        item,
+        original_item,
+        scrubbed_item,
         ident,
         observed: scrubber.out.observed,
         removed: scrubber.out.removed,
@@ -448,10 +432,12 @@ pub fn parse_removed_as<T: FromMeta>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::syntax::analysis::item::resolve_ident_from_struct_or_enum;
     use crate::syntax::extensions::path::PathExt;
     use internal_test_proc_macro::xtest;
-    use quote::{ToTokens, quote};
+    use quote::{
+        ToTokens,
+        quote,
+    };
     use syn::parse_quote;
 
     impl SiteAttrsVec {
@@ -494,29 +480,26 @@ mod tests {
                 Self::StructFieldUnnamed { index } => {
                     format!("StructFieldUnnamed {{ index: {} }}", index)
                 }
-                Self::Variant { variant } => format!("Variant {{ variant: {} }}", variant),
-                Self::VariantFieldNamed { variant, field } => format!(
-                    "VariantFieldNamed {{ variant: {}, field: {} }}",
-                    variant, field
-                ),
-                Self::VariantFieldUnnamed { variant, index } => format!(
-                    "VariantFieldUnnamed {{ variant: {}, index: {} }}",
-                    variant, index
-                ),
+                Self::Variant { variant } => {
+                    format!("Variant {{ variant: {} }}", variant)
+                }
+                Self::VariantFieldNamed { variant, field } => {
+                    format!("VariantFieldNamed {{ variant: {}, field: {} }}", variant, field)
+                }
+                Self::VariantFieldUnnamed { variant, index } => {
+                    format!("VariantFieldUnnamed {{ variant: {}, index: {} }}", variant, index)
+                }
             }
         }
     }
 
     mod scrub_helpers_and_ident {
         use super::*;
+        use internal_test_util::assert_ts_eq;
         #[inline]
         fn assert_no_errors(scrub_outcome: &ScrubOutcome) {
             assert_eq!(
-                scrub_outcome
-                    .errors
-                    .iter()
-                    .map(|e| e.to_string())
-                    .collect::<Vec<String>>(),
+                scrub_outcome.errors.iter().map(|e| e.to_string()).collect::<Vec<String>>(),
                 Vec::<String>::new()
             );
         }
@@ -528,12 +511,8 @@ mod tests {
 
         #[inline]
         fn assert_no_helpers_remain_on_item(scrub_outcome: &ScrubOutcome) {
-            let ts = scrub_outcome.item.to_token_stream().to_string();
-            assert!(
-                !ts.contains("::helper"),
-                "item still has helper attributes: {}",
-                ts
-            );
+            let ts = scrub_outcome.scrubbed_item.to_token_stream().to_string();
+            assert!(!ts.contains("::helper"), "item still has helper attributes: {}", ts);
         }
 
         fn is_helper(attr: &Attribute) -> bool {
@@ -541,9 +520,7 @@ mod tests {
         }
 
         fn resolve_ident(item: &Item) -> syn::Result<&Ident> {
-            resolve_ident_from_struct_or_enum(item).map_err(|err| {
-                syn::Error::new(item.span(), format!("failed to resolve ident: {err}"))
-            })
+            item.ident()
         }
 
         #[xtest]
@@ -559,26 +536,20 @@ mod tests {
                     z: i32,
                 }
             };
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
             let got = scrub_outcome.removed;
             let expected = SiteAttrsVec::from_vec(vec![
+                SiteAttrs { site: AttrSite::Item, attrs: vec![parse_quote!(#[item::helper])] },
                 SiteAttrs {
-                    site: AttrSite::Item,
-                    attrs: vec![parse_quote!(#[item::helper])],
-                },
-                SiteAttrs {
-                    site: AttrSite::StructFieldNamed {
-                        field: parse_quote!(x),
-                    },
+                    site: AttrSite::StructFieldNamed { field: parse_quote!(x) },
                     attrs: vec![parse_quote!(#[field::helper])],
                 },
                 SiteAttrs {
-                    site: AttrSite::StructFieldNamed {
-                        field: parse_quote!(z),
-                    },
+                    site: AttrSite::StructFieldNamed { field: parse_quote!(z) },
                     attrs: vec![
                         parse_quote!(#[field::_1::helper]),
                         parse_quote!(#[field::_2::helper]),
@@ -608,26 +579,20 @@ mod tests {
                     C,
                 }
             };
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
             let got = scrub_outcome.removed;
             let expected = SiteAttrsVec::from_vec(vec![
+                SiteAttrs { site: AttrSite::Item, attrs: vec![parse_quote!(#[item::helper])] },
                 SiteAttrs {
-                    site: AttrSite::Item,
-                    attrs: vec![parse_quote!(#[item::helper])],
-                },
-                SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(A),
-                    },
+                    site: AttrSite::Variant { variant: parse_quote!(A) },
                     attrs: vec![parse_quote!(#[field::helper])],
                 },
                 SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(C),
-                    },
+                    site: AttrSite::Variant { variant: parse_quote!(C) },
                     attrs: vec![
                         parse_quote!(#[field::_1::helper]),
                         parse_quote!(#[field::_2::helper]),
@@ -664,13 +629,14 @@ mod tests {
                     Y,
                 }
             };
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
-            let item = scrub_outcome.item;
-            assert_eq!(
-                item.to_token_stream().to_string(),
+            let item = scrub_outcome.scrubbed_item;
+            assert_ts_eq!(
+                item.to_token_stream(),
                 quote! {
                     #[non_helper]
                     enum Foo {
@@ -684,7 +650,6 @@ mod tests {
                         Y,
                     }
                 }
-                .to_string(),
             );
             Ok(())
         }
@@ -706,34 +671,23 @@ mod tests {
                     C,
                 }
             };
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
             assert_no_errors(&scrub_outcome);
             assert_ident(&scrub_outcome, "Foo");
             assert_no_helpers_remain_on_item(&scrub_outcome);
             let got = scrub_outcome.observed;
             let expected = SiteAttrsVec::from_vec(vec![
+                SiteAttrs { site: AttrSite::Item, attrs: vec![parse_quote!(#[non_helper])] },
                 SiteAttrs {
-                    site: AttrSite::Item,
+                    site: AttrSite::Variant { variant: parse_quote!(A) },
                     attrs: vec![parse_quote!(#[non_helper])],
                 },
                 SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(A),
-                    },
-                    attrs: vec![parse_quote!(#[non_helper])],
-                },
-                SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(B),
-                    },
+                    site: AttrSite::Variant { variant: parse_quote!(B) },
                     attrs: vec![parse_quote!(#[non_helper]), parse_quote!(#[non_helper])],
                 },
-                SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(C),
-                    },
-                    attrs: vec![],
-                },
+                SiteAttrs { site: AttrSite::Variant { variant: parse_quote!(C) }, attrs: vec![] },
             ]);
             assert_eq!(
                 got.to_test_string(),
@@ -766,47 +720,29 @@ mod tests {
                 }
             };
 
-            let scrub_outcome = scrub_helpers_and_ident(input, is_helper, resolve_ident)?;
+            let input_item = InputItem::from_ts_validated(input).expect("should be valid item");
+            let scrub_outcome = scrub_helpers(input_item, is_helper)?;
 
             let got = SiteAttrsVec::from_vec(scrub_outcome.all_with_removed_attrs());
             let expected = SiteAttrsVec::from_vec(vec![
+                SiteAttrs { site: AttrSite::Item, attrs: vec![parse_quote!(#[item::helper])] },
                 SiteAttrs {
-                    site: AttrSite::Item,
-                    attrs: vec![parse_quote!(#[item::helper])],
-                },
-                SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(A),
-                    },
+                    site: AttrSite::Variant { variant: parse_quote!(A) },
                     attrs: vec![parse_quote!(#[field::helper])],
                 },
+                SiteAttrs { site: AttrSite::Variant { variant: parse_quote!(B) }, attrs: vec![] },
                 SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(B),
-                    },
-                    attrs: vec![],
-                },
-                SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(C),
-                    },
+                    site: AttrSite::Variant { variant: parse_quote!(C) },
                     attrs: vec![
                         parse_quote!(#[field::_1::helper]),
                         parse_quote!(#[field::_2::helper]),
                     ],
                 },
                 SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(X),
-                    },
+                    site: AttrSite::Variant { variant: parse_quote!(X) },
                     attrs: vec![parse_quote!(#[field::helper])],
                 },
-                SiteAttrs {
-                    site: AttrSite::Variant {
-                        variant: parse_quote!(Y),
-                    },
-                    attrs: vec![],
-                },
+                SiteAttrs { site: AttrSite::Variant { variant: parse_quote!(Y) }, attrs: vec![] },
             ]);
 
             assert_eq!(

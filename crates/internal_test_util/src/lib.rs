@@ -1,11 +1,14 @@
+pub mod token_stream;
 pub mod ui_util;
 
 use bevy_app::App;
 use bevy_internal::MinimalPlugins;
 use darling::ast::NestedMeta;
 use std::any::TypeId;
-use syn::punctuated::Punctuated;
-use syn::token::Comma;
+use syn::{
+    punctuated::Punctuated,
+    token::Comma,
+};
 
 pub fn create_minimal_app() -> App {
     let mut app = App::new();
@@ -24,10 +27,9 @@ pub fn extract_punctuated_paths(punctuated: Punctuated<NestedMeta, Comma>) -> Ve
     punctuated
         .into_iter()
         .map(|nested_meta| match nested_meta {
-            NestedMeta::Meta(meta) => meta
-                .require_path_only()
-                .cloned()
-                .expect("expected path only"),
+            NestedMeta::Meta(meta) => {
+                meta.require_path_only().cloned().expect("expected path only")
+            }
             NestedMeta::Lit(_) => panic!("unexpected literal"),
         })
         .collect::<Vec<_>>()
@@ -75,15 +77,9 @@ mod tests {
         assert_eq!(vec_spread![1], vec![1]);
         assert_eq!(vec_spread![1, 2, 3], vec![1, 2, 3]);
         assert_eq!(vec_spread![1, 2, 3, 4, 5, 6], vec![1, 2, 3, 4, 5, 6]);
-        assert_eq!(
-            vec_spread![1, 2, 3, ..[4, 5, 6], 7, 8],
-            vec![1, 2, 3, 4, 5, 6, 7, 8]
-        );
+        assert_eq!(vec_spread![1, 2, 3, ..[4, 5, 6], 7, 8], vec![1, 2, 3, 4, 5, 6, 7, 8]);
         assert_eq!(vec_spread![..[4, 5, 6], 7, 8], vec![4, 5, 6, 7, 8]);
         assert_eq!(vec_spread![1, 2, 3, ..[4, 5, 6]], vec![1, 2, 3, 4, 5, 6]);
-        assert_eq!(
-            vec_spread![1, 2, 3, ..[4, 5, 6], 7, 8, ..[9]],
-            vec![1, 2, 3, 4, 5, 6, 7, 8, 9]
-        );
+        assert_eq!(vec_spread![1, 2, 3, ..[4, 5, 6], 7, 8, ..[9]], vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
     }
 }

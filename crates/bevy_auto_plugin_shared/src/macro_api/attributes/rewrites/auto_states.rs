@@ -1,15 +1,17 @@
-use crate::__private::attribute::RewriteAttribute;
-use crate::codegen::tokens::ArgsBackToTokens;
-use crate::codegen::{ExpandAttrs, tokens};
-use crate::macro_api::attributes::AttributeIdent;
-use crate::macro_api::attributes::prelude::GenericsArgs;
-use crate::macro_api::attributes::prelude::*;
-use crate::syntax::ast::flag_or_list::FlagOrList;
-use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::validated::non_empty_path::NonEmptyPath;
+use crate::{
+    codegen::{
+        ExpandAttrs,
+        tokens,
+    },
+    macro_api::prelude::*,
+    syntax::{
+        ast::flag_or_list::FlagOrList,
+        validated::non_empty_path::NonEmptyPath,
+    },
+    util::macros::impl_from_default,
+};
 use darling::FromMeta;
-use proc_macro2::{Ident, TokenStream as MacroStream, TokenStream};
-use quote::quote;
+use proc_macro2::Ident;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
@@ -18,12 +20,6 @@ pub struct StatesArgs {
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
     pub init: bool,
-}
-
-impl GenericsArgs for StatesArgs {
-    fn type_lists(&self) -> &[TypeList] {
-        &[]
-    }
 }
 
 impl AttributeIdent for StatesArgs {
@@ -47,135 +43,28 @@ impl<'a> From<&'a StatesArgs> for InitStateArgs {
         Self::default()
     }
 }
-
-impl ArgsBackToTokens for StatesArgs {
-    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        let mut items = vec![];
-        items.extend(self.generics().to_attribute_arg_vec_tokens());
-        if self.derive.present {
-            items.push(self.derive.to_outer_tokens("derive"));
+pub type IaState =
+    ItemAttribute<Composed<StatesArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
+pub type StateAttrExpandEmitter = AttrExpansionEmitter<IaState>;
+impl AttrExpansionEmitterToExpandAttr for StateAttrExpandEmitter {
+    fn to_expand_attrs(&self, expand_attrs: &mut ExpandAttrs) {
+        if self.args.args.base.derive.present {
+            expand_attrs.append(tokens::derive_states(&self.args.args.base.derive.items));
         }
-        if self.reflect.present {
-            items.push(self.reflect.to_outer_tokens("reflect"));
-        }
-        if self.register {
-            items.push(quote!(register));
-        }
-        if self.init {
-            items.push(quote!(init));
-        }
-        tokens.extend(quote! { #(#items),* });
-    }
-}
-
-impl RewriteAttribute for StatesArgs {
-    fn expand_args(&self, plugin: &NonEmptyPath) -> MacroStream {
-        let mut args = Vec::new();
-        args.push(quote! { plugin = #plugin });
-        if !self.generics().is_empty() {
-            args.extend(self.generics().to_attribute_arg_vec_tokens());
-        }
-        quote! { #(#args),* }
-    }
-
-    fn expand_attrs(&self, plugin: &NonEmptyPath) -> ExpandAttrs {
-        let mut expanded_attrs = ExpandAttrs::default();
-
-        if self.derive.present {
-            expanded_attrs.append(tokens::derive_states(&self.derive.items));
-        }
-        if self.reflect.present {
-            if self.derive.present {
-                expanded_attrs.attrs.push(tokens::derive_reflect());
+        if self.args.args.base.reflect.present {
+            if self.args.args.base.derive.present {
+                expand_attrs.attrs.push(tokens::derive_reflect());
             }
-            expanded_attrs.append(tokens::reflect(&self.reflect.items))
+            expand_attrs.append(tokens::reflect(&self.args.args.base.reflect.items))
         }
-        if self.register {
-            expanded_attrs
-                .attrs
-                .push(tokens::auto_register_type(plugin.clone(), self.into()));
-            expanded_attrs.attrs.push(tokens::auto_register_state_type(
-                plugin.clone(),
-                self.into(),
-            ));
+        if self.args.args.base.register {
+            expand_attrs.attrs.push(tokens::auto_register_type(self.into()));
+            expand_attrs.attrs.push(tokens::auto_register_state_type(self.into()));
         }
-        if self.init {
-            expanded_attrs
-                .attrs
-                .push(tokens::auto_init_states(plugin.clone(), self.into()));
+        if self.args.args.base.init {
+            expand_attrs.attrs.push(tokens::auto_init_states(self.into()));
         }
-        expanded_attrs
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::macro_api::with_plugin::WithPlugin;
-    use crate::test_util::combo::combos_one_per_group_or_skip;
-    use crate::test_util::macros::*;
-    use darling::ast::NestedMeta;
-    use internal_test_proc_macro::xtest;
-    use internal_test_util::{extract_punctuated_paths, vec_spread};
-    use quote::ToTokens;
-    use syn::parse_quote;
-
-    #[xtest]
-    fn test_expand_back_into_args() -> syn::Result<()> {
-        for args in combos_one_per_group_or_skip(&[
-            vec![quote!(derive), quote!(derive(Debug, Default))],
-            vec![quote!(reflect), quote!(reflect(Debug, Default))],
-            vec![quote!(register)],
-            vec![quote!(init)],
-        ]) {
-            println!("checking args: {}", quote! { #(#args),*});
-            assert_vec_args_expand!(plugin!(parse_quote!(Test)), StatesArgs, args);
-        }
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_expand_attrs_global() -> syn::Result<()> {
-        let extras = extract_punctuated_paths(parse_quote!(A, B))
-            .into_iter()
-            .map(NonEmptyPath::try_from)
-            .collect::<syn::Result<Vec<_>>>()?;
-        let args: NestedMeta = parse_quote! {_(
-            plugin = Test,
-            derive(#(#extras),*),
-            reflect(#(#extras),*),
-            register,
-            init,
-        )};
-        let args = WithPlugin::<StatesArgs>::from_nested_meta(&args)?;
-        let derive_attr = tokens::derive_states(&extras);
-        let derive_reflect_path = tokens::derive_reflect_path();
-        let reflect_args = vec_spread![..extras,];
-        let reflect_attr = tokens::reflect(reflect_args.iter().map(NonEmptyPath::last_ident));
-        println!(
-            "{}",
-            args.inner.expand_attrs(&args.plugin()).to_token_stream()
-        );
-        assert_eq!(
-            args.inner
-                .expand_attrs(&args.plugin())
-                .to_token_stream()
-                .to_string(),
-            ExpandAttrs {
-                use_items: [derive_attr.use_items, reflect_attr.use_items].concat(),
-                attrs: vec_spread![
-                    ..derive_attr.attrs,
-                    // TODO: merge these derives
-                    quote! { #[derive(#derive_reflect_path)] },
-                    quote! { #[reflect(#(#reflect_args),*)] },
-                    tokens::auto_register_type(args.plugin(), (&args.inner).into()),
-                    tokens::auto_register_state_type(args.plugin(), (&args.inner).into()),
-                    tokens::auto_init_states(args.plugin(), (&args.inner).into()),
-                ]
-            }
-            .to_token_stream()
-            .to_string()
-        );
-        Ok(())
-    }
-}
+impl_from_default!(StatesArgs => (RegisterTypeArgs, RegisterStateTypeArgs, InitStateArgs));

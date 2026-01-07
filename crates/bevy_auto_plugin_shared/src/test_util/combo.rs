@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+/// might still need when rewriting the old tests that were removed
 use internal_test_util::vec_spread;
 use std::borrow::Borrow;
 
@@ -59,9 +61,5 @@ where
     }
 
     // filter out empty sets
-    combos
-        .into_iter()
-        .filter(|c| !c.is_empty())
-        .map(|g| vec_spread![with.clone(), ..g,])
-        .collect()
+    combos.into_iter().filter(|c| !c.is_empty()).map(|g| vec_spread![with.clone(), ..g,]).collect()
 }

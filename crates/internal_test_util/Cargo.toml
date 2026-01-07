@@ -20,6 +20,8 @@ internal_test_proc_macro = { workspace = true }
 trybuild = { workspace = true }
 darling = { workspace = true }
 syn = { workspace = true }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
 
 [dev-dependencies]
 wasm-bindgen-test = { workspace = true }

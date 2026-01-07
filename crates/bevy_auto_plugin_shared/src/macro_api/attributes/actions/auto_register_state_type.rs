@@ -1,128 +1,44 @@
-use crate::codegen::tokens::ArgsBackToTokens;
-use crate::codegen::with_target_path::ToTokensWithConcreteTargetPath;
-use crate::macro_api::attributes::prelude::GenericsArgs;
-use crate::macro_api::attributes::{AttributeIdent, ItemAttributeArgs};
-use crate::syntax::analysis::item::{IdentFromItemResult, resolve_ident_from_struct_or_enum};
-use crate::syntax::ast::type_list::TypeList;
-use crate::syntax::validated::concrete_path::ConcreteTargetPath;
+use crate::macro_api::prelude::*;
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::Item;
+use quote::{
+    ToTokens,
+    quote,
+};
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct RegisterStateTypeArgs {
-    #[darling(multiple)]
-    pub generics: Vec<TypeList>,
-}
+pub struct RegisterStateTypeArgs {}
 
 impl AttributeIdent for RegisterStateTypeArgs {
     const IDENT: &'static str = "auto_register_state_type";
 }
 
-impl ItemAttributeArgs for RegisterStateTypeArgs {
-    fn resolve_item_ident(item: &Item) -> IdentFromItemResult<'_> {
-        resolve_ident_from_struct_or_enum(item)
+pub type IaRegisterStateType = ItemAttribute<
+    Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
+    AllowStructOrEnum,
+>;
+pub type RegisterStateTypeAppMutEmitter = AppMutationEmitter<IaRegisterStateType>;
+pub type RegisterStateTypeAttrEmitter = AttrEmitter<IaRegisterStateType>;
+
+impl EmitAppMutationTokens for RegisterStateTypeAppMutEmitter {
+    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+        for concrete_path in self.args.concrete_paths() {
+            let bevy_state = crate::__private::paths::state::root_path();
+            tokens.extend(quote! {
+                #app_param.register_type :: < #bevy_state::prelude::State< #concrete_path > >();
+                #app_param.register_type :: < #bevy_state::prelude::NextState< #concrete_path > >();
+            });
+        }
     }
 }
 
-impl GenericsArgs for RegisterStateTypeArgs {
-    fn type_lists(&self) -> &[TypeList] {
-        &self.generics
-    }
-}
-
-impl ToTokensWithConcreteTargetPath for RegisterStateTypeArgs {
-    fn to_tokens_with_concrete_target_path(
-        &self,
-        tokens: &mut TokenStream,
-        target: &ConcreteTargetPath,
-    ) {
-        let bevy_state = crate::__private::paths::state::root_path();
+impl ToTokens for RegisterStateTypeAttrEmitter {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let args = self.args.args.extra_args();
         tokens.extend(quote! {
-            .register_type :: < #bevy_state::prelude::State< #target > >()
-            .register_type :: < #bevy_state::prelude::NextState< #target > >()
-        })
-    }
-}
-
-impl ArgsBackToTokens for RegisterStateTypeArgs {
-    fn back_to_inner_arg_tokens(&self, tokens: &mut TokenStream) {
-        tokens.extend(self.generics().to_attribute_arg_tokens());
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::codegen::with_target_path::WithTargetPath;
-    use internal_test_proc_macro::xtest;
-    use syn::{Path, parse_quote, parse2};
-
-    #[xtest]
-    fn test_to_tokens_no_generics() -> syn::Result<()> {
-        let args = parse2::<RegisterStateTypeArgs>(quote!())?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let bevy_state = crate::__private::paths::state::root_path();
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .register_type :: < #bevy_state::prelude::State< FooTarget > >()
-                .register_type :: < #bevy_state::prelude::NextState< FooTarget > >()
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_to_tokens_single() -> syn::Result<()> {
-        let args = parse2::<RegisterStateTypeArgs>(quote!(generics(u8, bool)))?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let bevy_state = crate::__private::paths::state::root_path();
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .register_type :: < #bevy_state::prelude::State< FooTarget<u8, bool> > >()
-                .register_type :: < #bevy_state::prelude::NextState< FooTarget<u8, bool> > >()
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
-    }
-
-    #[xtest]
-    fn test_to_tokens_multiple() -> syn::Result<()> {
-        let args =
-            parse2::<RegisterStateTypeArgs>(quote!(generics(u8, bool), generics(bool, bool)))?;
-        let path: Path = parse_quote!(FooTarget);
-        let args_with_target = WithTargetPath::try_from((path, args))?;
-        let bevy_state = crate::__private::paths::state::root_path();
-        let mut token_iter = args_with_target.to_tokens_iter();
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .register_type :: < #bevy_state::prelude::State< FooTarget<u8, bool> > >()
-                .register_type :: < #bevy_state::prelude::NextState< FooTarget<u8, bool> > >()
-            }
-            .to_string()
-        );
-        assert_eq!(
-            token_iter.next().expect("token_iter").to_string(),
-            quote! {
-                .register_type :: < #bevy_state::prelude::State< FooTarget<bool, bool> > >()
-                .register_type :: < #bevy_state::prelude::NextState< FooTarget<bool, bool> > >()
-            }
-            .to_string()
-        );
-        assert!(token_iter.next().is_none());
-        Ok(())
+            #(#args),*
+        });
+        *tokens = self.wrap_as_attr(tokens);
     }
 }
