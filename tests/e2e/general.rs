@@ -280,10 +280,7 @@ fn test_auto_register_state_type_foo_state_2() {
     let app = app();
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
-    assert!(
-        type_registry.contains(type_id_of::<State<FooState2>>()),
-        "did not auto register type"
-    );
+    assert!(type_registry.contains(type_id_of::<State<FooState2>>()), "did not auto register type");
     assert!(
         type_registry.contains(type_id_of::<NextState<FooState2>>()),
         "did not auto register type"
@@ -294,9 +291,7 @@ fn test_auto_register_state_type_foo_state_2() {
 fn test_auto_init_state_type_foo_state_2() {
     let app = app();
     assert_eq!(
-        app.world()
-            .get_resource::<State<FooState2>>()
-            .map(Deref::deref),
+        app.world().get_resource::<State<FooState2>>().map(Deref::deref),
         Some(&FooState2::Start),
         "did not auto init state"
     );
@@ -322,9 +317,7 @@ fn test_auto_init_sub_state_type_foo_sub_state() {
     let mut app = app();
     app.update(); // needed to figure out we're in the right state
     assert_eq!(
-        app.world()
-            .get_resource::<State<FooSubState>>()
-            .map(Deref::deref),
+        app.world().get_resource::<State<FooSubState>>().map(Deref::deref),
         Some(&FooSubState::Start),
         "did not auto init substate"
     );
@@ -350,9 +343,7 @@ fn test_auto_init_sub_state_type_foo_sub_state_2() {
     let mut app = app();
     app.update(); // needed to figure out we're in the right state
     assert_eq!(
-        app.world()
-            .get_resource::<State<FooSubState2>>()
-            .map(Deref::deref),
+        app.world().get_resource::<State<FooSubState2>>().map(Deref::deref),
         Some(&FooSubState2::Start),
         "did not auto init substate"
     );
