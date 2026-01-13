@@ -37,14 +37,14 @@ bevy_auto_plugin_shared = { version = "0.8.2", path = "crates/bevy_auto_plugin_s
 bevy_auto_plugin_proc_macros = { version = "0.8.2", path = "crates/bevy_auto_plugin_proc_macros" }
 internal_test_util = { path = "crates/internal_test_util" }
 internal_test_proc_macro = { path = "crates/internal_test_proc_macro" }
-bevy = { version = "0.18.0-rc.2", default-features = false, features = ["bevy_state"] }
-bevy_app = { version = "0.18.0-rc.2", default-features = false }
-bevy_state = { version = "0.18.0-rc.2", default-features = false }
-bevy_reflect = { version = "0.18.0-rc.2", default-features = false }
-bevy_reflect_derive = { version = "0.18.0-rc.2", default-features = false }
-bevy_internal = { version = "0.18.0-rc.2", default-features = false }
-bevy_ecs = { version = "0.18.0-rc.2", default-features = false }
-bevy_ecs_macros = { version = "0.18.0-rc.2", default-features = false }
+bevy = { version = "0.18", default-features = false, features = ["bevy_state"] }
+bevy_app = { version = "0.18", default-features = false }
+bevy_state = { version = "0.18", default-features = false }
+bevy_reflect = { version = "0.18", default-features = false }
+bevy_reflect_derive = { version = "0.18", default-features = false }
+bevy_internal = { version = "0.18", default-features = false }
+bevy_ecs = { version = "0.18", default-features = false }
+bevy_ecs_macros = { version = "0.18", default-features = false }
 proc-macro2 = "1"
 syn = { version = "2", features = ["full", "extra-traits", "visit-mut"] }
 quote = "1"
