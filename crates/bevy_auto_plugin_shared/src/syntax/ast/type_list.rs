@@ -92,14 +92,12 @@ impl TypeList {
         let target_set: HashSet<String> =
             target_params.iter().map(|ident| ident.to_string()).collect();
         let mut named_types: HashMap<String, Type> = HashMap::new();
-        let mut positional_types = Vec::new();
-        let mut has_named = false;
+        let mut positional_types: Vec<Type> = Vec::new();
 
         for entry in &self.0 {
             match entry {
                 TypeListEntry::Positional(ty) => positional_types.push(ty.clone()),
                 TypeListEntry::Named { ident, ty } => {
-                    has_named = true;
                     let key = ident.to_string();
                     if !target_set.contains(&key) {
                         return Err(syn::Error::new(
@@ -118,7 +116,29 @@ impl TypeList {
             }
         }
 
+        let has_named = !named_types.is_empty();
+        let has_positional = !positional_types.is_empty();
+
+        if has_positional && has_named {
+            return Err(syn::Error::new(
+                self.span(),
+                "cannot mix positional and named arguments in a single type list",
+            ));
+        }
+
+        // Positional-only case: enforce arity.
         if !has_named {
+            if positional_types.len() != target_params.len() {
+                let extra = &positional_types[target_params.len()];
+                return Err(syn::Error::new(
+                    extra.span(),
+                    format!(
+                        "unexpected number of generic arguments: expected {}, got {}",
+                        target_params.len(),
+                        positional_types.len()
+                    ),
+                ));
+            }
             return Ok(positional_types);
         }
 
@@ -133,12 +153,14 @@ impl TypeList {
             } else {
                 return Err(syn::Error::new(
                     ident.span(),
-                    format!("missing generic argument for `{}`", ident),
+                    format!(
+                        "missing generic argument for `{}` (note: defaults/lifetimes/const generics are not supported here)",
+                        ident
+                    ),
                 ));
             }
         }
 
-        resolved_types.extend(positional_iter);
         Ok(resolved_types)
     }
 }
