@@ -145,3 +145,4 @@
 - Removed rust v1.88 requirement
 - Moved docs to facade crate (benefits VS Code users when viewing documentation on hover)
 - Massive under the hood refactoring and organization of the entire project
+- Added support for named generics
