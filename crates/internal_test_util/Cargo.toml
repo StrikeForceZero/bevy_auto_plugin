@@ -7,6 +7,8 @@ publish = false
 [lib]
 
 [features]
+bevy_0_17 = ["dep:bevy_app_0_17", "dep:bevy_internal_0_17"]
+bevy_0_18 = []
 # internal for tests
 _web = [
     "bevy_app/web",
@@ -14,6 +16,8 @@ _web = [
 ]
 
 [dependencies]
+bevy_app_0_17 = { workspace = true, optional = true }
+bevy_internal_0_17 = { workspace = true, optional = true }
 bevy_app = { workspace = true }
 bevy_internal = { workspace = true }
 internal_test_proc_macro = { workspace = true }

@@ -12,6 +12,9 @@ publish = true
 proc-macro = true
 
 [features]
+default = ["bevy_0_18"]
+bevy_0_17 = ["bevy_auto_plugin_shared/bevy_0_17"]
+bevy_0_18 = ["bevy_auto_plugin_shared/bevy_0_18"]
 inventory = ["bevy_auto_plugin_shared/inventory"]
 debug_log_plugin_registry = ["bevy_auto_plugin_shared/debug_log_plugin_registry"]
 log_plugin_build = ["bevy_auto_plugin_shared/log_plugin_build"]

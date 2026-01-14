@@ -1,3 +1,15 @@
+#[cfg(feature = "bevy_0_17")]
+use {
+    bevy_app_0_17 as bevy_app,
+    bevy_internal_0_17 as bevy_internal,
+};
+
+#[cfg(feature = "bevy_0_18")]
+use {
+    bevy_app,
+    bevy_internal,
+};
+
 pub mod token_stream;
 pub mod ui_util;
 

@@ -10,7 +10,32 @@ publish = true
 
 [features]
 default = [
+    "bevy_0_18",
     "debug_log_plugin_registry",
+]
+bevy_0_17 = [
+    "bevy_auto_plugin_proc_macros/bevy_0_17",
+    "bevy_auto_plugin_shared/bevy_0_17",
+    "internal_test_util/bevy_0_17",
+    "dep:bevy_0_17",
+    "dep:bevy_app_0_17",
+    "dep:bevy_reflect_0_17",
+    "dep:bevy_reflect_derive_0_17",
+    "dep:bevy_ecs_0_17",
+    "dep:bevy_ecs_macros_0_17",
+    "dep:bevy_state_0_17",
+]
+bevy_0_18 = [
+    "bevy_auto_plugin_proc_macros/bevy_0_18",
+    "bevy_auto_plugin_shared/bevy_0_18",
+    "internal_test_util/bevy_0_18",
+    "dep:bevy",
+    "dep:bevy_app",
+    "dep:bevy_reflect",
+    "dep:bevy_reflect_derive",
+    "dep:bevy_ecs",
+    "dep:bevy_ecs_macros",
+    "dep:bevy_state",
 ]
 inventory = ["bevy_auto_plugin_proc_macros/inventory"]
 # optional extras
@@ -33,10 +58,10 @@ _wasm = [
 members = ["crates/*"]
 
 [workspace.dependencies]
-bevy_auto_plugin_shared = { version = "0.8.2", path = "crates/bevy_auto_plugin_shared" }
-bevy_auto_plugin_proc_macros = { version = "0.8.2", path = "crates/bevy_auto_plugin_proc_macros" }
-internal_test_util = { path = "crates/internal_test_util" }
-internal_test_proc_macro = { path = "crates/internal_test_proc_macro" }
+bevy_auto_plugin_shared = { version = "0.8.2", path = "crates/bevy_auto_plugin_shared", default-features = false }
+bevy_auto_plugin_proc_macros = { version = "0.8.2", path = "crates/bevy_auto_plugin_proc_macros", default-features = false }
+internal_test_util = { path = "crates/internal_test_util", default-features = false }
+internal_test_proc_macro = { path = "crates/internal_test_proc_macro", default-features = false }
 bevy = { version = "0.18", default-features = false, features = ["bevy_state"] }
 bevy_app = { version = "0.18", default-features = false }
 bevy_state = { version = "0.18", default-features = false }
@@ -45,6 +70,15 @@ bevy_reflect_derive = { version = "0.18", default-features = false }
 bevy_internal = { version = "0.18", default-features = false }
 bevy_ecs = { version = "0.18", default-features = false }
 bevy_ecs_macros = { version = "0.18", default-features = false }
+
+bevy_0_17 = { package = "bevy", version = "0.17", default-features = false, features = ["bevy_state"] }
+bevy_app_0_17 = { package = "bevy_app", version = "0.17", default-features = false }
+bevy_state_0_17 = { package = "bevy_state", version = "0.17", default-features = false }
+bevy_reflect_0_17 = { package = "bevy_reflect", version = "0.17", default-features = false }
+bevy_reflect_derive_0_17 = { package = "bevy_reflect_derive", version = "0.17", default-features = false }
+bevy_internal_0_17 = { package = "bevy_internal", version = "0.17", default-features = false }
+bevy_ecs_0_17 = { package = "bevy_ecs", version = "0.17", default-features = false }
+bevy_ecs_macros_0_17 = { package = "bevy_ecs_macros", version = "0.17", default-features = false }
 proc-macro2 = "1"
 syn = { version = "2", features = ["full", "extra-traits", "visit-mut"] }
 quote = "1"
@@ -63,15 +97,25 @@ proc-macro-crate = { version = "3.4" }
 bevy_auto_plugin_proc_macros = { workspace = true }
 bevy_auto_plugin_shared = { workspace = true }
 
+# Bevy 0.18
+bevy = { workspace = true, optional = true }
+bevy_app = { workspace = true, optional = true }
+bevy_reflect = { workspace = true, optional = true }
+bevy_reflect_derive = { workspace = true, optional = true }
+bevy_ecs = { workspace = true, optional = true }
+bevy_ecs_macros = { workspace = true, optional = true }
+bevy_state = { workspace = true, optional = true }
+
+# Bevy 0.17
+bevy_0_17 = { workspace = true, optional = true }
+bevy_app_0_17 = { workspace = true, optional = true }
+bevy_reflect_0_17 = { workspace = true, optional = true }
+bevy_reflect_derive_0_17 = { workspace = true, optional = true }
+bevy_ecs_0_17 = { workspace = true, optional = true }
+bevy_ecs_macros_0_17 = { workspace = true, optional = true }
+bevy_state_0_17 = { workspace = true, optional = true }
+
 [dev-dependencies]
-# required for doc tests
-bevy = { workspace = true }
-bevy_app = { workspace = true }
-bevy_reflect = { workspace = true }
-bevy_reflect_derive = { workspace = true }
-bevy_ecs = { workspace = true }
-bevy_ecs_macros = { workspace = true }
-bevy_state = { workspace = true }
 trybuild = { workspace = true }
 # used in feature tests
 log = { workspace = true }

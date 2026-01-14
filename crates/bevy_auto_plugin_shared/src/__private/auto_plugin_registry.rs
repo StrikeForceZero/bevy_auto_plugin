@@ -18,7 +18,7 @@ use syn::{
     Path,
 };
 
-pub use bevy_app;
+pub use crate::bevy_app;
 #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
 pub use inventory;
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "inventory")))]

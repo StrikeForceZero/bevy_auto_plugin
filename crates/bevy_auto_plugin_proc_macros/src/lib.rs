@@ -1,3 +1,9 @@
+#[cfg(all(feature = "bevy_0_17", feature = "bevy_0_18"))]
+compile_error!("features `bevy_0_17` and `bevy_0_18` are mutually exclusive");
+
+#[cfg(not(any(feature = "bevy_0_17", feature = "bevy_0_18")))]
+compile_error!("one of the features `bevy_0_17` or `bevy_0_18` must be enabled");
+
 use bevy_auto_plugin_shared::__private::expand;
 use proc_macro::TokenStream as CompilerStream;
 use proc_macro2::TokenStream as MacroStream;

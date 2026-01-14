@@ -11,6 +11,19 @@ publish = true
 [lib]
 
 [features]
+default = ["bevy_0_18"]
+bevy_0_17 = [
+    "dep:bevy_app_0_17",
+    "dep:bevy_ecs_0_17",
+    "dep:bevy_reflect_0_17",
+    "dep:bevy_state_0_17"
+]
+bevy_0_18 = [
+    "dep:bevy_app",
+    "dep:bevy_ecs",
+    "dep:bevy_reflect",
+    "dep:bevy_state"
+]
 inventory = []
 debug_log_plugin_registry = ["log"]
 log_plugin_build = ["log"]
@@ -25,7 +38,15 @@ _web = [
 ]
 
 [dependencies]
-bevy_app = { workspace = true }
+bevy_app_0_17 = { workspace = true, optional = true }
+bevy_ecs_0_17 = { workspace = true, optional = true }
+bevy_reflect_0_17 = { workspace = true, optional = true }
+bevy_state_0_17 = { workspace = true, optional = true }
+
+bevy_app = { workspace = true, optional = true }
+bevy_ecs = { workspace = true, optional = true }
+bevy_reflect = { workspace = true, optional = true }
+bevy_state = { workspace = true, optional = true }
 proc-macro2 = { workspace = true }
 syn = { workspace = true }
 quote = { workspace = true }
@@ -43,6 +64,4 @@ internal_test_util = { workspace = true }
 wasm-bindgen-test = { workspace = true }
 anyhow = { workspace = true }
 # used in crate resolve tests
-bevy_ecs = { workspace = true }
-bevy_reflect = { workspace = true }
-bevy_state = { workspace = true }
+# these are now handled via versioned features in [dependencies]

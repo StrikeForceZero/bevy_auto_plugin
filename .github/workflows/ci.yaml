@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        feature-set: [ default, inventory ]
+        feature-set: [ bevy_0_18, "bevy_0_18,inventory", bevy_0_17, "bevy_0_17,inventory" ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -66,6 +66,9 @@ jobs:
 
   clippy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bevy-version: [ bevy_0_18, bevy_0_17 ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -78,14 +81,14 @@ jobs:
           override: true
 
       - name: Run clippy
-        run: cargo +stable clippy --all-targets --all-features -- -D warnings
+        run: cargo +stable clippy --all-targets --no-default-features --features "${{ matrix.bevy-version }},inventory" -- -D warnings
 
   # ---------- Browser WebAssembly target ----------
   web-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        feature-set: [ default, inventory ]
+        feature-set: [ bevy_0_18, "bevy_0_18,inventory", bevy_0_17, "bevy_0_17,inventory" ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

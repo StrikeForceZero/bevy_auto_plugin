@@ -73,7 +73,7 @@ macro_rules! parse_macro_input2_or_emit_with {
 }
 
 macro_rules! as_cargo_alias {
-    ($name:ident) => {
+    ($name:expr) => {
         ::syn::Ident::new(&$name, ::proc_macro2::Span::call_site())
     };
 }
@@ -88,34 +88,48 @@ macro_rules! bevy_crate_path {
         // unused import for tests
         #[cfg(not(test))]
         use $crate::util::macros::as_cargo_alias;
+
         #[allow(clippy::result_large_err)]
-        let res: Result::<Path, String> = match crate_name(concat!("bevy_", stringify!($target_crate))) {
-            Ok(FoundCrate::Itself) => Ok(parse2::<Path>(quote!(::bevy_$target_crate)).unwrap()),
-            Ok(FoundCrate::Name(alias)) => {
-                let alias_ident = as_cargo_alias!(alias);
-                Ok(parse2::<Path>(quote!(::#alias_ident)).unwrap())
+        let res: Result::<Path, String> = match crate_name("bevy_auto_plugin") {
+            Ok(FoundCrate::Itself) => {
+                let path_str = concat!("::bevy_auto_plugin::bevy_", stringify!($target_crate));
+                Ok(::syn::parse_str(path_str).unwrap())
             }
-            #[allow(unused_variables)]
-            Err(err_a) => {
-                // fall back to bevy’s re-export
-                match crate_name("bevy") {
-                    Ok(FoundCrate::Itself) => Ok(parse2::<Path>(quote!(::bevy::$target_crate)).unwrap()),
+            Ok(FoundCrate::Name(alias)) => {
+                let path_str = format!("::{}::bevy_{}", alias, stringify!($target_crate));
+                Ok(::syn::parse_str(&path_str).unwrap())
+            }
+            Err(_) => {
+                // Fallback to searching for the individual bevy crate or bevy itself
+                match crate_name(concat!("bevy_", stringify!($target_crate))) {
+                    Ok(FoundCrate::Itself) => Ok(parse2::<Path>(quote!(::bevy_$target_crate)).unwrap()),
                     Ok(FoundCrate::Name(alias)) => {
-                        let alias_ident = as_cargo_alias!(alias);
-                        Ok(parse2::<Path>(quote!(::#alias_ident::$target_crate)).unwrap())
+                        let alias_ident = as_cargo_alias!(&alias);
+                        Ok(parse2::<Path>(quote!(::#alias_ident)).unwrap())
                     }
                     #[allow(unused_variables)]
-                    Err(err_b) => {
-                        #[cfg(target_arch = "wasm32")] {
-                            // WASM/tests: env not available — use standard path
-                            Ok(parse2::<Path>(quote!(::bevy::$target_crate)).unwrap())
+                    Err(err_a) => {
+                        // fall back to bevy’s re-export
+                        match crate_name("bevy") {
+                            Ok(FoundCrate::Itself) => Ok(parse2::<Path>(quote!(::bevy::$target_crate)).unwrap()),
+                            Ok(FoundCrate::Name(alias)) => {
+                                let alias_ident = as_cargo_alias!(&alias);
+                                Ok(parse2::<Path>(quote!(::#alias_ident::$target_crate)).unwrap())
+                            }
+                            #[allow(unused_variables)]
+                            Err(err_b) => {
+                                #[cfg(target_arch = "wasm32")] {
+                                    // WASM/tests: env not available — use standard path
+                                    Ok(parse2::<Path>(quote!(::bevy::$target_crate)).unwrap())
+                                }
+                                #[cfg(not(target_arch = "wasm32"))] {
+                                    let label_a = concat!("bevy_", stringify!($target_crate));
+                                    let label_b = concat!("bevy::", stringify!($target_crate));
+                                    Err(format!("\n{label_a}: {err_a}\n{label_b}: {err_b}"))
+                                }
+                            }
                         }
-                        #[cfg(not(target_arch = "wasm32"))] {
-                            let label_a = concat!("bevy_", stringify!($target_crate));
-                            let label_b = concat!("bevy::", stringify!($target_crate));
-                            Err(format!("\n{label_a}: {err_a}\n{label_b}: {err_b}"))
-                        }
-                    },
+                    }
                 }
             }
         };

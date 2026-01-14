@@ -107,6 +107,48 @@
 //! struct BarComponent;
 //! ```
 
+#[cfg(all(feature = "bevy_0_17", feature = "bevy_0_18"))]
+compile_error!("features `bevy_0_17` and `bevy_0_18` are mutually exclusive");
+
+#[cfg(not(any(feature = "bevy_0_17", feature = "bevy_0_18")))]
+compile_error!("one of the features `bevy_0_17` or `bevy_0_18` must be enabled");
+
+#[cfg(feature = "bevy_0_17")]
+pub extern crate bevy_0_17 as bevy;
+#[cfg(feature = "bevy_0_17")]
+pub extern crate bevy_app_0_17 as bevy_app;
+#[cfg(feature = "bevy_0_17")]
+pub extern crate bevy_ecs_0_17 as bevy_ecs;
+#[cfg(feature = "bevy_0_17")]
+pub extern crate bevy_reflect_0_17 as bevy_reflect;
+#[cfg(feature = "bevy_0_17")]
+pub extern crate bevy_state_0_17 as bevy_state;
+
+#[cfg(feature = "bevy_0_18")]
+pub extern crate bevy;
+#[cfg(feature = "bevy_0_18")]
+pub extern crate bevy_app;
+#[cfg(feature = "bevy_0_18")]
+pub extern crate bevy_ecs;
+#[cfg(feature = "bevy_0_18")]
+pub extern crate bevy_reflect;
+#[cfg(feature = "bevy_0_18")]
+pub extern crate bevy_state;
+
+#[cfg(feature = "bevy_0_17")]
+#[allow(unused_imports)]
+pub use {
+    bevy_ecs_macros_0_17 as bevy_ecs_macros,
+    bevy_reflect_derive_0_17 as bevy_reflect_derive,
+};
+
+#[cfg(feature = "bevy_0_18")]
+#[allow(unused_imports)]
+pub use {
+    bevy_ecs_macros,
+    bevy_reflect_derive,
+};
+
 /// Private Re-exports
 #[doc(hidden)]
 pub mod __private {
@@ -114,6 +156,13 @@ pub mod __private {
 }
 
 pub mod prelude {
+    pub use crate::{
+        bevy,
+        bevy_app,
+        bevy_ecs,
+        bevy_reflect,
+        bevy_state,
+    };
     #[doc = include_str!("../docs/derives/AutoPlugin.md")]
     pub use bevy_auto_plugin_proc_macros::AutoPlugin;
 
