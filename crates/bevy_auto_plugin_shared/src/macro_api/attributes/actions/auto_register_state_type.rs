@@ -22,14 +22,20 @@ pub type RegisterStateTypeAppMutEmitter = AppMutationEmitter<IaRegisterStateType
 pub type RegisterStateTypeAttrEmitter = AttrEmitter<IaRegisterStateType>;
 
 impl EmitAppMutationTokens for RegisterStateTypeAppMutEmitter {
-    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        for concrete_path in self.args.concrete_paths() {
+    fn to_app_mutation_tokens(
+        &self,
+        tokens: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()> {
+        let concrete_paths = self.args.concrete_paths()?;
+        for concrete_path in concrete_paths {
             let bevy_state = crate::__private::paths::state::root_path();
             tokens.extend(quote! {
                 #app_param.register_type :: < #bevy_state::prelude::State< #concrete_path > >();
                 #app_param.register_type :: < #bevy_state::prelude::NextState< #concrete_path > >();
             });
         }
+        Ok(())
     }
 }
 

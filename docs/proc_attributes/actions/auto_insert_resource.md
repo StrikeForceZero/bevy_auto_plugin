@@ -5,6 +5,7 @@ Automatically inserts a resource with a specific value into the app.
 - `resource(Value)` - Required. Specifies the resource value to insert.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the resource will be inserted with these specific generic parameters.
+  Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
 
 # Example
 ```rust

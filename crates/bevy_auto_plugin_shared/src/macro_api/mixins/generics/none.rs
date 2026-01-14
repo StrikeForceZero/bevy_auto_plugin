@@ -2,10 +2,12 @@ use crate::{
     macro_api::{
         mixins::HasKeys,
         prelude::{
+            HasGenerics,
             WithZeroOrManyGenerics,
             WithZeroOrOneGenerics,
         },
     },
+    syntax::ast::type_list::TypeList,
     util::macros::impl_from_default,
 };
 use darling::{
@@ -61,6 +63,12 @@ impl Parse for WithNoGenerics {
             return Err(input.error("generics are not supported"));
         }
         Ok(Self::default())
+    }
+}
+
+impl HasGenerics for WithNoGenerics {
+    fn generics(&self) -> &[TypeList] {
+        &[]
     }
 }
 

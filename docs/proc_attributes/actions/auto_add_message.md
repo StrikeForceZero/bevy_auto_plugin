@@ -4,7 +4,7 @@ Automatically registers an message to be added to the app.
 - `plugin = PluginType` - Required. Specifies which plugin should register this message.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the message will be registered with these specific generic parameters.
-
+  Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
 # Example
 
 ```rust

@@ -115,6 +115,46 @@ impl InputItem {
                 .ok_or_else(|| syn::Error::new(item.span(), "expected item to have an ident"))
         })
     }
+    pub fn type_param_idents(&self) -> syn::Result<Vec<syn::Ident>> {
+        let mut cloned = self.clone();
+        let item = cloned.ensure_ast()?;
+        let idents = match item {
+            syn::Item::Const(_) => vec![],
+            syn::Item::Enum(item) => {
+                item.generics.type_params().map(|tp| tp.ident.clone()).collect()
+            }
+            syn::Item::ExternCrate(_) => vec![],
+            syn::Item::Fn(item) => {
+                item.sig.generics.type_params().map(|tp| tp.ident.clone()).collect()
+            }
+            syn::Item::ForeignMod(_) => vec![],
+            syn::Item::Impl(item) => {
+                item.generics.type_params().map(|tp| tp.ident.clone()).collect()
+            }
+            syn::Item::Macro(_) => vec![],
+            syn::Item::Mod(_) => vec![],
+            syn::Item::Static(_) => vec![],
+            syn::Item::Struct(item) => {
+                item.generics.type_params().map(|tp| tp.ident.clone()).collect()
+            }
+            syn::Item::Trait(item) => {
+                item.generics.type_params().map(|tp| tp.ident.clone()).collect()
+            }
+            syn::Item::TraitAlias(item) => {
+                item.generics.type_params().map(|tp| tp.ident.clone()).collect()
+            }
+            syn::Item::Type(item) => {
+                item.generics.type_params().map(|tp| tp.ident.clone()).collect()
+            }
+            syn::Item::Union(item) => {
+                item.generics.type_params().map(|tp| tp.ident.clone()).collect()
+            }
+            syn::Item::Use(_) => vec![],
+            syn::Item::Verbatim(_) => vec![],
+            _ => vec![],
+        };
+        Ok(idents)
+    }
     pub fn map_ast<F>(&mut self, f: F) -> syn::Result<()>
     where
         F: FnOnce(&mut syn::Item) -> syn::Result<()>,

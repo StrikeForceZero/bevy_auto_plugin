@@ -26,14 +26,20 @@ pub type AddSystemAppMutEmitter = AppMutationEmitter<IaAddSystem>;
 pub type AddSystemAttrEmitter = AttrEmitter<IaAddSystem>;
 
 impl EmitAppMutationTokens for AddSystemAppMutEmitter {
-    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+    fn to_app_mutation_tokens(
+        &self,
+        tokens: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()> {
         let schedule = &self.args.args.base.schedule_config.schedule;
         let config_tokens = self.args.args.base.schedule_config.config.to_token_stream();
-        for concrete_path in self.args.concrete_paths() {
+        let concrete_paths = self.args.concrete_paths()?;
+        for concrete_path in concrete_paths {
             tokens.extend(quote! {
                 #app_param . add_systems(#schedule, #concrete_path #config_tokens);
             });
         }
+        Ok(())
     }
 }
 

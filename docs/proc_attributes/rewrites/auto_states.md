@@ -4,6 +4,7 @@ Automatically initializes a state in the app.
 - `plugin = PluginType` - Required. Specifies which plugin should initialize this state.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the states will be registered with these specific generic parameters.
+  Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(A = ..., B = ...)`.
 - `derive` | `derive(Debug, Default, ..)` - Optional. Specifies that the macro should handle deriving `States`.
   Passes through any additional derives listed.
   When enabled, `States` include these additional derives:  

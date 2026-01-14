@@ -28,12 +28,18 @@ pub type InitResourceAppMutEmitter = AppMutationEmitter<IaInitResource>;
 pub type InitResourceAttrEmitter = AttrEmitter<IaInitResource>;
 
 impl EmitAppMutationTokens for InitResourceAppMutEmitter {
-    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        for concrete_path in self.args.concrete_paths() {
+    fn to_app_mutation_tokens(
+        &self,
+        tokens: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()> {
+        let concrete_paths = self.args.concrete_paths()?;
+        for concrete_path in concrete_paths {
             tokens.extend(quote! {
                 #app_param.init_resource::<#concrete_path>();
             });
         }
+        Ok(())
     }
 }
 

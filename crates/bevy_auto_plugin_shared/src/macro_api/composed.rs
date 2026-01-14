@@ -149,7 +149,18 @@ where
         if self.generics.generics().is_empty() {
             vec![target.clone()]
         } else {
-            self.generics.generics().iter().map(|g| parse_quote!(#target :: < #g >)).collect()
+            self.generics
+                .generics()
+                .iter()
+                .map(|g| {
+                    let types = g.types_in_declared_order();
+                    if types.is_empty() {
+                        target.clone()
+                    } else {
+                        parse_quote!(#target :: < #(#types),* >)
+                    }
+                })
+                .collect()
         }
     }
 }

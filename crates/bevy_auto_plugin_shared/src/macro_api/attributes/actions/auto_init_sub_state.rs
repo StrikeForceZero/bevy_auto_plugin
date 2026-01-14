@@ -20,11 +20,18 @@ pub type InitSubStateAppMutEmitter = AppMutationEmitter<IaInitSubState>;
 pub type InitSubStateAttrEmitter = AttrEmitter<IaInitSubState>;
 
 impl EmitAppMutationTokens for InitSubStateAppMutEmitter {
-    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        let target = &self.args.target;
-        tokens.extend(quote! {
-            #app_param.add_sub_state::<#target>();
-        });
+    fn to_app_mutation_tokens(
+        &self,
+        tokens: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()> {
+        let concrete_paths = self.args.concrete_paths()?;
+        for concrete_path in concrete_paths {
+            tokens.extend(quote! {
+                #app_param.add_sub_state::<#concrete_path>();
+            });
+        }
+        Ok(())
     }
 }
 
