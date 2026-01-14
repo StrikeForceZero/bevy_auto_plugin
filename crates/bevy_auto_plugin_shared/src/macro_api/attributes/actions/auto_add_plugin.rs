@@ -26,14 +26,12 @@ pub type AddPluginAppMutEmitter = AppMutationEmitter<IaAddPlugin>;
 pub type AddPluginAttrEmitter = AttrEmitter<IaAddPlugin>;
 
 impl EmitAppMutationTokens for AddPluginAppMutEmitter {
-    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        let concrete_paths = match self.args.concrete_paths() {
-            Ok(paths) => paths,
-            Err(err) => {
-                tokens.extend(err.to_compile_error());
-                return;
-            }
-        };
+    fn to_app_mutation_tokens(
+        &self,
+        tokens: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()> {
+        let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
             if let Some(expr) = &self.args.args.base.init.expr {
                 tokens.extend(quote! {
@@ -49,6 +47,7 @@ impl EmitAppMutationTokens for AddPluginAppMutEmitter {
                 });
             }
         }
+        Ok(())
     }
 }
 

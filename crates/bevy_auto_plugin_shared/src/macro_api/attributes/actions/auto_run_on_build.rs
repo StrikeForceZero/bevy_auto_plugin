@@ -20,19 +20,18 @@ pub type RunOnBuildAppMutEmitter = AppMutationEmitter<IaRunOnBuild>;
 pub type RunOnBuildAttrEmitter = AttrEmitter<IaRunOnBuild>;
 
 impl EmitAppMutationTokens for RunOnBuildAppMutEmitter {
-    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        let concrete_paths = match self.args.concrete_paths() {
-            Ok(paths) => paths,
-            Err(err) => {
-                tokens.extend(err.to_compile_error());
-                return;
-            }
-        };
+    fn to_app_mutation_tokens(
+        &self,
+        tokens: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()> {
+        let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
             tokens.extend(quote! {
                 #concrete_path(#app_param);
             });
         }
+        Ok(())
     }
 }
 

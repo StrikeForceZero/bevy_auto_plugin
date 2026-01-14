@@ -57,10 +57,16 @@ pub trait EmitAppMutationTokens {
     }
     fn to_app_mutation_token_stream(&self, app_param: &syn::Ident) -> TokenStream {
         let mut tokens = TokenStream::new();
-        self.to_app_mutation_tokens(&mut tokens, app_param);
+        if let Err(err) = self.to_app_mutation_tokens(&mut tokens, app_param) {
+            tokens.extend(err.to_compile_error());
+        }
         tokens
     }
-    fn to_app_mutation_tokens(&self, out: &mut TokenStream, app_param: &syn::Ident);
+    fn to_app_mutation_tokens(
+        &self,
+        out: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()>;
 }
 
 impl<T> ToTokens for AppMutationEmitter<T>
@@ -69,6 +75,10 @@ where
     T: ItemAttributeInput,
 {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        EmitAppMutationTokens::to_app_mutation_tokens(self, tokens, &self.app_param)
+        if let Err(err) =
+            EmitAppMutationTokens::to_app_mutation_tokens(self, tokens, &self.app_param)
+        {
+            tokens.extend(err.to_compile_error());
+        }
     }
 }

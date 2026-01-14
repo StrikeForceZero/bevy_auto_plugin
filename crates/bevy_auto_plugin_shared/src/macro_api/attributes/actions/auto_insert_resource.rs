@@ -53,27 +53,19 @@ pub type InsertResourceAppMutEmitter = AppMutationEmitter<IaInsertResource>;
 pub type InsertResourceAttrEmitter = AttrEmitter<IaInsertResource>;
 
 impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
-    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        let resource = match self.args.args.base.resolve_resource() {
-            Ok(resource) => resource,
-            Err(err) => {
-                let err = syn::Error::from(err);
-                tokens.extend(err.to_compile_error());
-                return;
-            }
-        };
-        let concrete_paths = match self.args.concrete_paths() {
-            Ok(paths) => paths,
-            Err(err) => {
-                tokens.extend(err.to_compile_error());
-                return;
-            }
-        };
+    fn to_app_mutation_tokens(
+        &self,
+        tokens: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()> {
+        let resource = self.args.args.base.resolve_resource().map_err(syn::Error::from)?;
+        let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
             tokens.extend(quote! {
                 #app_param.insert_resource({ let resource: #concrete_path = #resource; resource});
             });
         }
+        Ok(())
     }
 }
 

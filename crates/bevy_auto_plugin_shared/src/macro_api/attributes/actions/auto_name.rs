@@ -25,15 +25,13 @@ pub type NameAppMutEmitter = AppMutationEmitter<IaName>;
 pub type NameAttrEmitter = AttrEmitter<IaName>;
 
 impl EmitAppMutationTokens for NameAppMutEmitter {
-    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+    fn to_app_mutation_tokens(
+        &self,
+        tokens: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()> {
         let args = &self.args.args.base;
-        let concrete_paths = match self.args.concrete_paths() {
-            Ok(paths) => paths,
-            Err(err) => {
-                tokens.extend(err.to_compile_error());
-                return;
-            }
-        };
+        let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
             let name = args.name.as_ref().map(|name| name.unquoted_string()).unwrap_or_else(|| {
                 // TODO: move to util fn
@@ -51,6 +49,7 @@ impl EmitAppMutationTokens for NameAppMutEmitter {
                 #app_param.register_required_components_with::<#concrete_path, #bevy_ecs::prelude::Name>(|| #bevy_ecs::prelude::Name::new(#name));
             });
         }
+        Ok(())
     }
 }
 

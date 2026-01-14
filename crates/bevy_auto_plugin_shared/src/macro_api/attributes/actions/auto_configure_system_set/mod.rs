@@ -118,7 +118,11 @@ impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
         }
         Ok(())
     }
-    fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
+    fn to_app_mutation_tokens(
+        &self,
+        tokens: &mut TokenStream,
+        app_param: &syn::Ident,
+    ) -> syn::Result<()> {
         let args = self.args.args.base.clone();
         // checks if we need to inflate args
         let inflated_args = if args.inner.is_none() {
@@ -128,20 +132,14 @@ impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
                 Ok((_, args)) => args,
                 Err((_, err)) => {
                     tokens.extend(err.to_compile_error());
-                    return;
+                    return Ok(());
                 }
             }
         } else {
             args
         };
         let generics = self.args.args.generics();
-        let concrete_paths = match self.args.concrete_paths() {
-            Ok(paths) => paths,
-            Err(err) => {
-                tokens.extend(err.to_compile_error());
-                return;
-            }
-        };
+        let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
             tokens.extend(inflate::output(
                 &inflated_args,
@@ -150,6 +148,7 @@ impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
                 !generics.is_empty(),
             ));
         }
+        Ok(())
     }
 }
 
