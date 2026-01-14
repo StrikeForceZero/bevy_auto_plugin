@@ -4,6 +4,7 @@ Automatically registers a system to be added to the app.
 - `plugin = PluginType` - Required. Specifies which plugin should register this system.
 - `schedule = ScheduleName` - Required. Specifies which schedule to add the system to.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
+  Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
 - `config(..)`
   - `in_set = SetName` - Optional. See [`bevy IntoScheduleConfigs in_set`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.in_set)
   - `before = SetName or system` - Optional. See [`bevy IntoScheduleConfigs before`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.before)

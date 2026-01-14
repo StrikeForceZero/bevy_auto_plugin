@@ -75,7 +75,8 @@ fn my_system() {}
 
 ### Generics
 #### Component
-if your items have generics, you can specify the types using the `generics(...)` meta argument for each concrete type. 
+if your items have generics, you can specify the types using the `generics(...)` meta argument for each concrete type.
+Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(A = ..., B = ...)`.
 ```rust
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -84,7 +85,7 @@ struct MyPlugin;
 #[auto_component(
     plugin = MyPlugin,
     generics(usize, bool),
-    generics(bool, bool),
+    generics(A = bool, B = bool),
     derive(Debug, Default),
     reflect(Debug, Default),
     register,
@@ -103,12 +104,13 @@ impl Plugin for MyPlugin {
 ```
 #### System
 if your systems have generics, you can specify the types using the `generics(...)` meta argument for each concrete type.
+Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(A = ..., B = ...)`.
 ```rust
 #[auto_system(
     plugin = MyPlugin,
     schedule = Update, 
     generics(Name), 
-    generics(Transform),
+    generics(A = Transform),
     config( 
         run_if = some_condition,
         after = some_other_system,

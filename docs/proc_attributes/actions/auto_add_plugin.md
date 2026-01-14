@@ -8,6 +8,7 @@ Automatically inserts a plugin as a sub-plugin into the app.
   - `init = ... | init(...)` for custom values of the sub-plugin. e.g. `YourSubPlugin("data")` or `YourSubPlugin { foo: "bar" }`
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, along with impl_plugin_trait, the plugin will be derived with these specific generic parameters.
+  Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
 
 # Example
 ```rust
