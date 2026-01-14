@@ -138,3 +138,10 @@
 ---
 ### v0.8.2
 - Fix link in `auto_add_plugin` doc attribute
+
+---
+### v0.9.0
+- Update to bevy 0.18
+- Removed rust v1.88 requirement
+- Moved docs to facade crate (benefits VS Code users when viewing documentation on hover)
+- Massive under the hood refactoring and organization of the entire project
