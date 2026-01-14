@@ -23,7 +23,14 @@ pub type RegisterTypeAttrEmitter = AttrEmitter<IaRegisterType>;
 
 impl EmitAppMutationTokens for RegisterTypeAppMutEmitter {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
-        for concrete_path in self.args.concrete_paths() {
+        let concrete_paths = match self.args.concrete_paths() {
+            Ok(paths) => paths,
+            Err(err) => {
+                tokens.extend(err.to_compile_error());
+                return;
+            }
+        };
+        for concrete_path in concrete_paths {
             tokens.extend(quote! {
                 #app_param.register_type::<#concrete_path>();
             });

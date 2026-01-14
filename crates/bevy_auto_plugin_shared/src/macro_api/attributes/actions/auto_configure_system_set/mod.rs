@@ -135,7 +135,14 @@ impl EmitAppMutationTokens for ConfigureSystemSetAppMutEmitter {
             args
         };
         let generics = self.args.args.generics();
-        for concrete_path in self.args.concrete_paths() {
+        let concrete_paths = match self.args.concrete_paths() {
+            Ok(paths) => paths,
+            Err(err) => {
+                tokens.extend(err.to_compile_error());
+                return;
+            }
+        };
+        for concrete_path in concrete_paths {
             tokens.extend(inflate::output(
                 &inflated_args,
                 app_param,

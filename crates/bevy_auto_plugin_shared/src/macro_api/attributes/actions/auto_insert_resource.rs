@@ -62,7 +62,14 @@ impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
                 return;
             }
         };
-        for concrete_path in self.args.concrete_paths() {
+        let concrete_paths = match self.args.concrete_paths() {
+            Ok(paths) => paths,
+            Err(err) => {
+                tokens.extend(err.to_compile_error());
+                return;
+            }
+        };
+        for concrete_path in concrete_paths {
             tokens.extend(quote! {
                 #app_param.insert_resource({ let resource: #concrete_path = #resource; resource});
             });

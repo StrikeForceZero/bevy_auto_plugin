@@ -62,7 +62,10 @@ mod tests {
     fn test_to_tokens_single() {
         assert_eq!(
             WithZeroOrManyGenerics {
-                generics: vec![TypeList(vec![parse_quote!(bool), parse_quote!(u32)])]
+                generics: vec![TypeList::from_types(vec![
+                    parse_quote!(bool),
+                    parse_quote!(u32)
+                ])]
             }
             .to_token_stream()
             .to_string(),
@@ -75,8 +78,8 @@ mod tests {
         assert_eq!(
             WithZeroOrManyGenerics {
                 generics: vec![
-                    TypeList(vec![parse_quote!(bool), parse_quote!(u32)]),
-                    TypeList(vec![parse_quote!(usize)]),
+                    TypeList::from_types(vec![parse_quote!(bool), parse_quote!(u32)]),
+                    TypeList::from_types(vec![parse_quote!(usize)]),
                 ],
             }
             .to_token_stream()

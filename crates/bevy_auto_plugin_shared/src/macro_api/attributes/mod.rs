@@ -148,7 +148,7 @@ impl IdentPathResolver for AllowAny {
 impl_from_default!(AllowAny => (AllowStructOrEnum, AllowFn));
 
 pub trait GenericsCap {
-    fn concrete_paths(&self) -> Vec<syn::Path>;
+    fn concrete_paths(&self) -> syn::Result<Vec<syn::Path>>;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -312,12 +312,24 @@ impl<C, M1, M2, R> GenericsCap for ItemAttribute<Composed<C, M1, M2>, R>
 where
     M2: HasGenerics,
 {
-    fn concrete_paths(&self) -> Vec<syn::Path> {
+    fn concrete_paths(&self) -> syn::Result<Vec<syn::Path>> {
         let target = &self.target;
+        let target_params = self.input_item.type_param_idents()?;
+        // TODO: check if generics counts match?
         if self.args.generics.generics().is_empty() {
-            vec![target.clone()]
+            Ok(vec![target.clone()])
         } else {
-            self.args.generics.generics().iter().map(|g| syn::parse_quote!(#target::<#g>)).collect()
+            let mut paths = Vec::new();
+            for generics in self.args.generics.generics() {
+                let resolved = generics.resolve_types(&target_params)?;
+                let path = if resolved.is_empty() {
+                    target.clone()
+                } else {
+                    syn::parse_quote!(#target::<#(#resolved),*>)
+                };
+                paths.push(path);
+            }
+            Ok(paths)
         }
     }
 }

@@ -27,7 +27,14 @@ pub type NameAttrEmitter = AttrEmitter<IaName>;
 impl EmitAppMutationTokens for NameAppMutEmitter {
     fn to_app_mutation_tokens(&self, tokens: &mut TokenStream, app_param: &syn::Ident) {
         let args = &self.args.args.base;
-        for concrete_path in self.args.concrete_paths() {
+        let concrete_paths = match self.args.concrete_paths() {
+            Ok(paths) => paths,
+            Err(err) => {
+                tokens.extend(err.to_compile_error());
+                return;
+            }
+        };
+        for concrete_path in concrete_paths {
             let name = args.name.as_ref().map(|name| name.unquoted_string()).unwrap_or_else(|| {
                 // TODO: move to util fn
                 quote!(#concrete_path)
