@@ -312,6 +312,11 @@ macro_rules! _plugin_entry_after_build {
     };
 }
 
+pub trait AutoPluginCustom {
+    fn resolve_path() -> Path;
+    fn on_build<T: 'static>(app: &mut bevy_app::App);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
