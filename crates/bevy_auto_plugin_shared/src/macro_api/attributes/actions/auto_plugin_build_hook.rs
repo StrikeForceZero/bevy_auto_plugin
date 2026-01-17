@@ -9,39 +9,39 @@ use syn::Path;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
-pub struct AutoPluginCustomArgs {
-    custom: Path,
+pub struct AutoPluginBuildHookArgs {
+    hook: Path,
 }
 
-impl AttributeIdent for AutoPluginCustomArgs {
-    const IDENT: &'static str = "auto_plugin_custom";
+impl AttributeIdent for AutoPluginBuildHookArgs {
+    const IDENT: &'static str = "auto_plugin_hook";
 }
 
-pub type IaAutoPluginCustom = ItemAttribute<
-    Composed<AutoPluginCustomArgs, WithPlugin, WithZeroOrManyGenerics>,
+pub type IaAutoPluginBuildHook = ItemAttribute<
+    Composed<AutoPluginBuildHookArgs, WithPlugin, WithZeroOrManyGenerics>,
     AllowStructOrEnum,
 >;
-pub type AutoPluginCustomAppMutEmitter = AppMutationEmitter<IaAutoPluginCustom>;
-pub type AutoPluginCustomAttrEmitter = AttrEmitter<IaAutoPluginCustom>;
+pub type AutoPluginBuildHookAppMutEmitter = AppMutationEmitter<IaAutoPluginBuildHook>;
+pub type AutoPluginBuildHookAttrEmitter = AttrEmitter<IaAutoPluginBuildHook>;
 
-impl EmitAppMutationTokens for AutoPluginCustomAppMutEmitter {
+impl EmitAppMutationTokens for AutoPluginBuildHookAppMutEmitter {
     fn to_app_mutation_tokens(
         &self,
         tokens: &mut TokenStream,
         app_param: &syn::Ident,
     ) -> syn::Result<()> {
-        let custom = &self.args.args.base.custom;
+        let custom = &self.args.args.base.hook;
         let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
             tokens.extend(quote! {
-                <#custom as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginCustom>::on_build::<#concrete_path>(#app_param);
+                <#custom as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginBuildHook>::on_build::<#concrete_path>(#app_param);
             });
         }
         Ok(())
     }
 }
 
-impl ToTokens for AutoPluginCustomAttrEmitter {
+impl ToTokens for AutoPluginBuildHookAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let args = self.args.args.extra_args();
         tokens.extend(quote! {

@@ -190,5 +190,5 @@ pub mod prelude {
     #[doc = include_str!("../docs/proc_attributes/actions/auto_configure_system_set.md")]
     pub use bevy_auto_plugin_proc_macros::auto_configure_system_set;
 
-    pub use bevy_auto_plugin_proc_macros::auto_plugin_custom;
+    pub use bevy_auto_plugin_proc_macros::auto_plugin_build_hook;
 }
