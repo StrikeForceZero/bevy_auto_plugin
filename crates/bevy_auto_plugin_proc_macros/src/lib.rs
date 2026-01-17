@@ -155,3 +155,8 @@ pub fn auto_run_on_build(attr: CompilerStream, input: CompilerStream) -> Compile
 pub fn auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(expand::attr::auto_bind_plugin::auto_bind_plugin_outer, attr, input)
 }
+
+#[proc_macro_attribute]
+pub fn auto_plugin_build_hook(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_plugin_build_hook, attr, input)
+}

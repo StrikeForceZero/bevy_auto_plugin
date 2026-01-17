@@ -42,6 +42,7 @@ gen_action_outers! {
     auto_add_observer          => IaAddObserver,
     auto_add_plugin            => IaAddPlugin,
     auto_configure_system_set  => IaConfigureSystemSet,
+    auto_plugin_build_hook     => IaAutoPluginBuildHook,
 }
 
 gen_rewrite_outers! {

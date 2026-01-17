@@ -79,6 +79,7 @@ wasm-bindgen-test = { workspace = true }
 internal_test_util = { workspace = true }
 internal_test_proc_macro = { workspace = true }
 meta_merge = "0.1.1"
+syn = { workspace = true }
 
 [build-dependencies]
 rustc_version = "0.4"
