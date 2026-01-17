@@ -5,12 +5,12 @@ use quote::{
     ToTokens,
     quote,
 };
-use syn::Path;
+use syn::Expr;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse)]
 pub struct AutoPluginBuildHookArgs {
-    hook: Path,
+    hook: Expr,
 }
 
 impl AttributeIdent for AutoPluginBuildHookArgs {
@@ -34,7 +34,8 @@ impl EmitAppMutationTokens for AutoPluginBuildHookAppMutEmitter {
         let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
             tokens.extend(quote! {
-                < #custom as ::bevy_auto_plugin::__private::shared::AutoPluginBuildHook::< #concrete_path >>::on_build(#app_param);
+                let instance = #custom;
+                ::bevy_auto_plugin::__private::shared::AutoPluginBuildHook::< #concrete_path >::on_build(&instance, #app_param);
             });
         }
         Ok(())
