@@ -150,10 +150,6 @@ macro_rules! _plugin_entry {
     };
 }
 
-pub trait AutoPluginBuildHook {
-    fn on_build<T: 'static>(app: &mut bevy_app::App);
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

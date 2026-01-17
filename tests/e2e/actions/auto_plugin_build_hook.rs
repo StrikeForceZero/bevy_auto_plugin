@@ -1,6 +1,5 @@
 use bevy_app::prelude::*;
 use bevy_auto_plugin::prelude::*;
-use bevy_auto_plugin_shared::__private::auto_plugin_registry::AutoPluginBuildHook;
 use bevy_ecs::prelude::*;
 use internal_test_proc_macro::xtest;
 use std::any::TypeId;
