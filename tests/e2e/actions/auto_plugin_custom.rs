@@ -4,10 +4,6 @@ use bevy_auto_plugin_shared::__private::auto_plugin_registry::AutoPluginCustom;
 use bevy_ecs::prelude::*;
 use internal_test_proc_macro::xtest;
 use std::any::TypeId;
-use syn::{
-    Path,
-    parse_quote,
-};
 
 #[derive(AutoPlugin)]
 #[auto_plugin(impl_plugin_trait)]
@@ -19,9 +15,6 @@ struct Counter(Vec<String>);
 struct MyCustomHookA;
 
 impl AutoPluginCustom for MyCustomHookA {
-    fn resolve_path() -> Path {
-        parse_quote!(::tests::e2e::actions::auto_plugin_custom::MyCustomHookA)
-    }
     fn on_build<T: 'static>(app: &mut App) {
         app.world_mut().resource_mut::<Counter>().0.push(format!("A {:?}", TypeId::of::<T>()))
     }
@@ -30,9 +23,6 @@ impl AutoPluginCustom for MyCustomHookA {
 struct MyCustomHookB;
 
 impl AutoPluginCustom for MyCustomHookB {
-    fn resolve_path() -> Path {
-        parse_quote!(::tests::e2e::actions::auto_plugin_custom::MyCustomHookB)
-    }
     fn on_build<T: 'static>(app: &mut App) {
         app.world_mut().resource_mut::<Counter>().0.push(format!("B {:?}", TypeId::of::<T>()))
     }
