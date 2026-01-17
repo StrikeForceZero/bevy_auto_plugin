@@ -34,7 +34,7 @@ impl EmitAppMutationTokens for AutoPluginBuildHookAppMutEmitter {
         let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
             tokens.extend(quote! {
-                <#custom as ::bevy_auto_plugin::__private::shared::AutoPluginBuildHook>::on_build::<#concrete_path>(#app_param);
+                < #custom as ::bevy_auto_plugin::__private::shared::AutoPluginBuildHook::< #concrete_path >>::on_build(#app_param);
             });
         }
         Ok(())

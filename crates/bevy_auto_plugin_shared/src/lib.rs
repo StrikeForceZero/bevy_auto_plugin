@@ -21,6 +21,6 @@ pub fn _initialize() {
     }
 }
 
-pub trait AutoPluginBuildHook {
-    fn on_build<T: 'static>(app: &mut bevy_app::App);
+pub trait AutoPluginBuildHook<T: 'static> {
+    fn on_build(app: &mut bevy_app::App);
 }
