@@ -20,3 +20,7 @@ pub fn _initialize() {
         __wasm_call_ctors();
     }
 }
+
+pub trait AutoPluginBuildHook {
+    fn on_build<T: 'static>(app: &mut bevy_app::App);
+}
