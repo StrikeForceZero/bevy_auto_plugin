@@ -13,26 +13,26 @@ struct Counter(Vec<String>);
 
 struct MyCustomHookA;
 
-impl AutoPluginBuildHook for MyCustomHookA {
-    fn on_build<T: 'static>(app: &mut App) {
+impl<T: Component + 'static> AutoPluginBuildHook<T> for MyCustomHookA {
+    fn on_build(app: &mut App) {
         app.world_mut().resource_mut::<Counter>().0.push(format!("A {:?}", TypeId::of::<T>()))
     }
 }
 
 struct MyCustomHookB;
 
-impl AutoPluginBuildHook for MyCustomHookB {
-    fn on_build<T: 'static>(app: &mut App) {
+impl<T: Component + 'static> AutoPluginBuildHook<T> for MyCustomHookB {
+    fn on_build(app: &mut App) {
         app.world_mut().resource_mut::<Counter>().0.push(format!("B {:?}", TypeId::of::<T>()))
     }
 }
 
-#[derive(Debug)]
+#[derive(Component, Debug)]
 #[auto_plugin_build_hook(plugin = TestPlugin, hook = MyCustomHookA)]
 #[auto_plugin_build_hook(plugin = TestPlugin, hook = MyCustomHookB)]
 struct TestA;
 
-#[derive(Debug)]
+#[derive(Component, Debug)]
 #[auto_plugin_build_hook(plugin = TestPlugin, hook = MyCustomHookB)]
 #[auto_plugin_build_hook(plugin = TestPlugin, hook = MyCustomHookA)]
 struct TestB;
