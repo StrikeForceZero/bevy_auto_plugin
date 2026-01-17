@@ -157,6 +157,6 @@ pub fn auto_bind_plugin(attr: CompilerStream, input: CompilerStream) -> Compiler
 }
 
 #[proc_macro_attribute]
-pub fn auto_plugin_custom(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
-    handle_attribute(expand::attr::auto_plugin_custom, attr, input)
+pub fn auto_plugin_build_hook(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_plugin_build_hook, attr, input)
 }

@@ -22,7 +22,7 @@ mod auto_insert_resource;
 mod auto_insert_resource_with_generics;
 mod auto_name;
 mod auto_name_with_generics;
-mod auto_plugin_custom;
+mod auto_plugin_build_hook;
 mod auto_plugin_default_param;
 mod auto_plugin_default_param_method;
 mod auto_plugin_param;

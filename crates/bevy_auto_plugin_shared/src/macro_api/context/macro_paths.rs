@@ -32,7 +32,7 @@ pub struct MacroPaths {
     pub emit_auto_name_macro: syn::Path,
     /// resolved absolute path to `auto_configure_system_set`
     pub emit_configure_system_set_macro: syn::Path,
-    pub emit_auto_plugin_custom_macro: syn::Path,
+    pub emit_auto_plugin_hook_macro: syn::Path,
 }
 
 impl Default for MacroPaths {
@@ -52,7 +52,7 @@ impl Default for MacroPaths {
             emit_run_on_build_macro:            parse_quote!(  ::bevy_auto_plugin::prelude::auto_run_on_build          ),
             emit_auto_name_macro:               parse_quote!(  ::bevy_auto_plugin::prelude::auto_name                  ),
             emit_configure_system_set_macro:    parse_quote!(  ::bevy_auto_plugin::prelude::auto_configure_system_set  ),
-            emit_auto_plugin_custom_macro:      parse_quote!(  ::bevy_auto_plugin::prelude::auto_plugin_custom         ),
+            emit_auto_plugin_hook_macro:      parse_quote!(  ::bevy_auto_plugin::prelude::auto_plugin_hook         ),
         }
     }
 }
@@ -139,8 +139,8 @@ impl MacroPathProvider for ConfigureSystemSetArgs {
     }
 }
 
-impl MacroPathProvider for AutoPluginCustomArgs {
+impl MacroPathProvider for AutoPluginBuildHookArgs {
     fn macro_path(context: &Context) -> &syn::Path {
-        &context.macros.emit_auto_plugin_custom_macro
+        &context.macros.emit_auto_plugin_hook_macro
     }
 }
