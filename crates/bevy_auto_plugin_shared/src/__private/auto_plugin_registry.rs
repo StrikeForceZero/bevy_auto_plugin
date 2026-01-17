@@ -151,7 +151,6 @@ macro_rules! _plugin_entry {
 }
 
 pub trait AutoPluginCustom {
-    fn resolve_path() -> Path;
     fn on_build<T: 'static>(app: &mut bevy_app::App);
 }
 
