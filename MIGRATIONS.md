@@ -65,4 +65,4 @@
 - Removed `generics` from `auto_init_state` and `auto_state` - There should be no valid use cases for this but if you have one and were using it please open an issue.
 
 ## v0.8 to v0.9
-- No changes
+- Deprecated (compiler error) `resource` in favor of `init` in `auto_insert_resource`
