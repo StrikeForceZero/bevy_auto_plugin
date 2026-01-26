@@ -146,4 +146,8 @@
 - Moved docs to facade crate (benefits VS Code users when viewing documentation on hover)
 - Massive under the hood refactoring and organization of the entire project
 - Added support for named generics
-- Renamed `resource` in `auto_insert_resource` to `init`
+- Deprecated `resource` in `auto_insert_resource` to `init`
+
+### v0.9.1
+- Fixed docs
+- Deprecated `init` in `auto_insert_resource` with a message to prefer `insert`
