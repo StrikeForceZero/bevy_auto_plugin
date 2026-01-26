@@ -5,7 +5,11 @@ use crate::{
     },
     macro_api::prelude::*,
     syntax::{
-        ast::flag_or_list::FlagOrList,
+        ast::{
+            any_expr::AnyExprCallClosureMacroPath,
+            any_expr_list::AnyExprList,
+            flag_or_list::FlagOrList,
+        },
         validated::non_empty_path::NonEmptyPath,
     },
     util::macros::impl_from_default,
@@ -21,6 +25,7 @@ pub struct ResourceArgs {
     pub reflect: FlagOrList<Ident>,
     pub register: bool,
     pub init: bool,
+    pub insert: Option<AnyExprList<AnyExprCallClosureMacroPath>>,
 }
 
 impl AttributeIdent for ResourceArgs {
@@ -62,7 +67,22 @@ impl AttrExpansionEmitterToExpandAttr for ResourceAttrExpandEmitter {
         if self.args.args.base.init {
             expand_attrs.attrs.push(tokens::auto_init_resource(self.into()));
         }
+        if let Some(insert) = &self.args.args.base.insert {
+            for item in insert.iter() {
+                let ia_insert_resource: IaInsertResource =
+                    self.args.clone().into_zero_or_one_generic_target::<InsertResourceArgs>(
+                        |_| InsertResourceArgs::from_init(item.clone()),
+                        |_| {
+                            // TODO: if we wanted to actually use the generics passed
+                            //  we could store an iterator before the for loop and call .next()
+                            Default::default()
+                        },
+                    );
+                let ia_insert_resource_emitter = AttrEmitter::from_args(ia_insert_resource);
+                expand_attrs.attrs.push(tokens::auto_insert_resource(ia_insert_resource_emitter));
+            }
+        }
     }
 }
 
-impl_from_default!(ResourceArgs => (RegisterTypeArgs, InitResourceArgs));
+impl_from_default!(ResourceArgs => (RegisterTypeArgs, InitResourceArgs, InsertResourceArgs));

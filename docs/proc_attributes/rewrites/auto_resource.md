@@ -15,6 +15,17 @@ Automatically registers a resource to be added to the app.
   Same as having `#[auto_register_type]`
 - `init` - Initializes the `Resource` with default values
   Same as having `#[auto_init_resource]`
+- `insert(Value)` | `insert(Value1), insert(Value2)` - Inserts the `Resource` with a specific value.
+
+  Same as having:
+  ```
+  #[auto_insert_resource(init(Value))]
+  ``` 
+  or
+  ```
+  #[auto_insert_resource(init(Value1))]
+  #[auto_insert_resource(init(Value2))]
+  ```
 
 # Example
 ```rust
@@ -26,6 +37,19 @@ use bevy_auto_plugin::prelude::*;
 struct MyPlugin;
 
 #[auto_resource(plugin = MyPlugin, derive(Debug, Default, PartialEq), reflect,  register)]
+struct FooResource(usize);
+```
+
+# Example (with init value)
+```rust
+use bevy::prelude::*;
+use bevy_auto_plugin::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+#[auto_resource(plugin = MyPlugin, derive(Debug, PartialEq), insert(FooResource(42)))]
 struct FooResource(usize);
 ```
 

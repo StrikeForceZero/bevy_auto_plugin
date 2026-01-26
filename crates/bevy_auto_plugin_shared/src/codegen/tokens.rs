@@ -202,6 +202,9 @@ pub fn auto_name(args: NameAttrEmitter) -> TokenStream {
 pub fn auto_init_resource(args: InitResourceAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
+pub fn auto_insert_resource(args: InsertResourceAttrEmitter) -> TokenStream {
+    args.to_token_stream()
+}
 pub fn auto_init_states(args: InitStateAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }

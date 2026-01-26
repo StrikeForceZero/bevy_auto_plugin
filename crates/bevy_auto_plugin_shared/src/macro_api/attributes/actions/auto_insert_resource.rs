@@ -13,9 +13,12 @@ use quote::{
     quote_spanned,
 };
 use std::hash::Hash;
-use syn::spanned::Spanned;
+use syn::{
+    parse_quote,
+    spanned::Spanned,
+};
 
-#[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
+#[derive(FromMeta, Default, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct InsertResourceArgs {
     // TODO: after removing legacy fields, remove _resolved, make insert required
@@ -80,6 +83,9 @@ impl FromMeta for MetaExpr {
 }
 
 impl InsertResourceArgs {
+    pub fn from_init(init: AnyExprCallClosureMacroPath) -> Self {
+        Self { init: Some(init), ..Default::default() }
+    }
     fn validate(self) -> darling::Result<Self> {
         Ok(Self { _resolved: Some(Self::resolve_resource(&self)?.clone()), ..self })
     }
@@ -143,9 +149,23 @@ impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
         }
         let resource = self.args.args.base.resolve_resource().map_err(syn::Error::from)?;
         let concrete_paths = self.args.concrete_paths()?;
+        let placeholder_path = if self.args.args.generics().is_empty() {
+            let type_params = self.args.input_item.type_param_idents()?;
+            if type_params.is_empty() {
+                None
+            } else {
+                let placeholders: Vec<syn::Type> =
+                    (0..type_params.len()).map(|_| parse_quote!(_)).collect();
+                let target = &self.args.target;
+                Some(parse_quote!(#target::<#(#placeholders),*>))
+            }
+        } else {
+            None
+        };
         for concrete_path in concrete_paths {
+            let ty_path = placeholder_path.as_ref().unwrap_or(&concrete_path);
             tokens.extend(quote! {
-                #app_param.insert_resource({ let resource: #concrete_path = #resource; resource});
+                #app_param.insert_resource({ let resource: #ty_path = #resource; resource});
             });
         }
         Ok(())
