@@ -31,18 +31,16 @@ impl InsertResourceArgs {
             Ok(resolved)
         } else {
             match (self.insert.as_ref(), self.resource.as_ref(), self.init.as_ref()) {
-                (Some(_), Some(_), _) | (Some(_), _, Some(_)) => {
-                    Err(darling::Error::custom(
-                        "insert is mutually exclusive with init and resource, use only insert",
-                    ))
-                }
+                (Some(_), Some(_), _) | (Some(_), _, Some(_)) => Err(darling::Error::custom(
+                    "insert is mutually exclusive with init and resource, use only insert",
+                )),
                 (Some(res), None, None) => Ok(res),
                 (None, Some(_), Some(_)) => Err(darling::Error::custom(
                     "resource and init are mutually exclusive, use only one",
                 )),
-                (None, None, None) => Err(darling::Error::custom(
-                    "missing field: insert (or legacy init/resource)",
-                )),
+                (None, None, None) => {
+                    Err(darling::Error::custom("missing field: insert (or legacy init/resource)"))
+                }
                 (None, Some(res), None) => Ok(res),
                 (None, None, Some(res)) => Ok(res),
             }
