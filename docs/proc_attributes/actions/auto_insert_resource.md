@@ -3,8 +3,8 @@ Automatically inserts a resource with a specific value into the app.
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should insert this resource.
 - `insert(Value)` - Required. Specifies the resource value to insert.
-- `init(Value)` - Legacy. Same as `insert(Value)`.
-- `resource(Value)` - Legacy. Same as `insert(Value)`.
+- `init(Value)` - Legacy. Same as `insert(Value)`; emits a deprecation warning.
+- `resource(Value)` - Legacy. Same as `insert(Value)`; emits a deprecation warning.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the resource will be inserted with these specific generic parameters.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.

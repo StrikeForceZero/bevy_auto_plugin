@@ -19,7 +19,6 @@ mod auto_init_resource_generic;
 mod auto_init_state;
 mod auto_init_sub_state;
 mod auto_insert_resource;
-mod auto_insert_resource_legacy;
 mod auto_insert_resource_with_generics;
 mod auto_name;
 mod auto_name_with_generics;

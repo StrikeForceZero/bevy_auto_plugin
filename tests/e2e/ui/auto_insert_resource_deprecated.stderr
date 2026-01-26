@@ -1,0 +1,18 @@
+error: use of deprecated function `_auto_plugin_auto_insert_resource__cf0fdb60ec1f110f::{closure#1}::__bevy_auto_plugin_deprecated_auto_insert_resource`: auto_insert_resource(init(...)) is deprecated; use insert(...) instead
+  --> tests/e2e/ui/auto_insert_resource_deprecated.rs:10:50
+   |
+10 | #[auto_insert_resource(plugin = TestPlugin, init(LegacyInit(1)))]
+   |                                                  ^^^^^^^^^^^^^
+   |
+note: the lint level is defined here
+  --> tests/e2e/ui/auto_insert_resource_deprecated.rs:1:9
+   |
+ 1 | #![deny(warnings)]
+   |         ^^^^^^^^
+   = note: `#[deny(deprecated)]` implied by `#[deny(warnings)]`
+
+error: use of deprecated function `_auto_plugin_auto_insert_resource__afec09a3c197a2d0::{closure#1}::__bevy_auto_plugin_deprecated_auto_insert_resource`: auto_insert_resource(resource(...)) is deprecated; use insert(...) instead
+  --> tests/e2e/ui/auto_insert_resource_deprecated.rs:14:54
+   |
+14 | #[auto_insert_resource(plugin = TestPlugin, resource(LegacyResource(2)))]
+   |                                                      ^^^^^^^^^^^^^^^^^

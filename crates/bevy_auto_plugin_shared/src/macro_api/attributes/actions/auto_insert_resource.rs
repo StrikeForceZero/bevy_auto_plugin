@@ -7,7 +7,9 @@ use proc_macro2::TokenStream;
 use quote::{
     ToTokens,
     quote,
+    quote_spanned,
 };
+use syn::spanned::Spanned;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, and_then = Self::validate)]
@@ -65,6 +67,22 @@ impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
         tokens: &mut TokenStream,
         app_param: &syn::Ident,
     ) -> syn::Result<()> {
+        let base = &self.args.args.base;
+        if base.insert.is_none() {
+            if let Some(init) = &base.init {
+                emit_deprecated_insert_resource_warning(
+                    tokens,
+                    init.span(),
+                    "auto_insert_resource(init(...)) is deprecated; use insert(...) instead",
+                );
+            } else if let Some(resource) = &base.resource {
+                emit_deprecated_insert_resource_warning(
+                    tokens,
+                    resource.span(),
+                    "auto_insert_resource(resource(...)) is deprecated; use insert(...) instead",
+                );
+            }
+        }
         let resource = self.args.args.base.resolve_resource().map_err(syn::Error::from)?;
         let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
@@ -74,6 +92,20 @@ impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
         }
         Ok(())
     }
+}
+
+fn emit_deprecated_insert_resource_warning(
+    tokens: &mut TokenStream,
+    span: proc_macro2::Span,
+    message: &'static str,
+) {
+    tokens.extend(quote_spanned! { span=>
+        {
+            #[deprecated(note = #message)]
+            fn __bevy_auto_plugin_deprecated_auto_insert_resource() {}
+            __bevy_auto_plugin_deprecated_auto_insert_resource();
+        }
+    });
 }
 
 impl ToTokens for InsertResourceAttrEmitter {
