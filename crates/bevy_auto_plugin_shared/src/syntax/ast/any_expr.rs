@@ -200,7 +200,6 @@ macro_rules! any_expr_enum {
 
         impl ::syn::parse::Parse for $crate::syntax::ast::any_expr_list::AnyExprList<$name> {
             fn parse(input: ::syn::parse::ParseStream) -> ::syn::Result<Self> {
-                use ::syn::spanned::Spanned;
                 let elems = ::syn::punctuated::Punctuated::<::syn::Expr, ::syn::Token![,]>::parse_terminated(input)?;
                 if elems.is_empty() {
                     return Err(::darling::Error::too_few_items(1).with_span(&input.span()).into());
