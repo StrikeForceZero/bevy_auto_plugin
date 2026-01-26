@@ -160,6 +160,60 @@ macro_rules! any_expr_enum {
             }
         }
 
+        impl ::darling::FromMeta for $crate::syntax::ast::any_expr_list::AnyExprList<$name> {
+            fn from_meta(meta: &::syn::Meta) -> ::std::result::Result<Self, ::darling::Error> {
+                use ::syn::spanned::Spanned;
+                use ::syn::parse::Parser;
+                fn from_expr(
+                    expr: &::syn::Expr,
+                    parse_one: impl Fn(::syn::Expr) -> ::std::result::Result<$name, ::darling::Error>,
+                ) -> ::std::result::Result<::std::vec::Vec<$name>, ::darling::Error> {
+                    match expr {
+                        ::syn::Expr::Array(arr) => {
+                            if arr.elems.is_empty() {
+                                return Err(::darling::Error::too_few_items(1).with_span(expr));
+                            }
+                            arr.elems.iter().cloned().map(parse_one).collect()
+                        }
+                        ::syn::Expr::Group(group) => from_expr(&group.expr, parse_one),
+                        ::syn::Expr::Paren(paren) => from_expr(&paren.expr, parse_one),
+                        other => Ok(vec![parse_one(other.clone())?]),
+                    }
+                }
+                let items = match meta {
+                    ::syn::Meta::List(list) => {
+                        let parser = ::syn::punctuated::Punctuated::<::syn::Expr, ::syn::Token![,]>::parse_terminated;
+                        let elems = parser.parse2(list.tokens.clone()).map_err(::darling::Error::from)?;
+                        if elems.is_empty() {
+                            return Err(::darling::Error::too_few_items(1).with_span(&list.tokens.span()));
+                        }
+                        elems.into_iter().map($name::__from_expr).collect::<::std::result::Result<::std::vec::Vec<_>, _>>()?
+                    }
+                    ::syn::Meta::NameValue(nv) => from_expr(&nv.value, $name::__from_expr)?,
+                    ::syn::Meta::Path(_) => {
+                        return Err(::darling::Error::unsupported_format("expected `attr(<exprs...>)` or `attr = <expr>`").with_span(&meta.span()));
+                    }
+                };
+                Ok($crate::syntax::ast::any_expr_list::AnyExprList(items))
+            }
+        }
+
+        impl ::syn::parse::Parse for $crate::syntax::ast::any_expr_list::AnyExprList<$name> {
+            fn parse(input: ::syn::parse::ParseStream) -> ::syn::Result<Self> {
+                use ::syn::spanned::Spanned;
+                let elems = ::syn::punctuated::Punctuated::<::syn::Expr, ::syn::Token![,]>::parse_terminated(input)?;
+                if elems.is_empty() {
+                    return Err(::darling::Error::too_few_items(1).with_span(&input.span()).into());
+                }
+                let items = elems
+                    .into_iter()
+                    .map($name::__from_expr)
+                    .collect::<::std::result::Result<::std::vec::Vec<_>, _>>()
+                    .map_err(|e| ::syn::Error::new(input.span(), e.to_string()))?;
+                Ok($crate::syntax::ast::any_expr_list::AnyExprList(items))
+            }
+        }
+
         impl ::syn::parse::Parse for $name {
             fn parse(input: ::syn::parse::ParseStream) -> ::syn::Result<Self> {
                 use ::syn::spanned::Spanned;
