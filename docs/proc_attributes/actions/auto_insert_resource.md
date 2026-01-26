@@ -2,7 +2,9 @@ Automatically inserts a resource with a specific value into the app.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should insert this resource.
-- `init(Value)` - Required. Specifies the resource value to insert.
+- `insert(Value)` - Required. Specifies the resource value to insert.
+- `init(Value)` - Legacy. Same as `insert(Value)`.
+- `resource(Value)` - Legacy. Same as `insert(Value)`.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the resource will be inserted with these specific generic parameters.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
@@ -19,7 +21,7 @@ struct MyPlugin;
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
 #[auto_register_type(plugin = MyPlugin)]
-#[auto_insert_resource(plugin = MyPlugin, init(FooResource(42)))]
+#[auto_insert_resource(plugin = MyPlugin, insert(FooResource(42)))]
 struct FooResource(usize);
 ```
 
@@ -35,6 +37,6 @@ struct MyPlugin;
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
 #[auto_register_type(plugin = MyPlugin, generics(usize))]
-#[auto_insert_resource(plugin = MyPlugin, init(FooResourceWithGeneric(42)), generics(usize))]
+#[auto_insert_resource(plugin = MyPlugin, insert(FooResourceWithGeneric(42)), generics(usize))]
 struct FooResourceWithGeneric<T>(T);
 ```

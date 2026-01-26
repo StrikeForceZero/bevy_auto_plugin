@@ -207,7 +207,7 @@ struct FooDefaultResource(usize);
 #[reflect(Resource)]
 #[auto_register_type(plugin = MyPlugin)]
 #[auto_init_resource(plugin = MyPlugin)]
-#[auto_insert_resource(plugin = MyPlugin, resource(FooResource(1)))]
+#[auto_insert_resource(plugin = MyPlugin, insert(FooResource(1)))]
 struct FooResource(usize);
 
 #[derive(Message, Debug, Default, Reflect)]

@@ -8,12 +8,12 @@ use quote::{
     ToTokens,
     quote,
 };
-use syn::spanned::Spanned;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct InsertResourceArgs {
-    // TODO: after removing resource, remove _resolved, make init required
+    // TODO: after removing legacy fields, remove _resolved, make insert required
+    pub insert: Option<AnyExprCallClosureMacroPath>,
     pub resource: Option<AnyExprCallClosureMacroPath>,
     pub init: Option<AnyExprCallClosureMacroPath>,
     #[darling(skip)]
@@ -28,14 +28,21 @@ impl InsertResourceArgs {
         if let Some(resolved) = self._resolved.as_ref() {
             Ok(resolved)
         } else {
-            let deprecated = |msg| darling::Error::custom(msg).with_span(&self.resource.span());
-            match (self.resource.as_ref(), self.init.as_ref()) {
-                (Some(_), Some(_)) => {
-                    Err(deprecated("resource and init are mutually exclusive, use init instead"))
+            match (self.insert.as_ref(), self.resource.as_ref(), self.init.as_ref()) {
+                (Some(_), Some(_), _) | (Some(_), _, Some(_)) => {
+                    Err(darling::Error::custom(
+                        "insert is mutually exclusive with init and resource, use only insert",
+                    ))
                 }
-                (None, None) => Err(darling::Error::missing_field("init")),
-                (Some(_), None) => Err(deprecated("resource is deprecated, use init instead")),
-                (None, Some(res)) => Ok(res),
+                (Some(res), None, None) => Ok(res),
+                (None, Some(_), Some(_)) => Err(darling::Error::custom(
+                    "resource and init are mutually exclusive, use only one",
+                )),
+                (None, None, None) => Err(darling::Error::custom(
+                    "missing field: insert (or legacy init/resource)",
+                )),
+                (None, Some(res), None) => Ok(res),
+                (None, None, Some(res)) => Ok(res),
             }
         }
     }
@@ -72,8 +79,15 @@ impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
 impl ToTokens for InsertResourceAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
-        let resource = &self.args.args.base.resource;
-        args.push(quote! { resource = #resource });
+        let base = &self.args.args.base;
+        if let Some(insert) = &base.insert {
+            args.push(quote! { insert = #insert });
+        } else if let Some(init) = &base.init {
+            args.push(quote! { init = #init });
+        } else {
+            let resource = &base.resource;
+            args.push(quote! { resource = #resource });
+        }
         tokens.extend(quote! {
             #(#args),*
         });
