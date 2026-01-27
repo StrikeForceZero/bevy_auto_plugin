@@ -49,6 +49,7 @@ fn main() {
 
     let workspace_docs = manifest_dir.join("../../docs");
     let docs_gen = manifest_dir.join("docs_gen");
+    let docs_gen_docs = docs_gen.join("docs");
 
     if docs_gen.exists() {
         verify_docs_gen_version(&docs_gen, &pkg_version);
@@ -57,6 +58,9 @@ fn main() {
     let source_docs = if workspace_docs.exists() {
         println!("cargo:rerun-if-changed={}", workspace_docs.display());
         workspace_docs
+    } else if docs_gen_docs.exists() {
+        println!("cargo:rerun-if-changed={}", docs_gen_docs.display());
+        docs_gen_docs
     } else if docs_gen.exists() {
         println!("cargo:rerun-if-changed={}", docs_gen.display());
         docs_gen

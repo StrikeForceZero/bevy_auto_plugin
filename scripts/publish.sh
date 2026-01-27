@@ -19,7 +19,7 @@ fi
 
 rm -rf "$docs_gen"
 mkdir -p "$docs_gen"
-cp -R "$docs_src/" "$docs_gen/"
+cp -R "$docs_src/." "$docs_gen/"
 printf "%s\n" "$version" > "$docs_gen/.version"
 
 echo "Prepared docs_gen for bevy_auto_plugin_proc_macros v$version"
@@ -46,9 +46,14 @@ if [[ -n "$dirty_files" ]]; then
   done <<< "$dirty_files"
 fi
 
+docs_gen_root="$docs_gen"
 if [[ -d "$docs_gen/docs" ]]; then
+  docs_gen_root="$docs_gen/docs"
+fi
+
+if [[ -d "$docs_gen_root" ]]; then
   while IFS= read -r gen_file; do
-    rel="${gen_file#"$docs_gen/docs/"}"
+    rel="${gen_file#"$docs_gen_root/"}"
     src_file="$docs_src/$rel"
     if [[ ! -f "$src_file" ]]; then
       echo "docs_gen file has no matching source: $gen_file (expected $src_file)" >&2
@@ -58,7 +63,7 @@ if [[ -d "$docs_gen/docs" ]]; then
       echo "docs_gen file differs from source: $gen_file" >&2
       exit 1
     fi
-  done < <(find "$docs_gen/docs" -type f -print)
+  done < <(find "$docs_gen_root" -type f -print)
   allow_dirty_arg="--allow-dirty"
 fi
 
