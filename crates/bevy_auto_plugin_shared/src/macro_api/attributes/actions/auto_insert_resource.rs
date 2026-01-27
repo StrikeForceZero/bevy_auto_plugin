@@ -3,23 +3,80 @@ use crate::{
     syntax::ast::any_expr::AnyExprCallClosureMacroPath,
 };
 use darling::FromMeta;
-use proc_macro2::TokenStream;
+use proc_macro2::{
+    Span,
+    TokenStream,
+};
 use quote::{
     ToTokens,
     quote,
     quote_spanned,
 };
+use std::hash::Hash;
 use syn::spanned::Spanned;
 
 #[derive(FromMeta, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct InsertResourceArgs {
     // TODO: after removing legacy fields, remove _resolved, make insert required
-    pub insert: Option<AnyExprCallClosureMacroPath>,
-    pub resource: Option<AnyExprCallClosureMacroPath>,
-    pub init: Option<AnyExprCallClosureMacroPath>,
+    pub insert: Option<MetaExpr>,
+    pub resource: Option<MetaExpr>,
+    pub init: Option<MetaExpr>,
     #[darling(skip)]
     _resolved: Option<AnyExprCallClosureMacroPath>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MetaExpr {
+    value: AnyExprCallClosureMacroPath,
+    span: Span,
+}
+
+impl PartialEq for MetaExpr {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
+impl Hash for MetaExpr {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+    }
+}
+
+impl MetaExpr {
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl AsRef<AnyExprCallClosureMacroPath> for MetaExpr {
+    fn as_ref(&self) -> &AnyExprCallClosureMacroPath {
+        &self.value
+    }
+}
+
+impl FromMeta for MetaExpr {
+    fn from_meta(item: &syn::Meta) -> darling::Result<Self> {
+        let value = AnyExprCallClosureMacroPath::from_meta(item).map_err(|e| e.with_span(item))?;
+        let span = match item {
+            syn::Meta::Path(path) => path.span(),
+            syn::Meta::List(list) => list.path.span(),
+            syn::Meta::NameValue(nv) => nv.path.span(),
+        };
+        Ok(Self { value, span })
+    }
+
+    fn from_nested_meta(item: &darling::ast::NestedMeta) -> darling::Result<Self> {
+        match item {
+            darling::ast::NestedMeta::Meta(meta) => Self::from_meta(meta),
+            darling::ast::NestedMeta::Lit(lit) => {
+                let value =
+                    AnyExprCallClosureMacroPath::from_value(lit).map_err(|e| e.with_span(lit))?;
+                Ok(Self { value, span: item.span() })
+            }
+        }
+    }
 }
 
 impl InsertResourceArgs {
@@ -31,18 +88,21 @@ impl InsertResourceArgs {
             Ok(resolved)
         } else {
             match (self.insert.as_ref(), self.resource.as_ref(), self.init.as_ref()) {
-                (Some(_), Some(_), _) | (Some(_), _, Some(_)) => Err(darling::Error::custom(
-                    "insert is mutually exclusive with init and resource, use only insert",
-                )),
-                (Some(res), None, None) => Ok(res),
+                (Some(insert), Some(_), _) | (Some(insert), _, Some(_)) => {
+                    Err(darling::Error::custom(
+                        "insert is mutually exclusive with init and resource, use only insert",
+                    )
+                    .with_span(&insert.span()))
+                }
+                (Some(res), None, None) => Ok(res.as_ref()),
                 (None, Some(_), Some(_)) => Err(darling::Error::custom(
                     "resource and init are mutually exclusive, use only one",
                 )),
                 (None, None, None) => {
                     Err(darling::Error::custom("missing field: insert (or legacy init/resource)"))
                 }
-                (None, Some(res), None) => Ok(res),
-                (None, None, Some(res)) => Ok(res),
+                (None, Some(res), None) => Ok(res.as_ref()),
+                (None, None, Some(res)) => Ok(res.as_ref()),
             }
         }
     }
@@ -111,11 +171,13 @@ impl ToTokens for InsertResourceAttrEmitter {
         let mut args = self.args.args.extra_args();
         let base = &self.args.args.base;
         if let Some(insert) = &base.insert {
+            let insert = insert.as_ref();
             args.push(quote! { insert = #insert });
         } else if let Some(init) = &base.init {
+            let init = init.as_ref();
             args.push(quote! { init = #init });
         } else {
-            let resource = &base.resource;
+            let resource = base.resource.as_ref().map(|res| res.as_ref());
             args.push(quote! { resource = #resource });
         }
         tokens.extend(quote! {
