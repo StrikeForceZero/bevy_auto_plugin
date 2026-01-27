@@ -1,7 +1,10 @@
 use std::{
     env,
     fs,
-    path::{Path, PathBuf},
+    path::{
+        Path,
+        PathBuf,
+    },
 };
 
 fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
@@ -28,17 +31,11 @@ fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
 fn verify_docs_gen_version(docs_gen: &Path, pkg_version: &str) {
     let version_path = docs_gen.join(".version");
     let version_contents = fs::read_to_string(&version_path).unwrap_or_else(|_| {
-        panic!(
-            "docs_gen exists but is missing .version file at {}",
-            version_path.display()
-        )
+        panic!("docs_gen exists but is missing .version file at {}", version_path.display())
     });
     let version = version_contents.trim();
     if version != pkg_version {
-        panic!(
-            "docs_gen .version '{}' does not match crate version '{}'",
-            version, pkg_version
-        );
+        panic!("docs_gen .version '{}' does not match crate version '{}'", version, pkg_version);
     }
     println!("cargo:rerun-if-changed={}", version_path.display());
 }
