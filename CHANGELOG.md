@@ -13,7 +13,9 @@
 - add `#[auto_add_event(..)]`
 
 ---
-## v0.1.1 (yanked for bad dep versioning)
+## v0.1.1 
+
+(yanked for bad dep versioning)
 
 ---
 ## v0.1.2
@@ -81,7 +83,7 @@
 #### `auto_plugin(app=..)` is now `auto_plugin(app_param=..)` across all modes
 
 ---
-### v0.6
+## v0.6
 - update to bevy 0.17
 - add `auto_add_message` to register items deriving `Message` on plugin build
 - add `auto_message` shorthand to derive `Message` and add to bevy app
@@ -90,19 +92,21 @@
 - fix `auto_component` not passing generics to `auto_name`
 
 ---
-### v0.6.1
+## v0.6.1
 - Add support for `auto_system` param `schedule` to accept `ExprCall` in addition to `ExprPath`
 
 ---
-### v0.6.2 (yanked for bad dep versioning)
+## v0.6.2 
+
+(yanked for bad dep versioning)
 
 ---
-### v0.6.3
+## v0.6.3
 - Fix compat issue by allowing more than one `ScheduleConfig` condition
 - Fix compat issue by allow more than `Path` for `ScheduleConfig`
 
 ---
-### v0.7.0
+## v0.7.0
 - Add `name` param to `auto_name` attribute
 - Add the ability to set a custom name with `auto_name` param in `auto_component`
 - Add `auto_run_on_build` to run functions and pass `&mut bevy_app::App` as the only param
@@ -115,11 +119,11 @@
 - Change exports from `use bevy_auto_plugin::modes::global::prelude::*` -> `use bevy_auto_plugin::prelude::*`
 
 ---
-### v0.7.1
+## v0.7.1
 - Restore and deprecate old imports `use bevy_auto_plugin::modes::global::prelude::*` -> `use bevy_auto_plugin::prelude::*`
 
 ---
-### v0.8.0
+## v0.8.0
 - Add `auto_configure_system_set` - configures struct or enum variants to be a `SystemSet`.
 - Add `auto_init_sub_state` - registers `SubState`.
 - Add `auto_add_plugin` - adds plugin to target plugin. See docs for params.
@@ -131,16 +135,16 @@
 - All error paths *should* retain the original tokens from the input; mitigates the IDE from losing syntax highlighting.
 
 ---
-### v0.8.1
+## v0.8.1
 - Add `auto_sub_states`
 - `auto_states` now includes `auto_register_state_type`
 
 ---
-### v0.8.2
+## v0.8.2
 - Fix link in `auto_add_plugin` doc attribute
 
 ---
-### v0.9.0
+## v0.9.0
 - Update to bevy 0.18
 - Removed rust v1.88 requirement
 - Moved docs to facade crate (benefits VS Code users when viewing documentation on hover)
@@ -148,6 +152,7 @@
 - Added support for named generics
 - Deprecated `resource` in `auto_insert_resource` to `init`
 
-### v0.9.1
+---
+## v0.9.1
 - Fixed docs
 - Deprecated `init` in `auto_insert_resource` with a message to prefer `insert`
