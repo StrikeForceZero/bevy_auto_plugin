@@ -71,8 +71,8 @@ if [[ -d "$docs_gen_root" ]]; then
 fi
 
 if [[ "$dry_run_requested" == "true" ]]; then
-  echo "Running: cargo publish --dry-run ${allow_dirty_arg} ${filtered_args[*]}"
-  (cwd="$repo_root"; cd "$cwd"; cargo publish --dry-run ${allow_dirty_arg} "${filtered_args[@]}")
+  echo "Running: cargo +stable publish --dry-run ${allow_dirty_arg} ${filtered_args[*]}"
+  (cwd="$repo_root"; cd "$cwd"; cargo +stable publish --dry-run ${allow_dirty_arg} "${filtered_args[@]}")
   if [[ -n "$dirty_files" ]]; then
     echo "Dirty state: safe (docs_gen matches docs)"
   else
@@ -81,8 +81,8 @@ if [[ "$dry_run_requested" == "true" ]]; then
   exit 0
 fi
 
-echo "Running: cargo publish --dry-run ${allow_dirty_arg} ${filtered_args[*]}"
-(cwd="$repo_root"; cd "$cwd"; cargo publish --dry-run ${allow_dirty_arg} "${filtered_args[@]}")
+echo "Running: cargo +stable publish --dry-run ${allow_dirty_arg} ${filtered_args[*]}"
+(cwd="$repo_root"; cd "$cwd"; cargo +stable publish --dry-run ${allow_dirty_arg} "${filtered_args[@]}")
 
-echo "Running: cargo publish ${allow_dirty_arg} ${filtered_args[*]}"
-(cwd="$repo_root"; cd "$cwd"; cargo publish ${allow_dirty_arg} "${filtered_args[@]}")
+echo "Running: cargo +stable publish ${allow_dirty_arg} ${filtered_args[*]}"
+(cwd="$repo_root"; cd "$cwd"; cargo +stable publish ${allow_dirty_arg} "${filtered_args[@]}")
