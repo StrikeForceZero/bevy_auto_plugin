@@ -43,12 +43,13 @@ if [[ -n "$dirty_files" ]]; then
       echo "Refusing to publish with dirty file outside docs_gen: $file" >&2
       exit 1
     fi
-    if [[ "$file" == "crates/bevy_auto_plugin_proc_macros/docs_gen/.version" ]]; then
-      continue
-    fi
-    rel="${file#crates/bevy_auto_plugin_proc_macros/docs_gen/}"
-    src_file="$repo_root/$rel"
-    gen_file="$repo_root/$file"
+  done <<< "$dirty_files"
+fi
+
+if [[ -d "$docs_gen/docs" ]]; then
+  while IFS= read -r gen_file; do
+    rel="${gen_file#"$docs_gen/docs/"}"
+    src_file="$docs_src/$rel"
     if [[ ! -f "$src_file" ]]; then
       echo "docs_gen file has no matching source: $gen_file (expected $src_file)" >&2
       exit 1
@@ -57,7 +58,7 @@ if [[ -n "$dirty_files" ]]; then
       echo "docs_gen file differs from source: $gen_file" >&2
       exit 1
     fi
-  done <<< "$dirty_files"
+  done < <(find "$docs_gen/docs" -type f -print)
   allow_dirty_arg="--allow-dirty"
 fi
 
