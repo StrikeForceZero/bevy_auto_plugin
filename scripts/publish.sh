@@ -53,6 +53,9 @@ fi
 
 if [[ -d "$docs_gen_root" ]]; then
   while IFS= read -r gen_file; do
+    if [[ "$(basename "$gen_file")" == ".version" ]]; then
+      continue
+    fi
     rel="${gen_file#"$docs_gen_root/"}"
     src_file="$docs_src/$rel"
     if [[ ! -f "$src_file" ]]; then
