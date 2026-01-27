@@ -3,3 +3,4 @@
 Cargo.lock
 .idea
 rustc-ice-*.txt
+crates/bevy_auto_plugin_proc_macros/docs_gen/

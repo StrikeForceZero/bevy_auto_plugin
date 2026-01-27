@@ -7,6 +7,8 @@ license = "MIT OR Apache-2.0"
 description = "proc macros for bevy_auto_plugin"
 edition = "2024"
 publish = true
+build = "build.rs"
+include = ["src/**", "Cargo.toml", "build.rs", "docs_gen/**"]
 
 [lib]
 proc-macro = true
