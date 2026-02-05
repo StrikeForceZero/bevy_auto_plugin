@@ -103,6 +103,8 @@ struct MyPlugin;
 use crate::components::{FooComponent, BarComponent as BazComponent};
 ```
 Each imported name becomes its own entry. `use ...::*`, `use ...::self`, and `_` imports are not supported.
+If you rely on `use` order for plugin ordering, `rustfmt` may reorder the imports; use `#[rustfmt::skip]` to preserve order.
+Registry entries are sorted by file/line/column; within a file, definition order is preserved. Across files, order follows file path, so use `after_build` or explicit plugin ordering when order matters.
 
 ### Generics
 #### Component

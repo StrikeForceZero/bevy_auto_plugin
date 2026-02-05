@@ -4,6 +4,10 @@ Attribute to mark the build function for the plugin, or impl Plugin trait build 
 - `plugin = PluginType` - **Required for bare functions only.** Specifies the plugin this build function belongs to.  
   **Not allowed on `impl Plugin` methods**, since the plugin type is already known.
 
+# Notes
+- Registry entries are sorted by file/line/column; within a file, definition order is preserved.
+- Across files/modules, ordering follows file path (not module/import order). If order matters, co-locate entries, use `after_build`, or explicitly order plugins.
+
 # Example - impl Plugin
 ```rust
 use bevy::prelude::*;

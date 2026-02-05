@@ -15,6 +15,8 @@ Automatically inserts a plugin as a sub-plugin into the app.
 - This attribute can be applied to a `use` item; each imported name becomes its own target.
 - `use ...::*`, `use ...::self`, and `_` imports are not supported.
 - Renames (`as`) are supported and use the local name.
+- If you rely on `use` order for plugin ordering, `rustfmt` may reorder the imports; use `#[rustfmt::skip]` to preserve order.
+- Registry entries are sorted by file/line/column; within a file, definition order is preserved. Across files, order follows file path, so use `after_build` or explicit plugin ordering when order matters.
 
 # Example
 ```rust
