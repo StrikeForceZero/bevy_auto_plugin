@@ -49,15 +49,28 @@ pub static AUTO_PLUGIN_REGISTRY: LazyLock<AutoPluginRegistry> = LazyLock::new(||
 
     #[allow(unused_variables)]
     let mut count = 0;
-    let mut registry: HashMap<TypeId, Vec<BevyAppBuildFn>> = HashMap::new();
+    let mut registry: HashMap<TypeId, Vec<(RegistryOrder, BevyAppBuildFn)>> = HashMap::new();
 
-    for (ix, AutoPluginRegistryEntryFactory(type_factory, sys_factory)) in iter.enumerate() {
-        registry.entry(type_factory()).or_default().push(*sys_factory);
+    for (ix, AutoPluginRegistryEntryFactory(type_factory, sys_factory, order)) in iter.enumerate() {
+        registry.entry(type_factory()).or_default().push((*order, *sys_factory));
         #[allow(unused_assignments)]
         {
             count = ix + 1;
         }
     }
+
+    // Sort per-plugin entries by definition order for deterministic execution.
+    let mut registry = registry
+        .into_iter()
+        .map(|(type_id, mut entries)| {
+            entries.sort_by(|a, b| a.0.cmp(&b.0));
+            let mut build_fns = Vec::with_capacity(entries.len());
+            for (_, build_fn) in entries {
+                build_fns.push(build_fn);
+            }
+            (type_id, build_fns)
+        })
+        .collect::<HashMap<_, _>>();
 
     // Trim down
     registry.values_mut().for_each(|vec| vec.shrink_to_fit());
@@ -80,15 +93,30 @@ pub static AUTO_PLUGIN_REGISTRY_END: LazyLock<AutoPluginRegistry> = LazyLock::ne
 
     #[allow(unused_variables)]
     let mut count = 0;
-    let mut registry: HashMap<TypeId, Vec<BevyAppBuildFn>> = HashMap::new();
+    let mut registry: HashMap<TypeId, Vec<(RegistryOrder, BevyAppBuildFn)>> = HashMap::new();
 
-    for (ix, AutoPluginRegistryEntryFactoryEnd(type_factory, sys_factory)) in iter.enumerate() {
-        registry.entry(type_factory()).or_default().push(*sys_factory);
+    for (ix, AutoPluginRegistryEntryFactoryEnd(type_factory, sys_factory, order)) in
+        iter.enumerate()
+    {
+        registry.entry(type_factory()).or_default().push((*order, *sys_factory));
         #[allow(unused_assignments)]
         {
             count = ix + 1;
         }
     }
+
+    // Sort per-plugin entries by definition order for deterministic execution.
+    let mut registry = registry
+        .into_iter()
+        .map(|(type_id, mut entries)| {
+            entries.sort_by(|a, b| a.0.cmp(&b.0));
+            let mut build_fns = Vec::with_capacity(entries.len());
+            for (_, build_fn) in entries {
+                build_fns.push(build_fn);
+            }
+            (type_id, build_fns)
+        })
+        .collect::<HashMap<_, _>>();
 
     // Trim down
     registry.values_mut().for_each(|vec| vec.shrink_to_fit());
@@ -144,17 +172,38 @@ pub trait AutoPlugin: AutoPluginTypeId {
 
 pub type TypeIdFn = fn() -> TypeId;
 pub type BevyAppBuildFn = fn(&mut bevy_app::App);
-pub struct AutoPluginRegistryEntryFactory(TypeIdFn, BevyAppBuildFn);
-pub struct AutoPluginRegistryEntryFactoryEnd(TypeIdFn, BevyAppBuildFn);
+pub struct AutoPluginRegistryEntryFactory(TypeIdFn, BevyAppBuildFn, RegistryOrder);
+pub struct AutoPluginRegistryEntryFactoryEnd(TypeIdFn, BevyAppBuildFn, RegistryOrder);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct RegistryOrder {
+    file: &'static str,
+    line: u32,
+    column: u32,
+}
+
+impl RegistryOrder {
+    pub const fn new(file: &'static str, line: u32, column: u32) -> Self {
+        Self { file, line, column }
+    }
+}
 
 impl AutoPluginRegistryEntryFactory {
-    pub const fn new(type_factory: fn() -> TypeId, sys_factory: fn(&mut bevy_app::App)) -> Self {
-        Self(type_factory, sys_factory)
+    pub const fn new(
+        type_factory: fn() -> TypeId,
+        sys_factory: fn(&mut bevy_app::App),
+        order: RegistryOrder,
+    ) -> Self {
+        Self(type_factory, sys_factory, order)
     }
 }
 impl AutoPluginRegistryEntryFactoryEnd {
-    pub const fn new(type_factory: fn() -> TypeId, sys_factory: fn(&mut bevy_app::App)) -> Self {
-        Self(type_factory, sys_factory)
+    pub const fn new(
+        type_factory: fn() -> TypeId,
+        sys_factory: fn(&mut bevy_app::App),
+        order: RegistryOrder,
+    ) -> Self {
+        Self(type_factory, sys_factory, order)
     }
 }
 pub struct AutoPluginRegistry(HashMap<TypeId, Vec<BevyAppBuildFn>>);
@@ -171,7 +220,12 @@ pub fn _plugin_entry_block(static_ident: &Ident, plugin: &Path, expr: &ExprClosu
             #static_ident,
             ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactory::new(
                 || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
-                #expr
+                #expr,
+                ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::RegistryOrder::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                )
             )
         );
     }
@@ -187,7 +241,12 @@ pub fn _plugin_entry_block_end(
             #static_ident,
             ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryEnd::new(
                 || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
-                #expr
+                #expr,
+                ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::RegistryOrder::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                )
             )
         );
     }

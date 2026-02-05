@@ -27,10 +27,10 @@ macro_rules! rob {
 }
 
 rob!(a);
-// rob!(b);
-// rob!(c);
-// rob!(d);
-// rob!(e);
+rob!(b);
+rob!(c);
+rob!(d);
+rob!(e);
 
 fn insert(label: &'static str) -> impl Fn(ResMut<FooResource>) {
     move |mut res: ResMut<FooResource>| {
@@ -56,8 +56,7 @@ fn test_run_on_build_ordered() {
     assert!(!app.world().resource::<FooResource>().0.is_empty(), "did not run any systems");
     assert_eq!(
         app.world().resource::<FooResource>(),
-        // &FooResource(vec!["a", "b", "c", "d", "e"]),
-        &FooResource(vec!["a"]),
+        &FooResource(vec!["a", "b", "c", "d", "e"]),
         "did not run systems in order"
     );
 }
