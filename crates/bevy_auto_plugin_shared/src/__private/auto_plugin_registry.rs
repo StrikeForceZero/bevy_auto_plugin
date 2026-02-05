@@ -31,6 +31,13 @@ pub static AUTO_PLUGINS: [AutoPluginRegistryEntryFactory];
 #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
 inventory::collect!(AutoPluginRegistryEntryFactory);
 
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "inventory")))]
+#[linkme::distributed_slice]
+pub static AUTO_PLUGINS_END: [AutoPluginRegistryEntryFactoryEnd];
+
+#[cfg(any(target_arch = "wasm32", feature = "inventory"))]
+inventory::collect!(AutoPluginRegistryEntryFactoryEnd);
+
 pub static AUTO_PLUGIN_REGISTRY: LazyLock<AutoPluginRegistry> = LazyLock::new(|| {
     #[cfg(target_arch = "wasm32")]
     crate::_initialize();
@@ -62,6 +69,37 @@ pub static AUTO_PLUGIN_REGISTRY: LazyLock<AutoPluginRegistry> = LazyLock::new(||
     AutoPluginRegistry(registry)
 });
 
+pub static AUTO_PLUGIN_REGISTRY_END: LazyLock<AutoPluginRegistry> = LazyLock::new(|| {
+    #[cfg(target_arch = "wasm32")]
+    crate::_initialize();
+
+    #[cfg(not(any(target_arch = "wasm32", feature = "inventory")))]
+    let iter = AUTO_PLUGINS_END.into_iter();
+    #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
+    let iter = ::inventory::iter::<AutoPluginRegistryEntryFactoryEnd>.into_iter();
+
+    #[allow(unused_variables)]
+    let mut count = 0;
+    let mut registry: HashMap<TypeId, Vec<BevyAppBuildFn>> = HashMap::new();
+
+    for (ix, AutoPluginRegistryEntryFactoryEnd(type_factory, sys_factory)) in iter.enumerate() {
+        registry.entry(type_factory()).or_default().push(*sys_factory);
+        #[allow(unused_assignments)]
+        {
+            count = ix + 1;
+        }
+    }
+
+    // Trim down
+    registry.values_mut().for_each(|vec| vec.shrink_to_fit());
+    registry.shrink_to_fit();
+
+    #[cfg(feature = "debug_log_plugin_registry")]
+    log::debug!("Building AutoPluginRegistryEnd from {count} entries");
+
+    AutoPluginRegistry(registry)
+});
+
 pub trait AutoPluginTypeId {
     fn type_id() -> TypeId;
 }
@@ -86,9 +124,19 @@ pub trait AutoPlugin: AutoPluginTypeId {
     fn build(&self, app: &mut bevy_app::App) {
         Self::static_build(app);
     }
+    #[inline]
+    fn build_end(&self, app: &mut bevy_app::App) {
+        Self::static_build_end(app);
+    }
     fn static_build(app: &mut bevy_app::App) {
         let type_id = <Self as AutoPluginTypeId>::type_id();
         AUTO_PLUGIN_REGISTRY.get_entries(type_id).iter().for_each(|build_fn| {
+            build_fn(app);
+        });
+    }
+    fn static_build_end(app: &mut bevy_app::App) {
+        let type_id = <Self as AutoPluginTypeId>::type_id();
+        AUTO_PLUGIN_REGISTRY_END.get_entries(type_id).iter().for_each(|build_fn| {
             build_fn(app);
         });
     }
@@ -97,8 +145,14 @@ pub trait AutoPlugin: AutoPluginTypeId {
 pub type TypeIdFn = fn() -> TypeId;
 pub type BevyAppBuildFn = fn(&mut bevy_app::App);
 pub struct AutoPluginRegistryEntryFactory(TypeIdFn, BevyAppBuildFn);
+pub struct AutoPluginRegistryEntryFactoryEnd(TypeIdFn, BevyAppBuildFn);
 
 impl AutoPluginRegistryEntryFactory {
+    pub const fn new(type_factory: fn() -> TypeId, sys_factory: fn(&mut bevy_app::App)) -> Self {
+        Self(type_factory, sys_factory)
+    }
+}
+impl AutoPluginRegistryEntryFactoryEnd {
     pub const fn new(type_factory: fn() -> TypeId, sys_factory: fn(&mut bevy_app::App)) -> Self {
         Self(type_factory, sys_factory)
     }
@@ -116,6 +170,22 @@ pub fn _plugin_entry_block(static_ident: &Ident, plugin: &Path, expr: &ExprClosu
         ::bevy_auto_plugin::__private::shared::_plugin_entry!(
             #static_ident,
             ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactory::new(
+                || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
+                #expr
+            )
+        );
+    }
+}
+
+pub fn _plugin_entry_block_end(
+    static_ident: &Ident,
+    plugin: &Path,
+    expr: &ExprClosure,
+) -> MacroStream {
+    quote! {
+        ::bevy_auto_plugin::__private::shared::_plugin_entry_end!(
+            #static_ident,
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryEnd::new(
                 || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
                 #expr
             )
@@ -143,6 +213,33 @@ macro_rules! _plugin_entry {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! _plugin_entry {
+    ($static_ident:ident, $entry:expr) => {
+        ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::inventory::submit!(
+            $entry
+        );
+    };
+}
+
+#[cfg(not(any(target_arch = "wasm32", feature = "inventory")))]
+#[macro_export]
+#[doc(hidden)]
+macro_rules! _plugin_entry_end {
+    ($static_ident:ident, $entry:expr) => {
+        #[::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::linkme::distributed_slice(
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AUTO_PLUGINS_END
+        )]
+        #[linkme(crate = ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::linkme)]
+        #[allow(non_upper_case_globals)]
+        static $static_ident:
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryEnd =
+            $entry;
+    };
+}
+
+#[cfg(any(target_arch = "wasm32", feature = "inventory"))]
+#[macro_export]
+#[doc(hidden)]
+macro_rules! _plugin_entry_end {
     ($static_ident:ident, $entry:expr) => {
         ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::inventory::submit!(
             $entry

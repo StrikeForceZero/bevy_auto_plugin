@@ -1,4 +1,7 @@
-use crate::macro_api::mixins::HasKeys;
+use crate::{
+    macro_api::mixins::HasKeys,
+    syntax::ast::flag::Flag,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::{
@@ -11,16 +14,21 @@ use quote::{
 pub struct WithPlugin {
     #[darling(rename = "plugin")]
     pub plugin: syn::Path,
+    pub end: Flag,
 }
 
 impl WithPlugin {
-    pub const KEYS: &'static [&'static str] = &["plugin"];
+    pub const KEYS: &'static [&'static str] = &["plugin", "end"];
 }
 
 impl ToTokens for WithPlugin {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let plugin = &self.plugin;
-        tokens.extend(quote! { plugin = #plugin });
+        if self.end.is_present() {
+            tokens.extend(quote! { plugin = #plugin, end });
+        } else {
+            tokens.extend(quote! { plugin = #plugin });
+        }
     }
 }
 
