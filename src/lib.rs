@@ -106,6 +106,34 @@
 //! #[apply(CopyDefaultComponentTemplate!)]
 //! struct BarComponent;
 //! ```
+//!
+//! ### Custom Build Hooks (Third-Party Integration)
+//! You can use `#[auto_plugin_build_hook]` as a building block for third-party
+//! APIs that require `App` calls (for example, `bevy_replicon`'s `app.replicate::<T>()`).
+//! This makes it easy to build your own macros for external crates without
+//! writing boilerplate in every plugin build.
+//!
+//! ```rust,ignore
+//! use bevy::prelude::*;
+//! use bevy_auto_plugin::prelude::*;
+//! use bevy_replicon::prelude::*;
+//!
+//! #[derive(AutoPlugin)]
+//! #[auto_plugin(impl_plugin_trait)]
+//! struct MyPlugin;
+//!
+//! struct ReplicateHook;
+//!
+//! impl<T: Component + 'static> AutoPluginBuildHook<T> for ReplicateHook {
+//!     fn on_build(&self, app: &mut App) {
+//!         app.replicate::<T>();
+//!     }
+//! }
+//!
+//! #[derive(Component)]
+//! #[auto_plugin_build_hook(plugin = MyPlugin, hook = ReplicateHook)]
+//! struct NetTransform;
+//! ```
 
 /// Private Re-exports
 #[doc(hidden)]
@@ -189,4 +217,10 @@ pub mod prelude {
 
     #[doc = include_str!("../docs/proc_attributes/actions/auto_configure_system_set.md")]
     pub use bevy_auto_plugin_proc_macros::auto_configure_system_set;
+
+    #[doc(inline)]
+    pub use super::__private::shared::AutoPluginBuildHook;
+
+    #[doc = include_str!("../docs/proc_attributes/actions/auto_plugin_build_hook.md")]
+    pub use bevy_auto_plugin_proc_macros::auto_plugin_build_hook;
 }

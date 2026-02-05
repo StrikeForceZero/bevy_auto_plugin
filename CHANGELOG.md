@@ -161,3 +161,4 @@
 - Add deterministic ordering for auto plugin registry entries, preserving definition order.
 - Add optional `after_build` flag to all `auto_*` macros to enable injecting tokens at the end of plugin build function body instead of the start.
 - Add support for `insert` in `auto_resource`
+- Add `auto_plugin_build_hook` and `AutoPluginBuildHook` to run custom hooks during plugin build.

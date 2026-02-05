@@ -168,6 +168,34 @@ There is `auto_plugin` arguments if your plugin has generics.
 
 See [tests](tests/e2e) for other examples
 
+### Custom Build Hooks (Third-Party Integration)
+
+You can extend this pattern to third-party crates by using `#[auto_plugin_build_hook]` as a building block
+for your own macros. For example, a user might want to automatically call `bevy_replicon` `app.replicate::<T>()` for each annotated type.
+
+```rust,ignore
+use bevy::prelude::*;
+use bevy_auto_plugin::prelude::*;
+use bevy_replicon::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+struct ReplicateHook;
+
+impl<T: Component + 'static> AutoPluginBuildHook<T> for ReplicateHook {
+    fn on_build(&self, app: &mut App) {
+        app.replicate::<T>();
+    }
+}
+
+#[derive(Component)]
+#[auto_plugin_build_hook(plugin = MyPlugin, hook = ReplicateHook)]
+struct MyReplicatedThing;
+```
+
+
 ### Expanded
 
 If you were looking to cherry-pick certain functionality like `auto_name` or `auto_register_type` for example you could use them individually:
