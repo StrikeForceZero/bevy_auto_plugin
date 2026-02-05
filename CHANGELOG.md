@@ -156,3 +156,7 @@
 ## v0.9.1
 - Fixed docs
 - Deprecated `init` in `auto_insert_resource` with a message to prefer `insert`
+
+## v0.10.0
+- Add deterministic ordering for auto plugin registry entries, preserving definition order.
+- Add optional `end` flag to all `auto_*` macros to enable injecting tokens at the end of plugin build function body instead of the start.
