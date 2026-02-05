@@ -175,6 +175,18 @@ pub type BevyAppBuildFn = fn(&mut bevy_app::App);
 pub struct AutoPluginRegistryEntryFactory(TypeIdFn, BevyAppBuildFn, RegistryOrder);
 pub struct AutoPluginRegistryEntryFactoryEnd(TypeIdFn, BevyAppBuildFn, RegistryOrder);
 
+#[macro_export]
+#[doc(hidden)]
+macro_rules! registry_order {
+    () => {
+        ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::RegistryOrder::new(
+            file!(),
+            line!(),
+            column!(),
+        )
+    };
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct RegistryOrder {
     file: &'static str,
@@ -221,11 +233,7 @@ pub fn _plugin_entry_block(static_ident: &Ident, plugin: &Path, expr: &ExprClosu
             ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactory::new(
                 || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
                 #expr,
-                ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::RegistryOrder::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                )
+                ::bevy_auto_plugin::__private::shared::registry_order!()
             )
         );
     }
@@ -242,11 +250,7 @@ pub fn _plugin_entry_block_end(
             ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryEnd::new(
                 || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
                 #expr,
-                ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::RegistryOrder::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                )
+                ::bevy_auto_plugin::__private::shared::registry_order!()
             )
         );
     }
