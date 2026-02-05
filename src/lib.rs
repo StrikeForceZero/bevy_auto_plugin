@@ -107,6 +107,30 @@
 //! struct BarComponent;
 //! ```
 //!
+//! You can also attach action macros to `use` items to target imported names.
+//! ```rust
+//! use bevy::prelude::*;
+//! use bevy_auto_plugin::prelude::*;
+//!
+//! #[derive(AutoPlugin)]
+//! #[auto_plugin(impl_plugin_trait)]
+//! struct MyPlugin;
+//!
+//! mod components {
+//!     use bevy::prelude::*;
+//!
+//!     #[derive(Reflect)]
+//!     pub struct FooComponent;
+//!
+//!     #[derive(Reflect)]
+//!     pub struct BarComponent;
+//! }
+//!
+//! #[auto_register_type(plugin = MyPlugin)]
+//! use components::{FooComponent, BarComponent as BazComponent};
+//! ```
+//! Each imported name becomes its own entry. `use ...::*`, `use ...::self`, and `_` imports are not supported.
+//!
 //! ### Custom Build Hooks (Third-Party Integration)
 //! You can use `#[auto_plugin_build_hook]` as a building block for third-party
 //! APIs that require `App` calls (for example, `bevy_replicon`'s `app.replicate::<T>()`).

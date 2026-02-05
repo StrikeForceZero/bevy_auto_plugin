@@ -17,6 +17,11 @@ Automatically registers a system to be added to the app.
   - `after_ignore_deferred = SetName or system` - Optional. See [`bevy IntoScheduleConfigs after_ignore_deferred`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.after_ignore_deferred)
   - `before_ignore_deferred = SetName or system` - Optional. See [`bevy IntoScheduleConfigs before_ignore_deferred`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.before_ignore_deferred)
 
+# Notes
+- This attribute can be applied to a `use` item; each imported name becomes its own target.
+- `use ...::*`, `use ...::self`, and `_` imports are not supported.
+- Renames (`as`) are supported and use the local name.
+
 # Example
 ```rust
 use bevy::prelude::*;

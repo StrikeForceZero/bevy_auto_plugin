@@ -7,6 +7,11 @@ Automatically registers a type with the app's type registry.
   When provided, the type will be registered with these specific generic parameters.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
 
+# Notes
+- This attribute can be applied to a `use` item; each imported name becomes its own target.
+- `use ...::*`, `use ...::self`, and `_` imports are not supported.
+- Renames (`as`) are supported and use the local name.
+
 # Example
 ```rust
 use bevy::prelude::*;
