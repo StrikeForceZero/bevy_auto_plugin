@@ -99,11 +99,11 @@ pub fn attrs_inject_plugin_param(
             continue;
         }
 
-        attr_inject_plugin_param(attr, plugin, add_plugin, add_post_build);
+        attr_inject_with_plugin_params(attr, plugin, add_plugin, add_post_build);
     }
 }
 
-fn attr_inject_plugin_param(
+fn attr_inject_with_plugin_params(
     attr: &mut syn::Attribute,
     plugin: &syn::Path,
     add_plugin: bool,
