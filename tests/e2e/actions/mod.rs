@@ -11,7 +11,7 @@ mod auto_add_systems_complex_with_generics;
 mod auto_add_systems_with_generics;
 mod auto_add_systems_with_set;
 mod auto_bind_plugin;
-mod auto_bind_plugin_end;
+mod auto_bind_plugin_post_build;
 mod auto_configure_system_set;
 mod auto_configure_system_set_schedule_config;
 mod auto_configure_system_set_schedule_config_multiple_groups;

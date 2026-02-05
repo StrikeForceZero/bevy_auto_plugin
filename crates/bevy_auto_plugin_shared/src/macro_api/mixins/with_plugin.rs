@@ -14,18 +14,18 @@ use quote::{
 pub struct WithPlugin {
     #[darling(rename = "plugin")]
     pub plugin: syn::Path,
-    pub end: Flag,
+    pub post_build: Flag,
 }
 
 impl WithPlugin {
-    pub const KEYS: &'static [&'static str] = &["plugin", "end"];
+    pub const KEYS: &'static [&'static str] = &["plugin", "post_build"];
 }
 
 impl ToTokens for WithPlugin {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let plugin = &self.plugin;
-        if self.end.is_present() {
-            tokens.extend(quote! { plugin = #plugin, end });
+        if self.post_build.is_present() {
+            tokens.extend(quote! { plugin = #plugin, post_build });
         } else {
             tokens.extend(quote! { plugin = #plugin });
         }

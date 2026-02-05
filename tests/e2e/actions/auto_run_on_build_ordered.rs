@@ -17,7 +17,7 @@ struct TestRob;
 
 macro_rules! rob {
     ($label:ident) => {
-        #[auto_run_on_build(plugin = TestRob, end)]
+        #[auto_run_on_build(plugin = TestRob, post_build)]
         fn $label(app: &mut App) {
             app.world_mut()
                 .run_system_once(insert(stringify!($label)))

@@ -187,7 +187,7 @@ impl<T, R> ItemAttribute<T, R> {
 
 pub trait ItemAttributePlugin {
     fn plugin(&self) -> &syn::Path;
-    fn plugin_end(&self) -> bool {
+    fn plugin_post_build(&self) -> bool {
         false
     }
 }
@@ -196,8 +196,8 @@ impl<T, G, Resolver> ItemAttributePlugin for ItemAttribute<Composed<T, WithPlugi
     fn plugin(&self) -> &Path {
         self.args.plugin()
     }
-    fn plugin_end(&self) -> bool {
-        self.args.plugin.end.is_present()
+    fn plugin_post_build(&self) -> bool {
+        self.args.plugin.post_build.is_present()
     }
 }
 
