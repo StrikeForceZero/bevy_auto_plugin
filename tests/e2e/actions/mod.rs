@@ -8,6 +8,7 @@ mod auto_add_plugin_with_generics_and_init;
 mod auto_add_plugin_with_init;
 mod auto_add_systems;
 mod auto_add_systems_complex_with_generics;
+mod auto_add_systems_pipe_in;
 mod auto_add_systems_with_generics;
 mod auto_add_systems_with_set;
 mod auto_bind_plugin;

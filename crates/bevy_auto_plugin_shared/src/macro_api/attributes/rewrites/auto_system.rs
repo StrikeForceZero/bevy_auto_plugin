@@ -7,6 +7,10 @@ use crate::{
         prelude::*,
         schedule_config::ScheduleWithScheduleConfigArgs,
     },
+    syntax::ast::{
+        any_expr::AnyExprCallClosureMacroPath,
+        any_expr_list::AnyExprList,
+    },
 };
 use darling::FromMeta;
 
@@ -15,6 +19,8 @@ use darling::FromMeta;
 pub struct SystemArgs {
     #[darling(flatten)]
     pub schedule_config: ScheduleWithScheduleConfigArgs,
+    #[darling(default)]
+    pub pipe_in: Option<AnyExprList<AnyExprCallClosureMacroPath>>,
 }
 
 impl AttributeIdent for SystemArgs {
@@ -29,7 +35,10 @@ impl<'a> From<&'a SystemArgs> for RegisterTypeArgs {
 
 impl<'a> From<&'a SystemArgs> for AddSystemArgs {
     fn from(value: &'a SystemArgs) -> Self {
-        AddSystemArgs { schedule_config: value.schedule_config.clone() }
+        AddSystemArgs {
+            schedule_config: value.schedule_config.clone(),
+            pipe_in: value.pipe_in.clone(),
+        }
     }
 }
 
@@ -45,6 +54,6 @@ impl AttrExpansionEmitterToExpandAttr for SystemAttrExpandEmitter {
 
 impl From<SystemArgs> for AddSystemArgs {
     fn from(value: SystemArgs) -> Self {
-        Self { schedule_config: value.schedule_config }
+        Self { schedule_config: value.schedule_config, pipe_in: value.pipe_in }
     }
 }

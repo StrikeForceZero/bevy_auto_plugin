@@ -4,6 +4,7 @@ Automatically registers a system to be added to the app.
 - `plugin = PluginType` - Required. Specifies which plugin should register this system.
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 - `schedule = ScheduleName` - Required. Specifies which schedule to add the system to.
+- `pipe_in = [sys1, sys2, ...]` - Optional. Pipes inputs into the system in order, so `pipe_in(a, b)` becomes `a.pipe(b).pipe(<system>)`.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(A = ..., B = ...)`.
 - `config(..)`
@@ -32,6 +33,29 @@ struct FooResource(usize);
 #[auto_system(plugin = MyPlugin, schedule = Update)]
 fn foo_system(mut foo_res: ResMut<FooResource>) {
     foo_res.0 += 1;
+}
+```
+
+# Example (with pipe_in)
+```rust
+use bevy::prelude::*;
+use bevy_auto_plugin::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+fn get_name() -> String {
+    "World".to_string()
+}
+
+fn greet_name(name: In<String>) -> String {
+    format!("Hello, {}!", *name)
+}
+
+#[auto_system(plugin = MyPlugin, schedule = Startup, pipe_in = [get_name, greet_name])]
+fn print_greeting(greeting: In<String>) {
+    println!("{}", *greeting);
 }
 ```
 
