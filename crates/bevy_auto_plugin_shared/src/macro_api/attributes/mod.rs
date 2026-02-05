@@ -185,6 +185,26 @@ impl<T, R> ItemAttribute<T, R> {
     }
 }
 
+impl<T, R> ItemAttribute<Composed<T, WithPlugin, WithZeroOrManyGenerics>, R> {
+    pub fn into_zero_or_one_generic_target<U>(
+        self,
+        map_base_fn: impl FnOnce(T) -> U,
+        map_generics_fn: impl FnOnce(WithZeroOrManyGenerics) -> WithZeroOrOneGenerics,
+    ) -> ItemAttribute<Composed<U, WithPlugin, WithZeroOrOneGenerics>, R> {
+        ItemAttribute {
+            args: Composed::<U, WithPlugin, WithZeroOrOneGenerics> {
+                plugin: self.args.plugin,
+                base: map_base_fn(self.args.base),
+                generics: map_generics_fn(self.args.generics),
+            },
+            context: self.context,
+            input_item: self.input_item,
+            target: self.target,
+            _resolver: PhantomData,
+        }
+    }
+}
+
 pub trait ItemAttributePlugin {
     fn plugin(&self) -> &syn::Path;
     fn plugin_after_build(&self) -> bool {
