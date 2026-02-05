@@ -2,6 +2,7 @@ Automatically adds a Name component to entities with this component.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should register this name.
+- `end` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the Name component will be added to entities with this component
   using the specified generic parameters.

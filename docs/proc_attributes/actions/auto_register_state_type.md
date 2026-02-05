@@ -2,6 +2,7 @@ Automatically registers `State<T>` and `NextState<T>` types with the app.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should register these state types.
+- `end` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 
 # Example
 ```rust
