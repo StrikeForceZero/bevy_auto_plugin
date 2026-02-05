@@ -17,6 +17,7 @@ proc-macro = true
 inventory = ["bevy_auto_plugin_shared/inventory"]
 debug_log_plugin_registry = ["bevy_auto_plugin_shared/debug_log_plugin_registry"]
 log_plugin_build = ["bevy_auto_plugin_shared/log_plugin_build"]
+compat_generics_angles = ["bevy_auto_plugin_shared/compat_generics_angles"]
 
 [dependencies]
 bevy_auto_plugin_shared = { workspace = true }

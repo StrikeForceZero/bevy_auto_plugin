@@ -9,7 +9,10 @@ use syn::ItemFn;
 pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream {
     use crate::{
         macro_api::prelude::*,
-        syntax::analysis::fn_param::require_fn_param_mutable_reference,
+        syntax::{
+            analysis::fn_param::require_fn_param_mutable_reference,
+            parse::rewrite::maybe_rewrite_generics_angles,
+        },
     };
     use proc_macro2::Ident;
     use quote::quote;
@@ -20,6 +23,7 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
     };
     let og_input = input.clone();
     let item = parse_macro_input2_or_emit_with!(input as ItemFn, og_input);
+    let attr = maybe_rewrite_generics_angles(attr, "generics");
     let params = ok_or_emit_with!(parse2::<AutoPluginFnArgs>(attr), og_input);
     let vis = &item.vis;
     let attrs = &item.attrs;

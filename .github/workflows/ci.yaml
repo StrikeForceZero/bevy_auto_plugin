@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        feature-set: [ default, inventory ]
+        feature-set: [ default, inventory, compat_generics_angles ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

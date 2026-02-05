@@ -1,6 +1,9 @@
 use crate::{
     macro_api::prelude::*,
-    syntax::validated::non_empty_path::NonEmptyPath,
+    syntax::{
+        parse::rewrite::maybe_rewrite_generics_angles,
+        validated::non_empty_path::NonEmptyPath,
+    },
     util::macros::impl_from_default,
 };
 use darling::{
@@ -390,6 +393,7 @@ where
             return Err(syn::Error::new(Span::call_site(), Resolver::NOT_ALLOWED_MESSAGE));
         };
         // Parse the attribute’s inner tokens as: Meta, Meta, ...
+        let attr = maybe_rewrite_generics_angles(attr, "generics");
         let metas: Punctuated<NestedMeta, Token![,]> =
             Punctuated::<NestedMeta, Token![,]>::parse_terminated.parse2(attr)?;
 

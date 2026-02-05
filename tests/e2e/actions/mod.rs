@@ -32,6 +32,8 @@ mod auto_plugin_with_generics;
 mod auto_register_state_type;
 mod auto_register_type;
 mod auto_register_type_generic;
+#[cfg(feature = "compat_generics_angles")]
+mod auto_register_type_generic_angles;
 mod auto_register_type_named_generics;
 mod auto_register_type_use;
 mod auto_run_on_build;

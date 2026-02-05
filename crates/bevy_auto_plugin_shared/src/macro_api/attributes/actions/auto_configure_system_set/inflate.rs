@@ -107,10 +107,13 @@ pub fn args_from_attr_input(
     attr: TokenStream,
     input: TokenStream,
 ) -> EmitResult<InputItem, ConfigureSystemSetArgs, syn::Error> {
+    use crate::syntax::parse::rewrite::maybe_rewrite_generics_angles;
     let input_item =
         InputItem::from_ts_validated(input.clone()).map_err(|e| (InputItem::Tokens(input), e))?;
-    let (input_item, args) =
-        Ctx::start(input_item).and_then(|_, _| syn::parse2::<ConfigureSystemSetArgs>(attr))?;
+    let (input_item, args) = Ctx::start(input_item).and_then(|_, _| {
+        let attr = maybe_rewrite_generics_angles(attr, "generics");
+        syn::parse2::<ConfigureSystemSetArgs>(attr)
+    })?;
     inflate_args_from_input_item(args, &input_item)
 }
 

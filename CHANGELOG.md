@@ -164,3 +164,5 @@
 - Add `auto_plugin_build_hook` and `AutoPluginBuildHook` to run custom hooks during plugin build.
 - Allow action macros on `use` statements; each imported name becomes its own entry (no `*`, `self`, or `_`).
 - Add `pipe_in` for `auto_add_system`/`auto_system` to build system pipelines.
+- Accept `generics = <...>` as shorthand for `generics(...)` in attributes (feature: `compat_generics_angles`).
+  - This feature will eventually be removed unless a petition is opened.

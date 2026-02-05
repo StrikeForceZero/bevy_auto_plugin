@@ -16,6 +16,10 @@ inventory = ["bevy_auto_plugin_proc_macros/inventory"]
 # optional extras
 debug_log_plugin_registry = ["bevy_auto_plugin_proc_macros/debug_log_plugin_registry", "bevy_auto_plugin_shared/debug_log_plugin_registry"]
 log_plugin_build = ["bevy_auto_plugin_proc_macros/log_plugin_build"]
+compat_generics_angles = [
+    "bevy_auto_plugin_proc_macros/compat_generics_angles",
+    "bevy_auto_plugin_shared/compat_generics_angles",
+]
 web = [
     "bevy_auto_plugin_shared/web",
 ]

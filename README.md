@@ -165,6 +165,9 @@ impl Plugin for MyPlugin {
 }
 ```
 
+Coming from `bevy_butler`? enable feature `compat_generics_angles` to accept `generics = <...>` as shorthand.
+This feature will eventually be removed unless a petition is opened.
+
 ### Plugin
 
 There are three distinct ways to make a bindable plugin:
