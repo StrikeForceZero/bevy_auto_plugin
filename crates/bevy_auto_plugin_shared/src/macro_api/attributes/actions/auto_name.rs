@@ -20,7 +20,7 @@ impl AttributeIdent for NameArgs {
 }
 
 pub type IaName =
-    ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+    ItemAttribute<Composed<NameArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnumOrUse>;
 pub type NameAppMutEmitter = AppMutationEmitter<IaName>;
 pub type NameAttrEmitter = AttrEmitter<IaName>;
 

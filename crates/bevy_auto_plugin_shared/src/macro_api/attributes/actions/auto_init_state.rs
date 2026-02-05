@@ -15,7 +15,7 @@ impl AttributeIdent for InitStateArgs {
 }
 
 pub type IaInitState =
-    ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
+    ItemAttribute<Composed<InitStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnumOrUse>;
 pub type InitStateAppMutEmitter = AppMutationEmitter<IaInitState>;
 pub type InitStateAttrEmitter = AttrEmitter<IaInitState>;
 

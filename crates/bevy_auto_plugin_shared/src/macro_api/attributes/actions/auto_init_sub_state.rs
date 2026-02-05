@@ -15,7 +15,7 @@ impl AttributeIdent for InitSubStateArgs {
 }
 
 pub type IaInitSubState =
-    ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnum>;
+    ItemAttribute<Composed<InitSubStateArgs, WithPlugin, WithNoGenerics>, AllowStructOrEnumOrUse>;
 pub type InitSubStateAppMutEmitter = AppMutationEmitter<IaInitSubState>;
 pub type InitSubStateAttrEmitter = AttrEmitter<IaInitSubState>;
 

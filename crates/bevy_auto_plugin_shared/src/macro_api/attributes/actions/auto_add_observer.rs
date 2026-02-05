@@ -15,7 +15,7 @@ impl AttributeIdent for AddObserverArgs {
 }
 
 pub type IaAddObserver =
-    ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+    ItemAttribute<Composed<AddObserverArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFnOrUse>;
 pub type AddObserverAppMutEmitter = AppMutationEmitter<IaAddObserver>;
 pub type AddObserverAttrEmitter = AttrEmitter<IaAddObserver>;
 

@@ -14,8 +14,10 @@ impl AttributeIdent for AddMessageArgs {
     const IDENT: &'static str = "auto_add_message";
 }
 
-pub type IaAddMessage =
-    ItemAttribute<Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type IaAddMessage = ItemAttribute<
+    Composed<AddMessageArgs, WithPlugin, WithZeroOrManyGenerics>,
+    AllowStructOrEnumOrUse,
+>;
 pub type AddMessageAppMutEmitter = AppMutationEmitter<IaAddMessage>;
 pub type AddMessageAttrEmitter = AttrEmitter<IaAddMessage>;
 

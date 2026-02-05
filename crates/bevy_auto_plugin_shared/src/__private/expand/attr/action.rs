@@ -11,9 +11,11 @@ use quote::{
 pub fn proc_attribute_outer<T>(attr: MacroStream, input: MacroStream) -> MacroStream
 where
     T: ItemAttributeArgs
+        + Clone
         + ItemAttributeParse
         + ItemAttributeInput
         + ItemAttributeTarget
+        + ItemAttributeTargetMut
         + ItemAttributeUniqueIdent
         + ItemAttributeContext
         + ItemAttributePlugin,
@@ -34,8 +36,27 @@ where
         }
         app_mut_emitter.args.input_item().to_token_stream()
     };
-    let after_item_tokens =
-        ok_or_emit_with!(app_mut_emitter.wrap_body(|body| quote! { #body }), processed_item);
+    let use_targets = ok_or_emit_with!(
+        app_mut_emitter.args.input_item().use_target_paths(),
+        processed_item.clone()
+    );
+    let after_item_tokens = if let Some(use_targets) = use_targets {
+        let mut tokens = MacroStream::new();
+        for target in use_targets {
+            let mut args = app_mut_emitter.args.clone();
+            args.set_target(target);
+            let mut per_target_emitter =
+                AppMutationEmitter { args, app_param: app_mut_emitter.app_param.clone() };
+            let entry_tokens = ok_or_emit_with!(
+                per_target_emitter.wrap_body(|body| quote! { #body }),
+                processed_item.clone()
+            );
+            tokens.extend(entry_tokens);
+        }
+        tokens
+    } else {
+        ok_or_emit_with!(app_mut_emitter.wrap_body(|body| quote! { #body }), processed_item)
+    };
     quote! {
         #processed_item
         #after_item_tokens

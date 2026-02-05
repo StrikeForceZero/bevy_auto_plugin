@@ -34,7 +34,9 @@ pub mod prelude {
     pub use super::{
         AllowAny,
         AllowFn,
+        AllowFnOrUse,
         AllowStructOrEnum,
+        AllowStructOrEnumOrUse,
         AttributeIdent,
         GenericsCap,
         ItemAttribute,
@@ -44,6 +46,7 @@ pub mod prelude {
         ItemAttributeParse,
         ItemAttributePlugin,
         ItemAttributeTarget,
+        ItemAttributeTargetMut,
         ItemAttributeUniqueIdent,
         auto_plugin::{
             AutoPluginFnArgs,
@@ -94,6 +97,23 @@ pub trait IdentPathResolver {
     fn resolve_ident_path(item: &Item) -> Option<syn::Path>;
 }
 
+fn first_use_local_ident(tree: &syn::UseTree) -> Option<syn::Ident> {
+    match tree {
+        syn::UseTree::Name(name) => usable_use_ident(&name.ident).then(|| name.ident.clone()),
+        syn::UseTree::Rename(rename) => {
+            usable_use_ident(&rename.rename).then(|| rename.rename.clone())
+        }
+        syn::UseTree::Path(path) => first_use_local_ident(&path.tree),
+        syn::UseTree::Group(group) => group.items.iter().find_map(first_use_local_ident),
+        syn::UseTree::Glob(_) => None,
+    }
+}
+
+fn usable_use_ident(ident: &syn::Ident) -> bool {
+    let name = ident.to_string();
+    name != "self" && name != "_"
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AllowStructOrEnum;
 impl IdentPathResolver for AllowStructOrEnum {
@@ -108,12 +128,43 @@ impl IdentPathResolver for AllowStructOrEnum {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct AllowStructOrEnumOrUse;
+impl IdentPathResolver for AllowStructOrEnumOrUse {
+    const NOT_ALLOWED_MESSAGE: &'static str = "Only allowed on Struct, Enum, or use items";
+    fn resolve_ident_path(item: &Item) -> Option<syn::Path> {
+        Some(match item {
+            Item::Struct(item) => item.ident.clone().into(),
+            Item::Enum(item) => item.ident.clone().into(),
+            Item::Use(item) => first_use_local_ident(&item.tree)
+                .unwrap_or_else(|| Ident::new("_auto_plugin_use_item", Span::call_site()))
+                .into(),
+            _ => return None,
+        })
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AllowFn;
 impl IdentPathResolver for AllowFn {
     const NOT_ALLOWED_MESSAGE: &'static str = "Only allowed on Fn items";
     fn resolve_ident_path(item: &Item) -> Option<syn::Path> {
         Some(match item {
             Item::Fn(item) => item.sig.ident.clone().into(),
+            _ => return None,
+        })
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct AllowFnOrUse;
+impl IdentPathResolver for AllowFnOrUse {
+    const NOT_ALLOWED_MESSAGE: &'static str = "Only allowed on Fn or use items";
+    fn resolve_ident_path(item: &Item) -> Option<syn::Path> {
+        Some(match item {
+            Item::Fn(item) => item.sig.ident.clone().into(),
+            Item::Use(item) => first_use_local_ident(&item.tree)
+                .unwrap_or_else(|| Ident::new("_auto_plugin_use_item", Span::call_site()))
+                .into(),
             _ => return None,
         })
     }
@@ -146,6 +197,8 @@ impl IdentPathResolver for AllowAny {
     }
 }
 impl_from_default!(AllowAny => (AllowStructOrEnum, AllowFn));
+impl_from_default!(AllowStructOrEnum => (AllowStructOrEnumOrUse));
+impl_from_default!(AllowFn => (AllowFnOrUse));
 
 pub trait GenericsCap {
     fn concrete_paths(&self) -> syn::Result<Vec<syn::Path>>;
@@ -182,6 +235,11 @@ impl<T, R> ItemAttribute<T, R> {
     {
         let hash = self._concat_ident_hash(ident);
         format_ident!("{prefix}_{hash}")
+    }
+
+    pub fn into_resolver<R2>(self) -> ItemAttribute<T, R2> {
+        let ItemAttribute { args, context, input_item, target, _resolver } = self;
+        ItemAttribute { args, context, input_item, target, _resolver: PhantomData }
     }
 }
 
@@ -242,6 +300,20 @@ where
 {
     fn target(&self) -> &syn::Path {
         &self.target
+    }
+}
+
+pub trait ItemAttributeTargetMut: ItemAttributeTarget {
+    fn set_target(&mut self, target: syn::Path);
+}
+
+impl<T, Resolver> ItemAttributeTargetMut for ItemAttribute<T, Resolver>
+where
+    T: AttributeIdent + Hash + Clone,
+    Resolver: Clone,
+{
+    fn set_target(&mut self, target: syn::Path) {
+        self.target = target;
     }
 }
 
