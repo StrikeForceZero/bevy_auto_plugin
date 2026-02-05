@@ -73,6 +73,22 @@ you can do it via the `auto_system(..)` attribute macro:
 fn my_system() {}
 ```
 
+System piping is supported via `pipe_in`:
+```rust
+fn get_name() -> String {
+    "World".to_string()
+}
+
+fn greet_name(name: In<String>) -> String {
+    format!("Hello, {}!", *name)
+}
+
+#[auto_add_system(plugin = MyPlugin, schedule = Startup, pipe_in = [get_name, greet_name])]
+fn print_greeting(greeting: In<String>) {
+    info!("{}", *greeting);
+}
+```
+
 #### Use Statements
 You can attach action macros to `use` items to target imported names from other modules.
 ```rust
