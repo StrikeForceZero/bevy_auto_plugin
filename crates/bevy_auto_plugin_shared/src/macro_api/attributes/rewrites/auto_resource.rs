@@ -71,7 +71,7 @@ impl AttrExpansionEmitterToExpandAttr for ResourceAttrExpandEmitter {
             for item in insert.iter() {
                 let ia_insert_resource: IaInsertResource =
                     self.args.clone().into_zero_or_one_generic_target::<InsertResourceArgs>(
-                        |_| InsertResourceArgs::from_init(item.clone()),
+                        |_| InsertResourceArgs::from_insert(item.clone()),
                         |_| {
                             // TODO: if we wanted to actually use the generics passed
                             //  we could store an iterator before the for loop and call .next()

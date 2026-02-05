@@ -35,6 +35,13 @@ pub struct MetaExpr {
     span: Span,
 }
 
+impl MetaExpr {
+    pub fn from_value(value: AnyExprCallClosureMacroPath) -> Self {
+        let span = value.span();
+        Self { value, span }
+    }
+}
+
 impl PartialEq for MetaExpr {
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value
@@ -83,8 +90,8 @@ impl FromMeta for MetaExpr {
 }
 
 impl InsertResourceArgs {
-    pub fn from_init(init: AnyExprCallClosureMacroPath) -> Self {
-        Self { init: Some(init), ..Default::default() }
+    pub fn from_insert(insert: AnyExprCallClosureMacroPath) -> Self {
+        Self { insert: Some(MetaExpr::from_value(insert)), ..Default::default() }
     }
     fn validate(self) -> darling::Result<Self> {
         Ok(Self { _resolved: Some(Self::resolve_resource(&self)?.clone()), ..self })
