@@ -16,7 +16,7 @@ impl AttributeIdent for RegisterStateTypeArgs {
 
 pub type IaRegisterStateType = ItemAttribute<
     Composed<RegisterStateTypeArgs, WithPlugin, WithZeroOrManyGenerics>,
-    AllowStructOrEnum,
+    AllowStructOrEnumOrUse,
 >;
 pub type RegisterStateTypeAppMutEmitter = AppMutationEmitter<IaRegisterStateType>;
 pub type RegisterStateTypeAttrEmitter = AttrEmitter<IaRegisterStateType>;

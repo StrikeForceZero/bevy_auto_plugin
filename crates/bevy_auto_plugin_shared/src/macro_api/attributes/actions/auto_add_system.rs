@@ -21,7 +21,7 @@ impl AttributeIdent for AddSystemArgs {
 }
 
 pub type IaAddSystem =
-    ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+    ItemAttribute<Composed<AddSystemArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFnOrUse>;
 pub type AddSystemAppMutEmitter = AppMutationEmitter<IaAddSystem>;
 pub type AddSystemAttrEmitter = AttrEmitter<IaAddSystem>;
 

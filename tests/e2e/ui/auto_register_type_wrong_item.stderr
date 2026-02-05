@@ -1,4 +1,4 @@
-error: Only allowed on Struct Or Enum items
+error: Only allowed on Struct, Enum, or use items
  --> tests/e2e/ui/auto_register_type_wrong_item.rs:7:1
   |
 7 | #[auto_register_type(plugin = TestPlugin)]

@@ -19,7 +19,7 @@ impl AttributeIdent for AutoPluginBuildHookArgs {
 
 pub type IaAutoPluginBuildHook = ItemAttribute<
     Composed<AutoPluginBuildHookArgs, WithPlugin, WithZeroOrManyGenerics>,
-    AllowStructOrEnum,
+    AllowStructOrEnumOrUse,
 >;
 pub type AutoPluginBuildHookAppMutEmitter = AppMutationEmitter<IaAutoPluginBuildHook>;
 pub type AutoPluginBuildHookAttrEmitter = AttrEmitter<IaAutoPluginBuildHook>;

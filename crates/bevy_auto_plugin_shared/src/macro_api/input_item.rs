@@ -11,6 +11,7 @@ use quote::{
     quote,
 };
 use syn::{
+    UseTree,
     parse2,
     spanned::Spanned,
 };
@@ -155,6 +156,23 @@ impl InputItem {
         };
         Ok(idents)
     }
+    pub fn use_target_paths(&self) -> syn::Result<Option<Vec<syn::Path>>> {
+        let mut cloned = self.clone();
+        let item = cloned.ensure_ast()?;
+        let syn::Item::Use(item_use) = item else {
+            return Ok(None);
+        };
+        let mut idents = Vec::new();
+        collect_use_tree_local_idents(&item_use.tree, &mut idents)?;
+        if idents.is_empty() {
+            return Err(syn::Error::new_spanned(
+                item_use,
+                "use statement does not import any named items for auto_* attributes",
+            ));
+        }
+        let paths = idents.into_iter().map(|ident| syn::parse_quote!(#ident)).collect();
+        Ok(Some(paths))
+    }
     pub fn map_ast<F>(&mut self, f: F) -> syn::Result<()>
     where
         F: FnOnce(&mut syn::Item) -> syn::Result<()>,
@@ -162,6 +180,43 @@ impl InputItem {
         let item = self.ensure_ast_mut()?;
         f(item)
     }
+}
+
+fn collect_use_tree_local_idents(tree: &UseTree, out: &mut Vec<syn::Ident>) -> syn::Result<()> {
+    match tree {
+        UseTree::Name(name) => {
+            validate_use_ident(&name.ident)?;
+            out.push(name.ident.clone());
+        }
+        UseTree::Rename(rename) => {
+            validate_use_ident(&rename.rename)?;
+            out.push(rename.rename.clone());
+        }
+        UseTree::Path(path) => collect_use_tree_local_idents(&path.tree, out)?,
+        UseTree::Group(group) => {
+            for item in &group.items {
+                collect_use_tree_local_idents(item, out)?;
+            }
+        }
+        UseTree::Glob(glob) => {
+            return Err(syn::Error::new_spanned(
+                glob,
+                "glob imports are not supported for auto_* attributes on use statements",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_use_ident(ident: &syn::Ident) -> syn::Result<()> {
+    let name = ident.to_string();
+    if name == "self" || name == "_" {
+        return Err(syn::Error::new(
+            ident.span(),
+            "unsupported use import for auto_* attributes; import explicit named items instead",
+        ));
+    }
+    Ok(())
 }
 
 impl ToTokens for InputItem {

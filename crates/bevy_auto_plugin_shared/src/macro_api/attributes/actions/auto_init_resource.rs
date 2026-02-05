@@ -22,7 +22,7 @@ impl AttributeIdent for InitResourceArgs {
 
 pub type IaInitResource = ItemAttribute<
     Composed<InitResourceArgs, WithPlugin, WithZeroOrManyGenerics>,
-    AllowStructOrEnum,
+    AllowStructOrEnumOrUse,
 >;
 pub type InitResourceAppMutEmitter = AppMutationEmitter<IaInitResource>;
 pub type InitResourceAttrEmitter = AttrEmitter<IaInitResource>;

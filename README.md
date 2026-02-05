@@ -73,6 +73,21 @@ you can do it via the `auto_system(..)` attribute macro:
 fn my_system() {}
 ```
 
+#### Use Statements
+You can attach action macros to `use` items to target imported names from other modules.
+```rust
+use bevy::prelude::*;
+use bevy_auto_plugin::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+#[auto_register_type(plugin = MyPlugin)]
+use crate::components::{FooComponent, BarComponent as BazComponent};
+```
+Each imported name becomes its own entry. `use ...::*`, `use ...::self`, and `_` imports are not supported.
+
 ### Generics
 #### Component
 if your items have generics, you can specify the types using the `generics(...)` meta argument for each concrete type.

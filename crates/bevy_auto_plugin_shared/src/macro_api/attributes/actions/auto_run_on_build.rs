@@ -15,7 +15,7 @@ impl AttributeIdent for RunOnBuildArgs {
 }
 
 pub type IaRunOnBuild =
-    ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFn>;
+    ItemAttribute<Composed<RunOnBuildArgs, WithPlugin, WithZeroOrManyGenerics>, AllowFnOrUse>;
 pub type RunOnBuildAppMutEmitter = AppMutationEmitter<IaRunOnBuild>;
 pub type RunOnBuildAttrEmitter = AttrEmitter<IaRunOnBuild>;
 

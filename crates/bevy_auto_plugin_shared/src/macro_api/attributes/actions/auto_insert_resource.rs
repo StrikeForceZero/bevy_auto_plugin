@@ -127,7 +127,7 @@ impl AttributeIdent for InsertResourceArgs {
 
 pub type IaInsertResource = ItemAttribute<
     Composed<InsertResourceArgs, WithPlugin, WithZeroOrOneGenerics>,
-    AllowStructOrEnum,
+    AllowStructOrEnumOrUse,
 >;
 pub type InsertResourceAppMutEmitter = AppMutationEmitter<IaInsertResource>;
 pub type InsertResourceAttrEmitter = AttrEmitter<IaInsertResource>;

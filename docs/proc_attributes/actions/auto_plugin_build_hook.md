@@ -8,6 +8,11 @@ Registers a build hook to run custom logic for a type when a plugin builds.
   When provided, the hook is run for each of these specific generic parameters.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
 
+# Notes
+- This attribute can be applied to a `use` item; each imported name becomes its own target.
+- `use ...::*`, `use ...::self`, and `_` imports are not supported.
+- Renames (`as`) are supported and use the local name.
+
 # Example
 ```rust
 use bevy::prelude::*;

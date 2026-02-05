@@ -4,6 +4,11 @@ Automatically registers `State<T>` and `NextState<T>` types with the app.
 - `plugin = PluginType` - Required. Specifies which plugin should register these state types.
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 
+# Notes
+- This attribute can be applied to a `use` item; each imported name becomes its own target.
+- `use ...::*`, `use ...::self`, and `_` imports are not supported.
+- Renames (`as`) are supported and use the local name.
+
 # Example
 ```rust
 use bevy::prelude::*;

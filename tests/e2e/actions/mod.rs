@@ -32,6 +32,7 @@ mod auto_register_state_type;
 mod auto_register_type;
 mod auto_register_type_generic;
 mod auto_register_type_named_generics;
+mod auto_register_type_use;
 mod auto_run_on_build;
 mod auto_run_on_build_ordered;
 mod auto_run_on_build_with_generics;

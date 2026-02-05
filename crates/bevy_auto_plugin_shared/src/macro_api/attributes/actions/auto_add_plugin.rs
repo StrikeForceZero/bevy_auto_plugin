@@ -20,8 +20,10 @@ impl AttributeIdent for AddPluginArgs {
     const IDENT: &'static str = "auto_add_plugin";
 }
 
-pub type IaAddPlugin =
-    ItemAttribute<Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>, AllowStructOrEnum>;
+pub type IaAddPlugin = ItemAttribute<
+    Composed<AddPluginArgs, WithPlugin, WithZeroOrManyGenerics>,
+    AllowStructOrEnumOrUse,
+>;
 pub type AddPluginAppMutEmitter = AppMutationEmitter<IaAddPlugin>;
 pub type AddPluginAttrEmitter = AttrEmitter<IaAddPlugin>;
 
