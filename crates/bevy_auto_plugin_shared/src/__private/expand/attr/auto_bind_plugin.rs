@@ -21,10 +21,11 @@ pub fn auto_bind_plugin_inner(
         )?;
 
     let plugin_path = item_attribute.args.plugin();
+    let plugin_end = item_attribute.args.plugin.end.is_present();
     let item = item_attribute.input_item.ensure_ast_mut()?;
     let mut attrs = item.take_attrs().map_err(|err| syn::Error::new(item.span(), err))?;
 
-    attrs_inject_plugin_param(&mut attrs, plugin_path);
+    attrs_inject_plugin_param(&mut attrs, plugin_path, plugin_end);
 
     let Ok(_) = item.put_attrs(attrs) else { unreachable!() };
 
@@ -66,7 +67,11 @@ mod tests {
     }
 }
 
-pub fn attrs_inject_plugin_param(attrs: &mut Vec<syn::Attribute>, plugin: &syn::Path) {
+pub fn attrs_inject_plugin_param(
+    attrs: &mut Vec<syn::Attribute>,
+    plugin: &syn::Path,
+    plugin_end: bool,
+) {
     use syn::Meta;
 
     for attr in attrs {
@@ -81,29 +86,90 @@ pub fn attrs_inject_plugin_param(attrs: &mut Vec<syn::Attribute>, plugin: &syn::
             Meta::Path(_) => false,
             Meta::NameValue(_) => true,
         };
+        let already_has_end = match &attr.meta {
+            Meta::List(ml) => list_has_key(ml, "end"),
+            Meta::Path(_) => false,
+            Meta::NameValue(_) => true,
+        };
 
-        if already_has_plugin {
+        let add_plugin = !already_has_plugin;
+        let add_end = plugin_end && !already_has_end;
+
+        if !add_plugin && !add_end {
             continue;
         }
 
-        attr_inject_plugin_param(attr, plugin);
+        attr_inject_plugin_param(attr, plugin, add_plugin, add_end);
     }
 }
 
-fn attr_inject_plugin_param(attr: &mut syn::Attribute, plugin: &syn::Path) {
+fn attr_inject_plugin_param(
+    attr: &mut syn::Attribute,
+    plugin: &syn::Path,
+    add_plugin: bool,
+    add_end: bool,
+) {
     use syn::{
         Meta,
+        Token,
+        parse::Parser,
         parse_quote,
+        punctuated::Punctuated,
     };
     match &attr.meta {
-        Meta::Path(path) => *attr = parse_quote!( #[#path(plugin = #plugin)] ),
+        Meta::Path(path) => {
+            *attr = if add_plugin && add_end {
+                parse_quote!( #[#path(plugin = #plugin, end)] )
+            } else if add_plugin {
+                parse_quote!( #[#path(plugin = #plugin)] )
+            } else if add_end {
+                parse_quote!( #[#path(end)] )
+            } else {
+                return;
+            };
+        }
         Meta::List(ml) => {
             let path = &ml.path;
-            let inner = &ml.tokens;
-            if inner.is_empty() {
-                *attr = parse_quote!( #[#path(plugin = #plugin)] )
-            } else {
-                *attr = parse_quote!( #[#path(plugin = #plugin, #inner)] )
+            let parser = Punctuated::<Meta, Token![,]>::parse_terminated;
+            match parser.parse2(ml.tokens.clone()) {
+                Ok(list) => {
+                    let mut items: Vec<Meta> = list.into_iter().collect();
+                    if add_plugin {
+                        items.insert(0, parse_quote!(plugin = #plugin));
+                    }
+                    if add_end {
+                        items.push(parse_quote!(end));
+                    }
+                    let tokens = quote::quote! { #(#items),* };
+                    *attr = parse_quote!( #[#path( #tokens )] );
+                }
+                Err(_) => {
+                    let inner = &ml.tokens;
+                    *attr = match (add_plugin, add_end) {
+                        (true, true) => {
+                            if inner.is_empty() {
+                                parse_quote!( #[#path(plugin = #plugin, end)] )
+                            } else {
+                                parse_quote!( #[#path(plugin = #plugin, end, #inner)] )
+                            }
+                        }
+                        (true, false) => {
+                            if inner.is_empty() {
+                                parse_quote!( #[#path(plugin = #plugin)] )
+                            } else {
+                                parse_quote!( #[#path(plugin = #plugin, #inner)] )
+                            }
+                        }
+                        (false, true) => {
+                            if inner.is_empty() {
+                                parse_quote!( #[#path(end)] )
+                            } else {
+                                parse_quote!( #[#path(end, #inner)] )
+                            }
+                        }
+                        (false, false) => return,
+                    };
+                }
             }
         }
         _ => {}
