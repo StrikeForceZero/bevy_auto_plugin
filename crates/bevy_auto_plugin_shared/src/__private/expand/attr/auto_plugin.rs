@@ -45,7 +45,7 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
 
     let mut impl_plugin = quote! {};
 
-    let (auto_plugin_hook, auto_plugin_hook_post_build) = if let Some(self_arg) = self_arg {
+    let (auto_plugin_hook, auto_plugin_hook_after_build) = if let Some(self_arg) = self_arg {
         if params.plugin.is_some() {
             return compile_error_with!(
                 syn::Error::new(
@@ -60,7 +60,7 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
                 <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::build(#self_arg, #app_param_ident);
             },
             quote! {
-                <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::post_build(#self_arg, #app_param_ident);
+                <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::after_build(#self_arg, #app_param_ident);
             },
         )
     } else {
@@ -94,7 +94,7 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
                 <#plugin_ident as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::static_build(#app_param_ident);
             },
             quote! {
-                <#plugin_ident as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::static_post_build(#app_param_ident);
+                <#plugin_ident as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::static_after_build(#app_param_ident);
             },
         )
     };
@@ -105,7 +105,7 @@ pub fn expand_auto_plugin(attr: MacroStream, input: MacroStream) -> MacroStream 
         {
             #auto_plugin_hook
             #block
-            #auto_plugin_hook_post_build
+            #auto_plugin_hook_after_build
         }
 
         #impl_plugin

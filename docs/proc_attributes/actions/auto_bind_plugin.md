@@ -1,8 +1,8 @@
-Automatically sets `plugin = _` (and optionally `post_build`) for all `#[auto_*(..)]` macros below it
+Automatically sets `plugin = _` (and optionally `after_build`) for all `#[auto_*(..)]` macros below it
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin to bind everything below.
-- `post_build` - Optional. Propagates the `post_build` flag to all `auto_*` macros below so their tokens run at the end of the plugin build.
+- `after_build` - Optional. Propagates the `after_build` flag to all `auto_*` macros below so their tokens run at the end of the plugin build.
 
 # Example
 ```rust

@@ -2,7 +2,7 @@ Automatically initializes a state in the app.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should initialize this state.
-- `post_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
+- `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 
 # Example
 ```rust

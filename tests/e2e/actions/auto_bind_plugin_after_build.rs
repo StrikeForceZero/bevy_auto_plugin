@@ -16,11 +16,11 @@ struct Test;
 impl Plugin for Test {
     #[auto_plugin]
     fn build(&self, app: &mut App) {
-        assert_post_build_type_registry(app, false);
+        assert_after_build_type_registry(app, false);
     }
 }
 
-fn assert_post_build_type_registry(app: &App, expected: bool) {
+fn assert_after_build_type_registry(app: &App, expected: bool) {
     let type_registry = app.world().resource::<AppTypeRegistry>().0.clone();
     let type_registry = type_registry.read();
     let entries = [
@@ -41,34 +41,34 @@ fn assert_post_build_type_registry(app: &App, expected: bool) {
         assert_eq!(
             type_registry.contains(type_id),
             expected,
-            "{name} should be registered {timing} post-build bindings run"
+            "{name} should be registered {timing} after-build bindings run"
         );
     }
 }
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 #[auto_register_type]
 #[auto_name]
 struct FooComponent;
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[auto_component(derive, register, reflect, auto_name)]
 struct FooComponent2;
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[auto_component(derive, register, reflect, auto_name)]
 struct FooComponent3;
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
 #[auto_register_type]
 #[auto_init_resource]
 struct FooDefaultRes(usize);
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
 #[auto_register_type]
@@ -76,31 +76,31 @@ struct FooDefaultRes(usize);
 #[auto_insert_resource(insert(FooRes(1)))]
 struct FooRes(usize);
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[auto_resource(derive, register, reflect, init)]
 #[derive(Default)]
 struct FooRes2(usize);
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[auto_resource(derive, register, reflect, init)]
 #[derive(Default)]
 struct FooRes3(usize);
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[derive(Message, Debug, Default, PartialEq, Reflect)]
 #[auto_register_type]
 #[auto_add_message]
 struct FooEvent(usize);
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[auto_event]
 struct FooEvent2(usize);
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[auto_event]
 struct FooEvent3(usize);
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[derive(States, Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Reflect)]
 #[auto_init_state]
 #[auto_register_state_type]
@@ -110,13 +110,13 @@ enum FooState {
     End,
 }
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[auto_add_system(schedule = Update)]
 fn foo_system(mut foo_res: ResMut<FooRes>) {
     foo_res.0 += 1;
 }
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[derive(Resource, Debug, Default, PartialEq, Reflect)]
 #[reflect(Resource)]
 #[auto_register_type]
@@ -125,7 +125,7 @@ struct FooComponentState {
     is_added: bool,
 }
 
-#[auto_bind_plugin(plugin = Test, post_build)]
+#[auto_bind_plugin(plugin = Test, after_build)]
 #[auto_add_observer]
 fn foo_observer(
     add: On<Add, FooComponent>,
@@ -144,9 +144,9 @@ fn app() -> App {
 }
 
 #[xtest]
-fn test_auto_bind_plugin_post_build_order() {
+fn test_auto_bind_plugin_after_build_order() {
     let app = app();
-    assert_post_build_type_registry(&app, true);
+    assert_after_build_type_registry(&app, true);
 }
 
 #[xtest]

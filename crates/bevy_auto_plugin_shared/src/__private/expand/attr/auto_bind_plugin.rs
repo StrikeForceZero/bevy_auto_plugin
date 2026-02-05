@@ -21,11 +21,11 @@ pub fn auto_bind_plugin_inner(
         )?;
 
     let plugin_path = item_attribute.args.plugin();
-    let plugin_post_build = item_attribute.args.plugin.post_build.is_present();
+    let plugin_after_build = item_attribute.args.plugin.after_build.is_present();
     let item = item_attribute.input_item.ensure_ast_mut()?;
     let mut attrs = item.take_attrs().map_err(|err| syn::Error::new(item.span(), err))?;
 
-    attrs_inject_plugin_param(&mut attrs, plugin_path, plugin_post_build);
+    attrs_inject_plugin_param(&mut attrs, plugin_path, plugin_after_build);
 
     let Ok(_) = item.put_attrs(attrs) else { unreachable!() };
 
@@ -70,7 +70,7 @@ mod tests {
 pub fn attrs_inject_plugin_param(
     attrs: &mut Vec<syn::Attribute>,
     plugin: &syn::Path,
-    plugin_post_build: bool,
+    plugin_after_build: bool,
 ) {
     use syn::Meta;
 
@@ -86,20 +86,20 @@ pub fn attrs_inject_plugin_param(
             Meta::Path(_) => false,
             Meta::NameValue(_) => true,
         };
-        let already_has_post_build = match &attr.meta {
-            Meta::List(ml) => list_has_key(ml, "post_build"),
+        let already_has_after_build = match &attr.meta {
+            Meta::List(ml) => list_has_key(ml, "after_build"),
             Meta::Path(_) => false,
             Meta::NameValue(_) => true,
         };
 
         let add_plugin = !already_has_plugin;
-        let add_post_build = plugin_post_build && !already_has_post_build;
+        let add_after_build = plugin_after_build && !already_has_after_build;
 
-        if !add_plugin && !add_post_build {
+        if !add_plugin && !add_after_build {
             continue;
         }
 
-        attr_inject_with_plugin_params(attr, plugin, add_plugin, add_post_build);
+        attr_inject_with_plugin_params(attr, plugin, add_plugin, add_after_build);
     }
 }
 
@@ -107,7 +107,7 @@ fn attr_inject_with_plugin_params(
     attr: &mut syn::Attribute,
     plugin: &syn::Path,
     add_plugin: bool,
-    add_post_build: bool,
+    add_after_build: bool,
 ) {
     use syn::{
         Meta,
@@ -118,12 +118,12 @@ fn attr_inject_with_plugin_params(
     };
     match &attr.meta {
         Meta::Path(path) => {
-            *attr = if add_plugin && add_post_build {
-                parse_quote!( #[#path(plugin = #plugin, post_build)] )
+            *attr = if add_plugin && add_after_build {
+                parse_quote!( #[#path(plugin = #plugin, after_build)] )
             } else if add_plugin {
                 parse_quote!( #[#path(plugin = #plugin)] )
-            } else if add_post_build {
-                parse_quote!( #[#path(post_build)] )
+            } else if add_after_build {
+                parse_quote!( #[#path(after_build)] )
             } else {
                 return;
             };
@@ -137,20 +137,20 @@ fn attr_inject_with_plugin_params(
                     if add_plugin {
                         items.insert(0, parse_quote!(plugin = #plugin));
                     }
-                    if add_post_build {
-                        items.push(parse_quote!(post_build));
+                    if add_after_build {
+                        items.push(parse_quote!(after_build));
                     }
                     let tokens = quote::quote! { #(#items),* };
                     *attr = parse_quote!( #[#path( #tokens )] );
                 }
                 Err(_) => {
                     let inner = &ml.tokens;
-                    *attr = match (add_plugin, add_post_build) {
+                    *attr = match (add_plugin, add_after_build) {
                         (true, true) => {
                             if inner.is_empty() {
-                                parse_quote!( #[#path(plugin = #plugin, post_build)] )
+                                parse_quote!( #[#path(plugin = #plugin, after_build)] )
                             } else {
-                                parse_quote!( #[#path(plugin = #plugin, post_build, #inner)] )
+                                parse_quote!( #[#path(plugin = #plugin, after_build, #inner)] )
                             }
                         }
                         (true, false) => {
@@ -162,9 +162,9 @@ fn attr_inject_with_plugin_params(
                         }
                         (false, true) => {
                             if inner.is_empty() {
-                                parse_quote!( #[#path(post_build)] )
+                                parse_quote!( #[#path(after_build)] )
                             } else {
-                                parse_quote!( #[#path(post_build, #inner)] )
+                                parse_quote!( #[#path(after_build, #inner)] )
                             }
                         }
                         (false, false) => return,

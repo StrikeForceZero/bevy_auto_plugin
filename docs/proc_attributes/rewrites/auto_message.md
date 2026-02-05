@@ -2,7 +2,7 @@ Automatically registers an event to be added to the app.
 
 # Parameters
 - `plugin = PluginType` - Required. Specifies which plugin should register this event.
-- `post_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
+- `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the event will be registered with these specific generic parameters.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(A = ..., B = ...)`.

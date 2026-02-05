@@ -26,76 +26,32 @@ pub use linkme;
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "inventory")))]
 #[linkme::distributed_slice]
-pub static AUTO_PLUGINS: [AutoPluginRegistryEntryFactory];
+pub static AUTO_PLUGINS_BEFORE_BUILD: [AutoPluginRegistryEntryFactoryBeforeBuild];
 
 #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
-inventory::collect!(AutoPluginRegistryEntryFactory);
+inventory::collect!(AutoPluginRegistryEntryFactoryBeforeBuild);
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "inventory")))]
 #[linkme::distributed_slice]
-pub static AUTO_PLUGINS_POST_BUILD: [AutoPluginRegistryEntryFactoryPostBuild];
+pub static AUTO_PLUGINS_AFTER_BUILD: [AutoPluginRegistryEntryFactoryAfterBuild];
 
 #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
-inventory::collect!(AutoPluginRegistryEntryFactoryPostBuild);
+inventory::collect!(AutoPluginRegistryEntryFactoryAfterBuild);
 
-pub static AUTO_PLUGIN_REGISTRY: LazyLock<AutoPluginRegistry> = LazyLock::new(|| {
+pub static AUTO_PLUGIN_REGISTRY_BEFORE_BUILD: LazyLock<AutoPluginRegistry> = LazyLock::new(|| {
     #[cfg(target_arch = "wasm32")]
     crate::_initialize();
 
     #[cfg(not(any(target_arch = "wasm32", feature = "inventory")))]
-    let iter = AUTO_PLUGINS.into_iter();
+    let iter = AUTO_PLUGINS_BEFORE_BUILD.into_iter();
     #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
-    let iter = ::inventory::iter::<AutoPluginRegistryEntryFactory>.into_iter();
+    let iter = ::inventory::iter::<AutoPluginRegistryEntryFactoryBeforeBuild>.into_iter();
 
     #[allow(unused_variables)]
     let mut count = 0;
     let mut registry: HashMap<TypeId, Vec<(RegistryOrder, BevyAppBuildFn)>> = HashMap::new();
 
-    for (ix, AutoPluginRegistryEntryFactory(type_factory, sys_factory, order)) in iter.enumerate() {
-        registry.entry(type_factory()).or_default().push((*order, *sys_factory));
-        #[allow(unused_assignments)]
-        {
-            count = ix + 1;
-        }
-    }
-
-    // Sort per-plugin entries by definition order for deterministic execution.
-    let mut registry = registry
-        .into_iter()
-        .map(|(type_id, mut entries)| {
-            entries.sort_by(|a, b| a.0.cmp(&b.0));
-            let mut build_fns = Vec::with_capacity(entries.len());
-            for (_, build_fn) in entries {
-                build_fns.push(build_fn);
-            }
-            (type_id, build_fns)
-        })
-        .collect::<HashMap<_, _>>();
-
-    // Trim down
-    registry.values_mut().for_each(|vec| vec.shrink_to_fit());
-    registry.shrink_to_fit();
-
-    #[cfg(feature = "debug_log_plugin_registry")]
-    log::debug!("Building AutoPluginRegistry from {count} entries");
-
-    AutoPluginRegistry(registry)
-});
-
-pub static AUTO_PLUGIN_REGISTRY_POST_BUILD: LazyLock<AutoPluginRegistry> = LazyLock::new(|| {
-    #[cfg(target_arch = "wasm32")]
-    crate::_initialize();
-
-    #[cfg(not(any(target_arch = "wasm32", feature = "inventory")))]
-    let iter = AUTO_PLUGINS_POST_BUILD.into_iter();
-    #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
-    let iter = ::inventory::iter::<AutoPluginRegistryEntryFactoryPostBuild>.into_iter();
-
-    #[allow(unused_variables)]
-    let mut count = 0;
-    let mut registry: HashMap<TypeId, Vec<(RegistryOrder, BevyAppBuildFn)>> = HashMap::new();
-
-    for (ix, AutoPluginRegistryEntryFactoryPostBuild(type_factory, sys_factory, order)) in
+    for (ix, AutoPluginRegistryEntryFactoryBeforeBuild(type_factory, sys_factory, order)) in
         iter.enumerate()
     {
         registry.entry(type_factory()).or_default().push((*order, *sys_factory));
@@ -123,7 +79,53 @@ pub static AUTO_PLUGIN_REGISTRY_POST_BUILD: LazyLock<AutoPluginRegistry> = LazyL
     registry.shrink_to_fit();
 
     #[cfg(feature = "debug_log_plugin_registry")]
-    log::debug!("Building AutoPluginRegistryPostBuild from {count} entries");
+    log::debug!("Building AutoPluginRegistryBeforeBuild from {count} entries");
+
+    AutoPluginRegistry(registry)
+});
+
+pub static AUTO_PLUGIN_REGISTRY_AFTER_BUILD: LazyLock<AutoPluginRegistry> = LazyLock::new(|| {
+    #[cfg(target_arch = "wasm32")]
+    crate::_initialize();
+
+    #[cfg(not(any(target_arch = "wasm32", feature = "inventory")))]
+    let iter = AUTO_PLUGINS_AFTER_BUILD.into_iter();
+    #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
+    let iter = ::inventory::iter::<AutoPluginRegistryEntryFactoryAfterBuild>.into_iter();
+
+    #[allow(unused_variables)]
+    let mut count = 0;
+    let mut registry: HashMap<TypeId, Vec<(RegistryOrder, BevyAppBuildFn)>> = HashMap::new();
+
+    for (ix, AutoPluginRegistryEntryFactoryAfterBuild(type_factory, sys_factory, order)) in
+        iter.enumerate()
+    {
+        registry.entry(type_factory()).or_default().push((*order, *sys_factory));
+        #[allow(unused_assignments)]
+        {
+            count = ix + 1;
+        }
+    }
+
+    // Sort per-plugin entries by definition order for deterministic execution.
+    let mut registry = registry
+        .into_iter()
+        .map(|(type_id, mut entries)| {
+            entries.sort_by(|a, b| a.0.cmp(&b.0));
+            let mut build_fns = Vec::with_capacity(entries.len());
+            for (_, build_fn) in entries {
+                build_fns.push(build_fn);
+            }
+            (type_id, build_fns)
+        })
+        .collect::<HashMap<_, _>>();
+
+    // Trim down
+    registry.values_mut().for_each(|vec| vec.shrink_to_fit());
+    registry.shrink_to_fit();
+
+    #[cfg(feature = "debug_log_plugin_registry")]
+    log::debug!("Building AutoPluginRegistryAfterBuild from {count} entries");
 
     AutoPluginRegistry(registry)
 });
@@ -153,18 +155,18 @@ pub trait AutoPlugin: AutoPluginTypeId {
         Self::static_build(app);
     }
     #[inline]
-    fn post_build(&self, app: &mut bevy_app::App) {
-        Self::static_post_build(app);
+    fn after_build(&self, app: &mut bevy_app::App) {
+        Self::static_after_build(app);
     }
     fn static_build(app: &mut bevy_app::App) {
         let type_id = <Self as AutoPluginTypeId>::type_id();
-        AUTO_PLUGIN_REGISTRY.get_entries(type_id).iter().for_each(|build_fn| {
+        AUTO_PLUGIN_REGISTRY_BEFORE_BUILD.get_entries(type_id).iter().for_each(|build_fn| {
             build_fn(app);
         });
     }
-    fn static_post_build(app: &mut bevy_app::App) {
+    fn static_after_build(app: &mut bevy_app::App) {
         let type_id = <Self as AutoPluginTypeId>::type_id();
-        AUTO_PLUGIN_REGISTRY_POST_BUILD.get_entries(type_id).iter().for_each(|build_fn| {
+        AUTO_PLUGIN_REGISTRY_AFTER_BUILD.get_entries(type_id).iter().for_each(|build_fn| {
             build_fn(app);
         });
     }
@@ -172,8 +174,8 @@ pub trait AutoPlugin: AutoPluginTypeId {
 
 pub type TypeIdFn = fn() -> TypeId;
 pub type BevyAppBuildFn = fn(&mut bevy_app::App);
-pub struct AutoPluginRegistryEntryFactory(TypeIdFn, BevyAppBuildFn, RegistryOrder);
-pub struct AutoPluginRegistryEntryFactoryPostBuild(TypeIdFn, BevyAppBuildFn, RegistryOrder);
+pub struct AutoPluginRegistryEntryFactoryBeforeBuild(TypeIdFn, BevyAppBuildFn, RegistryOrder);
+pub struct AutoPluginRegistryEntryFactoryAfterBuild(TypeIdFn, BevyAppBuildFn, RegistryOrder);
 
 #[macro_export]
 #[doc(hidden)]
@@ -200,7 +202,7 @@ impl RegistryOrder {
     }
 }
 
-impl AutoPluginRegistryEntryFactory {
+impl AutoPluginRegistryEntryFactoryBeforeBuild {
     pub const fn new(
         type_factory: fn() -> TypeId,
         sys_factory: fn(&mut bevy_app::App),
@@ -209,7 +211,7 @@ impl AutoPluginRegistryEntryFactory {
         Self(type_factory, sys_factory, order)
     }
 }
-impl AutoPluginRegistryEntryFactoryPostBuild {
+impl AutoPluginRegistryEntryFactoryAfterBuild {
     pub const fn new(
         type_factory: fn() -> TypeId,
         sys_factory: fn(&mut bevy_app::App),
@@ -230,7 +232,7 @@ pub fn _plugin_entry_block(static_ident: &Ident, plugin: &Path, expr: &ExprClosu
     quote! {
         ::bevy_auto_plugin::__private::shared::_plugin_entry!(
             #static_ident,
-            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactory::new(
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryBeforeBuild::new(
                 || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
                 #expr,
                 ::bevy_auto_plugin::__private::shared::registry_order!()
@@ -239,15 +241,15 @@ pub fn _plugin_entry_block(static_ident: &Ident, plugin: &Path, expr: &ExprClosu
     }
 }
 
-pub fn _plugin_entry_block_post_build(
+pub fn _plugin_entry_block_after_build(
     static_ident: &Ident,
     plugin: &Path,
     expr: &ExprClosure,
 ) -> MacroStream {
     quote! {
-        ::bevy_auto_plugin::__private::shared::_plugin_entry_post_build!(
+        ::bevy_auto_plugin::__private::shared::_plugin_entry_after_build!(
             #static_ident,
-            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryPostBuild::new(
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryAfterBuild::new(
                 || <#plugin as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginTypeId>::type_id(),
                 #expr,
                 ::bevy_auto_plugin::__private::shared::registry_order!()
@@ -262,12 +264,12 @@ pub fn _plugin_entry_block_post_build(
 macro_rules! _plugin_entry {
     ($static_ident:ident, $entry:expr) => {
         #[::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::linkme::distributed_slice(
-            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AUTO_PLUGINS
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AUTO_PLUGINS_BEFORE_BUILD
         )]
         #[linkme(crate = ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::linkme)]
         #[allow(non_upper_case_globals)]
         static $static_ident:
-            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactory =
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryBeforeBuild =
             $entry;
     };
 }
@@ -286,15 +288,15 @@ macro_rules! _plugin_entry {
 #[cfg(not(any(target_arch = "wasm32", feature = "inventory")))]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! _plugin_entry_post_build {
+macro_rules! _plugin_entry_after_build {
     ($static_ident:ident, $entry:expr) => {
         #[::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::linkme::distributed_slice(
-            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AUTO_PLUGINS_POST_BUILD
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AUTO_PLUGINS_AFTER_BUILD
         )]
         #[linkme(crate = ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::linkme)]
         #[allow(non_upper_case_globals)]
         static $static_ident:
-            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryPostBuild =
+            ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPluginRegistryEntryFactoryAfterBuild =
             $entry;
     };
 }
@@ -302,7 +304,7 @@ macro_rules! _plugin_entry_post_build {
 #[cfg(any(target_arch = "wasm32", feature = "inventory"))]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! _plugin_entry_post_build {
+macro_rules! _plugin_entry_after_build {
     ($static_ident:ident, $entry:expr) => {
         ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::inventory::submit!(
             $entry
@@ -318,7 +320,7 @@ mod tests {
         use super::*;
         #[test]
         fn builds_registry() {
-            let _ = &*AUTO_PLUGIN_REGISTRY;
+            let _ = &*AUTO_PLUGIN_REGISTRY_BEFORE_BUILD;
         }
     }
 
@@ -327,7 +329,7 @@ mod tests {
         use super::*;
         #[test]
         fn builds_registry() {
-            let _ = &*AUTO_PLUGIN_REGISTRY;
+            let _ = &*AUTO_PLUGIN_REGISTRY_BEFORE_BUILD;
         }
     }
 }

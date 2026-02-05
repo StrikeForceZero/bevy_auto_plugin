@@ -1,7 +1,7 @@
 use crate::{
     __private::auto_plugin_registry::{
         _plugin_entry_block,
-        _plugin_entry_block_post_build,
+        _plugin_entry_block_after_build,
     },
     macro_api::prelude::*,
 };
@@ -41,15 +41,15 @@ impl<T> AppMutationEmitter<T> {
         let app_param = &self.app_param;
         let unique_ident = self.args.get_unique_ident();
         let plugin = self.args.plugin().clone();
-        let use_post_build = self.args.plugin_post_build();
+        let use_after_build = self.args.plugin_after_build();
         let body = body(self.to_token_stream());
         let expr: syn::ExprClosure = syn::parse_quote!(|#app_param| {
             #body
         });
         // required for generics
         let unique_ident = format_ident!("{unique_ident}");
-        let output = if use_post_build {
-            _plugin_entry_block_post_build(&unique_ident, &plugin, &expr)
+        let output = if use_after_build {
+            _plugin_entry_block_after_build(&unique_ident, &plugin, &expr)
         } else {
             _plugin_entry_block(&unique_ident, &plugin, &expr)
         };
