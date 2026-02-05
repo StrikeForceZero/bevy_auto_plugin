@@ -70,6 +70,7 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
             {
                 fn build(&self, app: &mut ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::bevy_app::App) {
                     <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::build(self, app);
+                    <Self as ::bevy_auto_plugin::__private::shared::__private::auto_plugin_registry::AutoPlugin>::after_build(self, app);
                 }
             }
         });

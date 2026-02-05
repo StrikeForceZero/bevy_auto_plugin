@@ -187,11 +187,17 @@ impl<T, R> ItemAttribute<T, R> {
 
 pub trait ItemAttributePlugin {
     fn plugin(&self) -> &syn::Path;
+    fn plugin_after_build(&self) -> bool {
+        false
+    }
 }
 
 impl<T, G, Resolver> ItemAttributePlugin for ItemAttribute<Composed<T, WithPlugin, G>, Resolver> {
     fn plugin(&self) -> &Path {
         self.args.plugin()
+    }
+    fn plugin_after_build(&self) -> bool {
+        self.args.plugin.after_build.is_present()
     }
 }
 

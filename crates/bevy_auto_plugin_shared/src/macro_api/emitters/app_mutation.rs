@@ -1,5 +1,8 @@
 use crate::{
-    __private::auto_plugin_registry::_plugin_entry_block,
+    __private::auto_plugin_registry::{
+        _plugin_entry_block,
+        _plugin_entry_block_after_build,
+    },
     macro_api::prelude::*,
 };
 use proc_macro2::TokenStream;
@@ -38,13 +41,18 @@ impl<T> AppMutationEmitter<T> {
         let app_param = &self.app_param;
         let unique_ident = self.args.get_unique_ident();
         let plugin = self.args.plugin().clone();
+        let use_after_build = self.args.plugin_after_build();
         let body = body(self.to_token_stream());
         let expr: syn::ExprClosure = syn::parse_quote!(|#app_param| {
             #body
         });
         // required for generics
         let unique_ident = format_ident!("{unique_ident}");
-        let output = _plugin_entry_block(&unique_ident, &plugin, &expr);
+        let output = if use_after_build {
+            _plugin_entry_block_after_build(&unique_ident, &plugin, &expr)
+        } else {
+            _plugin_entry_block(&unique_ident, &plugin, &expr)
+        };
         assert!(!output.is_empty(), "No plugin entry points were generated for ident: {ident}");
         Ok(output)
     }
