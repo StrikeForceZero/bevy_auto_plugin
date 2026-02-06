@@ -55,6 +55,8 @@ where
         let generics_keys: HashSet<&str> = MGenerics::keys().iter().copied().collect();
 
         let mut plugin_bucket = Vec::<NestedMeta>::new();
+        #[cfg(feature = "default_plugin")]
+        let mut has_plugin_key = false;
         let mut generics_bucket = Vec::<NestedMeta>::new();
         let mut base_bucket = Vec::<NestedMeta>::new();
 
@@ -73,6 +75,10 @@ where
             };
 
             let routed = if let Some(ref k) = key_opt {
+                #[cfg(feature = "default_plugin")]
+                if k == "plugin" {
+                    has_plugin_key = true;
+                }
                 if plugin_keys.contains(k.as_str()) {
                     plugin_bucket.push(nm.clone());
                     true
@@ -89,6 +95,14 @@ where
             if !routed {
                 base_bucket.push(nm.clone());
             }
+        }
+
+        #[cfg(feature = "default_plugin")]
+        if !has_plugin_key && plugin_keys.contains("plugin") {
+            plugin_bucket.insert(
+                0,
+                NestedMeta::Meta(parse_quote!(plugin = __bevy_auto_plugin_default_plugin)),
+            );
         }
 
         // Parse each bucket

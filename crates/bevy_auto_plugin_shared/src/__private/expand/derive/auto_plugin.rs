@@ -76,6 +76,25 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
         });
     }
 
+    #[cfg(feature = "default_plugin")]
+    if params.auto_plugin.default_plugin.is_present() {
+        if !params.generics.params.is_empty() {
+            compile_warnings.extend(
+                syn::Error::new(
+                    params.auto_plugin.default_plugin.span(),
+                    "`default_plugin` is not supported for generic plugins; use a concrete wrapper type",
+                )
+                .to_compile_error(),
+            );
+        } else {
+            output.extend(quote! {
+                #[doc(hidden)]
+                #[allow(dead_code)]
+                type __bevy_auto_plugin_default_plugin = #ident;
+            });
+        }
+    }
+
     quote! {
         #compile_warnings
         #output

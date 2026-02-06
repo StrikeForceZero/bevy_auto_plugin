@@ -22,6 +22,8 @@ pub struct AutoPluginStructOrEnumArgs {
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub impl_plugin_trait: Flag,
+    #[cfg(feature = "default_plugin")]
+    pub default_plugin: Flag,
     #[deprecated(
         since = "0.8.0",
         note = "always implemented - remove `impl_generic_auto_plugin_trait`"

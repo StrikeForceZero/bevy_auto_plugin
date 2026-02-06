@@ -3,6 +3,7 @@ events, resources, and systems.
 
 # Parameters
 - `impl_plugin_trait` - Optional. When present, it automatically implements the Plugin trait.
+- `default_plugin` - Optional (feature: `default_plugin`). Emits a default plugin alias so `auto_*` macros can omit `plugin = ...`.
 
 # Example
 ```rust
