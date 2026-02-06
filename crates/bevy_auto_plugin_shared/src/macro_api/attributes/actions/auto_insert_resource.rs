@@ -144,13 +144,13 @@ impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
                 emit_deprecated_insert_resource_warning(
                     tokens,
                     init.span(),
-                    "auto_insert_resource(init(...)) is deprecated; use insert(...) instead",
+                    "auto_insert_resource(init(...)) is deprecated; use insert(...) instead. Planned for removal in 0.11.0 or bevy 0.19 (whichever comes last).",
                 );
             } else if let Some(resource) = &base.resource {
                 emit_deprecated_insert_resource_warning(
                     tokens,
                     resource.span(),
-                    "auto_insert_resource(resource(...)) is deprecated; use insert(...) instead",
+                    "auto_insert_resource(resource(...)) is deprecated; use insert(...) instead. Planned for removal in 0.11.0 or bevy 0.19 (whichever comes last).",
                 );
             }
         }

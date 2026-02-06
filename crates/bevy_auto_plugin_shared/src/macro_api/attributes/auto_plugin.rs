@@ -18,7 +18,10 @@ use syn::{
 #[derive(FromMeta, Debug, Default, Clone)]
 #[darling(derive_syn_parse, default)]
 pub struct AutoPluginStructOrEnumArgs {
-    #[deprecated(since = "0.8.0", note = "no longer needed - remove `generics(...)`")]
+    #[deprecated(
+        since = "0.8.0",
+        note = "no longer needed - remove `generics(...)`. Planned for removal in 0.11.0 or bevy 0.19 (whichever comes last)."
+    )]
     #[darling(multiple)]
     pub generics: Vec<TypeList>,
     pub impl_plugin_trait: Flag,
@@ -26,12 +29,12 @@ pub struct AutoPluginStructOrEnumArgs {
     pub default_plugin: Flag,
     #[deprecated(
         since = "0.8.0",
-        note = "always implemented - remove `impl_generic_auto_plugin_trait`"
+        note = "always implemented - remove `impl_generic_auto_plugin_trait`. Planned for removal in 0.11.0 or bevy 0.19 (whichever comes last)."
     )]
     pub impl_generic_auto_plugin_trait: Flag,
     #[deprecated(
         since = "0.8.0",
-        note = "always implemented - remove `impl_generic_plugin_trait`"
+        note = "always implemented - remove `impl_generic_plugin_trait`. Planned for removal in 0.11.0 or bevy 0.19 (whichever comes last)."
     )]
     pub impl_generic_plugin_trait: Flag,
 }

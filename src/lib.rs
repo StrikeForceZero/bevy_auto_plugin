@@ -173,7 +173,10 @@ pub mod prelude {
     pub use bevy_auto_plugin_proc_macros::auto_add_message;
 
     #[doc = include_str!("../docs/proc_attributes/actions/auto_add_plugin.md")]
-    #[deprecated(since = "0.6.0", note = "Use `auto_add_message` instead.")]
+    #[deprecated(
+        since = "0.6.0",
+        note = "Use `auto_add_message` instead. Planned for removal in 0.11.0 or bevy 0.19 (whichever comes last)."
+    )]
     pub use bevy_auto_plugin_proc_macros::auto_add_message as auto_add_event;
 
     #[doc = include_str!("../docs/proc_attributes/actions/auto_add_plugin.md")]
