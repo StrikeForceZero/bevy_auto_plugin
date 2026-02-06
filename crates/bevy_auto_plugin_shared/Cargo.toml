@@ -15,6 +15,7 @@ inventory = []
 debug_log_plugin_registry = ["log"]
 log_plugin_build = ["log"]
 compat_generics_angles = []
+default_plugin = []
 web = [
     "bevy_app/web"
 ]

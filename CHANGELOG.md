@@ -166,3 +166,4 @@
 - Add `pipe_in` for `auto_add_system`/`auto_system` to build system pipelines.
 - Accept `generics = <...>` as shorthand for `generics(...)` in attributes (feature: `compat_generics_angles`).
   - This feature will eventually be removed unless a petition is opened.
+- Add optional `default_plugin` feature to allow omitting `plugin = ...` when a default plugin is set via `#[auto_plugin(default_plugin)]`.

@@ -201,6 +201,7 @@ fn plugin(app: &mut App) {
 ```
 
 There is `auto_plugin` arguments if your plugin has generics.
+Optional: enable feature `default_plugin` and add `#[auto_plugin(default_plugin)]` to allow `auto_*` macros to omit `plugin = ...`.
 
 See [tests](tests/e2e) for other examples
 

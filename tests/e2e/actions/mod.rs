@@ -16,6 +16,8 @@ mod auto_bind_plugin_after_build;
 mod auto_configure_system_set;
 mod auto_configure_system_set_schedule_config;
 mod auto_configure_system_set_schedule_config_multiple_groups;
+#[cfg(feature = "default_plugin")]
+mod auto_default_plugin;
 mod auto_init_resource;
 mod auto_init_resource_generic;
 mod auto_init_state;
