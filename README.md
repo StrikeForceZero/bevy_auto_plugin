@@ -14,6 +14,15 @@ It helps keep your code ***focused on game logic rather than framework plumbing.
 
 The following examples demonstrate how common Bevy patterns can be expressed more ergonomically with `#[auto_*]` macros, while still generating the underlying bevy-specific code you would normally write by hand.
 
+## Bevy Compatibility
+
+| bevy_auto_plugin | Bevy |
+| --- | --- |
+| 0.9.x - 0.10.x | 0.18 |
+| 0.6.x - 0.8.x | 0.17 |
+| 0.2.x - 0.5.x | 0.16 |
+| 0.1.x | 0.15 |
+
 ## Examples
 
 ### Basic
