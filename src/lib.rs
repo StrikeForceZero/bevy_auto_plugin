@@ -44,6 +44,25 @@
 //! }
 //! ```
 //!
+//! Optional: enable feature `default_plugin` and mark a plugin as the default. With that in scope,
+//! `auto_*` macros can omit `plugin = ...`.
+//!
+//! ```rust
+//! #[cfg(feature = "default_plugin")]
+//! use bevy::prelude::*;
+//! #[cfg(feature = "default_plugin")]
+//! use bevy_auto_plugin::prelude::*;
+//!
+//! #[cfg(feature = "default_plugin")]
+//! #[derive(AutoPlugin)]
+//! #[auto_plugin(impl_plugin_trait, default_plugin)]
+//! struct MyPlugin;
+//!
+//! #[cfg(feature = "default_plugin")]
+//! #[auto_component(derive, reflect, register)]
+//! struct MyComponent;
+//! ```
+//!
 //! ### Using Attributes
 //! When `Plugin::build` is called on `MyPlugin` (i.e., `app.add_plugins(MyPlugin)`), the code for each attribute will be executed.
 //!

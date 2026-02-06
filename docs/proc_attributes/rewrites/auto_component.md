@@ -1,7 +1,7 @@
 Automatically registers a component to be added to the app.
 
 # Parameters
-- `plugin = PluginType` - Required. Specifies which plugin should register this component.
+- `plugin = PluginType` - Required unless the `default_plugin` feature is enabled and `#[auto_plugin(default_plugin)]` is in scope. Specifies which plugin should register this component.
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   When provided, the component will be registered with these specific generic parameters.

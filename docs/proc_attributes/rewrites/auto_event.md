@@ -1,7 +1,7 @@
 Automatically registers an event to be added to the app.
 
 # Parameters
-- `plugin = PluginType` - Required. Specifies which plugin should register this event.
+- `plugin = PluginType` - Required unless the `default_plugin` feature is enabled and `#[auto_plugin(default_plugin)]` is in scope. Specifies which plugin should register this event.
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 - `target([global|entity])` - Optional. (defaults to `global`) Specifies this is a global or entity event: `Event` or `EntityEvent`.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.

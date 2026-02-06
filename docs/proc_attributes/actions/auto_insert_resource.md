@@ -1,7 +1,7 @@
 Automatically inserts a resource with a specific value into the app.
 
 # Parameters
-- `plugin = PluginType` - Required. Specifies which plugin should insert this resource.
+- `plugin = PluginType` - Required unless the `default_plugin` feature is enabled and `#[auto_plugin(default_plugin)]` is in scope. Specifies which plugin should insert this resource.
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 - `insert(Value)` - Required. Specifies the resource value to insert.
 - `init(Value)` - Legacy. Same as `insert(Value)`; emits a deprecation warning.
