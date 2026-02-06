@@ -14,6 +14,7 @@ publish = true
 inventory = []
 debug_log_plugin_registry = ["log"]
 log_plugin_build = ["log"]
+# This feature will eventually be removed unless a petition is opened.
 compat_generics_angles = []
 default_plugin = []
 web = [
