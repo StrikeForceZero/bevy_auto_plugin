@@ -43,11 +43,10 @@ pub fn inject_send_sync_static(generics: &mut syn::Generics) {
                 }) => {
                     // e.g. ?Sized — ignore
                 }
-                TypeParamBound::Lifetime(lt) => {
-                    if lt == &Lifetime::new("'static", lt.apostrophe) {
+                TypeParamBound::Lifetime(lt)
+                    if lt == &Lifetime::new("'static", lt.apostrophe) => {
                         has_static = true;
                     }
-                }
                 _ => {}
             }
         }

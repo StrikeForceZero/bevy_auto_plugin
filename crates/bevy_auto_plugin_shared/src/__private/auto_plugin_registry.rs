@@ -65,7 +65,7 @@ pub static AUTO_PLUGIN_REGISTRY_BEFORE_BUILD: LazyLock<AutoPluginRegistry> = Laz
     let mut registry = registry
         .into_iter()
         .map(|(type_id, mut entries)| {
-            entries.sort_by(|a, b| a.0.cmp(&b.0));
+            entries.sort_by_key(|a| a.0);
             let mut build_fns = Vec::with_capacity(entries.len());
             for (_, build_fn) in entries {
                 build_fns.push(build_fn);
@@ -111,7 +111,7 @@ pub static AUTO_PLUGIN_REGISTRY_AFTER_BUILD: LazyLock<AutoPluginRegistry> = Lazy
     let mut registry = registry
         .into_iter()
         .map(|(type_id, mut entries)| {
-            entries.sort_by(|a, b| a.0.cmp(&b.0));
+            entries.sort_by_key(|a| a.0);
             let mut build_fns = Vec::with_capacity(entries.len());
             for (_, build_fn) in entries {
                 build_fns.push(build_fn);
