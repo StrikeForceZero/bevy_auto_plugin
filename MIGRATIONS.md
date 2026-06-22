@@ -66,3 +66,11 @@
 
 ## v0.8 to v0.9
 - Deprecated (compiler error) `resource` in favor of `insert` in `auto_insert_resource`
+
+## v0.10 to v0.11
+- Bevy support moved from 0.18 to 0.19.
+- Removed `auto_add_event`; use `auto_add_message`.
+- Removed `#[auto_plugin]` params `generics(...)`, `impl_generic_auto_plugin_trait`, and `impl_generic_plugin_trait`.
+    - Use `impl_plugin_trait` when you want the derive to implement Bevy's `Plugin`.
+    - `AutoPlugin` is always implemented when deriving `AutoPlugin`.
+- Removed `init(...)` and `resource(...)` from `auto_insert_resource`; use `insert(...)`.

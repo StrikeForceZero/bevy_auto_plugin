@@ -1,6 +1,5 @@
 use crate::util::macros::parse_macro_input2;
 use proc_macro2::TokenStream as MacroStream;
-use syn::spanned::Spanned;
 
 pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
     use crate::{
@@ -20,38 +19,6 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
         generics::inject_send_sync_static(&mut params.generics);
         params
     };
-
-    let mut compile_warnings = quote! {};
-
-    #[allow(deprecated)]
-    if params.auto_plugin.impl_generic_auto_plugin_trait.is_present() {
-        compile_warnings.extend(
-            syn::Error::new(
-                params.auto_plugin.impl_generic_auto_plugin_trait.span(),
-                "always implemented - remove `impl_generic_auto_plugin_trait`",
-            )
-            .to_compile_error(),
-        )
-    }
-
-    #[allow(deprecated)]
-    if params.auto_plugin.impl_generic_plugin_trait.is_present() {
-        compile_warnings.extend(
-            syn::Error::new(
-                params.auto_plugin.impl_generic_plugin_trait.span(),
-                "use `impl_plugin_trait` instead",
-            )
-            .to_compile_error(),
-        )
-    }
-
-    #[allow(deprecated)]
-    for generics in &params.auto_plugin.generics {
-        compile_warnings.extend(
-            syn::Error::new(generics.span(), "no longer needed - remove `generics(...)`")
-                .to_compile_error(),
-        )
-    }
 
     let ident = &params.ident; // `Test`
     let generics = &params.generics; // `<T1, T2>`
@@ -79,7 +46,7 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
     #[cfg(feature = "default_plugin")]
     if params.auto_plugin.default_plugin.is_present() {
         if !params.generics.params.is_empty() {
-            compile_warnings.extend(
+            output.extend(
                 syn::Error::new(
                     params.auto_plugin.default_plugin.span(),
                     "`default_plugin` is not supported for generic plugins; use a concrete wrapper type",
@@ -96,7 +63,6 @@ pub fn expand_derive_auto_plugin(input: MacroStream) -> MacroStream {
     }
 
     quote! {
-        #compile_warnings
         #output
     }
 }

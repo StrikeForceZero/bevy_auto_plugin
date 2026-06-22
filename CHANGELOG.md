@@ -168,3 +168,10 @@
 - Accept `generics = <...>` as shorthand for `generics(...)` in attributes (feature: `compat_generics_angles`).
   - This feature will eventually be removed unless a petition is opened.
 - Add optional `default_plugin` feature to allow omitting `plugin = ...` when a default plugin is set via `#[auto_plugin(default_plugin)]`.
+
+---
+## v0.11.0
+- Update to bevy 0.19
+- Remove deprecated `auto_add_event` alias; use `auto_add_message`.
+- Remove deprecated `#[auto_plugin]` args `generics(...)`, `impl_generic_auto_plugin_trait`, and `impl_generic_plugin_trait`.
+- Remove deprecated `init(...)` and `resource(...)` args from `auto_insert_resource`; use `insert(...)`.
