@@ -3,42 +3,28 @@ use crate::{
     syntax::ast::any_expr::AnyExprCallClosureMacroPath,
 };
 use darling::FromMeta;
-use proc_macro2::{
-    Span,
-    TokenStream,
-};
+use proc_macro2::TokenStream;
 use quote::{
     ToTokens,
     quote,
-    quote_spanned,
 };
 use std::hash::Hash;
-use syn::{
-    parse_quote,
-    spanned::Spanned,
-};
+use syn::parse_quote;
 
 #[derive(FromMeta, Default, Debug, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, and_then = Self::validate)]
 pub struct InsertResourceArgs {
-    // TODO: after removing legacy fields, remove _resolved, make insert required
     pub insert: Option<MetaExpr>,
-    pub resource: Option<MetaExpr>,
-    pub init: Option<MetaExpr>,
-    #[darling(skip)]
-    _resolved: Option<AnyExprCallClosureMacroPath>,
 }
 
 #[derive(Debug, Clone)]
 pub struct MetaExpr {
     value: AnyExprCallClosureMacroPath,
-    span: Span,
 }
 
 impl MetaExpr {
     pub fn from_value(value: AnyExprCallClosureMacroPath) -> Self {
-        let span = value.span();
-        Self { value, span }
+        Self { value }
     }
 }
 
@@ -54,12 +40,6 @@ impl Hash for MetaExpr {
     }
 }
 
-impl MetaExpr {
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
 impl AsRef<AnyExprCallClosureMacroPath> for MetaExpr {
     fn as_ref(&self) -> &AnyExprCallClosureMacroPath {
         &self.value
@@ -69,12 +49,7 @@ impl AsRef<AnyExprCallClosureMacroPath> for MetaExpr {
 impl FromMeta for MetaExpr {
     fn from_meta(item: &syn::Meta) -> darling::Result<Self> {
         let value = AnyExprCallClosureMacroPath::from_meta(item).map_err(|e| e.with_span(item))?;
-        let span = match item {
-            syn::Meta::Path(path) => path.span(),
-            syn::Meta::List(list) => list.path.span(),
-            syn::Meta::NameValue(nv) => nv.path.span(),
-        };
-        Ok(Self { value, span })
+        Ok(Self { value })
     }
 
     fn from_nested_meta(item: &darling::ast::NestedMeta) -> darling::Result<Self> {
@@ -83,7 +58,7 @@ impl FromMeta for MetaExpr {
             darling::ast::NestedMeta::Lit(lit) => {
                 let value =
                     AnyExprCallClosureMacroPath::from_value(lit).map_err(|e| e.with_span(lit))?;
-                Ok(Self { value, span: item.span() })
+                Ok(Self { value })
             }
         }
     }
@@ -91,33 +66,19 @@ impl FromMeta for MetaExpr {
 
 impl InsertResourceArgs {
     pub fn from_insert(insert: AnyExprCallClosureMacroPath) -> Self {
-        Self { insert: Some(MetaExpr::from_value(insert)), ..Default::default() }
+        Self { insert: Some(MetaExpr::from_value(insert)) }
     }
     fn validate(self) -> darling::Result<Self> {
-        Ok(Self { _resolved: Some(Self::resolve_resource(&self)?.clone()), ..self })
+        if self.insert.is_none() {
+            return Err(darling::Error::missing_field("insert"));
+        }
+        Ok(self)
     }
     fn resolve_resource(&self) -> darling::Result<&AnyExprCallClosureMacroPath> {
-        if let Some(resolved) = self._resolved.as_ref() {
-            Ok(resolved)
-        } else {
-            match (self.insert.as_ref(), self.resource.as_ref(), self.init.as_ref()) {
-                (Some(insert), Some(_), _) | (Some(insert), _, Some(_)) => {
-                    Err(darling::Error::custom(
-                        "insert is mutually exclusive with init and resource, use only insert",
-                    )
-                    .with_span(&insert.span()))
-                }
-                (Some(res), None, None) => Ok(res.as_ref()),
-                (None, Some(_), Some(_)) => Err(darling::Error::custom(
-                    "resource and init are mutually exclusive, use only one",
-                )),
-                (None, None, None) => {
-                    Err(darling::Error::custom("missing field: insert (or legacy init/resource)"))
-                }
-                (None, Some(res), None) => Ok(res.as_ref()),
-                (None, None, Some(res)) => Ok(res.as_ref()),
-            }
-        }
+        self.insert
+            .as_ref()
+            .map(AsRef::as_ref)
+            .ok_or_else(|| darling::Error::missing_field("insert"))
     }
 }
 
@@ -138,22 +99,6 @@ impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
         tokens: &mut TokenStream,
         app_param: &syn::Ident,
     ) -> syn::Result<()> {
-        let base = &self.args.args.base;
-        if base.insert.is_none() {
-            if let Some(init) = &base.init {
-                emit_deprecated_insert_resource_warning(
-                    tokens,
-                    init.span(),
-                    "auto_insert_resource(init(...)) is deprecated; use insert(...) instead. Planned for removal in 0.11.0 or bevy 0.19 (whichever comes last).",
-                );
-            } else if let Some(resource) = &base.resource {
-                emit_deprecated_insert_resource_warning(
-                    tokens,
-                    resource.span(),
-                    "auto_insert_resource(resource(...)) is deprecated; use insert(...) instead. Planned for removal in 0.11.0 or bevy 0.19 (whichever comes last).",
-                );
-            }
-        }
         let resource = self.args.args.base.resolve_resource().map_err(syn::Error::from)?;
         let concrete_paths = self.args.concrete_paths()?;
         let placeholder_path = if self.args.args.generics().is_empty() {
@@ -179,20 +124,6 @@ impl EmitAppMutationTokens for InsertResourceAppMutEmitter {
     }
 }
 
-fn emit_deprecated_insert_resource_warning(
-    tokens: &mut TokenStream,
-    span: proc_macro2::Span,
-    message: &'static str,
-) {
-    tokens.extend(quote_spanned! { span=>
-        {
-            #[deprecated(note = #message)]
-            fn __bevy_auto_plugin_deprecated_auto_insert_resource() {}
-            __bevy_auto_plugin_deprecated_auto_insert_resource();
-        }
-    });
-}
-
 impl ToTokens for InsertResourceAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut args = self.args.args.extra_args();
@@ -200,12 +131,6 @@ impl ToTokens for InsertResourceAttrEmitter {
         if let Some(insert) = &base.insert {
             let insert = insert.as_ref();
             args.push(quote! { insert = #insert });
-        } else if let Some(init) = &base.init {
-            let init = init.as_ref();
-            args.push(quote! { init = #init });
-        } else {
-            let resource = base.resource.as_ref().map(|res| res.as_ref());
-            args.push(quote! { resource = #resource });
         }
         tokens.extend(quote! {
             #(#args),*

@@ -19,12 +19,12 @@ Automatically registers a resource to be added to the app.
 
   Same as having:
   ```
-  #[auto_insert_resource(init(Value))]
+  #[auto_insert_resource(insert(Value))]
   ``` 
   or
   ```
-  #[auto_insert_resource(init(Value1))]
-  #[auto_insert_resource(init(Value2))]
+  #[auto_insert_resource(insert(Value1))]
+  #[auto_insert_resource(insert(Value2))]
   ```
 
 # Example
