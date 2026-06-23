@@ -15,11 +15,15 @@ for arg in "$@"; do
     dry_run_requested="true"
     continue
   fi
+  if [[ "$arg" == "--workspace" ]]; then
+    continue
+  fi
   filtered_args+=("$arg")
 done
+publish_args=(--workspace "${filtered_args[@]}")
 
 dirty_files=$(git -C "$repo_root" status --porcelain=v1 | awk '{print $2}')
-allow_dirty_arg=""
+allow_dirty_args=()
 if [[ -n "$dirty_files" ]]; then
   while IFS= read -r file; do
     [[ -z "$file" ]] && continue
@@ -51,12 +55,12 @@ if [[ -d "$docs_gen_root" ]]; then
       exit 1
     fi
   done < <(find "$docs_gen_root" -type f -print)
-  allow_dirty_arg="--allow-dirty"
+  allow_dirty_args=(--allow-dirty)
 fi
 
 if [[ "$dry_run_requested" == "true" ]]; then
-  echo "Running: cargo +stable publish --dry-run ${allow_dirty_arg} ${filtered_args[*]}"
-  (cwd="$repo_root"; cd "$cwd"; cargo +stable publish --dry-run ${allow_dirty_arg} "${filtered_args[@]}")
+  echo "Running: cargo +stable publish --dry-run ${allow_dirty_args[*]} ${publish_args[*]}"
+  (cwd="$repo_root"; cd "$cwd"; cargo +stable publish --dry-run "${allow_dirty_args[@]}" "${publish_args[@]}")
   if [[ -n "$dirty_files" ]]; then
     echo "Dirty state: safe (docs_gen matches docs)"
   else
@@ -65,8 +69,8 @@ if [[ "$dry_run_requested" == "true" ]]; then
   exit 0
 fi
 
-echo "Running: cargo +stable publish --dry-run ${allow_dirty_arg} ${filtered_args[*]}"
-(cwd="$repo_root"; cd "$cwd"; cargo +stable publish --dry-run ${allow_dirty_arg} "${filtered_args[@]}")
+echo "Running: cargo +stable publish --dry-run ${allow_dirty_args[*]} ${publish_args[*]}"
+(cwd="$repo_root"; cd "$cwd"; cargo +stable publish --dry-run "${allow_dirty_args[@]}" "${publish_args[@]}")
 
-echo "Running: cargo +stable publish ${allow_dirty_arg} ${filtered_args[*]}"
-(cwd="$repo_root"; cd "$cwd"; cargo +stable publish ${allow_dirty_arg} "${filtered_args[@]}")
+echo "Running: cargo +stable publish ${allow_dirty_args[*]} ${publish_args[*]}"
+(cwd="$repo_root"; cd "$cwd"; cargo +stable publish "${allow_dirty_args[@]}" "${publish_args[@]}")
