@@ -67,6 +67,18 @@ pub(crate) mod paths {
         }
     }
 
+    pub mod scene {
+        use super::*;
+
+        pub fn resolve() -> Result<syn::Path, String> {
+            bevy_crate_path!(scene)
+        }
+
+        pub fn root_path() -> syn::Path {
+            resolve().expect(bevy_crate_err_message!(scene))
+        }
+    }
+
     pub mod state {
         use super::*;
 
@@ -132,6 +144,14 @@ mod tests {
         assert_eq!(
             map_resolve_crate(super::paths::reflect::resolve()),
             ok_bevy_crate_path_string!(reflect)
+        );
+    }
+
+    #[xtest]
+    fn test_crate_resolve_bevy_scene() {
+        assert_eq!(
+            map_resolve_crate(super::paths::scene::resolve()),
+            ok_bevy_crate_path_string!(scene)
         );
     }
 

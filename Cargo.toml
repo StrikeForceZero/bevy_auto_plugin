@@ -46,9 +46,10 @@ bevy_auto_plugin_shared = { version = "0.11.0", path = "crates/bevy_auto_plugin_
 bevy_auto_plugin_proc_macros = { version = "0.11.0", path = "crates/bevy_auto_plugin_proc_macros" }
 internal_test_util = { path = "crates/internal_test_util" }
 internal_test_proc_macro = { path = "crates/internal_test_proc_macro" }
-bevy = { version = "0.19", default-features = false, features = ["bevy_state"] }
+bevy = { version = "0.19", default-features = false, features = ["bevy_scene", "bevy_state"] }
 bevy_app = { version = "0.19", default-features = false }
 bevy_state = { version = "0.19", default-features = false }
+bevy_scene = { version = "0.19", default-features = false }
 bevy_reflect = { version = "0.19", default-features = false }
 bevy_reflect_derive = { version = "0.19", default-features = false }
 bevy_internal = { version = "0.19", default-features = false }
@@ -80,6 +81,7 @@ bevy_reflect = { workspace = true }
 bevy_reflect_derive = { workspace = true }
 bevy_ecs = { workspace = true }
 bevy_ecs_macros = { workspace = true }
+bevy_scene = { workspace = true }
 bevy_state = { workspace = true }
 trybuild = { workspace = true }
 # used in feature tests

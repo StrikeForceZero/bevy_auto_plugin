@@ -48,5 +48,6 @@ anyhow = { workspace = true }
 # used in crate resolve tests
 bevy_ecs = { workspace = true }
 bevy_reflect = { workspace = true }
+bevy_scene = { workspace = true }
 bevy_state = { workspace = true }
 bevy_auto_plugin = { path = "../../.", default-features = false }
