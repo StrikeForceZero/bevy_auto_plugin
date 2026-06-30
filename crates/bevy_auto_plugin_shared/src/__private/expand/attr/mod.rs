@@ -46,12 +46,13 @@ gen_action_outers! {
 }
 
 gen_rewrite_outers! {
-    auto_component => IaComponent,
-    auto_resource  => IaResource,
-    auto_system    => IaSystem,
-    auto_event     => IaEvent,
-    auto_message   => IaMessage,
-    auto_observer  => IaObserver,
-    auto_states    => IaState,
-    auto_sub_states => IaSubState,
+    auto_component       => IaComponent,
+    auto_scene_component => IaSceneComponent,
+    auto_resource        => IaResource,
+    auto_system          => IaSystem,
+    auto_event           => IaEvent,
+    auto_message         => IaMessage,
+    auto_observer        => IaObserver,
+    auto_states          => IaState,
+    auto_sub_states      => IaSubState,
 }

@@ -227,6 +227,9 @@ pub mod prelude {
     #[doc = include_str!("../docs/proc_attributes/rewrites/auto_component.md")]
     pub use bevy_auto_plugin_proc_macros::auto_component;
 
+    #[doc = include_str!("../docs/proc_attributes/rewrites/auto_scene_component.md")]
+    pub use bevy_auto_plugin_proc_macros::auto_scene_component;
+
     #[doc = include_str!("../docs/proc_attributes/rewrites/auto_resource.md")]
     pub use bevy_auto_plugin_proc_macros::auto_resource;
 

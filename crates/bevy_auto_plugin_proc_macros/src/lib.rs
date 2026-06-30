@@ -102,6 +102,12 @@ pub fn auto_component(attr: CompilerStream, input: CompilerStream) -> CompilerSt
     handle_attribute(expand::attr::auto_component, attr, input)
 }
 
+#[doc = include_str!(concat!(env!("OUT_DIR"), "/docs/proc_attributes/rewrites/auto_scene_component.md"))]
+#[proc_macro_attribute]
+pub fn auto_scene_component(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_scene_component, attr, input)
+}
+
 #[doc = include_str!(concat!(env!("OUT_DIR"), "/docs/proc_attributes/rewrites/auto_resource.md"))]
 #[proc_macro_attribute]
 pub fn auto_resource(attr: CompilerStream, input: CompilerStream) -> CompilerStream {

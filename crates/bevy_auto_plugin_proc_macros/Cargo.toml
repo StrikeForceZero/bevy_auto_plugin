@@ -29,4 +29,5 @@ proc-macro2 = { workspace = true }
 # needed for doc-tests
 bevy = { workspace = true }
 bevy_app = { workspace = true }
+bevy_scene = { workspace = true }
 bevy_auto_plugin = { path = "../../.", default-features = false }

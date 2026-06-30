@@ -52,6 +52,13 @@ macro_rules! ecs_import {
         }};
     }
 
+macro_rules! scene_import {
+        ($path:path) => {{
+            let root = crate::__private::paths::scene::root_path();
+            parse_quote!(#root::$path)
+        }};
+    }
+
 pub fn derive_reflect_path() -> NonEmptyPath {
     let root = crate::__private::paths::reflect::reflect_root_path();
     parse_quote!(#root::Reflect)
@@ -59,6 +66,10 @@ pub fn derive_reflect_path() -> NonEmptyPath {
 
 pub fn derive_component_path() -> NonEmptyPath {
     ecs_import!(prelude::Component)
+}
+
+pub fn derive_scene_component_path() -> NonEmptyPath {
+    scene_import!(prelude::SceneComponent)
 }
 
 pub fn derive_resource_path() -> NonEmptyPath {
@@ -93,6 +104,17 @@ pub fn derive_component<'a>(
     derive_from(
         [
             vec![&derive_component_path()],
+            extra_items.into_iter().collect::<Vec<_>>(),
+        ]
+        .concat(),
+    )
+}
+pub fn derive_scene_component<'a>(
+    extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
+) -> TokenStream {
+    derive_from(
+        [
+            vec![&derive_scene_component_path()],
             extra_items.into_iter().collect::<Vec<_>>(),
         ]
         .concat(),
