@@ -1,3 +1,4 @@
+mod auto_asset;
 mod auto_component;
 mod auto_event;
 mod auto_message;
@@ -9,6 +10,7 @@ mod auto_system;
 
 pub mod prelude {
     pub use super::*;
+    pub use auto_asset::*;
     pub use auto_component::*;
     pub use auto_event::*;
     pub use auto_message::*;

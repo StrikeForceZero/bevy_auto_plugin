@@ -1,0 +1,43 @@
+Automatically registers an asset to be initialized in the app.
+
+# Parameters
+- `plugin = PluginType` - Required unless the `default_plugin` feature is enabled and `#[auto_plugin(default_plugin)]` is in scope. Specifies which plugin should initialize this asset.
+- `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
+- `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
+  When provided, the asset will be initialized with these specific generic parameters.
+  Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
+
+# Notes
+- This attribute can be applied to a `use` item; each imported name becomes its own target.
+- `use ...::*`, `use ...::self`, and `_` imports are not supported.
+- Renames (`as`) are supported and use the local name.
+
+# Example
+```rust
+use bevy::prelude::*;
+use bevy_asset::Asset;
+use bevy_auto_plugin::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+#[derive(Asset, TypePath)]
+#[auto_init_asset(plugin = MyPlugin)]
+struct FooAsset;
+```
+
+# Example (with generics)
+```rust
+use bevy::prelude::*;
+use bevy_asset::Asset;
+use bevy_auto_plugin::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+#[derive(Asset, TypePath)]
+#[auto_init_asset(plugin = MyPlugin, generics(usize))]
+struct FooAssetWithGeneric<T: TypePath + Send + Sync + 'static>(T);
+```

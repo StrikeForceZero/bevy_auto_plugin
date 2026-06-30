@@ -197,6 +197,9 @@ pub mod prelude {
     #[doc = include_str!("../docs/proc_attributes/actions/auto_add_system.md")]
     pub use bevy_auto_plugin_proc_macros::auto_add_system;
 
+    #[doc = include_str!("../docs/proc_attributes/actions/auto_init_asset.md")]
+    pub use bevy_auto_plugin_proc_macros::auto_init_asset;
+
     #[doc = include_str!("../docs/proc_attributes/actions/auto_init_resource.md")]
     pub use bevy_auto_plugin_proc_macros::auto_init_resource;
 
@@ -218,11 +221,17 @@ pub mod prelude {
     #[doc = include_str!("../docs/proc_attributes/actions/auto_register_state_type.md")]
     pub use bevy_auto_plugin_proc_macros::auto_register_state_type;
 
+    #[doc = include_str!("../docs/proc_attributes/actions/auto_register_asset_reflect.md")]
+    pub use bevy_auto_plugin_proc_macros::auto_register_asset_reflect;
+
     #[doc = include_str!("../docs/proc_attributes/actions/auto_register_type.md")]
     pub use bevy_auto_plugin_proc_macros::auto_register_type;
 
     #[doc = include_str!("../docs/proc_attributes/actions/auto_add_observer.md")]
     pub use bevy_auto_plugin_proc_macros::auto_add_observer;
+
+    #[doc = include_str!("../docs/proc_attributes/rewrites/auto_asset.md")]
+    pub use bevy_auto_plugin_proc_macros::auto_asset;
 
     #[doc = include_str!("../docs/proc_attributes/rewrites/auto_component.md")]
     pub use bevy_auto_plugin_proc_macros::auto_component;

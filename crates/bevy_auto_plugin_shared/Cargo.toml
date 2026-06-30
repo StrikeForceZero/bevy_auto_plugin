@@ -47,6 +47,7 @@ wasm-bindgen-test = { workspace = true }
 anyhow = { workspace = true }
 # used in crate resolve tests
 bevy_ecs = { workspace = true }
+bevy_asset = { workspace = true }
 bevy_reflect = { workspace = true }
 bevy_state = { workspace = true }
 bevy_auto_plugin = { path = "../../.", default-features = false }

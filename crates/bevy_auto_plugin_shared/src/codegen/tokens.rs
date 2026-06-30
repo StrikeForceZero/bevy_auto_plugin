@@ -61,6 +61,16 @@ pub fn derive_component_path() -> NonEmptyPath {
     ecs_import!(prelude::Component)
 }
 
+pub fn derive_asset_path() -> NonEmptyPath {
+    let root = crate::__private::paths::asset::asset_root_path();
+    parse_quote!(#root::Asset)
+}
+
+pub fn derive_type_path_path() -> NonEmptyPath {
+    let root = crate::__private::paths::reflect::reflect_root_path();
+    parse_quote!(#root::TypePath)
+}
+
 pub fn derive_resource_path() -> NonEmptyPath {
     ecs_import!(prelude::Resource)
 }
@@ -93,6 +103,26 @@ pub fn derive_component<'a>(
     derive_from(
         [
             vec![&derive_component_path()],
+            extra_items.into_iter().collect::<Vec<_>>(),
+        ]
+        .concat(),
+    )
+}
+pub fn derive_asset<'a>(extra_items: impl IntoIterator<Item = &'a NonEmptyPath>) -> TokenStream {
+    derive_from(
+        [
+            vec![&derive_asset_path(), &derive_type_path_path()],
+            extra_items.into_iter().collect::<Vec<_>>(),
+        ]
+        .concat(),
+    )
+}
+pub fn derive_asset_without_type_path<'a>(
+    extra_items: impl IntoIterator<Item = &'a NonEmptyPath>,
+) -> TokenStream {
+    derive_from(
+        [
+            vec![&derive_asset_path()],
             extra_items.into_iter().collect::<Vec<_>>(),
         ]
         .concat(),
@@ -193,6 +223,9 @@ pub fn use_bevy_state_app_ext_states() -> syn::ItemUse {
 pub fn auto_register_type(args: RegisterTypeAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
+pub fn auto_register_asset_reflect(args: RegisterAssetReflectAttrEmitter) -> TokenStream {
+    args.to_token_stream()
+}
 pub fn auto_register_state_type(args: RegisterStateTypeAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
@@ -200,6 +233,9 @@ pub fn auto_name(args: NameAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
 pub fn auto_init_resource(args: InitResourceAttrEmitter) -> TokenStream {
+    args.to_token_stream()
+}
+pub fn auto_init_asset(args: InitAssetAttrEmitter) -> TokenStream {
     args.to_token_stream()
 }
 pub fn auto_insert_resource(args: InsertResourceAttrEmitter) -> TokenStream {

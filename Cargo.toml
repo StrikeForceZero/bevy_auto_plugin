@@ -48,6 +48,7 @@ internal_test_util = { path = "crates/internal_test_util" }
 internal_test_proc_macro = { path = "crates/internal_test_proc_macro" }
 bevy = { version = "0.19", default-features = false, features = ["bevy_state"] }
 bevy_app = { version = "0.19", default-features = false }
+bevy_asset = { version = "0.19", default-features = false }
 bevy_state = { version = "0.19", default-features = false }
 bevy_reflect = { version = "0.19", default-features = false }
 bevy_reflect_derive = { version = "0.19", default-features = false }
@@ -76,6 +77,7 @@ bevy_auto_plugin_shared = { workspace = true }
 # required for doc tests
 bevy = { workspace = true }
 bevy_app = { workspace = true }
+bevy_asset = { workspace = true }
 bevy_reflect = { workspace = true }
 bevy_reflect_derive = { workspace = true }
 bevy_ecs = { workspace = true }

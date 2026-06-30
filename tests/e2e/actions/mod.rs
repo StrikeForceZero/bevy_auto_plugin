@@ -18,6 +18,7 @@ mod auto_configure_system_set_schedule_config;
 mod auto_configure_system_set_schedule_config_multiple_groups;
 #[cfg(feature = "default_plugin")]
 mod auto_default_plugin;
+mod auto_init_asset;
 mod auto_init_resource;
 mod auto_init_resource_generic;
 mod auto_init_state;
@@ -31,6 +32,7 @@ mod auto_plugin_default_param;
 mod auto_plugin_default_param_method;
 mod auto_plugin_param;
 mod auto_plugin_with_generics;
+mod auto_register_asset_reflect;
 mod auto_register_state_type;
 mod auto_register_type;
 mod auto_register_type_generic;

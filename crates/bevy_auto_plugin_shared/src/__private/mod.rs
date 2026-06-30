@@ -31,6 +31,18 @@ pub(crate) mod paths {
         }
     }
 
+    pub mod asset {
+        use super::*;
+
+        pub fn resolve() -> Result<syn::Path, String> {
+            bevy_crate_path!(asset)
+        }
+
+        pub fn asset_root_path() -> syn::Path {
+            resolve().expect(bevy_crate_err_message!(asset))
+        }
+    }
+
     pub mod reflect {
         use super::*;
 
@@ -116,6 +128,14 @@ mod tests {
         assert_eq!(
             map_resolve_crate(super::paths::ecs::resolve()),
             ok_bevy_crate_path_string!(ecs)
+        );
+    }
+
+    #[xtest]
+    fn test_crate_resolve_bevy_asset() {
+        assert_eq!(
+            map_resolve_crate(super::paths::asset::resolve()),
+            ok_bevy_crate_path_string!(asset)
         );
     }
 
