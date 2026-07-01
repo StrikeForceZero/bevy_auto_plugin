@@ -4,13 +4,14 @@ use crate::{
         tokens,
     },
     macro_api::prelude::*,
-    util::macros::impl_from_default,
 };
 use darling::FromMeta;
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct ObserverArgs {}
+pub struct ObserverArgs {
+    pub config: ObserverConfigArgs,
+}
 
 impl AttributeIdent for ObserverArgs {
     const IDENT: &'static str = "auto_observer";
@@ -23,8 +24,14 @@ impl<'a> From<&'a ObserverArgs> for RegisterTypeArgs {
 }
 
 impl<'a> From<&'a ObserverArgs> for AddObserverArgs {
-    fn from(_: &'a ObserverArgs) -> Self {
-        AddObserverArgs {}
+    fn from(value: &'a ObserverArgs) -> Self {
+        AddObserverArgs { config: value.config.clone() }
+    }
+}
+
+impl From<ObserverArgs> for AddObserverArgs {
+    fn from(value: ObserverArgs) -> Self {
+        AddObserverArgs { config: value.config }
     }
 }
 
@@ -37,5 +44,3 @@ impl AttrExpansionEmitterToExpandAttr for ObserverAttrExpandEmitter {
         expand_attrs.attrs.push(tokens::auto_add_observer(self.into()));
     }
 }
-
-impl_from_default!(ObserverArgs => (AddObserverArgs));
