@@ -1,4 +1,7 @@
-use crate::macro_api::prelude::*;
+use crate::{
+    macro_api::prelude::*,
+    syntax::ast::any_expr::AnyExprCallClosureMacroPath,
+};
 use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::{
@@ -8,7 +11,43 @@ use quote::{
 
 #[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
 #[darling(derive_syn_parse, default)]
-pub struct AddObserverArgs {}
+pub struct ObserverConfigArgs {
+    #[darling(multiple)]
+    pub run_if: Vec<AnyExprCallClosureMacroPath>,
+}
+
+impl ObserverConfigArgs {
+    pub fn is_empty(&self) -> bool {
+        self.run_if.is_empty()
+    }
+
+    pub fn to_inner_arg_tokens_vec(&self) -> Vec<TokenStream> {
+        self.run_if
+            .iter()
+            .map(|run_if| {
+                quote! {
+                    run_if = #run_if
+                }
+            })
+            .collect()
+    }
+}
+
+impl ToTokens for ObserverConfigArgs {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        for run_if in &self.run_if {
+            tokens.extend(quote! {
+                .run_if(#run_if)
+            });
+        }
+    }
+}
+
+#[derive(FromMeta, Debug, Default, Clone, PartialEq, Hash)]
+#[darling(derive_syn_parse, default)]
+pub struct AddObserverArgs {
+    pub config: ObserverConfigArgs,
+}
 
 impl AttributeIdent for AddObserverArgs {
     const IDENT: &'static str = "auto_add_observer";
@@ -25,10 +64,11 @@ impl EmitAppMutationTokens for AddObserverAppMutEmitter {
         tokens: &mut TokenStream,
         app_param: &syn::Ident,
     ) -> syn::Result<()> {
+        let config_tokens = self.args.args.base.config.to_token_stream();
         let concrete_paths = self.args.concrete_paths()?;
         for concrete_path in concrete_paths {
             tokens.extend(quote! {
-                #app_param.add_observer( #concrete_path );
+                #app_param.add_observer( #concrete_path #config_tokens );
             });
         }
         Ok(())
@@ -37,7 +77,11 @@ impl EmitAppMutationTokens for AddObserverAppMutEmitter {
 
 impl ToTokens for AddObserverAttrEmitter {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let args = self.args.args.extra_args();
+        let mut args = self.args.args.extra_args();
+        let config = self.args.args.base.config.to_inner_arg_tokens_vec();
+        if !config.is_empty() {
+            args.push(quote! { config( #(#config),* )});
+        }
         tokens.extend(quote! {
             #(#args),*
         });

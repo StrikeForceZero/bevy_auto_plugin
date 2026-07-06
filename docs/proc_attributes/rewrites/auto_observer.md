@@ -5,6 +5,8 @@ Automatically adds a global observer
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 - `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(A = ..., B = ...)`.
+- `config(..)`
+  - `run_if = Condition` - Optional. Adds a Bevy observer run condition. May be repeated.
 
 # Example
 ```rust
@@ -19,6 +21,28 @@ struct MyPlugin;
 struct Foo;
 
 #[auto_observer(plugin = MyPlugin)]
+fn foo_observer(add: On<Add, Foo>, mut commands: Commands) {
+    // ...
+}
+```
+
+# Example (with run condition)
+```rust
+use bevy::prelude::*;
+use bevy_auto_plugin::prelude::*;
+
+#[derive(AutoPlugin)]
+#[auto_plugin(impl_plugin_trait)]
+struct MyPlugin;
+
+#[derive(Component)]
+struct Foo;
+
+fn should_observe() -> bool {
+    true
+}
+
+#[auto_observer(plugin = MyPlugin, config(run_if = should_observe))]
 fn foo_observer(add: On<Add, Foo>, mut commands: Commands) {
     // ...
 }
