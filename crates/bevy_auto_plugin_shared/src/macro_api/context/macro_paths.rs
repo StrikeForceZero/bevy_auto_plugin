@@ -14,6 +14,8 @@ pub struct MacroPaths {
     pub emit_add_observer_macro: syn::Path,
     /// resolved absolute path to `auto_add_plugin`
     pub emit_add_plugin_macro: syn::Path,
+    /// resolved absolute path to `auto_init_asset`
+    pub emit_init_asset_macro: syn::Path,
     /// resolved absolute path to `auto_init_resource`
     pub emit_init_resource_macro: syn::Path,
     /// resolved absolute path to `auto_init_state`
@@ -22,6 +24,8 @@ pub struct MacroPaths {
     pub emit_init_sub_state_macro: syn::Path,
     /// resolved absolute path to `auto_insert_resource`
     pub emit_insert_resource_macro: syn::Path,
+    /// resolved absolute path to `auto_register_asset_reflect`
+    pub emit_register_asset_reflect_macro: syn::Path,
     /// resolved absolute path to `auto_register_state_type`
     pub emit_register_state_type_macro: syn::Path,
     /// resolved absolute path to `auto_register_type`
@@ -43,10 +47,12 @@ impl Default for MacroPaths {
             emit_add_message_macro:             parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_message           ),
             emit_add_observer_macro:            parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_observer          ),
             emit_add_plugin_macro:              parse_quote!(  ::bevy_auto_plugin::prelude::auto_add_plugin            ),
+            emit_init_asset_macro:              parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_asset            ),
             emit_init_resource_macro:           parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_resource         ),
             emit_init_state_macro:              parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_state            ),
             emit_init_sub_state_macro:          parse_quote!(  ::bevy_auto_plugin::prelude::auto_init_sub_state        ),
             emit_insert_resource_macro:         parse_quote!(  ::bevy_auto_plugin::prelude::auto_insert_resource       ),
+            emit_register_asset_reflect_macro:  parse_quote!(  ::bevy_auto_plugin::prelude::auto_register_asset_reflect),
             emit_register_state_type_macro:     parse_quote!(  ::bevy_auto_plugin::prelude::auto_register_state_type   ),
             emit_register_type_macro:           parse_quote!(  ::bevy_auto_plugin::prelude::auto_register_type         ),
             emit_run_on_build_macro:            parse_quote!(  ::bevy_auto_plugin::prelude::auto_run_on_build          ),
@@ -85,6 +91,12 @@ impl MacroPathProvider for AddPluginArgs {
     }
 }
 
+impl MacroPathProvider for InitAssetArgs {
+    fn macro_path(context: &Context) -> &syn::Path {
+        &context.macros.emit_init_asset_macro
+    }
+}
+
 impl MacroPathProvider for InitResourceArgs {
     fn macro_path(context: &Context) -> &syn::Path {
         &context.macros.emit_init_resource_macro
@@ -106,6 +118,12 @@ impl MacroPathProvider for InitSubStateArgs {
 impl MacroPathProvider for InsertResourceArgs {
     fn macro_path(context: &Context) -> &syn::Path {
         &context.macros.emit_insert_resource_macro
+    }
+}
+
+impl MacroPathProvider for RegisterAssetReflectArgs {
+    fn macro_path(context: &Context) -> &syn::Path {
+        &context.macros.emit_register_asset_reflect_macro
     }
 }
 

@@ -1,3 +1,4 @@
+mod auto_asset;
 mod auto_component;
 mod auto_event;
 mod auto_message;

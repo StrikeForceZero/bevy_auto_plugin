@@ -31,7 +31,9 @@ macro_rules! gen_rewrite_outers {
 gen_action_outers! {
     auto_run_on_build          => IaRunOnBuild,
     auto_register_type         => IaRegisterType,
+    auto_register_asset_reflect => IaRegisterAssetReflect,
     auto_add_message           => IaAddMessage,
+    auto_init_asset            => IaInitAsset,
     auto_init_resource         => IaInitResource,
     auto_insert_resource       => IaInsertResource,
     auto_init_state            => IaInitState,
@@ -46,6 +48,7 @@ gen_action_outers! {
 }
 
 gen_rewrite_outers! {
+    auto_asset     => IaAsset,
     auto_component => IaComponent,
     auto_resource  => IaResource,
     auto_system    => IaSystem,

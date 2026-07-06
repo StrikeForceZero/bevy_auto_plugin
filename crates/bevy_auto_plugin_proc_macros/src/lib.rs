@@ -30,6 +30,12 @@ pub fn auto_register_type(attr: CompilerStream, input: CompilerStream) -> Compil
     handle_attribute(expand::attr::auto_register_type, attr, input)
 }
 
+#[doc = include_str!(concat!(env!("OUT_DIR"), "/docs/proc_attributes/actions/auto_register_asset_reflect.md"))]
+#[proc_macro_attribute]
+pub fn auto_register_asset_reflect(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_register_asset_reflect, attr, input)
+}
+
 #[doc = include_str!(concat!(env!("OUT_DIR"), "/docs/proc_attributes/actions/auto_add_message.md"))]
 #[proc_macro_attribute]
 pub fn auto_add_message(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
@@ -40,6 +46,12 @@ pub fn auto_add_message(attr: CompilerStream, input: CompilerStream) -> Compiler
 #[proc_macro_attribute]
 pub fn auto_configure_system_set(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(expand::attr::auto_configure_system_set, attr, input)
+}
+
+#[doc = include_str!(concat!(env!("OUT_DIR"), "/docs/proc_attributes/actions/auto_init_asset.md"))]
+#[proc_macro_attribute]
+pub fn auto_init_asset(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_init_asset, attr, input)
 }
 
 #[doc = include_str!(concat!(env!("OUT_DIR"), "/docs/proc_attributes/actions/auto_init_resource.md"))]
@@ -94,6 +106,12 @@ pub fn auto_add_observer(attr: CompilerStream, input: CompilerStream) -> Compile
 #[proc_macro_attribute]
 pub fn auto_add_plugin(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
     handle_attribute(expand::attr::auto_add_plugin, attr, input)
+}
+
+#[doc = include_str!(concat!(env!("OUT_DIR"), "/docs/proc_attributes/rewrites/auto_asset.md"))]
+#[proc_macro_attribute]
+pub fn auto_asset(attr: CompilerStream, input: CompilerStream) -> CompilerStream {
+    handle_attribute(expand::attr::auto_asset, attr, input)
 }
 
 #[doc = include_str!(concat!(env!("OUT_DIR"), "/docs/proc_attributes/rewrites/auto_component.md"))]
