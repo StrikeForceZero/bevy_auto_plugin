@@ -30,5 +30,6 @@ proc-macro2 = { workspace = true }
 bevy = { workspace = true }
 bevy_app = { workspace = true }
 bevy_asset = { workspace = true }
+bevy_scene = { workspace = true }
 bevy_auto_plugin = { path = "../../.", default-features = false }
 bevy_reflect = { workspace = true }
