@@ -175,3 +175,11 @@
 - Remove deprecated `auto_add_event` alias; use `auto_add_message`.
 - Remove deprecated `#[auto_plugin]` args `generics(...)`, `impl_generic_auto_plugin_trait`, and `impl_generic_plugin_trait`.
 - Remove deprecated `init(...)` and `resource(...)` args from `auto_insert_resource`; use `insert(...)`.
+
+---
+## v0.11.1
+- Add `auto_init_asset` to initialize Bevy asset types from plugin build.
+- Add `auto_register_asset_reflect` to register asset reflection metadata.
+- Add `auto_asset` shorthand for deriving `Asset`, optional reflection, asset reflection registration, and asset initialization.
+- Add `auto_scene_component` shorthand for Bevy 0.19 `SceneComponent` support, including derive, reflect, register, `auto_name`, and generics support.
+- Add `config(run_if = ...)` support to `auto_add_observer` and `auto_observer`.
