@@ -185,6 +185,6 @@
 - Add `config(run_if = ...)` support to `auto_add_observer` and `auto_observer`.
 
 ---
-## Unreleased
+## v0.12.0
 - Update Bevy dependencies to 0.20.
 - Update observer examples and tests to use Bevy 0.20's `On<Add<T>>` syntax.
