@@ -26,7 +26,7 @@ struct MyPlugin;
 struct Foo;
 
 #[auto_add_observer(plugin = MyPlugin)]
-fn foo_observer(add: On<Add, Foo>, mut commands: Commands) {
+fn foo_observer(add: On<Add<Foo>>, mut commands: Commands) {
     // ...
 }
 ```
@@ -48,7 +48,7 @@ fn should_observe() -> bool {
 }
 
 #[auto_add_observer(plugin = MyPlugin, config(run_if = should_observe))]
-fn foo_observer(add: On<Add, Foo>, mut commands: Commands) {
+fn foo_observer(add: On<Add<Foo>>, mut commands: Commands) {
     // ...
 }
 ```

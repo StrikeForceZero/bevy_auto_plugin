@@ -27,7 +27,7 @@ fn observer_enabled(observer_enabled: Res<ObserverEnabled>) -> bool {
 
 #[auto_add_observer(plugin = TestPlugin)]
 fn test_observer(
-    add: On<Add, FooComponent>,
+    add: On<Add<FooComponent>>,
     added_foo_q: Query<Ref<FooComponent>, Added<FooComponent>>,
     mut foo_component_added: ResMut<FooComponentState>,
 ) {
@@ -36,7 +36,7 @@ fn test_observer(
 }
 
 #[auto_add_observer(plugin = TestPlugin, config(run_if = observer_enabled, run_if = observer_enabled))]
-fn gated_observer(_add: On<Add, FooComponent>, mut foo_component_added: ResMut<FooComponentState>) {
+fn gated_observer(_add: On<Add<FooComponent>>, mut foo_component_added: ResMut<FooComponentState>) {
     foo_component_added.gated_add_count += 1;
 }
 

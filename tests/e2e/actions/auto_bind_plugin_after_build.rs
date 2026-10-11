@@ -128,7 +128,7 @@ struct FooComponentState {
 #[auto_bind_plugin(plugin = Test, after_build)]
 #[auto_add_observer]
 fn foo_observer(
-    add: On<Add, FooComponent>,
+    add: On<Add<FooComponent>>,
     added_foo_q: Query<Ref<FooComponent>, Added<FooComponent>>,
     mut foo_component_added: ResMut<FooComponentState>,
 ) {
