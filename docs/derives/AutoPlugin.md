@@ -2,6 +2,10 @@ A derive macro that implements Plugin for a struct and collects registered compo
 events, resources, and systems.
 
 # Parameters
+
+Parameters marked **repeatable** may appear more than once within the same attribute.
+All other parameters may appear at most once.
+
 - `impl_plugin_trait` - Optional. When present, it automatically implements the Plugin trait.
 - `default_plugin` - Optional (feature: `default_plugin`). Emits a default plugin alias so `auto_*` macros can omit `plugin = ...`.
 

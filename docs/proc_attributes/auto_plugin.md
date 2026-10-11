@@ -1,6 +1,10 @@
 Attribute to mark the build function for the plugin, or impl Plugin trait build method for injection
 
 # Parameters
+
+Parameters marked **repeatable** may appear more than once within the same attribute.
+All other parameters may appear at most once.
+
 - `plugin = PluginType` - **Required for bare functions only.** Specifies the plugin this build function belongs to.  
   **Not allowed on `impl Plugin` methods**, since the plugin type is already known.
 

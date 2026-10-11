@@ -27,6 +27,20 @@ The following examples demonstrate how common Bevy patterns can be expressed mor
 
 ## Examples
 
+### Parameter repeatability
+
+The attribute references mark arguments that can be repeated within a single attribute
+as **repeatable**. All other arguments may appear at most once. For example,
+`config(before = first_system, before = second_system)` adds two ordering constraints
+inside one `config(...)`; the `config` argument itself cannot be repeated.
+
+A list-valued argument is not necessarily repeatable. Use one `derive(Debug, Default)`
+argument for multiple derives, or one `insert(Value1, Value2)` argument in `auto_resource`
+for multiple values.
+Most macros that accept `generics(...)` allow it to be repeated for different concrete
+type combinations. `auto_insert_resource` accepts only one `generics(...)` argument;
+use separate attributes for separate inserted values.
+
 ### Basic
 
 #### Component

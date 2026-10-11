@@ -1,27 +1,29 @@
 Automatically configures a SystemSet for the app.
 
 # Parameters
+
+Parameters marked **repeatable** may appear more than once within the same attribute.
+All other parameters may appear at most once.
+
 - `plugin = PluginType` - Required unless the `default_plugin` feature is enabled and `#[auto_plugin(default_plugin)]` is in scope. Specifies which plugin should register this system.
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
 - `schedule = ScheduleName` - Required. Specifies which schedule to add the system to.
-- `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
+- `generics(T1, T2, ...)` - Optional, repeatable. Specifies one combination of concrete types for generic parameters. Repeat for additional combinations.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
 - `group` - Optional. Specifies what group this config is for. Omitting acts like a group.
   - it's recommended to use the schedule label as your group key. e.g. `Update` or `FixedUpdate`
-- `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
-  Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
 - `chain` - Optional. calls `.chain()` on the resultant set.
 - `chain_ignore_deferred` - Optional. calls `.chain_ignore_deferred()` on the resultant set.
-- `config(..)`
-  - `in_set = SetName` - Optional. See [`bevy IntoScheduleConfigs in_set`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.in_set)
-  - `before = SetName or system` - Optional. See [`bevy IntoScheduleConfigs before`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.before)
-  - `after = SetName or system` - Optional. See [`bevy IntoScheduleConfigs after`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.after)
-  - `run_if = Condition` - Optional. See [`bevy IntoScheduleConfigs run_if`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.run_if)
-  - `distributive_run_if = Condition` - Optional. See [`bevy IntoScheduleConfigs run_if_inner`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.run_if_inner)
-  - `ambiguous_with = System` - Optional. See [`bevy IntoScheduleConfigs ambiguous_with`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.ambiguous_with)
+- `config(..)` - Optional, non-repeatable. Contains the configuration parameters below.
+  - `in_set = SetName` - Optional, repeatable. See [`bevy IntoScheduleConfigs in_set`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.in_set)
+  - `before = SetName or system` - Optional, repeatable. See [`bevy IntoScheduleConfigs before`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.before)
+  - `after = SetName or system` - Optional, repeatable. See [`bevy IntoScheduleConfigs after`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.after)
+  - `run_if = Condition` - Optional, repeatable. See [`bevy IntoScheduleConfigs run_if`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.run_if)
+  - `distributive_run_if = Condition` - Optional, repeatable. See [`bevy IntoScheduleConfigs run_if_inner`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.run_if_inner)
+  - `ambiguous_with = System` - Optional, repeatable. See [`bevy IntoScheduleConfigs ambiguous_with`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.ambiguous_with)
   - `ambiguous_with_all = bool` - Optional. See [`bevy IntoScheduleConfigs ambiguous_with_all`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.ambiguous_with_all)
-  - `after_ignore_deferred = SetName or system` - Optional. See [`bevy IntoScheduleConfigs after_ignore_deferred`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.after_ignore_deferred)
-  - `before_ignore_deferred = SetName or system` - Optional. See [`bevy IntoScheduleConfigs before_ignore_deferred`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.before_ignore_deferred)
+  - `after_ignore_deferred = SetName or system` - Optional, repeatable. See [`bevy IntoScheduleConfigs after_ignore_deferred`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.after_ignore_deferred)
+  - `before_ignore_deferred = SetName or system` - Optional, repeatable. See [`bevy IntoScheduleConfigs before_ignore_deferred`](https://docs.rs/bevy/0.16.1/bevy/prelude/trait.IntoScheduleConfigs.html#method.before_ignore_deferred)
 
 # Example
 ```rust

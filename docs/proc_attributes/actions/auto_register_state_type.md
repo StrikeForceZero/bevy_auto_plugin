@@ -1,8 +1,13 @@
 Automatically registers `State<T>` and `NextState<T>` types with the app.
 
 # Parameters
+
+Parameters marked **repeatable** may appear more than once within the same attribute.
+All other parameters may appear at most once.
+
 - `plugin = PluginType` - Required unless the `default_plugin` feature is enabled and `#[auto_plugin(default_plugin)]` is in scope. Specifies which plugin should register these state types.
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
+- `generics(T1, T2, ...)` - Optional, repeatable. Specifies one combination of concrete types for generic parameters. Repeat for additional combinations.
 
 # Notes
 - This attribute can be applied to a `use` item; each imported name becomes its own target.

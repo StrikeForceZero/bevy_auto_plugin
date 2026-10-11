@@ -1,9 +1,13 @@
 Automatically derives `Asset` with `TypePath` or `Reflect`, registers asset reflection, and initializes the asset in the app.
 
 # Parameters
+
+Parameters marked **repeatable** may appear more than once within the same attribute.
+All other parameters may appear at most once.
+
 - `plugin = PluginType` - Required unless the `default_plugin` feature is enabled and `#[auto_plugin(default_plugin)]` is in scope. Specifies which plugin should initialize this asset.
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
-- `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
+- `generics(T1, T2, ...)` - Optional, repeatable. Specifies one combination of concrete types for generic parameters. Repeat for additional combinations.
   When provided, the `register` and `init` actions use these specific generic parameters.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(A = ..., B = ...)`.
 - `derive` | `derive(Debug, Default, ..)` - Optional. Specifies that the macro should handle deriving `Asset` and `TypePath`.

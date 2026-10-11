@@ -1,9 +1,13 @@
 Automatically registers an message to be added to the app.
 
 # Parameters
+
+Parameters marked **repeatable** may appear more than once within the same attribute.
+All other parameters may appear at most once.
+
 - `plugin = PluginType` - Required unless the `default_plugin` feature is enabled and `#[auto_plugin(default_plugin)]` is in scope. Specifies which plugin should register this message.
 - `after_build` - Optional. Injects this macro's tokens at the end of the plugin build instead of the start.
-- `generics(T1, T2, ...)` - Optional. Specifies concrete types for generic parameters.
+- `generics(T1, T2, ...)` - Optional, repeatable. Specifies one combination of concrete types for generic parameters. Repeat for additional combinations.
   When provided, the message will be registered with these specific generic parameters.
   Note: Clippy will complain if you have duplicate generic type names. For those you can use named generics: `generics(T1 = ..., T2 = ...)`.
 # Notes
