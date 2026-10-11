@@ -18,6 +18,7 @@ The following examples demonstrate how common Bevy patterns can be expressed mor
 
 | bevy_auto_plugin | Bevy |
 |------------------|------|
+| 0.12.x           | 0.20 |
 | 0.11.x           | 0.19 |
 | 0.9.x - 0.10.x   | 0.18 |
 | 0.6.x - 0.8.x    | 0.17 |

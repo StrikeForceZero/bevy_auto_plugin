@@ -115,7 +115,7 @@ struct FooComponentState {
 
 #[auto_add_observer(plugin = Test)]
 fn foo_observer(
-    add: On<Add, FooComponent>,
+    add: On<Add<FooComponent>>,
     added_foo_q: Query<Ref<FooComponent>, Added<FooComponent>>,
     mut foo_component_added: ResMut<FooComponentState>,
 ) {
@@ -124,7 +124,7 @@ fn foo_observer(
 }
 
 #[auto_observer(plugin = Test)]
-fn foo_observer2(_add: On<Add, FooComponent>) {}
+fn foo_observer2(_add: On<Add<FooComponent>>) {}
 
 fn app() -> App {
     let mut app = create_minimal_app();

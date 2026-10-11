@@ -183,3 +183,8 @@
 - Add `auto_asset` shorthand for deriving `Asset`, optional reflection, asset reflection registration, and asset initialization.
 - Add `auto_scene_component` shorthand for Bevy 0.19 `SceneComponent` support, including derive, reflect, register, `auto_name`, and generics support.
 - Add `config(run_if = ...)` support to `auto_add_observer` and `auto_observer`.
+
+---
+## v0.12.0
+- Update Bevy dependencies to 0.20.
+- Update observer examples and tests to use Bevy 0.20's `On<Add<T>>` syntax.

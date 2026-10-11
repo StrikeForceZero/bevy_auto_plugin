@@ -82,7 +82,7 @@ struct FooComponentState {
 #[allow(clippy::type_complexity)]
 #[auto_add_observer(plugin = Test::<u8, bool>, generics(u8, bool))]
 fn foo_observer<T1, T2>(
-    add: On<Add, FooComponent<T1, T2>>,
+    add: On<Add<FooComponent<T1, T2>>>,
     added_foo_q: Query<Ref<FooComponent<T1, T2>>, Added<FooComponent<T1, T2>>>,
     mut foo_component_added: ResMut<FooComponentState>,
 ) where

@@ -17,7 +17,7 @@ struct ObserverCount(usize);
 struct ObserverEnabled(bool);
 
 #[auto_observer(plugin = Test)]
-fn foo_observer(_trigger: On<Add, Foo>, mut count: ResMut<ObserverCount>) {
+fn foo_observer(_trigger: On<Add<Foo>>, mut count: ResMut<ObserverCount>) {
     count.0 += 1;
 }
 
@@ -26,7 +26,7 @@ fn observer_enabled(observer_enabled: Res<ObserverEnabled>) -> bool {
 }
 
 #[auto_observer(plugin = Test, config(run_if = observer_enabled, run_if = observer_enabled))]
-fn gated_foo_observer(_trigger: On<Add, Foo>, mut count: ResMut<ObserverCount>) {
+fn gated_foo_observer(_trigger: On<Add<Foo>>, mut count: ResMut<ObserverCount>) {
     count.0 += 10;
 }
 

@@ -18,11 +18,11 @@ Automatically registers a resource to be added to the app.
 - `insert(Value)` | `insert(Value1), insert(Value2)` - Inserts the `Resource` with a specific value.
 
   Same as having:
-  ```
+  ```rust,ignore
   #[auto_insert_resource(insert(Value))]
   ``` 
   or
-  ```
+  ```rust,ignore
   #[auto_insert_resource(insert(Value1))]
   #[auto_insert_resource(insert(Value2))]
   ```

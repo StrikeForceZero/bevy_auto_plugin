@@ -74,3 +74,6 @@
     - Use `impl_plugin_trait` when you want the derive to implement Bevy's `Plugin`.
     - `AutoPlugin` is always implemented when deriving `AutoPlugin`.
 - Removed `init(...)` and `resource(...)` from `auto_insert_resource`; use `insert(...)`.
+
+## v0.11 to v0.12
+- Bevy support moved from 0.19 to 0.20.
